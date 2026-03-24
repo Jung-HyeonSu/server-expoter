@@ -1,0 +1,47 @@
+---
+# os-gather/tasks/windows/gather_cpu.yml → data.cpu fragment
+
+- name: "windows | cpu | collect"
+  ansible.windows.win_shell: |
+    $cpu = Get-CimInstance Win32_Processor
+    [PSCustomObject]@{
+      sockets  = ($cpu | Measure-Object).Count
+      cores    = ($cpu | Measure-Object -Property NumberOfCores -Sum).Sum
+      logical  = ($cpu | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum
+      model    = ($cpu | Select-Object -First 1 -ExpandProperty Name)
+    } | ConvertTo-Json -Compress
+  register: _w_cpu_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "windows | cpu | build fragment"
+  ansible.builtin.set_fact:
+    _w_cpu_data: "{{ _w_cpu_raw.stdout | default('{}') | from_json }}"
+
+- name: "windows | cpu | set fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      cpu:
+        sockets:         "{{ _w_cpu_data.sockets  | default(none) }}"
+        cores_physical:  "{{ _w_cpu_data.cores    | default(none) }}"
+        logical_threads: "{{ _w_cpu_data.logical  | default(ansible_processor_vcpus | default(none)) }}"
+        model:           "{{ _w_cpu_data.model    | default(none) }}"
+        architecture: >-
+          {%- set _arch = ansible_architecture | default('') -%}
+          {%- if _arch in ['x86_64', 'AMD64', 'amd64'] -%}x86_64
+          {%- elif '64' in _arch -%}x86_64
+          {%- elif _arch in ['i386', 'i686', 'x86'] -%}i386
+          {%- elif '32' in _arch or '86' in _arch -%}i386
+          {%- elif _arch -%}{{ _arch }}
+          {%- else -%}{{ none }}
+          {%- endif -%}
+    _sections_supported_fragment: ['cpu']
+    _sections_collected_fragment: ['cpu']
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true
+
+- name: "windows | cpu | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

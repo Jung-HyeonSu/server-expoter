@@ -1,0 +1,37 @@
+---
+# common/tasks/normalize/build_sections.yml
+#
+# _all_sec_* 누적 변수로 sections 딕셔너리를 생성한다.
+# merge_fragment 누적 완료 후 호출한다.
+#
+# 입력 변수:
+#   _all_sec_supported : list — 지원 섹션
+#   _all_sec_collected : list — 수집 성공 섹션
+#   _all_sec_failed    : list — 수집 실패 섹션
+#
+# 출력 변수:
+#   _norm_sections : dict — 10개 섹션 각각 success|failed|not_supported
+#
+# 우선순위: not_supported > failed > success > failed(미분류)
+
+- name: "normalize | build_sections"
+  ansible.builtin.set_fact:
+    _norm_sections: >-
+      {%- set all_sec = ['system','hardware','bmc','cpu','memory',
+                         'storage','network','firmware','users','power'] -%}
+      {%- set supported  = _all_sec_supported | default([]) -%}
+      {%- set collected  = _all_sec_collected | default([]) -%}
+      {%- set failed     = _all_sec_failed    | default([]) -%}
+      {%- set out = {} -%}
+      {%- for s in all_sec -%}
+        {%- if s not in supported -%}
+          {%- set _ = out.update({s: 'not_supported'}) -%}
+        {%- elif s in failed -%}
+          {%- set _ = out.update({s: 'failed'}) -%}
+        {%- elif s in collected -%}
+          {%- set _ = out.update({s: 'success'}) -%}
+        {%- else -%}
+          {%- set _ = out.update({s: 'failed'}) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}

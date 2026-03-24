@@ -1,0 +1,36 @@
+---
+# common/tasks/normalize/build_empty_data.yml
+#
+# 빈 data 뼈대를 _norm_empty_data 에 생성한다.
+# rescue 에서 _merged_data 대신 쓸 수 있다.
+# 또는 init_fragments 의 초기값으로도 활용된다.
+# ※ 빈 데이터 뼈대(data skeleton)는 아래 세 파일에 복제되어 있음.
+#   구조 변경 시 반드시 세 파일 모두 동기화할 것:
+#     - common/tasks/normalize/init_fragments.yml
+#     - common/tasks/normalize/build_empty_data.yml    (이 파일)
+#     - common/tasks/normalize/build_failed_output.yml
+#
+# 출력 변수:
+#   _norm_empty_data : dict
+
+- name: "normalize | build_empty_data"
+  ansible.builtin.set_fact:
+    _norm_empty_data:
+      system:   null
+      hardware: null
+      bmc:      null
+      cpu:      null
+      memory:   null
+      storage:
+        filesystems:    []
+        physical_disks: []
+        datastores:     []
+        controllers:    []
+      network:
+        dns_servers:      []
+        default_gateways: []
+        interfaces:       []
+      users:    []
+      firmware: []
+      power:    null
+  no_log: true

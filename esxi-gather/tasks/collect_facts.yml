@@ -1,0 +1,21 @@
+---
+# esxi-gather/tasks/collect_facts.yml
+# vmware_host_facts → _e_raw_facts, _e_facts_ok
+
+- name: "esxi | collect | vmware_host_facts"
+  community.vmware.vmware_host_facts:
+    hostname:       "{{ _e_ip }}"
+    username:       "{{ _e_user }}"
+    password:       "{{ _e_pass }}"
+    validate_certs: no
+  register:    _e_facts_result
+  delegate_to: localhost
+  failed_when: false
+  no_log: true
+
+- name: "esxi | collect | store raw facts"
+  ansible.builtin.set_fact:
+    _e_raw_facts: "{{ _e_facts_result.ansible_facts | default({}) }}"
+    _e_facts_ok:  "{{ _e_facts_result is not failed and
+                      _e_facts_result.ansible_facts is defined }}"
+  no_log: true

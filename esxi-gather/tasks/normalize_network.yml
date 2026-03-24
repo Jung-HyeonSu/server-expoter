@@ -1,0 +1,74 @@
+---
+# esxi-gather/tasks/normalize_network.yml
+# _e_raw_facts + _e_raw_config → network fragment
+
+- name: "esxi | normalize network | extract dns and gw"
+  ansible.builtin.set_fact:
+    _e_default_gw:  "{{ _e_raw_facts.ansible_default_ipv4.gateway | default(none) }}"
+    _e_dns_servers: >-
+      {%- set dns = [] -%}
+      {%- for k, v in (_e_raw_config | default({})).items() -%}
+        {%- if 'dns' in (k|lower) and v and (v|string|length) > 0 -%}
+          {%- set _ = dns.append(v|string) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ dns }}
+  no_log: true
+
+- name: "esxi | normalize network | build interfaces"
+  ansible.builtin.set_fact:
+    _e_norm_interfaces: >-
+      {%- set out = [] -%}
+      {%- set primary = _e_raw_facts.ansible_default_ipv4.interface | default('') -%}
+      {%- for iface in (_e_raw_facts.ansible_interfaces | default([])) -%}
+        {%- set d    = _e_raw_facts.get('ansible_' ~ iface, {}) -%}
+        {%- set ipv4 = d.get('ipv4', {}) -%}
+        {%- if ipv4.get('address') and
+               ipv4.address != '127.0.0.1' and
+               not ipv4.address.startswith('169.254.') -%}
+          {%- set nm = ipv4.netmask | default('') -%}
+          {%- if   nm=='255.255.255.255' -%}{%- set pfx=32 -%}
+          {%- elif nm=='255.255.255.0'   -%}{%- set pfx=24 -%}
+          {%- elif nm=='255.255.0.0'     -%}{%- set pfx=16 -%}
+          {%- elif nm=='255.0.0.0'       -%}{%- set pfx=8  -%}
+          {%- else                        -%}{%- set pfx=none -%}
+          {%- endif -%}
+          {%- set is_p = (iface == primary) -%}
+          {%- set _ = out.append({
+            'id':          iface, 'name': iface, 'kind': 'vmkernel',
+            'mac':         d.get('macaddress',none),
+            'mtu':         d.get('mtu',none),
+            'speed_mbps':  none,
+            'link_status': 'up' if d.get('active',false) else 'unknown',
+            'is_primary':  is_p,
+            'addresses': [{'family':'ipv4','address':ipv4.address,
+                           'prefix_length':pfx,
+                           'subnet_mask': nm if nm else none,
+                           'gateway': _e_default_gw if is_p else none}]
+          }) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+- name: "esxi | normalize network | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      network:
+        dns_servers: "{{ _e_dns_servers }}"
+        default_gateways: >-
+          {%- set out = [] -%}
+          {%- if _e_default_gw -%}
+            {%- set _ = out.append({'family':'ipv4','address':_e_default_gw}) -%}
+          {%- endif -%}
+          {{ out }}
+        interfaces: "{{ _e_norm_interfaces }}"
+    _sections_supported_fragment: ['network']
+    _sections_collected_fragment: ['network']
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true
+
+- name: "esxi | normalize network | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

@@ -1,0 +1,59 @@
+---
+# os-gather/tasks/linux/gather_memory.yml
+# 물리 메모리 수집 (dmidecode 우선, /proc/meminfo fallback)
+# → data.memory fragment 생성
+
+- name: "linux | memory | physical (dmidecode)"
+  ansible.builtin.shell: |
+    if command -v dmidecode >/dev/null 2>&1; then
+      dmidecode -t memory 2>/dev/null \
+      | grep -E "^[[:space:]]*Size:" \
+      | grep -v "No Module Installed" \
+      | awk '{
+          if ($3=="GB")       sum+=$2*1024;
+          else if ($3=="MB")  sum+=$2;
+          else if ($3=="KB")  sum+=$2/1024;
+          else if ($3=="B")   sum+=$2/1048576;
+        } END{print int(sum)}'
+    else
+      echo ""
+    fi
+  register: _l_mem_phys_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "linux | memory | build fragment"
+  ansible.builtin.set_fact:
+    _l_mem_phys_ok: >-
+      {{ _l_mem_phys_raw.stdout | trim | length > 0
+         and _l_mem_phys_raw.stdout | trim | int > 0 }}
+    _data_fragment:
+      memory:
+        total_mb: >-
+          {{ _l_mem_phys_raw.stdout | trim | int
+             if (_l_mem_phys_raw.stdout | trim | length > 0
+                 and _l_mem_phys_raw.stdout | trim | int > 0)
+             else (ansible_memtotal_mb | default(0)) }}
+        total_basis: >-
+          {{ 'physical_installed'
+             if (_l_mem_phys_raw.stdout | trim | length > 0
+                 and _l_mem_phys_raw.stdout | trim | int > 0)
+             else 'os_visible' }}
+        installed_mb: >-
+          {{ _l_mem_phys_raw.stdout | trim | int
+             if (_l_mem_phys_raw.stdout | trim | length > 0
+                 and _l_mem_phys_raw.stdout | trim | int > 0)
+             else none }}
+        visible_mb:  "{{ ansible_memtotal_mb | default(none) }}"
+        free_mb:     "{{ ansible_memfree_mb  | default(none) }}"
+        slots:       []
+    _sections_supported_fragment: ['memory']
+    _sections_collected_fragment: ['memory']
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true
+
+- name: "linux | memory | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

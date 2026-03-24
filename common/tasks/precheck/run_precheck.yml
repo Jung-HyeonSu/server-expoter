@@ -1,0 +1,60 @@
+---
+# ==============================================================================
+# run_precheck.yml — 통합 사전 진단 실행
+# ==============================================================================
+# 수집 전 대상 호스트의 연결 상태를 진단합니다.
+#
+# 필수 입력 변수:
+#   _precheck_channel: "redfish" | "os" | "esxi"
+#   _precheck_host:    대상 IP 주소
+#
+# 선택 입력 변수:
+#   _precheck_ports:      포트 목록 (기본: 채널별 기본값)
+#   _precheck_username:   인증 사용자명
+#   _precheck_password:   인증 비밀번호
+#   _precheck_timeout_port:     포트 타임아웃 (기본: 3.0)
+#   _precheck_timeout_protocol: 프로토콜 타임아웃 (기본: 6.0)
+#   _precheck_timeout_auth:     인증 타임아웃 (기본: 8.0)
+#
+# 출력 변수:
+#   _precheck_result:  precheck_bundle 모듈 반환값
+#   _precheck_ok:      전체 진단 통과 여부 (bool)
+#   _diagnosis:        공통 diagnosis 딕셔너리
+# ==============================================================================
+
+- name: "precheck | 대상 호스트 연결 진단"
+  precheck_bundle:
+    host: "{{ _precheck_host }}"
+    channel: "{{ _precheck_channel }}"
+    ports: "{{ _precheck_ports | default(omit) }}"
+    timeout_port: "{{ _precheck_timeout_port | default(3.0) }}"
+    timeout_protocol: "{{ _precheck_timeout_protocol | default(6.0) }}"
+    timeout_auth: "{{ _precheck_timeout_auth | default(8.0) }}"
+    username: "{{ _precheck_username | default(omit) }}"
+    password: "{{ _precheck_password | default(omit) }}"
+  delegate_to: localhost
+  register: _precheck_raw
+  no_log: true
+
+- name: "precheck | 진단 결과 저장"
+  ansible.builtin.set_fact:
+    _precheck_result: "{{ _precheck_raw }}"
+    _precheck_ok: >-
+      {{
+        _precheck_raw.reachable | default(false) | bool
+        and _precheck_raw.port_open | default(false) | bool
+        and _precheck_raw.protocol_supported | default(false) | bool
+        and (_precheck_raw.failure_stage is none or _precheck_raw.failure_stage | default('') == '')
+      }}
+
+- name: "precheck | 공통 diagnosis 생성"
+  ansible.builtin.set_fact:
+    _diagnosis: "{{ _precheck_raw | build_diagnosis(_precheck_channel) }}"
+
+- name: "precheck | 진단 실패 시 로그 출력"
+  ansible.builtin.debug:
+    msg: >-
+      [진단 실패] {{ _precheck_host }}:
+      단계={{ _precheck_raw.failure_stage | default('unknown') }},
+      사유={{ _precheck_raw.failure_reason | default('알 수 없음') }}
+  when: not (_precheck_ok | bool)

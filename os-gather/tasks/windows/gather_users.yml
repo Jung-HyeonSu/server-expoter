@@ -1,0 +1,82 @@
+---
+# os-gather/tasks/windows/gather_users.yml → data.users fragment
+
+- name: "windows | users | collect"
+  ansible.windows.win_shell: |
+    $useLocal = $null -ne (Get-Command Get-LocalUser -ErrorAction SilentlyContinue)
+    if ($useLocal) {
+      try {
+        Get-LocalUser -ErrorAction Stop | ForEach-Object {
+          $u = $_; $grps = @()
+          try {
+            Get-LocalGroup -ErrorAction SilentlyContinue | ForEach-Object {
+              try {
+                $members = Get-LocalGroupMember $_.Name -ErrorAction SilentlyContinue
+                if ($members.Name -contains "$env:COMPUTERNAME\$($u.Name)") { $grps += $_.Name }
+              } catch {}
+            }
+          } catch {}
+          $profile = $null
+          try {
+            $reg = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$($u.SID.Value)"
+            $profile = (Get-ItemProperty $reg -ErrorAction SilentlyContinue).ProfileImagePath
+          } catch {}
+          $last = $null
+          if ($u.LastLogon) { $last = $u.LastLogon.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ") }
+          $isSys = $u.Name -in @('Administrator','Guest','DefaultAccount','WDAGUtilityAccount')
+          [PSCustomObject]@{ name=$u.Name; uid=$u.SID.Value; groups=($grps -join ',');
+            home=$profile; is_system=$isSys; last=$last } | ConvertTo-Json -Compress
+        }
+      } catch {}
+    } else {
+      try {
+        Get-CimInstance Win32_UserAccount -Filter 'LocalAccount=True' -ErrorAction Stop | ForEach-Object {
+          $u=$_; $grps=@(); $profile=$null
+          try {
+            $reg="HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$($u.SID)"
+            $profile=(Get-ItemProperty $reg -ErrorAction SilentlyContinue).ProfileImagePath
+          } catch {}
+          $isSys=$u.Name -in @('Administrator','Guest','DefaultAccount','WDAGUtilityAccount')
+          [PSCustomObject]@{ name=$u.Name; uid=$u.SID; groups=($grps -join ',');
+            home=$profile; is_system=$isSys; last=$null } | ConvertTo-Json -Compress
+        }
+      } catch {}
+    }
+  register: _w_users_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "windows | users | normalize"
+  ansible.builtin.set_fact:
+    _w_norm_users_list: >-
+      {%- set out = [] -%}
+      {%- for line in (_w_users_raw.stdout_lines | default([])) -%}
+        {%- if line | trim -%}
+          {%- set u = line | from_json -%}
+          {%- set groups = (u.groups|default('')).split(',')|reject('equalto','')|list -%}
+          {%- set is_admin = 'Administrators' in groups -%}
+          {%- if not (u.is_system|default(true)) or is_admin -%}
+            {%- set _ = out.append({
+              'name': u.name, 'uid': u.uid|string, 'groups': groups,
+              'home': u.home|default(none), 'last_access_time': u.last|default(none)
+            }) -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+- name: "windows | users | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      users: "{{ _w_norm_users_list }}"
+    _sections_supported_fragment: ['users']
+    _sections_collected_fragment: ['users']
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true
+
+- name: "windows | users | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

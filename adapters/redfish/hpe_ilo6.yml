@@ -1,0 +1,61 @@
+---
+adapter_id: redfish_hpe_ilo6
+channel: redfish
+priority: 100
+version: "1.0.0"
+
+match:
+  vendor: ["HPE", "Hewlett Packard Enterprise"]
+  firmware_patterns: ["iLO.*6", "^1\\.[5-9]"]
+
+capabilities:
+  sections_supported:
+    - system
+    - hardware
+    - bmc
+    - cpu
+    - memory
+    - storage
+    - network
+    - firmware
+    - power
+
+collect:
+  strategy: standard_plus_oem
+  standard_tasks: "redfish-gather/tasks/collect_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/hpe/collect_oem.yml"
+
+normalize:
+  standard_tasks: "redfish-gather/tasks/normalize_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/hpe/normalize_oem.yml"
+
+credentials:
+  profile: "hpe"
+  fallback_profiles: []
+
+auth:
+  preferred: [session, basic]
+
+graceful_degradation:
+  on_section_fail: continue
+  on_auth_fail: abort
+  critical_sections: [system, hardware]
+  optional_sections: [firmware, power]
+
+# iLO 6 특이사항 (실장비 검증 2026-03-18):
+# - Storage: StorageControllers 인라인 배열 없음 → Controllers 서브링크 사용
+# - IndicatorLED 미제공 → LocationIndicatorActive (bool) 사용
+# - Fan ReadingUnits = "Percent" (RPM이 아닌 퍼센트)
+# - EthernetInterfaces: SpeedMbps, LinkStatus, Status 모두 null
+# - MemorySummary.Status.Health 미제공 → HealthRollup 사용
+# - HostName이 빈 문자열("") 가능
+
+vendor_notes:
+  storage_controller_method: controllers_sublink
+  indicator_led_field: LocationIndicatorActive
+  fan_reading_units: Percent
+  nic_data_limited: true
+
+diagnosis:
+  protocol_name: redfish
+  not_supported_message: "HPE iLO 6 장비 — Redfish 완전 지원 (Gen11)."

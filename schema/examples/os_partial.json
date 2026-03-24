@@ -1,0 +1,100 @@
+{
+  "schema_version": "1",
+  "target_type": "os",
+  "collection_method": "agent",
+  "ip": "10.10.1.20",
+  "hostname": "10.10.1.20",
+  "vendor": null,
+  "status": "partial",
+  "sections": {
+    "system": "success",
+    "hardware": "not_supported",
+    "bmc": "not_supported",
+    "cpu": "success",
+    "memory": "success",
+    "storage": "failed",
+    "network": "success",
+    "firmware": "not_supported",
+    "users": "success",
+    "power": "not_supported"
+  },
+  "diagnosis": {
+    "reachable": true,
+    "port_open": true,
+    "protocol_supported": true,
+    "auth_success": true,
+    "failure_stage": null,
+    "failure_reason": null,
+    "details": {
+      "channel": "os",
+      "adapter_candidate": "os_linux_rhel",
+      "checked_ports": [22],
+      "detected_os": "linux",
+      "detected_port": 22
+    }
+  },
+  "meta": {
+    "started_at": "2026-03-18T11:00:00Z",
+    "finished_at": "2026-03-18T11:00:12Z",
+    "duration_ms": 12340,
+    "adapter_id": "os_linux_rhel",
+    "adapter_version": "1.0.0",
+    "ansible_version": "2.19.1"
+  },
+  "correlation": {
+    "serial_number": null,
+    "system_uuid": null,
+    "bmc_ip": null,
+    "host_ip": "10.10.1.20"
+  },
+  "errors": [
+    {
+      "section": "storage",
+      "message": "스토리지 수집 실패: lsblk 명령어를 찾을 수 없습니다.",
+      "detail": "lsblk: command not found"
+    }
+  ],
+  "data": {
+    "system": {
+      "os_family": "RedHat",
+      "distribution": "Rocky Linux",
+      "version": "9.3",
+      "kernel": "5.14.0-362.24.1.el9_3.x86_64",
+      "architecture": "x86_64",
+      "uptime_seconds": 8640000,
+      "selinux": "enforcing",
+      "fqdn": "server01.example.com"
+    },
+    "hardware": null,
+    "bmc": null,
+    "cpu": {
+      "sockets": 2,
+      "cores_physical": 32,
+      "logical_threads": 64,
+      "model": "Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz",
+      "architecture": "x86_64"
+    },
+    "memory": {
+      "total_mb": 262144,
+      "total_basis": "physical_installed",
+      "installed_mb": 262144,
+      "visible_mb": 261800,
+      "free_mb": 128000,
+      "slots": []
+    },
+    "storage": {
+      "filesystems": [],
+      "physical_disks": [],
+      "datastores": [],
+      "controllers": []
+    },
+    "network": {
+      "dns_servers": ["8.8.8.8", "8.8.4.4"],
+      "default_gateways": [{"family": "ipv4", "address": "10.10.1.1"}],
+      "interfaces": []
+    },
+    "users": [],
+    "firmware": null,
+    "power": null
+  }
+}

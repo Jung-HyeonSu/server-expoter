@@ -1,0 +1,85 @@
+---
+# ==============================================================================
+# esxi.yml — ESXi 채널 전용 필드 정의
+# ==============================================================================
+# vSphere API를 통해 수집하는 ESXi 채널 전용 필드입니다.
+# ==============================================================================
+
+channel: esxi
+
+sections:
+  hardware:
+    fields:
+      vendor:
+        type: string
+        display_name: "벤더"
+      model:
+        type: string
+        display_name: "모델"
+      serial:
+        type: string
+        display_name: "시리얼"
+      uuid:
+        type: string
+        display_name: "UUID"
+      bios_version:
+        type: string
+        display_name: "BIOS 버전"
+      bios_date:
+        type: string
+        display_name: "BIOS 날짜"
+        source: "_e_raw_facts.ansible_bios_date"
+
+  storage:
+    sub_sections:
+      datastores:
+        display_name: "데이터스토어 목록"
+        item_fields:
+          name:
+            type: string
+            display_name: "데이터스토어명"
+          type:
+            type: string
+            display_name: "유형"
+            description: "VMFS, NFS, vSAN 등"
+          total_mb:
+            type: integer
+            display_name: "전체 용량(MB)"
+          free_mb:
+            type: integer
+            display_name: "여유 용량(MB)"
+          used_mb:
+            type: integer
+            display_name: "사용 용량(MB)"
+          usage_percent:
+            type: float
+            display_name: "사용률(%)"
+          accessible:
+            type: boolean
+            display_name: "접근 가능 여부"
+
+  network:
+    sub_sections:
+      interfaces:
+        display_name: "VMkernel 인터페이스"
+        note: "kind 필드는 'vmkernel'로 표시됨"
+        item_fields:
+          id:
+            type: string
+          name:
+            type: string
+          kind:
+            type: string
+            description: "vmkernel (ESXi 채널에서 수집된 인터페이스)"
+          mac:
+            type: string
+          mtu:
+            type: integer
+          speed_mbps:
+            type: integer
+          link_status:
+            type: string
+          is_primary:
+            type: boolean
+          addresses:
+            type: list

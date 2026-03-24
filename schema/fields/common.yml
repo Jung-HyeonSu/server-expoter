@@ -1,0 +1,101 @@
+---
+# ==============================================================================
+# common.yml — 공통 필드 정의
+# ==============================================================================
+# 3개 채널에서 공통으로 수집 가능한 필드를 정의합니다.
+# 각 필드의 type, 설명, 채널별 source를 명시합니다.
+#
+# source가 null인 경우: 해당 채널에서는 수집 불가 → output에서 null
+# ==============================================================================
+
+sections:
+  system:
+    fields:
+      os_family:
+        type: string
+        display_name: "OS 계열"
+        description: "운영체제 계열 (Linux, Windows, VMware ESXi 등)"
+
+      distribution:
+        type: string
+        display_name: "배포판"
+        description: "OS 배포판명 (Ubuntu, RHEL, Windows Server 2022 등)"
+
+      version:
+        type: string
+        display_name: "버전"
+        description: "OS 버전 문자열"
+
+      kernel:
+        type: string
+        display_name: "커널/빌드"
+        description: "커널 버전 또는 빌드 번호"
+
+      architecture:
+        type: string
+        display_name: "아키텍처"
+        description: "시스템 아키텍처 (x86_64, aarch64 등)"
+
+      uptime_seconds:
+        type: integer
+        display_name: "가동시간(초)"
+        description: "시스템 가동 시간(초)"
+
+      fqdn:
+        type: string
+        display_name: "FQDN"
+        description: "정규화된 도메인 이름"
+
+  cpu:
+    fields:
+      sockets:
+        type: integer
+        display_name: "소켓 수"
+
+      cores_physical:
+        type: integer
+        display_name: "물리 코어 수"
+
+      logical_threads:
+        type: integer
+        display_name: "논리 스레드 수"
+
+      model:
+        type: string
+        display_name: "CPU 모델"
+
+      architecture:
+        type: string
+        display_name: "CPU 아키텍처"
+
+  memory:
+    fields:
+      total_mb:
+        type: integer
+        display_name: "총 용량(MB)"
+        description: "총 메모리 용량 (MB 단위)"
+
+      total_basis:
+        type: string
+        display_name: "용량 기준"
+        description: "용량 기준 (physical_installed, os_visible, hypervisor_visible)"
+
+      installed_mb:
+        type: integer
+        display_name: "물리 장착(MB)"
+        description: "물리적으로 장착된 용량"
+
+      visible_mb:
+        type: integer
+        display_name: "OS 인식(MB)"
+        description: "OS가 인식하는 용량"
+
+      free_mb:
+        type: integer
+        display_name: "여유(MB)"
+        description: "현재 여유 메모리"
+
+      slots:
+        type: list
+        display_name: "메모리 슬롯"
+        description: "슬롯별 상세 정보 목록"

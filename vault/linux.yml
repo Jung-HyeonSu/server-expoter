@@ -1,0 +1,7 @@
+---
+# 로컬 테스트용 플레이스홀더. 운영 환경에서는 Jenkins credentials binding으로 대체한다.
+# 사용법: ansible-playbook --vault-password-file .vault_pass ... 또는 Jenkins withCredentials 블록
+# Linux SSH 접속 계정
+# GitLab repo 접근 권한으로 보안 통제
+ansible_user:     "cloviradmin"
+ansible_password: "Goodmit0802!"

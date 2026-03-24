@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ansible
+*.retry
+
+# Vault (실제 비밀은 커밋하지 않음)
+# vault/*.yml 은 ansible-vault 로 암호화된 상태로만 커밋
+
+# Supplemental test inventory (local credentials — never tracked)
+tests/inventory/local/*
+!tests/inventory/local/.gitkeep
+
+# Conditional review targets and local credentials — never tracked
+tests/scripts/local/*
+!tests/scripts/local/.gitkeep

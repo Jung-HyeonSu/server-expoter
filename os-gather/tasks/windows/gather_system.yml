@@ -1,0 +1,54 @@
+---
+# os-gather/tasks/windows/gather_system.yml → data.system fragment
+
+- name: "windows | system | os version"
+  ansible.windows.win_shell: |
+    $os  = Get-CimInstance Win32_OperatingSystem
+    $rel = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' `
+              -ErrorAction SilentlyContinue).DisplayVersion
+    if (-not $rel) {
+      $rel = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' `
+                -ErrorAction SilentlyContinue).ReleaseId
+    }
+    [PSCustomObject]@{
+      caption = $os.Caption
+      version = $os.Version
+      build   = $os.BuildNumber
+      rel_id  = $rel
+    } | ConvertTo-Json -Compress
+  register: _w_os_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "windows | system | parse"
+  ansible.builtin.set_fact:
+    _w_os_data: >-
+      {%- if _w_os_raw.stdout is defined and _w_os_raw.stdout | trim | length > 0 -%}
+      {{ _w_os_raw.stdout | from_json }}
+      {%- else -%}
+      {}
+      {%- endif -%}
+  no_log: true
+
+- name: "windows | system | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      system:
+        os_family:      "Windows"
+        distribution:   "{{ _w_os_data.caption  | default(none) }}"
+        version:        "{{ _w_os_data.rel_id    | default(_w_os_data.version | default(none)) }}"
+        kernel:         "{{ _w_os_data.build     | default(none) | string }}"
+        architecture:   "{{ ansible_architecture | default(none) }}"
+        uptime_seconds: "{{ (ansible_uptime_seconds | default(0)) | int }}"
+        selinux:        null
+        fqdn:           "{{ ansible_fqdn | default(inventory_hostname) }}"
+    _sections_supported_fragment: ['system']
+    _sections_collected_fragment: ['system']
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true
+
+- name: "windows | system | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

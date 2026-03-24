@@ -1,0 +1,120 @@
+---
+# ==============================================================================
+# os.yml — OS 채널 전용 필드 정의
+# ==============================================================================
+# SSH(Linux) / WinRM(Windows)을 통해 수집하는 OS 채널 전용 필드입니다.
+# ==============================================================================
+
+channel: os
+
+sections:
+  system:
+    extra_fields:
+      selinux:
+        type: string
+        display_name: "SELinux 상태"
+        description: "SELinux 모드 (enforcing/permissive/disabled/null)"
+        note: "Linux 전용. Windows는 항상 null"
+
+  storage:
+    sub_sections:
+      filesystems:
+        display_name: "파일시스템 목록"
+        item_fields:
+          device:
+            type: string
+            display_name: "장치명"
+          mount_point:
+            type: string
+            display_name: "마운트 포인트"
+          filesystem:
+            type: string
+            display_name: "파일시스템 유형"
+          total_mb:
+            type: integer
+            display_name: "전체 용량(MB)"
+          used_mb:
+            type: integer
+            display_name: "사용 용량(MB)"
+          available_mb:
+            type: integer
+            display_name: "여유 용량(MB)"
+          usage_percent:
+            type: float
+            display_name: "사용률(%)"
+          status:
+            type: string
+            display_name: "마운트 상태"
+            description: "mounted / unmounted"
+
+      physical_disks:
+        display_name: "물리 디스크 목록"
+        item_fields:
+          device:
+            type: string
+          model:
+            type: string
+          total_mb:
+            type: integer
+          media_type:
+            type: string
+            description: "HDD 또는 SSD"
+          protocol:
+            type: string
+          health:
+            type: string
+
+  network:
+    sub_sections:
+      interfaces:
+        display_name: "네트워크 인터페이스"
+        item_fields:
+          id:
+            type: string
+          name:
+            type: string
+          kind:
+            type: string
+            description: "os_nic (OS 채널에서 수집된 인터페이스)"
+          mac:
+            type: string
+          mtu:
+            type: integer
+          speed_mbps:
+            type: integer
+          link_status:
+            type: string
+          is_primary:
+            type: boolean
+          addresses:
+            type: list
+            item_fields:
+              family:
+                type: string
+              address:
+                type: string
+              prefix_length:
+                type: integer
+              subnet_mask:
+                type: string
+              gateway:
+                type: string
+
+  users:
+    display_name: "시스템 사용자 목록"
+    item_fields:
+      name:
+        type: string
+        display_name: "사용자명"
+      uid:
+        type: string
+        display_name: "UID/SID"
+      groups:
+        type: list
+        display_name: "소속 그룹"
+      home:
+        type: string
+        display_name: "홈 디렉토리"
+      last_access_time:
+        type: string
+        display_name: "마지막 접속 시각"

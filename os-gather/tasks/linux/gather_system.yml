@@ -1,0 +1,78 @@
+---
+# os-gather/tasks/linux/gather_system.yml
+# OS 기본 정보 수집 → data.system fragment 생성
+#
+# 출력:
+#   _data_fragment               → {system: {...}}
+#   _sections_supported_fragment → ['system']
+#   _sections_collected_fragment → ['system'] or []
+#   _sections_failed_fragment    → [] or ['system']
+#   _errors_fragment             → []
+
+- name: "linux | system | init fallback vars"
+  ansible.builtin.set_fact:
+    _l_fb: {}
+  no_log: true
+
+- name: "linux | system | setup"
+  ansible.builtin.setup:
+    gather_subset: ['hardware', 'network', 'virtual', 'distribution']
+  vars:
+    ansible_python_interpreter: "{{ _l_python | default('python3') }}"
+  register: _l_setup_result
+  failed_when: false
+  no_log: true
+
+- name: "linux | system | raw fallback"
+  when: _l_setup_result is failed or
+        (_l_setup_result.ansible_facts is not defined)
+  ansible.builtin.raw: |
+    export LANG=C
+    echo "DIST=$(. /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || cat /etc/redhat-release 2>/dev/null || echo unknown)"
+    echo "KERNEL=$(uname -r)"
+    echo "ARCH=$(uname -m)"
+    echo "UPTIME=$(awk '{print int($1)}' /proc/uptime 2>/dev/null || echo 0)"
+  register: _l_raw_result
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "linux | system | parse raw fallback"
+  when: _l_setup_result is failed or
+        (_l_setup_result.ansible_facts is not defined)
+  ansible.builtin.set_fact:
+    _l_fb: "{{ dict(_l_raw_result.stdout_lines | default([])
+                    | select('search','=')
+                    | map('split','=',1)
+                    | list) }}"
+  no_log: true
+
+- name: "linux | system | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      system:
+        os_family:      "{{ ansible_os_family      | default(none) }}"
+        distribution:   "{{ ansible_distribution   | default(_l_fb.DIST | default(none)) }}"
+        version:        "{{ ansible_distribution_version | default(none) }}"
+        kernel:         "{{ ansible_kernel         | default(_l_fb.KERNEL | default(none)) }}"
+        architecture:   "{{ ansible_architecture   | default(_l_fb.ARCH | default(none)) }}"
+        uptime_seconds: "{{ (ansible_uptime_seconds | default(_l_fb.UPTIME | default(0))) | int }}"
+        selinux:        "{{ ansible_selinux.status | default(none) }}"
+        fqdn:           "{{ ansible_fqdn | default(inventory_hostname) }}"
+    _sections_supported_fragment: ['system']
+    _sections_collected_fragment: >-
+      {{ ['system'] if (ansible_distribution is defined
+                        or (_l_fb is defined and _l_fb.DIST is defined))
+         else [] }}
+    _sections_failed_fragment: >-
+      {{ [] if (ansible_distribution is defined
+                or (_l_fb is defined and _l_fb.DIST is defined))
+         else ['system'] }}
+    _errors_fragment: []
+    # l_fb 를 후속 태스크가 참조할 수 있도록 유지
+    _l_fb: "{{ _l_fb | default({}) }}"
+  no_log: true
+
+- name: "linux | system | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

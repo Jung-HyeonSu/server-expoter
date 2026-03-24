@@ -1,0 +1,33 @@
+---
+# common/tasks/normalize/build_status.yml
+#
+# sections 결과 기준으로 overall status 를 계산한다.
+# build_sections.yml 호출 후 사용한다.
+#
+# 입력 변수:
+#   _norm_sections : dict — build_sections.yml 출력
+#
+# 출력 변수:
+#   _out_status : str — "success" | "partial" | "failed"
+#
+# 판정 규칙:
+#   supported 섹션 중 모두 success                  → success
+#   supported 섹션 중 success 와 failed 혼재          → partial
+#   supported 섹션 중 success 가 하나도 없음           → failed
+
+- name: "normalize | build_status"
+  ansible.builtin.set_fact:
+    _out_status: >-
+      {%- set sec_vals = _norm_sections.values() | list -%}
+      {%- set supported_vals = sec_vals | reject('equalto','not_supported') | list -%}
+      {%- set success_count  = supported_vals | select('equalto','success') | list | length -%}
+      {%- set failed_count   = supported_vals | select('equalto','failed')  | list | length -%}
+      {%- if supported_vals | length == 0 -%}
+      failed
+      {%- elif failed_count == 0 -%}
+      success
+      {%- elif success_count == 0 -%}
+      failed
+      {%- else -%}
+      partial
+      {%- endif -%}

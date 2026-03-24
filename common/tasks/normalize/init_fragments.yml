@@ -1,0 +1,58 @@
+---
+# common/tasks/normalize/init_fragments.yml
+#
+# fragment 누적 변수를 초기화한다.
+# ※ 빈 데이터 뼈대(data skeleton)는 아래 세 파일에 복제되어 있음.
+#   구조 변경 시 반드시 세 파일 모두 동기화할 것:
+#     - common/tasks/normalize/init_fragments.yml      (이 파일)
+#     - common/tasks/normalize/build_empty_data.yml
+#     - common/tasks/normalize/build_failed_output.yml
+# gather 의 첫 번째 태스크(preflight 직후)에서 반드시 호출해야 한다.
+#
+# 출력 변수:
+#   _merged_data          : dict  — data 병합 누적 공간 (빈 뼈대)
+#   _all_sec_supported    : list  — 지원 섹션 누적
+#   _all_sec_collected    : list  — 수집 성공 섹션 누적
+#   _all_sec_failed       : list  — 수집 실패 섹션 누적
+#   _all_errors           : list  — errors 누적
+
+- name: "normalize | validate REPO_ROOT"
+  ansible.builtin.assert:
+    that:
+      - lookup('env', 'REPO_ROOT') | length > 0
+    fail_msg: >-
+      REPO_ROOT 환경변수가 설정되지 않았습니다.
+      Jenkins 에서 REPO_ROOT=${WORKSPACE} 를 설정하거나,
+      수동 실행 시 export REPO_ROOT=/path/to/repo 를 먼저 수행하세요.
+
+- name: "normalize | init_fragments | timestamp"
+  ansible.builtin.set_fact:
+    _started_at:    "{{ now(utc=true).isoformat() + 'Z' }}"
+    _started_epoch: "{{ now(fmt='%s') }}"
+  no_log: true
+
+- name: "normalize | init_fragments"
+  ansible.builtin.set_fact:
+    _merged_data:
+      system:   null
+      hardware: null
+      bmc:      null
+      cpu:      null
+      memory:   null
+      storage:
+        filesystems:    []
+        physical_disks: []
+        datastores:     []
+        controllers:    []
+      network:
+        dns_servers:      []
+        default_gateways: []
+        interfaces:       []
+      users:    []
+      firmware: []
+      power:    null
+    _all_sec_supported: []
+    _all_sec_collected: []
+    _all_sec_failed:    []
+    _all_errors:        []
+  no_log: true

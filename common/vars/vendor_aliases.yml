@@ -1,0 +1,50 @@
+---
+# ==============================================================================
+# vendor_aliases.yml — 벤더명 정규화 매핑
+# ==============================================================================
+# Redfish Manufacturer, Ansible facts 등에서 반환되는 다양한 벤더 표기를
+# 내부 표준 이름(canonical)으로 정규화합니다.
+#
+# 사용처:
+#   - redfish-gather: detect_vendor에서 벤더 식별
+#   - adapter_loader: adapter match 조건 평가
+#   - normalize 단계: _out_vendor 결정
+#
+# 새 벤더 추가 시: 아래에 canonical 이름과 aliases 목록만 추가하세요.
+# ※ redfish_gather.py의 _BUILTIN_VENDOR_MAP과 동기화 필요 — 변경 시 양쪽 모두 수정할 것
+# ==============================================================================
+
+vendor_aliases:
+  dell:
+    - "Dell"
+    - "Dell Inc."
+    - "DELL"
+    - "dell"
+
+  hpe:
+    - "HPE"
+    - "Hewlett Packard Enterprise"
+    - "HP Enterprise"
+    - "HP"
+    - "Hp"
+    - "hpe"
+
+  lenovo:
+    - "Lenovo"
+    - "LENOVO"
+    - "lenovo"
+
+  supermicro:
+    - "Supermicro"
+    - "Super Micro Computer, Inc."
+    - "Super Micro Computer"
+    - "SUPERMICRO"
+    - "supermicro"
+
+  cisco:
+    - "Cisco Systems Inc"
+    - "Cisco Systems Inc."
+    - "Cisco Systems"
+    - "Cisco"
+    - "CISCO"
+    - "cisco"

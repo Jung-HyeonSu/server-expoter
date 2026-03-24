@@ -1,0 +1,76 @@
+---
+# os-gather/tasks/linux/gather_storage.yml
+# lsblk(물리 디스크) + ansible_mounts(파일시스템) → data.storage fragment
+
+- name: "linux | storage | lsblk (physical disks)"
+  ansible.builtin.shell: >
+    lsblk -J -b -d -o NAME,SIZE,TYPE,ROTA,MODEL 2>/dev/null || echo "{}"
+  register: _l_lsblk_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "linux | storage | normalize physical disks"
+  ansible.builtin.set_fact:
+    _l_norm_physical_disks: >-
+      {%- set out = [] -%}
+      {%- set lsblk = (_l_lsblk_raw.stdout | default('{}') | from_json) -%}
+      {%- if lsblk.blockdevices is defined -%}
+        {%- for dev in lsblk.blockdevices -%}
+          {%- if dev.type in ['disk'] and dev.size | int > 0 -%}
+            {%- set _ = out.append({
+              'device':     '/dev/' ~ dev.name,
+              'model':      dev.model | default(none) | trim if dev.model is defined else none,
+              'total_mb':   (dev.size | int / 1048576) | round(0,'floor') | int,
+              'media_type': 'HDD' if (dev.rota | string) in ['1','true','True'] else 'SSD',
+              'protocol':   none,
+              'health':     none
+            }) -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+      {{ out }}
+  no_log: true
+
+- name: "linux | storage | normalize filesystems"
+  ansible.builtin.set_fact:
+    _l_norm_filesystems: >-
+      {%- set out = [] -%}
+      {%- for m in (ansible_mounts | default([])) -%}
+        {%- if m.device.startswith('/dev/') or m.mount == '/' -%}
+          {%- set total_mb = (m.size_total | int / 1048576) | round(1) -%}
+          {%- set avail_mb = (m.size_available | int / 1048576) | round(1) -%}
+          {%- set used_mb  = total_mb - avail_mb -%}
+          {%- set pct = (used_mb / total_mb * 100) | round(1) if total_mb > 0 else 0 -%}
+          {%- set _ = out.append({
+            'device':        m.device,
+            'mount_point':   m.mount,
+            'filesystem':    m.fstype,
+            'total_mb':      total_mb,
+            'used_mb':       used_mb,
+            'available_mb':  avail_mb,
+            'usage_percent': pct,
+            'status':        'mounted'
+          }) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+- name: "linux | storage | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      storage:
+        filesystems:    "{{ _l_norm_filesystems }}"
+        physical_disks: "{{ _l_norm_physical_disks }}"
+        datastores:     []
+        controllers:    []
+    _sections_supported_fragment: ['storage']
+    _sections_collected_fragment: ['storage']
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true
+
+- name: "linux | storage | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

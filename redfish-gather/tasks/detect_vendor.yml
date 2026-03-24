@@ -1,0 +1,40 @@
+---
+# redfish-gather/tasks/detect_vendor.yml
+# 빈 계정으로 Manufacturer 감지 → _rf_detected_vendor
+# vendor_aliases.yml 기반 정규화 (하드코딩 벤더 목록 제거)
+
+- name: "redfish | detect_vendor | load vendor aliases"
+  ansible.builtin.include_vars:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/vars/vendor_aliases.yml"
+    name: _va
+
+- name: "redfish | detect_vendor | probe"
+  redfish_gather:
+    bmc_ip:     "{{ _rf_ip }}"
+    username:   ""
+    password:   ""
+    timeout:    "{{ _rf_timeout | default(30) }}"
+    verify_ssl: false
+  register:    _rf_probe_result
+  failed_when: false
+  ignore_errors: true
+  no_log: true
+
+- name: "redfish | detect_vendor | normalize vendor"
+  ansible.builtin.set_fact:
+    _rf_detected_vendor: >-
+      {%- set raw = _rf_probe_result.vendor | default('') | trim | lower -%}
+      {%- set found = namespace(canon='unknown') -%}
+      {%- for canonical, alias_list in (_va.vendor_aliases | default({})).items() -%}
+        {%- for alias in alias_list -%}
+          {%- if alias | lower == raw -%}
+            {%- set found.canon = canonical -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      {{ found.canon }}
+    _rf_probe_facts:
+      vendor: "{{ _rf_probe_result.vendor | default('') }}"
+      firmware: "{{ (_rf_probe_result.data | default({})).get('bmc', {}).get('firmware_version', '') if _rf_probe_result.data is defined else '' }}"
+      model: "{{ (_rf_probe_result.data | default({})).get('system', {}).get('model', '') if _rf_probe_result.data is defined else '' }}"
+  no_log: true

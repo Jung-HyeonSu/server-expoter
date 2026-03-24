@@ -1,0 +1,97 @@
+---
+# common/tasks/normalize/merge_fragment.yml
+#
+# 각 gather_*.yml / normalize_*.yml 이 생성한 fragment 를 누적 병합한다.
+# 태스크별로 fragment 생성 직후 호출한다.
+# ※ 에러 정규화 로직은 build_errors.yml에도 동일하게 존재함 (상호참조).
+#
+# 입력 변수 (호출 전 set_fact):
+#   _data_fragment               : dict  — 이번 태스크의 data 기여분 (없으면 {})
+#   _sections_supported_fragment : list  — 이번 태스크가 지원하는 섹션 목록
+#   _sections_collected_fragment : list  — 이번 태스크에서 수집 성공한 섹션
+#   _sections_failed_fragment    : list  — 이번 태스크에서 수집 실패한 섹션
+#   _errors_fragment             : list  — 이번 태스크의 errors
+#
+# 출력 변수 (누적):
+#   _merged_data       : dict — data 재귀 병합 결과
+#   _all_sec_supported : list
+#   _all_sec_collected : list
+#   _all_sec_failed    : list
+#   _all_errors        : list
+
+- name: "normalize | merge_fragment | accumulate sections and errors"
+  ansible.builtin.set_fact:
+    _all_sec_supported: >-
+      {{ (_all_sec_supported | default([]))
+         | union(_sections_supported_fragment | default([])) }}
+    _all_sec_collected: >-
+      {{ (_all_sec_collected | default([]))
+         | union(_sections_collected_fragment | default([])) }}
+    _all_sec_failed: >-
+      {{ (_all_sec_failed | default([]))
+         | union(_sections_failed_fragment | default([])) }}
+    _all_errors: >-
+      {%- set out = (_all_errors | default([])) | list -%}
+      {%- for e in (_errors_fragment | default([])) -%}
+        {%- if e is string -%}
+          {%- set _ = out.append({'section':'unknown','message':e,'detail':none}) -%}
+        {%- elif e is mapping -%}
+          {%- set _ = out.append({
+            'section': e.section | default('unknown'),
+            'message': e.message | default(e | string),
+            'detail':  e.detail  | default(none)
+          }) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+- name: "normalize | merge_fragment | merge data"
+  ansible.builtin.set_fact:
+    _merged_data: >-
+      {%- set base = _merged_data | default({}) -%}
+      {%- set frag = _data_fragment | default({}) -%}
+      {%- set out  = {} -%}
+      {#  최상위 키를 순회하며 병합 #}
+      {%- set all_keys = (base.keys() | list) | union(frag.keys() | list) -%}
+      {%- for k in all_keys -%}
+        {%- set bv = base.get(k, none) -%}
+        {%- set fv = frag.get(k, none) -%}
+        {%- if fv is none -%}
+          {#  fragment 에 없으면 base 값 유지 #}
+          {%- set _ = out.update({k: bv}) -%}
+        {%- elif bv is none -%}
+          {#  base 가 null 이면 fragment 값으로 교체 #}
+          {%- set _ = out.update({k: fv}) -%}
+        {%- elif bv is mapping and fv is mapping -%}
+          {#  둘 다 dict 면 얕은 병합 (fragment 우선) #}
+          {%- set merged = {} -%}
+          {%- for mk in (bv.keys() | list) | union(fv.keys() | list) -%}
+            {%- if fv.get(mk) is not none -%}
+              {%- set _ = merged.update({mk: fv[mk]}) -%}
+            {%- else -%}
+              {%- set _ = merged.update({mk: bv.get(mk)}) -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- set _ = out.update({k: merged}) -%}
+        {%- elif bv is iterable and bv is not string
+             and fv is iterable and fv is not string -%}
+          {#  둘 다 list 면 합산 #}
+          {%- set _ = out.update({k: bv + fv}) -%}
+        {%- else -%}
+          {#  그 외: fragment 값 우선 #}
+          {%- set _ = out.update({k: fv}) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+# fragment 변수 초기화 (다음 태스크가 오염된 값을 쓰지 않도록)
+- name: "normalize | merge_fragment | reset fragment vars"
+  ansible.builtin.set_fact:
+    _data_fragment:               {}
+    _sections_supported_fragment: []
+    _sections_collected_fragment: []
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true

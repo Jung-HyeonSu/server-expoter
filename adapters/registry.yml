@@ -1,0 +1,26 @@
+---
+# ==============================================================================
+# registry.yml — Adapter Registry 마스터 인덱스
+# ==============================================================================
+# 채널별 adapter 디렉토리와 기본 adapter를 정의합니다.
+#
+# adapter 파일은 adapters/<channel>/ 디렉토리에 YAML로 추가하면
+# adapter_loader (lookup_plugins/adapter_loader.py)가 자동으로 인식합니다.
+# default_adapter 값은 해당 디렉토리의 YAML 파일명(확장자 제외)과 일치해야 합니다.
+# ==============================================================================
+
+channels:
+  redfish:
+    adapters_dir: "adapters/redfish"
+    default_adapter: "redfish_generic"
+    description: "Redfish REST API 기반 BMC 하드웨어 수집"
+
+  os:
+    adapters_dir: "adapters/os"
+    default_adapter: "linux_generic"
+    description: "SSH/WinRM 기반 OS 정보 수집"
+
+  esxi:
+    adapters_dir: "adapters/esxi"
+    default_adapter: "esxi_generic"
+    description: "vSphere API 기반 ESXi 호스트 수집"

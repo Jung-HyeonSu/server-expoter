@@ -1,0 +1,157 @@
+---
+# =============================================================================
+# redfish-gather / site.yml  — orchestration 전용
+#
+# 흐름:
+#   init_fragments
+#   → run_precheck       (4단계 진단: ping→port→protocol→auth)
+#   → detect_vendor      (_rf_detected_vendor, _rf_probe_facts)
+#   → select_adapter     (adapter_loader → _selected_adapter)
+#   → load_vault         (adapter 기반 credential profile)
+#   → collect_standard   (_rf_raw_collect, _rf_collect_ok, _rf_vendor)
+#   → normalize_standard (표준 fragment → merge)
+#   → vendor adapter     (OEM fragment → merge, adapter 기반 동적 로딩)
+#   → build_sections / build_status / build_errors / build_output
+#   → inject schema_version
+#   → OUTPUT
+# =============================================================================
+
+- name: "redfish-gather"
+  hosts: all
+  gather_facts: no
+  connection: local
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    _rf_ip:      "{{ ansible_host | default(inventory_hostname) }}"
+    _rf_timeout: 30
+
+  tasks:
+
+    - name: "redfish | gather"
+      block:
+
+        - name: "redfish | init fragments"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/init_fragments.yml"
+
+        # ── pre-check (Phase 1) ──────────────────────────────────────────
+        - name: "redfish | run precheck"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/precheck/run_precheck.yml"
+          vars:
+            _precheck_host: "{{ _rf_ip }}"
+            _precheck_channel: "redfish"
+            _precheck_timeout: "{{ _rf_timeout }}"
+
+        # ── detect vendor ────────────────────────────────────────────────
+        - name: "redfish | detect vendor"
+          ansible.builtin.include_tasks: tasks/detect_vendor.yml
+
+        # ── select adapter (Phase 2) ─────────────────────────────────────
+        - name: "redfish | select adapter"
+          ansible.builtin.set_fact:
+            _selected_adapter: >-
+              {{ lookup('adapter_loader',
+                         channel='redfish',
+                         facts=_rf_probe_facts | default({}),
+                         repo_root=lookup('env','REPO_ROOT')) }}
+          no_log: true
+
+        - name: "redfish | adapter selected"
+          ansible.builtin.debug:
+            msg: "adapter={{ _selected_adapter.adapter_id | default('none') }}"
+
+        # ── load vault (adapter 기반) ────────────────────────────────────
+        - name: "redfish | load vault"
+          ansible.builtin.include_tasks: tasks/load_vault.yml
+
+        # ── collect standard ─────────────────────────────────────────────
+        - name: "redfish | collect standard"
+          ansible.builtin.include_tasks: tasks/collect_standard.yml
+
+        - name: "redfish | abort if collect completely failed"
+          ansible.builtin.fail:
+            msg: "Redfish 수집 완전 실패 — BMC 연결 또는 인증 문제. BMC IP/포트(443) 접근, 방화벽 규칙, Redfish 서비스 활성화 여부, 자격증명(vault)을 확인하세요."
+          when: not (_rf_collect_ok | bool)
+
+        # ── normalize standard ───────────────────────────────────────────
+        - name: "redfish | normalize standard"
+          ansible.builtin.include_tasks: tasks/normalize_standard.yml
+
+        # ── vendor adapter (OEM 확장, adapter 기반) ──────────────────────
+        # adapter에 oem_tasks가 정의된 경우만 실행 (하드코딩 벤더 목록 제거)
+        - name: "redfish | vendor adapter | collect OEM"
+          when: ((_selected_adapter | default({})).collect | default({})).oem_tasks | default('') != ''
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/{{ _selected_adapter.collect.oem_tasks }}"
+
+        - name: "redfish | vendor adapter | normalize OEM"
+          when: ((_selected_adapter | default({})).normalize | default({})).oem_tasks | default('') != ''
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/{{ _selected_adapter.normalize.oem_tasks }}"
+        # ─────────────────────────────────────────────────────────────────
+
+        - name: "redfish | build_sections"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_sections.yml"
+
+        - name: "redfish | build_status"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_status.yml"
+
+        - name: "redfish | build_errors"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_errors.yml"
+
+        - name: "redfish | set output meta"
+          ansible.builtin.set_fact:
+            _out_target_type:       "redfish"
+            _out_collection_method: "redfish_api"
+            _out_ip:                "{{ _rf_ip }}"
+            _out_vendor:            "{{ _rf_vendor | default(none) }}"
+            _diagnosis: "{{ _diagnosis | combine({'auth_success': true, 'details': _diagnosis.details | combine({'adapter_candidate': _selected_adapter.adapter_id | default(none)})}) }}"
+
+        # ── meta & correlation (Phase 3) ─────────────────────────────────
+        - name: "redfish | build_meta"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_meta.yml"
+
+        - name: "redfish | build_correlation"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_correlation.yml"
+        # ─────────────────────────────────────────────────────────────────
+
+        - name: "redfish | build_output"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_output.yml"
+
+        - name: "redfish | inject schema_version"
+          ansible.builtin.set_fact:
+            _output: "{{ _output | combine({'schema_version': '1'}) }}"
+
+      rescue:
+        - name: "redfish | rescue | set failed vars"
+          ansible.builtin.set_fact:
+            _out_target_type:       "redfish"
+            _out_collection_method: "redfish_api"
+            _out_ip:                "{{ _rf_ip }}"
+            _out_vendor:            "{{ _rf_vendor | default(none) }}"
+            _fail_sec_supported:    "{{ ((_selected_adapter | default({})).capabilities | default({})).sections_supported
+                                        | default(['system','hardware','bmc','cpu','memory',
+                                                   'storage','network','firmware']) }}"
+            _fail_error_section:    "redfish_gather"
+            _fail_error_message:    "{{ ansible_failed_result.msg | default('Redfish 수집 예외') }}"
+
+        - name: "redfish | rescue | build_failed_output"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_failed_output.yml"
+
+        - name: "redfish | rescue | inject schema_version"
+          ansible.builtin.set_fact:
+            _output: "{{ _output | combine({'schema_version': '1'}) }}"
+
+      always:
+        - name: OUTPUT
+          ansible.builtin.debug:
+            msg: "{{ (_output | default({'status':'failed','errors':[{'section':'gather','message':'_output 미생성 — block/rescue 모두 실패'}]})) | to_json }}"

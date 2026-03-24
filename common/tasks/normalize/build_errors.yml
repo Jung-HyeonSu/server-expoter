@@ -1,0 +1,32 @@
+---
+# common/tasks/normalize/build_errors.yml
+#
+# _all_errors 누적 변수를 표준 형식으로 정리한다.
+# ※ 에러 정규화 로직은 merge_fragment.yml에도 동일하게 존재함 (상호참조).
+#
+# 입력 변수:
+#   _all_errors : list — merge_fragment 누적 errors
+#
+# 출력 변수:
+#   _norm_errors : list — [{section, message, detail}]
+
+- name: "normalize | build_errors"
+  ansible.builtin.set_fact:
+    _norm_errors: >-
+      {%- set out = [] -%}
+      {%- for e in (_all_errors | default([])) -%}
+        {%- if e is string -%}
+          {%- set _ = out.append({
+            'section': 'unknown',
+            'message': e,
+            'detail':  none
+          }) -%}
+        {%- elif e is mapping -%}
+          {%- set _ = out.append({
+            'section': e.section | default('unknown'),
+            'message': e.message | default(e | string),
+            'detail':  e.detail  | default(none)
+          }) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}

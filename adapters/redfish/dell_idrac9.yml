@@ -1,0 +1,47 @@
+---
+adapter_id: redfish_dell_idrac9
+channel: redfish
+priority: 100
+version: "1.0.0"
+
+match:
+  vendor: ["Dell", "Dell Inc.", "DELL"]
+  firmware_patterns: ["iDRAC.*9", "^[4-7]\\."]
+
+capabilities:
+  sections_supported:
+    - system
+    - hardware
+    - bmc
+    - cpu
+    - memory
+    - storage
+    - network
+    - firmware
+    - power
+
+collect:
+  strategy: standard_plus_oem
+  standard_tasks: "redfish-gather/tasks/collect_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/dell/collect_oem.yml"
+
+normalize:
+  standard_tasks: "redfish-gather/tasks/normalize_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/dell/normalize_oem.yml"
+
+credentials:
+  profile: "dell"
+  fallback_profiles: []
+
+auth:
+  preferred: [session, basic]
+
+graceful_degradation:
+  on_section_fail: continue
+  on_auth_fail: abort
+  critical_sections: [system, hardware]
+  optional_sections: [firmware, power]
+
+diagnosis:
+  protocol_name: redfish
+  not_supported_message: "Dell iDRAC 9 장비 — Redfish 완전 지원."

@@ -1,0 +1,13 @@
+---
+# redfish-gather/tasks/normalize_sections.yml
+# ─────────────────────────────────────────────────────────────────────
+# STATUS : no-op (deprecated)
+# REASON : 정규화 로직이 normalize_standard.yml 로 통합됨.
+#          어댑터 YAML 또는 기존 include 에서 참조할 수 있으므로
+#          하위 호환성을 위해 파일을 유지한다.
+# SEE    : redfish-gather/tasks/normalize_standard.yml
+# ─────────────────────────────────────────────────────────────────────
+- name: "redfish | normalize_sections (no-op — use normalize_standard.yml)"
+  ansible.builtin.debug:
+    msg: "deprecated: use normalize_standard.yml"
+  no_log: false

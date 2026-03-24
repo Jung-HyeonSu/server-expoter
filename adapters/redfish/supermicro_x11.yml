@@ -1,0 +1,47 @@
+---
+adapter_id: redfish_supermicro_x11
+channel: redfish
+priority: 100
+version: "1.0.0"
+
+match:
+  vendor: ["Supermicro", "Super Micro Computer, Inc.", "SUPERMICRO"]
+  model_patterns: ["X11", "x11"]
+
+capabilities:
+  sections_supported:
+    - system
+    - hardware
+    - bmc
+    - cpu
+    - memory
+    - storage
+    - network
+    - firmware
+    - power
+
+collect:
+  strategy: standard_plus_oem
+  standard_tasks: "redfish-gather/tasks/collect_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/supermicro/collect_oem.yml"
+
+normalize:
+  standard_tasks: "redfish-gather/tasks/normalize_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/supermicro/normalize_oem.yml"
+
+credentials:
+  profile: "supermicro"
+  fallback_profiles: []
+
+auth:
+  preferred: [basic]
+
+graceful_degradation:
+  on_section_fail: continue
+  on_auth_fail: abort
+  critical_sections: [system, hardware]
+  optional_sections: [firmware, power]
+
+diagnosis:
+  protocol_name: redfish
+  not_supported_message: "Supermicro X11 계열 — Redfish 완전 지원."

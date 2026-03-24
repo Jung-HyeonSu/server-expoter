@@ -1,0 +1,55 @@
+---
+# esxi-gather/tasks/normalize_storage.yml
+# _e_raw_ds → storage fragment (datastores)
+
+- name: "esxi | normalize storage | build datastores"
+  ansible.builtin.set_fact:
+    _e_norm_datastores: >-
+      {%- set out = [] -%}
+      {%- for ds in (_e_raw_ds | default([])) -%}
+        {%- if ds.capacity is defined -%}
+          {%- set cap  = ds.capacity  | int -%}
+          {%- set free = ds.freeSpace | default(ds.free_space | default(0)) | int -%}
+        {%- else -%}
+          {%- set tr   = ds.total | default('0 GB') -%}
+          {%- set fr   = ds.free  | default('0 GB') -%}
+          {%- set tg   = (tr|regex_replace('[^0-9.]','')|float)*(1024 if 'TB' in tr else 1) -%}
+          {%- set fg   = (fr|regex_replace('[^0-9.]','')|float)*(1024 if 'TB' in fr else 1) -%}
+          {%- set cap  = (tg*1073741824)|int -%}
+          {%- set free = (fg*1073741824)|int -%}
+        {%- endif -%}
+        {%- set total_mb = (cap /1048576)|round(0,'floor')|int -%}
+        {%- set free_mb  = (free/1048576)|round(0,'floor')|int -%}
+        {%- set used_mb  = total_mb - free_mb -%}
+        {%- set _ = out.append({
+          'name':          ds.name,
+          'type':          ds.type | default(none),
+          'total_mb':      total_mb,
+          'free_mb':       free_mb,
+          'used_mb':       used_mb,
+          'usage_percent': (used_mb/total_mb*100)|round(1) if total_mb>0 else 0,
+          'accessible':    ds.accessible | default(none)
+        }) -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+- name: "esxi | normalize storage | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      storage:
+        filesystems:    []
+        physical_disks: []
+        datastores:     "{{ _e_norm_datastores }}"
+        controllers:    []
+    _sections_supported_fragment: ['storage']
+    _sections_collected_fragment: >-
+      {{ ['storage'] if _e_ds_ok | bool else [] }}
+    _sections_failed_fragment: >-
+      {{ [] if _e_ds_ok | bool else ['storage'] }}
+    _errors_fragment: []
+  no_log: true
+
+- name: "esxi | normalize storage | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

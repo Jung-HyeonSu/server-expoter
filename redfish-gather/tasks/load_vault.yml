@@ -1,0 +1,46 @@
+---
+# redfish-gather/tasks/load_vault.yml
+# adapter 기반 vault 로딩 (하드코딩 벤더 목록 제거)
+# _selected_adapter.credentials.profile → vault 파일 경로
+
+- name: "redfish | load_vault | resolve vault profile"
+  ansible.builtin.set_fact:
+    _rf_vault_profile: "{{ _selected_adapter.credentials.profile | default('') }}"
+    _rf_vault_fallbacks: "{{ _selected_adapter.credentials.fallback_profiles | default([]) }}"
+  no_log: true
+
+- name: "redfish | load_vault | warn no profile"
+  ansible.builtin.debug:
+    msg: >-
+      adapter({{ _selected_adapter.adapter_id | default('unknown') }})에 credential
+      profile이 없습니다. 빈 자격증명으로 수집을 시도합니다.
+  when: _rf_vault_profile == ''
+
+- name: "redfish | load_vault | include vault (primary)"
+  ansible.builtin.include_vars:
+    file: "{{ lookup('env','REPO_ROOT') }}/vault/redfish/{{ _rf_vault_profile }}.yml"
+  no_log: true
+  failed_when: false
+  register: _rf_vault_load
+  when: _rf_vault_profile != ''
+
+- name: "redfish | load_vault | warn vault load failed"
+  ansible.builtin.debug:
+    msg: >-
+      vault 파일 로드 실패: vault/redfish/{{ _rf_vault_profile }}.yml —
+      파일 존재 여부와 ansible-vault 복호화 키를 확인하세요.
+      이후 인증 실패가 발생할 수 있습니다.
+  when:
+    - _rf_vault_profile != ''
+    - _rf_vault_load is defined
+    - _rf_vault_load is failed
+
+- name: "redfish | load_vault | try fallback profiles"
+  ansible.builtin.include_vars:
+    file: "{{ lookup('env','REPO_ROOT') }}/vault/redfish/{{ item }}.yml"
+  no_log: true
+  failed_when: false
+  loop: "{{ _rf_vault_fallbacks }}"
+  when:
+    - _rf_vault_profile == '' or (_rf_vault_load is defined and _rf_vault_load is failed)
+    - _rf_vault_fallbacks | length > 0

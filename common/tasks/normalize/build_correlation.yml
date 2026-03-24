@@ -1,0 +1,39 @@
+---
+# common/tasks/normalize/build_correlation.yml
+#
+# 다중 채널 수집 결과를 연결하기 위한 correlation 키를 생성합니다.
+# normalize 단계 이후, build_output 이전에 호출하세요.
+#
+# 입력 변수:
+#   _merged_data : dict — merge_fragment 누적 결과
+#   _out_ip      : str — 대상 IP
+#
+# 출력 변수:
+#   _correlation : dict — correlation 딕셔너리
+#
+# 사용 목적:
+#   같은 물리 장비에 대해 redfish/os/esxi 3개 채널 결과를
+#   serial_number나 system_uuid로 매칭하여 통합 뷰 제공
+
+- name: "normalize | build_correlation"
+  ansible.builtin.set_fact:
+    _correlation:
+      serial_number: >-
+        {{ (_merged_data.hardware.serial | default(none))
+           if _merged_data.hardware is defined and _merged_data.hardware is mapping
+           else (_merged_data.system.serial_number | default(none))
+           if _merged_data.system is mapping
+           else none }}
+      system_uuid: >-
+        {{ (_merged_data.hardware.uuid | default(none))
+           if _merged_data.hardware is defined and _merged_data.hardware is mapping
+           else (_merged_data.system.uuid | default(none))
+           if _merged_data.system is mapping
+           else none }}
+      bmc_ip: >-
+        {{ (_merged_data.bmc.ip | default(none))
+           if _merged_data.bmc is defined and _merged_data.bmc is mapping
+           else none }}
+      # host_ip: 수집 대상 IP. Redfish의 경우 BMC 관리 IP (OS IP를 알 수 없음),
+      #          os-gather의 경우 서버 OS IP.
+      host_ip: "{{ _out_ip | default(none) }}"

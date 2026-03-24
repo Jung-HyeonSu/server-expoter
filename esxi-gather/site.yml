@@ -1,0 +1,145 @@
+---
+# =============================================================================
+# esxi-gather / site.yml  — orchestration 전용
+#
+# 흐름:
+#   init_fragments
+#   → run_precheck       (4단계 진단)
+#   → select_adapter     (adapter_loader)
+#   → collect_facts      (_e_raw_facts, _e_facts_ok)
+#   → collect_config     (_e_raw_config, _e_config_ok)
+#   → collect_datastores (_e_raw_ds, _e_ds_ok)
+#   → normalize_system   (system/hardware/cpu/memory fragment → merge)
+#   → normalize_network  (network fragment → merge)
+#   → normalize_storage  (storage fragment → merge)
+#   → build_sections / build_status / build_errors
+#   → build_meta / build_correlation
+#   → build_output → inject schema_version → OUTPUT
+# =============================================================================
+
+- name: "esxi-gather"
+  hosts: all
+  gather_facts: no
+  connection: local
+
+  vars_files:
+    - "{{ lookup('env','REPO_ROOT') }}/vault/esxi.yml"
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    _e_ip:   "{{ ansible_host | default(inventory_hostname) }}"
+    _e_user: "{{ ansible_user }}"
+    _e_pass: "{{ ansible_password }}"
+
+  tasks:
+
+    - name: "esxi | gather"
+      block:
+
+        - name: "esxi | init fragments"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/init_fragments.yml"
+
+        # ── pre-check ────────────────────────────────────────────────────
+        - name: "esxi | run precheck"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/precheck/run_precheck.yml"
+          vars:
+            _precheck_host: "{{ _e_ip }}"
+            _precheck_channel: "esxi"
+            _precheck_timeout: 30
+
+        # ── adapter 선택 ─────────────────────────────────────────────────
+        - name: "esxi | select adapter"
+          ansible.builtin.set_fact:
+            _selected_adapter: >-
+              {{ lookup('adapter_loader',
+                         channel='esxi',
+                         facts={},
+                         repo_root=lookup('env','REPO_ROOT')) }}
+          no_log: true
+
+        - name: "esxi | collect facts"
+          ansible.builtin.include_tasks: tasks/collect_facts.yml
+
+        - name: "esxi | abort if facts failed"
+          ansible.builtin.fail:
+            msg: "vmware_host_facts 수집 실패 — ESXi 연결 또는 인증 문제. ESXi 호스트 접근성, vSphere API(443) 포트, 자격증명(vault)을 확인하세요."
+          when: not (_e_facts_ok | bool)
+
+        - name: "esxi | collect config"
+          ansible.builtin.include_tasks: tasks/collect_config.yml
+
+        - name: "esxi | collect datastores"
+          ansible.builtin.include_tasks: tasks/collect_datastores.yml
+
+        - name: "esxi | normalize system/hardware/cpu/memory"
+          ansible.builtin.include_tasks: tasks/normalize_system.yml
+
+        - name: "esxi | normalize network"
+          ansible.builtin.include_tasks: tasks/normalize_network.yml
+
+        - name: "esxi | normalize storage"
+          ansible.builtin.include_tasks: tasks/normalize_storage.yml
+
+        - name: "esxi | build_sections"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_sections.yml"
+
+        - name: "esxi | build_status"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_status.yml"
+
+        - name: "esxi | build_errors"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_errors.yml"
+
+        - name: "esxi | set output meta"
+          ansible.builtin.set_fact:
+            _out_target_type:       "esxi"
+            _out_collection_method: "vsphere_api"
+            _out_ip:                "{{ _e_ip }}"
+            _out_vendor:            "{{ _e_raw_facts.ansible_system_vendor | default(none) }}"
+
+        # ── meta & correlation ───────────────────────────────────────────
+        - name: "esxi | build_meta"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_meta.yml"
+
+        - name: "esxi | build_correlation"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_correlation.yml"
+        # ─────────────────────────────────────────────────────────────────
+
+        - name: "esxi | build_output"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_output.yml"
+
+        - name: "esxi | inject schema_version"
+          ansible.builtin.set_fact:
+            _output: "{{ _output | combine({'schema_version': '1'}) }}"
+
+      rescue:
+        - name: "esxi | rescue | set failed vars"
+          ansible.builtin.set_fact:
+            _out_target_type:       "esxi"
+            _out_collection_method: "vsphere_api"
+            _out_ip:                "{{ _e_ip }}"
+            _out_vendor:            null
+            _fail_sec_supported:    "{{ ((_selected_adapter | default({})).capabilities | default({})).sections_supported
+                                        | default(['system','hardware','cpu','memory','storage','network']) }}"
+            _fail_error_section:    "esxi_gather"
+            _fail_error_message:    "{{ ansible_failed_result.msg | default('ESXi 수집 예외') }}"
+
+        - name: "esxi | rescue | build_failed_output"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_failed_output.yml"
+
+        - name: "esxi | rescue | inject schema_version"
+          ansible.builtin.set_fact:
+            _output: "{{ _output | combine({'schema_version': '1'}) }}"
+
+      always:
+        - name: OUTPUT
+          ansible.builtin.debug:
+            msg: "{{ (_output | default({'status':'failed','errors':[{'section':'gather','message':'_output 미생성 — block/rescue 모두 실패'}]})) | to_json }}"

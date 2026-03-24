@@ -1,0 +1,45 @@
+---
+adapter_id: redfish_hpe_ilo4
+channel: redfish
+priority: 50
+version: "1.0.0"
+
+match:
+  vendor: ["HPE", "Hewlett Packard Enterprise", "HP Enterprise"]
+  firmware_patterns: ["iLO.*4", "^1\\.[0-9]"]
+
+capabilities:
+  sections_supported:
+    - system
+    - hardware
+    - bmc
+    - cpu
+    - memory
+    - network
+    - firmware
+
+collect:
+  strategy: standard_plus_oem
+  standard_tasks: "redfish-gather/tasks/collect_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/hpe/collect_oem.yml"
+
+normalize:
+  standard_tasks: "redfish-gather/tasks/normalize_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/hpe/normalize_oem.yml"
+
+credentials:
+  profile: "hpe"
+  fallback_profiles: []
+
+auth:
+  preferred: [basic]
+
+graceful_degradation:
+  on_section_fail: continue
+  on_auth_fail: abort
+  critical_sections: [system, hardware]
+  optional_sections: [firmware]
+
+diagnosis:
+  protocol_name: redfish
+  not_supported_message: "HPE iLO 4 장비 — Redfish 제한적 지원 (storage/power 미지원 가능)."

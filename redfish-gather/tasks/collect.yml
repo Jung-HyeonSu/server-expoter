@@ -1,0 +1,11 @@
+---
+# redfish-gather/tasks/collect.yml
+# ─────────────────────────────────────────────────────────────────────
+# STATUS : relay (deprecated)
+# REASON : 수집 로직이 collect_standard.yml 로 이동됨.
+#          어댑터 YAML 에서 collect.yml 을 참조할 수 있으므로
+#          하위 호환성을 위해 collect_standard.yml 로 위임한다.
+# SEE    : redfish-gather/tasks/collect_standard.yml
+# ─────────────────────────────────────────────────────────────────────
+- name: "redfish | collect (relay to collect_standard)"
+  ansible.builtin.include_tasks: collect_standard.yml

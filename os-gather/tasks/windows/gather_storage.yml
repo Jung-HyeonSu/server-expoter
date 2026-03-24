@@ -1,0 +1,97 @@
+---
+# os-gather/tasks/windows/gather_storage.yml → data.storage fragment
+
+- name: "windows | storage | volumes"
+  ansible.windows.win_shell: |
+    Get-Volume |
+    Where-Object { $_.DriveLetter -and $_.FileSystemType -ne 'Unknown' } |
+    ForEach-Object {
+      [PSCustomObject]@{
+        drive = [string]$_.DriveLetter
+        fs    = $_.FileSystemType
+        total = $_.Size
+        free  = $_.SizeRemaining
+      } | ConvertTo-Json -Compress
+    }
+  register: _w_vol_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "windows | storage | physical disks"
+  ansible.windows.win_shell: |
+    Get-CimInstance Win32_DiskDrive | ForEach-Object {
+      [PSCustomObject]@{
+        device = $_.DeviceID
+        model  = $_.Model
+        total  = $_.Size
+        media  = $_.MediaType
+      } | ConvertTo-Json -Compress
+    }
+  register: _w_disk_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "windows | storage | normalize filesystems"
+  ansible.builtin.set_fact:
+    _w_norm_filesystems: >-
+      {%- set out = [] -%}
+      {%- for line in (_w_vol_raw.stdout_lines | default([])) -%}
+        {%- if line | trim -%}
+          {%- set v = line | from_json -%}
+          {%- set total_mb = (v.total | int / 1048576) | round(1) -%}
+          {%- set free_mb  = (v.free  | int / 1048576) | round(1) -%}
+          {%- if total_mb > 0 -%}
+            {%- set _ = out.append({
+              'device':        v.drive ~ ':',
+              'mount_point':   v.drive ~ ':\\',
+              'filesystem':    v.fs,
+              'total_mb':      total_mb,
+              'used_mb':       total_mb - free_mb,
+              'available_mb':  free_mb,
+              'usage_percent': ((total_mb - free_mb) / total_mb * 100) | round(1) if total_mb > 0 else 0,
+              'status':        'mounted'
+            }) -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+    _w_physical_disks: >-
+      {%- set out = [] -%}
+      {%- for line in (_w_disk_raw.stdout_lines | default([])) -%}
+        {%- if line | trim -%}
+          {%- set d = line | from_json -%}
+          {%- set total_mb = (d.total | int / 1048576) | round(0,'floor') | int -%}
+          {%- if total_mb > 0 -%}
+            {%- set _ = out.append({
+              'device':     d.device,
+              'model':      d.model | default(none),
+              'total_mb':   total_mb,
+              'media_type': d.media | default(none),
+              'protocol':   none,
+              'health':     none
+            }) -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+- name: "windows | storage | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      storage:
+        filesystems:    "{{ _w_norm_filesystems }}"
+        physical_disks: "{{ _w_physical_disks }}"
+        datastores:     []
+        controllers:    []
+    _sections_supported_fragment: ['storage']
+    _sections_collected_fragment: ['storage']
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true
+
+- name: "windows | storage | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

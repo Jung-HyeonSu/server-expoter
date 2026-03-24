@@ -1,0 +1,38 @@
+---
+# os-gather/tasks/normalize/build_output.yml
+# ─────────────────────────────────────────────────────────────────────
+# OS gather 전용 마무리 단계:
+#   build_sections → build_status → build_errors → set meta → build_output
+#
+# 이 시점에서 _merged_data, _all_sec_* 는 이미 gather_*.yml 들이 채운 상태다.
+# 여기서는 OS 에서 지원하지 않는 섹션만 _all_sec_supported 에서 제외한다.
+# (hardware, bmc, firmware 는 supported 에 없으므로 자동으로 not_supported)
+#
+# NOTE: site.yml 은 이 파일을 include 하여 common 의 build_* 체인을
+#       호출한다. site.yml 자체에서 build_sections/status/errors 를
+#       직접 호출하지 않으므로 중복은 아니다 — 이 파일이 유일한 진입점이다.
+# ─────────────────────────────────────────────────────────────────────
+
+- name: "os | normalize | build_sections"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_sections.yml"
+
+- name: "os | normalize | build_status"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_status.yml"
+
+- name: "os | normalize | build_errors"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_errors.yml"
+
+- name: "os | normalize | set output meta"
+  ansible.builtin.set_fact:
+    _out_target_type:       "os"
+    _out_collection_method: "agent"
+    _out_ip:                "{{ _ip }}"
+    _out_vendor:            null
+  no_log: true
+
+- name: "os | normalize | build_output"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_output.yml"

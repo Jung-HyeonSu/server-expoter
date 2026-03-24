@@ -1,0 +1,45 @@
+---
+adapter_id: redfish_lenovo_imm2
+channel: redfish
+priority: 50
+version: "1.0.0"
+
+match:
+  vendor: ["Lenovo", "LENOVO"]
+  firmware_patterns: ["IMM2"]
+
+capabilities:
+  sections_supported:
+    - system
+    - hardware
+    - bmc
+    - cpu
+    - memory
+    - network
+    - firmware
+
+collect:
+  strategy: standard_plus_oem
+  standard_tasks: "redfish-gather/tasks/collect_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/lenovo/collect_oem.yml"
+
+normalize:
+  standard_tasks: "redfish-gather/tasks/normalize_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/lenovo/normalize_oem.yml"
+
+credentials:
+  profile: "lenovo"
+  fallback_profiles: []
+
+auth:
+  preferred: [basic]
+
+graceful_degradation:
+  on_section_fail: continue
+  on_auth_fail: abort
+  critical_sections: [system, hardware]
+  optional_sections: [firmware]
+
+diagnosis:
+  protocol_name: redfish
+  not_supported_message: "Lenovo IMM2 장비 — Redfish 제한적 지원."

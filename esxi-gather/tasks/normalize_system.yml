@@ -1,0 +1,47 @@
+---
+# esxi-gather/tasks/normalize_system.yml
+# _e_raw_facts → system/hardware/cpu/memory fragment
+
+- name: "esxi | normalize system | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      system:
+        os_family:      "VMware ESXi"
+        distribution:   "VMware ESXi"
+        version:        "{{ _e_raw_facts.ansible_distribution_version | default(none) }}"
+        kernel:         "{{ _e_raw_facts.ansible_distribution_build   | default(none) }}"
+        architecture:   "{{ _e_raw_facts.ansible_machine              | default(none) }}"
+        uptime_seconds: "{{ (_e_raw_facts.ansible_uptime               | default(0)) | int }}"
+        selinux:        null
+        fqdn:           "{{ _e_ip }}"
+      hardware:
+        vendor:       "{{ _e_raw_facts.ansible_system_vendor  | default(none) }}"
+        model:        "{{ _e_raw_facts.ansible_product_name   | default(none) }}"
+        serial:       "{{ _e_raw_facts.ansible_product_serial | default(none) }}"
+        uuid:         "{{ _e_raw_facts.ansible_uuid           | default(none) }}"
+        bios_version: "{{ _e_raw_facts.ansible_bios_version   | default(none) }}"
+        bios_date:    "{{ _e_raw_facts.ansible_bios_date      | default(none) }}"
+      cpu:
+        sockets:         "{{ _e_raw_facts.ansible_processor_count | default(none) }}"
+        cores_physical:  "{{ _e_raw_facts.ansible_processor_cores | default(none) }}"
+        logical_threads: "{{ _e_raw_facts.ansible_processor_vcpus | default(none) }}"
+        model:           "{{ _e_raw_facts.ansible_processor       | default(none) }}"
+        architecture:    "{{ _e_raw_facts.ansible_machine         | default(none) }}"
+      memory:
+        total_mb:     "{{ _e_raw_facts.ansible_memtotal_mb | default(none) }}"
+        total_basis:  "hypervisor_visible"
+        installed_mb: null
+        visible_mb:   "{{ _e_raw_facts.ansible_memtotal_mb | default(none) }}"
+        free_mb:      "{{ _e_raw_facts.ansible_memfree_mb  | default(none) }}"
+        slots:        []
+    _sections_supported_fragment: ['system','hardware','cpu','memory']
+    _sections_collected_fragment: >-
+      {{ ['system','hardware','cpu','memory'] if _e_facts_ok | bool else [] }}
+    _sections_failed_fragment: >-
+      {{ [] if _e_facts_ok | bool else ['system','hardware','cpu','memory'] }}
+    _errors_fragment: []
+  no_log: true
+
+- name: "esxi | normalize system | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

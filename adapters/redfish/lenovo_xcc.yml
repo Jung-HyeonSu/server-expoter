@@ -1,0 +1,47 @@
+---
+adapter_id: redfish_lenovo_xcc
+channel: redfish
+priority: 100
+version: "1.0.0"
+
+match:
+  vendor: ["Lenovo", "LENOVO"]
+  firmware_patterns: ["XCC"]
+
+capabilities:
+  sections_supported:
+    - system
+    - hardware
+    - bmc
+    - cpu
+    - memory
+    - storage
+    - network
+    - firmware
+    - power
+
+collect:
+  strategy: standard_plus_oem
+  standard_tasks: "redfish-gather/tasks/collect_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/lenovo/collect_oem.yml"
+
+normalize:
+  standard_tasks: "redfish-gather/tasks/normalize_standard.yml"
+  oem_tasks: "redfish-gather/tasks/vendors/lenovo/normalize_oem.yml"
+
+credentials:
+  profile: "lenovo"
+  fallback_profiles: []
+
+auth:
+  preferred: [basic]
+
+graceful_degradation:
+  on_section_fail: continue
+  on_auth_fail: abort
+  critical_sections: [system, hardware]
+  optional_sections: [firmware, power]
+
+diagnosis:
+  protocol_name: redfish
+  not_supported_message: "Lenovo XCC 장비 — Redfish 완전 지원."

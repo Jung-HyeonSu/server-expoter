@@ -1,0 +1,500 @@
+---
+# ==============================================================================
+# field_dictionary.yml — 출력 JSON 필드 설명 사전
+# ==============================================================================
+#
+# 목적:
+#   clovirone-portal의 gather 출력 JSON 필드에 대한 해석 가이드.
+#   포털/운영자가 각 필드의 의미, 단위, null 의미, 채널 간 차이를 이해할 수 있도록
+#   한국어/영어 설명을 제공합니다.
+#
+# 설계 원칙:
+#   - 출력 JSON에는 help를 삽입하지 않음 (JSON 크기 불변)
+#   - 이 파일을 별도로 참조하여 필드를 해석
+#   - 새 필드 추가 시 이 파일에 1항목 추가
+#
+# 역할 정의:
+#   - 문서용 참조 자산 (운영자/개발자가 필드 의미를 이해할 때 사용)
+#   - 포털 UI lookup 메타데이터 (포털이 이 파일을 로드하여 필드 설명 표시)
+#   - schema reference (출력 JSON 필드의 타입/enum/null 의미 정의)
+#   - 검증: tests/validate_field_dictionary.py로 무결성 검사 가능
+#
+# Path 표기 규칙:
+#   - "hardware.health"       → data.hardware.health (점 구분자 = 중첩 객체 경로)
+#   - "physical_disks[]"      → data.storage.physical_disks 배열 자체에 대한 설명
+#   - "physical_disks[].serial" → 배열 각 item 내부의 serial 필드
+#   - "sections.*"            → sections 객체의 모든 값 (와일드카드)
+#   - "status"                → top-level status 필드 (data 하위가 아닌 최상위)
+#   - "bmc.ip"                → data.bmc.ip
+#   - "correlation.host_ip"   → correlation.host_ip (top-level)
+#
+#   매칭 방법:
+#     포털에서 output JSON의 필드를 이 dictionary에서 찾을 때:
+#     1. 정확한 path로 먼저 검색 (예: "hardware.health")
+#     2. 배열 item 필드는 "physical_disks[].serial" 형태로 검색
+#     3. 와일드카드 path는 "sections.*"로 검색
+#
+# 사용 방법:
+#   1. 포털: 이 파일을 1회 로드하여 필드명 기반 lookup
+#      예) fieldDict["memory.total_basis"].help_ko
+#   2. 운영자: 출력 JSON의 특정 필드가 무엇인지 이 파일에서 검색
+#   3. 개발자: 새 필드 추가 시 코드 반영 후 이 파일에 설명 추가
+#
+# 등록 현황: Must 18개 / Nice 0개 (2차 등록 예정) / Skip 미등록
+#
+# 분류:
+#   priority: must    — 해석이 반드시 필요한 필드 (혼동 가능성 높음)
+#   priority: nice    — 설명이 있으면 좋지만 없어도 사용 가능
+#   priority: skip    — 의미가 자명하여 설명 불필요 (등록하지 않음)
+#
+# Validation 규칙 (수동 검증 시):
+#   1. 모든 entry에 help_ko, help_en이 둘 다 존재하는지
+#   2. path가 실제 output JSON 또는 schema/examples와 대응되는지
+#   3. 중복 key가 없는지
+#   4. priority 값이 must/nice/skip 중 하나인지
+#   5. channel 배열이 [redfish, os, esxi] 범위 안에 있는지
+# ==============================================================================
+
+fields:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # sections (top-level) — 수집 결과 상태
+  # ──────────────────────────────────────────────────────────────────────────
+
+  status:
+    type: "string"
+    enum: ["success", "partial", "failed"]
+    priority: must
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      전체 수집 결과 상태.
+      success=지원하는 모든 섹션 수집 성공,
+      partial=일부 섹션만 성공,
+      failed=전체 실패.
+      주의: success는 '수집 성공'이지 '장비 정상'이 아님.
+      hardware.health가 Critical이어도 status는 success일 수 있음.
+    help_en: >-
+      Overall collection result.
+      success=all supported sections collected,
+      partial=some sections failed,
+      failed=complete failure.
+      Note: success means 'collection succeeded', not 'equipment is healthy'.
+      hardware.health can be Critical even when status is success.
+
+  "sections.*":
+    type: "string"
+    enum: ["success", "failed", "not_supported"]
+    priority: must
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      개별 섹션 수집 상태.
+      success=해당 섹션 수집 성공,
+      failed=수집 시도했으나 실패,
+      not_supported=이 채널에서 해당 섹션을 지원하지 않음.
+      예: Redfish에서 system=not_supported (OS 정보 없음),
+      OS에서 bmc=not_supported (BMC 접근 불가).
+    help_en: >-
+      Per-section collection status.
+      success=section collected,
+      failed=collection attempted but failed,
+      not_supported=section not available in this channel.
+      Example: Redfish system=not_supported (no OS info),
+      OS bmc=not_supported (no BMC access).
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # hardware
+  # ──────────────────────────────────────────────────────────────────────────
+
+  hardware.health:
+    type: "string|null"
+    enum: ["OK", "Warning", "Critical"]
+    priority: must
+    channel: [redfish]
+    help_ko: >-
+      서버 하드웨어 전체 상태 (BMC rollup health).
+      OK=모든 하위 구성요소 정상,
+      Warning=일부 구성요소 주의 필요,
+      Critical=장애 발생.
+      이 값은 '수집 성공 여부'가 아닌 '장비 자체의 건강 상태'.
+      rollup에 포함되는 하위 구성요소 범위는 벤더마다 다를 수 있음.
+      null=BMC가 이 필드를 제공하지 않는 경우.
+    help_en: >-
+      Server hardware overall health (BMC rollup).
+      OK=all subsystems healthy,
+      Warning=some subsystems need attention,
+      Critical=fault detected.
+      This reflects equipment health, not collection success.
+      Rollup scope may vary by vendor.
+      null=BMC does not provide this field.
+
+  hardware.sku:
+    type: "string|null"
+    priority: must
+    channel: [redfish]
+    help_ko: >-
+      서버 제품 식별 번호. 벤더마다 의미가 다름.
+      Lenovo=CTO 주문 번호 (예: 7Z73CTO1WW),
+      HPE=파트 번호 (예: P52534-B21),
+      Dell=서비스 태그 (예: 2BJ8033),
+      Cisco=미제공 (null).
+    help_en: >-
+      Server product identifier. Meaning varies by vendor.
+      Lenovo=CTO order number,
+      HPE=part number,
+      Dell=service tag,
+      Cisco=not provided (null).
+
+  hardware.oem:
+    type: "object"
+    priority: must
+    channel: [redfish]
+    help_ko: >-
+      벤더 전용 확장 데이터. 키 구조가 벤더마다 완전히 다름.
+      HPE: aggregate_server_health, subsystem_health, psu_redundancy 등.
+      Dell: chassis_service_tag, express_service_code, rollup_status 등.
+      Lenovo: product_name 등.
+      Cisco: 일반적으로 비어 있음.
+    help_en: >-
+      Vendor-specific extended data. Key structure varies completely by vendor.
+      HPE: aggregate_server_health, subsystem_health, psu_redundancy, etc.
+      Dell: chassis_service_tag, express_service_code, rollup_status, etc.
+      Lenovo: product_name, etc.
+      Cisco: typically empty.
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # memory
+  # ──────────────────────────────────────────────────────────────────────────
+
+  memory.total_basis:
+    type: "string"
+    enum: ["physical_installed", "os_visible", "hypervisor_visible"]
+    priority: must
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      total_mb 값의 산출 기준.
+      physical_installed=DIMM에 물리적으로 장착된 용량 (Redfish 기준),
+      os_visible=운영체제가 인식하는 용량 (Linux/Windows 기준),
+      hypervisor_visible=하이퍼바이저가 인식하는 용량 (ESXi 기준).
+      같은 서버라도 채널에 따라 total_mb 값이 다를 수 있음.
+      예: 512GB 장착 서버에서 Redfish=524288MB, OS=500000MB (예약 영역 차감).
+    help_en: >-
+      Basis for total_mb calculation.
+      physical_installed=physically installed DIMM capacity (Redfish),
+      os_visible=OS-reported capacity (Linux/Windows),
+      hypervisor_visible=hypervisor-reported capacity (ESXi).
+      Same server may report different total_mb depending on channel.
+
+  memory.installed_mb:
+    type: "integer|null"
+    priority: must
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      물리적으로 장착된 메모리 용량 (MB).
+      Redfish 채널에서 주로 제공. OS 채널에서는 null일 수 있음.
+      total_mb와 동일한 값일 수 있으나, total_basis가 다르면 의미가 다름.
+    help_en: >-
+      Physically installed memory capacity (MB).
+      Primarily provided by Redfish. May be null in OS channel.
+
+  memory.visible_mb:
+    type: "integer|null"
+    priority: must
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      운영체제 또는 하이퍼바이저가 인식하는 메모리 용량 (MB).
+      OS/ESXi 채널에서 주로 제공. Redfish 채널에서는 null.
+    help_en: >-
+      OS or hypervisor visible memory capacity (MB).
+      Primarily provided by OS/ESXi. null in Redfish channel.
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # storage
+  # ──────────────────────────────────────────────────────────────────────────
+
+  "storage.physical_disks[]":
+    type: "array of object"
+    priority: must
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      시스템 전체의 물리 디스크 목록 (중복 제거됨).
+      controllers[].drives[]에도 같은 디스크가 컨트롤러별로 나타남.
+      physical_disks는 컨트롤러 구분 없이 전체 디스크를 한 번만 보여줌.
+      CapacityBytes=0인 드라이브 (Empty Bay, FlexFlash)는 제외됨.
+    help_en: >-
+      System-wide physical disk list (deduplicated).
+      Same disks also appear under controllers[].drives[] grouped by controller.
+      physical_disks shows all disks once without controller grouping.
+      Drives with CapacityBytes=0 (Empty Bay, FlexFlash) are excluded.
+
+  "storage.physical_disks[].predicted_life_percent":
+    type: "integer|null"
+    priority: must
+    channel: [redfish]
+    help_ko: >-
+      SSD 남은 미디어 수명 (%).
+      100=새 디스크, 0=수명 소진.
+      HDD에서는 null.
+      HPE는 float으로 반환되어 int로 변환됨 (예: 100.0 → 100).
+    help_en: >-
+      SSD remaining media life (%).
+      100=new drive, 0=end of life.
+      null for HDD.
+      HPE returns float, normalized to int (e.g., 100.0 → 100).
+
+  "storage.controllers[].drives[]":
+    type: "array of object"
+    priority: must
+    channel: [redfish]
+    help_ko: >-
+      해당 스토리지 컨트롤러에 연결된 드라이브 목록.
+      physical_disks[]와 같은 디스크가 컨트롤러별로 분류되어 나타남.
+      RAID 구성 확인 시 이 경로를 사용.
+    help_en: >-
+      Drives attached to this storage controller.
+      Same disks as physical_disks[] but grouped by controller.
+      Use this path for RAID configuration analysis.
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # network
+  # ──────────────────────────────────────────────────────────────────────────
+
+  "network.interfaces[].link_status":
+    type: "string|null"
+    enum: ["linkup", "linkdown", "none", null]
+    priority: must
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      NIC 링크 상태.
+      linkup=케이블 연결됨 및 링크 활성,
+      linkdown=케이블 미연결 또는 링크 비활성,
+      none=BMC가 상태를 제공하지 않음 (HPE/Cisco System NIC에서 발생),
+      null=필드 자체 미제공.
+      Redfish의 System EthernetInterfaces는 서버 NIC 하드웨어 정보이며,
+      IP 주소/게이트웨이는 일반적으로 비어 있음 (OS 수준 정보이므로).
+    help_en: >-
+      NIC link state.
+      linkup=cable connected and link active,
+      linkdown=no cable or link inactive,
+      none=BMC does not report status (HPE/Cisco System NICs),
+      null=field not provided.
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # power
+  # ──────────────────────────────────────────────────────────────────────────
+
+  "power.power_supplies[].state":
+    type: "string|null"
+    priority: must
+    channel: [redfish]
+    help_ko: >-
+      PSU 동작 상태.
+      Enabled=전원 공급 중이며 정상 동작,
+      UnavailableOffline=전원 미공급 또는 장애로 비활성.
+      health(OK/Warning/Critical)와는 별개 필드.
+    help_en: >-
+      PSU operational state.
+      Enabled=powered and operating,
+      UnavailableOffline=no power input or fault.
+      Separate from health (OK/Warning/Critical).
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # cpu
+  # ──────────────────────────────────────────────────────────────────────────
+
+  cpu.cores_physical:
+    type: "integer|null"
+    priority: must
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      서버 전체의 물리 코어 합계.
+      Redfish: 모든 프로세서의 TotalCores를 합산한 값.
+      OS: ansible_processor_count × cores_per_socket.
+      '소켓당 코어'가 아닌 '전체 코어 수'임에 주의.
+    help_en: >-
+      Total physical cores across all sockets.
+      Redfish: sum of TotalCores from all processors.
+      OS: ansible_processor_count × cores_per_socket.
+      Note: this is total cores, not per-socket.
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # firmware
+  # ──────────────────────────────────────────────────────────────────────────
+
+  "firmware[].component":
+    type: "string|null"
+    priority: must
+    channel: [redfish]
+    help_ko: >-
+      펌웨어 소프트웨어 식별자 (Redfish SoftwareId).
+      벤더마다 형식이 다름.
+      Lenovo: "BMC-AFBT-10" 형태,
+      Dell: 숫자 ID "101548",
+      HPE: 숫자 또는 UUID,
+      Cisco: 슬롯명.
+      raw 값이 문자열 "null"인 경우 None으로 변환됨.
+    help_en: >-
+      Firmware software identifier (Redfish SoftwareId).
+      Format varies by vendor.
+      Raw string "null" is converted to None.
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # bmc / correlation
+  # ──────────────────────────────────────────────────────────────────────────
+
+  bmc.ip:
+    type: "string|null"
+    priority: must
+    channel: [redfish]
+    help_ko: >-
+      BMC 관리 인터페이스의 IPv4 주소.
+      Manager의 EthernetInterfaces에서 추출.
+      서버 운영체제의 IP 주소가 아닌 BMC 전용 관리 IP.
+    help_en: >-
+      BMC management interface IPv4 address.
+      Extracted from Manager's EthernetInterfaces.
+      This is the BMC management IP, not the server OS IP.
+
+  correlation.host_ip:
+    type: "string"
+    priority: must
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      수집 대상 장비의 IP 주소.
+      Redfish 채널: BMC IP와 동일 (Redfish는 BMC를 통해 수집하므로 서버 OS IP를 알 수 없음).
+      OS 채널: 서버 운영체제의 IP.
+      ESXi 채널: ESXi 호스트의 IP.
+      Redfish에서 host_ip와 bmc_ip가 같은 것은 정상.
+    help_en: >-
+      IP address of the gather target.
+      Redfish: equals BMC IP (Redfish collects via BMC, cannot determine server OS IP).
+      OS: server OS IP.
+      ESXi: ESXi host IP.
+      host_ip equaling bmc_ip in Redfish is expected behavior.
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # diagnosis
+  # ──────────────────────────────────────────────────────────────────────────
+
+  diagnosis.auth_success:
+    type: "boolean|null"
+    priority: must
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      인증 성공 여부.
+      true=인증 성공 후 수집 완료,
+      false=인증 실패,
+      null=인증 단계가 실행되지 않았거나 확인 불가.
+      null은 '실패'가 아니라 '미확인' 의미.
+    help_en: >-
+      Authentication verification result.
+      true=auth succeeded and collection completed,
+      false=auth failed,
+      null=auth stage was not executed or inconclusive.
+      null means 'not verified', not 'failed'.
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # Nice to Have — 설명이 있으면 좋지만 없어도 사용 가능
+  # ══════════════════════════════════════════════════════════════════════════
+
+  hardware.power_state:
+    type: "string|null"
+    enum: ["On", "Off", "PoweringOn", "PoweringOff"]
+    priority: nice
+    channel: [redfish]
+    help_ko: >-
+      서버 전원 상태. On=전원 켜짐, Off=전원 꺼짐.
+      PoweringOn/PoweringOff는 전환 중 상태.
+    help_en: >-
+      Server power state. On/Off are steady states.
+      PoweringOn/PoweringOff are transitional.
+
+  "storage.physical_disks[].failure_predicted":
+    type: "boolean|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: >-
+      SMART 기반 디스크 고장 예측. true=조만간 고장 예상, false=정상.
+      CapacityBytes=0인 드라이브(FlexFlash 등)는 필터로 제외됨.
+    help_en: >-
+      SMART-based drive failure prediction. true=failure expected, false=healthy.
+      Drives with CapacityBytes=0 (FlexFlash etc.) are filtered out.
+
+  "network.interfaces[].kind":
+    type: "string"
+    enum: ["server_nic", "os_nic", "vmkernel"]
+    priority: nice
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      NIC 유형. server_nic=Redfish에서 수집한 서버 NIC 하드웨어,
+      os_nic=OS에서 수집한 네트워크 인터페이스,
+      vmkernel=ESXi vmkernel 포트.
+    help_en: >-
+      NIC type. server_nic=server NIC hardware from Redfish,
+      os_nic=OS-level network interface,
+      vmkernel=ESXi vmkernel port.
+
+  meta.duration_ms:
+    type: "integer|null"
+    priority: nice
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      수집 소요 시간 (밀리초). 해당 호스트 1대의 수집 시간.
+      배치 실행 시 전체 시간이 아닌 개별 호스트 시간.
+    help_en: >-
+      Collection duration (milliseconds). Per-host collection time,
+      not total batch time.
+
+  diagnosis.failure_stage:
+    type: "string|null"
+    enum: ["port", "protocol", "auth"]
+    priority: nice
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      실패 시 어느 단계에서 실패했는지.
+      port=포트 연결 실패, protocol=프로토콜 미지원, auth=인증 실패.
+      null=실패하지 않았거나 단계 확인 불가.
+    help_en: >-
+      Failure stage indicator.
+      port=port connection failed, protocol=not supported, auth=auth failed.
+      null=no failure or stage unknown.
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # Do Not Help (skip) — 의미가 자명하여 등록하되 설명은 최소한
+  # ══════════════════════════════════════════════════════════════════════════
+
+  "storage.physical_disks[].media_type":
+    type: "string|null"
+    enum: ["SSD", "HDD"]
+    priority: skip
+    channel: [redfish, os]
+    help_ko: "디스크 유형. SSD 또는 HDD."
+    help_en: "Disk media type. SSD or HDD."
+
+  "storage.physical_disks[].protocol":
+    type: "string|null"
+    enum: ["SATA", "SAS", "NVMe"]
+    priority: skip
+    channel: [redfish]
+    help_ko: "디스크 연결 프로토콜."
+    help_en: "Disk connection protocol."
+
+  cpu.architecture:
+    type: "string|null"
+    priority: skip
+    channel: [os, esxi]
+    help_ko: "CPU 아키텍처 (예: x86_64)."
+    help_en: "CPU architecture (e.g., x86_64)."
+
+  system.uptime_seconds:
+    type: "integer|null"
+    priority: skip
+    channel: [os, esxi]
+    help_ko: "서버 가동 시간 (초)."
+    help_en: "Server uptime in seconds."
+
+  "firmware[].updateable":
+    type: "boolean"
+    priority: skip
+    channel: [redfish]
+    help_ko: "펌웨어 업데이트 가능 여부."
+    help_en: "Whether firmware is updateable."

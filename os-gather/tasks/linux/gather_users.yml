@@ -1,0 +1,125 @@
+---
+# os-gather/tasks/linux/gather_users.yml
+# getent passwd/group + lastlog 3단계 → data.users fragment
+
+- name: "linux | users | passwd database"
+  ansible.builtin.getent:
+    database: passwd
+  failed_when: false
+  no_log: true
+
+- name: "linux | users | group database"
+  ansible.builtin.getent:
+    database: group
+  failed_when: false
+  no_log: true
+
+- name: "linux | users | last login times"
+  ansible.builtin.shell: |
+    export LANG=C LC_ALL=C
+    get_last_login() {
+      local u="$1" t=""
+      if command -v lastlog >/dev/null 2>&1; then
+        local line; line=$(lastlog -u "$u" 2>/dev/null | tail -1)
+        if ! echo "$line" | grep -q "Never logged in"; then
+          local ds; ds=$(echo "$line" | awk '{
+            n=NF; if($n~/^[0-9]{4}$/){
+              if($(n-1)~/^[+-][0-9]{4}$/) print $(n-4),$(n-3),$(n-2),$(n-1),$n
+              else print $(n-3),$(n-2),$(n-1),$n}}')
+          [ -n "$ds" ] && t=$(date -d "$ds" -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null||true)
+        fi
+      fi
+      if [ -z "$t" ] && command -v last >/dev/null 2>&1; then
+        local line; line=$(last -F -n 1 "$u" 2>/dev/null|head -1)
+        if [ -n "$line" ] && ! echo "$line"|grep -qE "^(wtmp|$)"; then
+          local ds; ds=$(echo "$line"|awk '{for(i=1;i<=NF;i++){if($i~/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/){print $i,$(i+1),$(i+2),$(i+3),$(i+4);break}}}')
+          [ -n "$ds" ] && t=$(date -d "$ds" -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null||true)
+        fi
+      fi
+      if [ -z "$t" ] && command -v utmpdump >/dev/null 2>&1 && [ -f /var/log/wtmp ]; then
+        local ul; ul=$(utmpdump /var/log/wtmp 2>/dev/null|grep "\[$u\]"|tail -1)
+        if [ -n "$ul" ]; then
+          local ds; ds=$(echo "$ul"|grep -oP '\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}'|tr -d '[')
+          [ -n "$ds" ] && t="${ds}Z"
+        fi
+      fi
+      echo "${u}:${t:-null}"
+    }
+    getent passwd | while IFS=: read -r u _ uid _ _ home _; do
+      { [ "$uid" -ge 1000 ] || [ "$u" = "root" ]; } && get_last_login "$u"
+    done
+  args:
+    executable: /bin/bash
+  register: _l_lastlog_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "linux | users | parse last login"
+  ansible.builtin.set_fact:
+    _l_last_logins: >-
+      {%- set out = {} -%}
+      {%- for line in (_l_lastlog_raw.stdout_lines | default([])) -%}
+        {%- if ':' in line -%}
+          {%- set parts = line.split(':',1) -%}
+          {%- set _ = out.update({parts[0]: parts[1] if parts[1] != 'null' else none}) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+- name: "linux | users | build users list"
+  ansible.builtin.set_fact:
+    _l_norm_users_list: >-
+      {%- set users = [] -%}
+      {%- set ug = {} -%}
+      {%- for gname, gdata in (getent_group | default({})).items() -%}
+        {%- for member in (gdata[2]|default('')|split(',')) -%}
+          {%- if member -%}
+            {%- if member not in ug -%}{%- set _ = ug.update({member:[]}) -%}{%- endif -%}
+            {%- set _ = ug[member].append(gname) -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      {%- for uname, udata in (getent_passwd | default({})).items() -%}
+        {%- set uid  = udata[1]|int -%}
+        {%- set gid  = udata[2]|int -%}
+        {%- set home = udata[4] -%}
+        {%- set is_sys = (uid<1000 and uid!=0) or uname in ['nobody','nfsnobody']
+                          or home.startswith('/var/') or home=='/nonexistent' -%}
+        {%- if not is_sys or uname=='root' -%}
+          {%- set ns = namespace(primary_grp='') -%}
+          {%- for gn, gd in (getent_group|default({})).items() -%}
+            {%- if gd[1]|int == gid -%}{%- set ns.primary_grp = gn -%}{%- endif -%}
+          {%- endfor -%}
+          {%- set groups = ug.get(uname,[]) -%}
+          {%- if ns.primary_grp and ns.primary_grp not in groups -%}
+            {%- set groups = [ns.primary_grp] + groups -%}
+          {%- endif -%}
+          {%- set _ = users.append({
+            'name':             uname,
+            'uid':              udata[1]|string,
+            'groups':           groups,
+            'home':             home if home else none,
+            'last_access_time': _l_last_logins.get(uname,none)
+          }) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ users | sort(attribute='uid') }}
+  no_log: true
+
+- name: "linux | users | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      users: "{{ _l_norm_users_list }}"
+    _sections_supported_fragment: ['users']
+    _sections_collected_fragment: >-
+      {{ ['users'] if (getent_passwd is defined and getent_passwd) else [] }}
+    _sections_failed_fragment: >-
+      {{ [] if (getent_passwd is defined and getent_passwd) else ['users'] }}
+    _errors_fragment: []
+  no_log: true
+
+- name: "linux | users | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

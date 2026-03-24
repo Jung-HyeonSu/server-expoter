@@ -1,0 +1,22 @@
+---
+# esxi-gather/tasks/collect_datastores.yml
+# vmware_datastore_info → _e_raw_ds, _e_ds_ok
+
+- name: "esxi | collect | vmware_datastore_info"
+  community.vmware.vmware_datastore_info:
+    hostname:       "{{ _e_ip }}"
+    username:       "{{ _e_user }}"
+    password:       "{{ _e_pass }}"
+    validate_certs: no
+  register:    _e_ds_result
+  delegate_to: localhost
+  failed_when: false
+  no_log: true
+
+- name: "esxi | collect | store raw datastores"
+  ansible.builtin.set_fact:
+    _e_raw_ds: "{{ _e_ds_result.datastores
+                   | default(_e_raw_facts.ansible_datastore | default([])) }}"
+    _e_ds_ok:  "{{ _e_ds_result is not failed and
+                   _e_ds_result.datastores is defined }}"
+  no_log: true

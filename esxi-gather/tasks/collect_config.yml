@@ -1,0 +1,21 @@
+---
+# esxi-gather/tasks/collect_config.yml
+# vmware_host_config_info → _e_raw_config, _e_config_ok
+
+- name: "esxi | collect | vmware_host_config_info"
+  community.vmware.vmware_host_config_info:
+    hostname:       "{{ _e_ip }}"
+    username:       "{{ _e_user }}"
+    password:       "{{ _e_pass }}"
+    validate_certs: no
+  register:    _e_config_result
+  delegate_to: localhost
+  failed_when: false
+  no_log: true
+
+- name: "esxi | collect | store raw config"
+  ansible.builtin.set_fact:
+    _e_raw_config: "{{ _e_config_result.hosts_config_info | default({}) }}"
+    _e_config_ok:  "{{ _e_config_result is not failed and
+                       _e_config_result.hosts_config_info is defined }}"
+  no_log: true

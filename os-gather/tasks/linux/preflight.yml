@@ -1,0 +1,45 @@
+---
+# os-gather/tasks/linux/preflight.yml
+#
+# Linux 호스트 실행 가능성 사전 점검
+# - Python 경로 감지
+# - 필수 명령 존재 여부 확인 (없어도 gather 는 계속)
+#
+# 출력 변수:
+#   _l_python   : str  — Python 실행 경로
+#   _l_has_lsblk: bool — lsblk 존재 여부
+#   _l_has_dmi  : bool — dmidecode 존재 여부
+#   _l_has_last : bool — last 명령 존재 여부
+
+- name: "linux | preflight | detect python"
+  ansible.builtin.raw: >
+    command -v python3 2>/dev/null ||
+    command -v python  2>/dev/null ||
+    echo "none"
+  register: _l_python_raw
+  changed_when: false
+  no_log: true
+
+- name: "linux | preflight | set python path"
+  ansible.builtin.set_fact:
+    _l_python: "{{ _l_python_raw.stdout_lines[0] | default('python3') | trim }}"
+  no_log: true
+
+- name: "linux | preflight | check optional commands"
+  ansible.builtin.raw: |
+    echo "lsblk=$(command -v lsblk >/dev/null 2>&1 && echo 1 || echo 0)"
+    echo "dmidecode=$(command -v dmidecode >/dev/null 2>&1 && echo 1 || echo 0)"
+    echo "last=$(command -v last >/dev/null 2>&1 && echo 1 || echo 0)"
+    echo "lastlog=$(command -v lastlog >/dev/null 2>&1 && echo 1 || echo 0)"
+  register: _l_preflight_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "linux | preflight | parse command availability"
+  ansible.builtin.set_fact:
+    _l_has_lsblk: "{{ 'lsblk=1' in _l_preflight_raw.stdout | default('') }}"
+    _l_has_dmi:   "{{ 'dmidecode=1' in _l_preflight_raw.stdout | default('') }}"
+    _l_has_last:  "{{ 'last=1' in _l_preflight_raw.stdout | default('') }}"
+    _l_has_lastlog: "{{ 'lastlog=1' in _l_preflight_raw.stdout | default('') }}"
+  no_log: true

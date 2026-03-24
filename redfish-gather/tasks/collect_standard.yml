@@ -1,0 +1,29 @@
+---
+# redfish-gather/tasks/collect_standard.yml
+# 표준 Redfish 수집 (벤더 공통)
+# → _rf_raw_collect, _rf_collect_ok, _rf_vendor
+# vendor_aliases.yml 기반 정규화 (하드코딩 벤더 목록 제거)
+
+- name: "redfish | collect_standard | run redfish_gather"
+  redfish_gather:
+    bmc_ip:     "{{ _rf_ip }}"
+    username:   "{{ ansible_user | default('') }}"
+    password:   "{{ ansible_password | default('') }}"
+    timeout:    "{{ _rf_timeout }}"
+    verify_ssl: false    # BMC 자체서명 인증서 사용. 운영 보안 정책에 따라 변경 검토
+  register:    _rf_raw_collect
+  failed_when: false
+  no_log: true
+
+- name: "redfish | collect_standard | set collect status"
+  ansible.builtin.set_fact:
+    _rf_collect_ok: >-
+      {{ _rf_raw_collect is not failed and
+         (_rf_raw_collect.status | default('failed')) != 'failed' }}
+    # adapter 기반 벤더 결정: detect_vendor에서 정규화된 값 사용
+    # vendor_aliases.yml이 벤더 목록 역할을 하므로 하드코딩 불필요
+    _rf_vendor: >-
+      {{ _rf_detected_vendor
+         if (_rf_detected_vendor | default('unknown')) != 'unknown'
+         else none }}
+  no_log: true

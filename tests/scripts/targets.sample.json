@@ -1,0 +1,7 @@
+[
+  {"label": "Lenovo",    "ip": "10.50.11.232",  "user": "YOUR_USER", "password": "YOUR_PASSWORD", "group": "baseline"},
+  {"label": "HPE",       "ip": "10.50.11.231",  "user": "YOUR_USER", "password": "YOUR_PASSWORD", "group": "baseline"},
+  {"label": "Dell-R740", "ip": "10.50.11.162",  "user": "YOUR_USER", "password": "YOUR_PASSWORD", "group": "baseline"},
+  {"label": "Cisco",     "ip": "10.100.15.2",   "user": "YOUR_USER", "password": "YOUR_PASSWORD", "group": "baseline"},
+  {"label": "Dell-R760", "ip": "10.100.15.27",  "user": "YOUR_USER", "password": "YOUR_PASSWORD", "group": "supplemental"}
+]

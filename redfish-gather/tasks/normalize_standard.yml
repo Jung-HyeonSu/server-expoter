@@ -1,0 +1,211 @@
+---
+# redfish-gather/tasks/normalize_standard.yml
+# 표준 Redfish 수집 결과 정규화 → system/hardware/bmc/cpu/memory/network/storage/firmware/power fragment
+
+- name: "redfish | normalize_standard | extract raw sub-sections"
+  ansible.builtin.set_fact:
+    _rf_d_system:  "{{ _rf_raw_collect.data.system      | default({}) }}"
+    _rf_d_bmc:     "{{ _rf_raw_collect.data.bmc         | default(none) }}"
+    _rf_d_procs:   "{{ _rf_raw_collect.data.processors  | default([]) }}"
+    _rf_d_memory:  "{{ _rf_raw_collect.data.memory      | default({}) }}"
+    _rf_d_storage: "{{ _rf_raw_collect.data.storage     | default([]) }}"
+    _rf_d_network: "{{ _rf_raw_collect.data.network     | default([]) }}"
+    _rf_d_firmware: "{{ _rf_raw_collect.data.firmware    | default([]) }}"
+    _rf_d_power:   "{{ _rf_raw_collect.data.power       | default(none) }}"
+  no_log: true
+
+# ── network ──────────────────────────────────────────────────────────────────
+- name: "redfish | normalize_standard | interfaces"
+  ansible.builtin.set_fact:
+    _rf_norm_interfaces: >-
+      {%- set out = [] -%}
+      {%- for nic in (_rf_d_network | default([])) -%}
+        {%- set addrs = [] -%}
+        {%- for a in (nic.ipv4 | default([])) -%}
+          {%- if a.address is defined and a.address not in [none,'0.0.0.0',''] -%}
+            {%- set _ = addrs.append({
+              'family':'ipv4','address':a.address,'prefix_length':none,
+              'subnet_mask':a.subnet_mask|default(none),
+              'gateway':a.gateway|default(none),
+              'origin':a.address_origin|default(none)}) -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- set _ = out.append({
+          'id':          nic.id|default(nic.name|default(none)),
+          'name':        nic.name|default(none),
+          'kind':        'server_nic',
+          'mac':         nic.mac|default(none),
+          'mtu':         nic.mtu|default(none),
+          'speed_mbps':  nic.speed_mbps|default(none),
+          'link_status': (nic.link_status|lower) if nic.link_status is defined else 'unknown',
+          'is_primary':  false,
+          'addresses':   addrs
+        }) -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+- name: "redfish | normalize_standard | aggregate gateways"
+  ansible.builtin.set_fact:
+    _rf_norm_gateways: >-
+      {%- set gws = [] -%}
+      {%- for iface in _rf_norm_interfaces -%}
+        {%- for addr in iface.addresses -%}
+          {%- if addr.gateway and addr.gateway not in ['0.0.0.0',''] -%}
+            {%- set entry = {'family':addr.family,'address':addr.gateway} -%}
+            {%- if entry not in gws -%}{%- set _ = gws.append(entry) -%}{%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      {{ gws }}
+  no_log: true
+
+# ── storage ───────────────────────────────────────────────────────────────────
+- name: "redfish | normalize_standard | controllers"
+  ansible.builtin.set_fact:
+    _rf_norm_controllers: >-
+      {%- set out = [] -%}
+      {%- for ctrl in (_rf_d_storage | default([])) -%}
+        {%- set drives = [] -%}
+        {%- for drv in (ctrl.drives | default([])) -%}
+          {%- set _ = drives.append({
+            'device':     drv.name|default(none),
+            'model':      drv.model|default(none),
+            'total_mb':   ((drv.capacity_bytes|int)/1048576)|round(0,'floor')|int
+                          if drv.capacity_bytes else none,
+            'media_type': drv.media_type|default(none),
+            'protocol':   drv.protocol|default(none),
+            'health':     drv.health|default(none)
+          }) -%}
+        {%- endfor -%}
+        {%- set _ = out.append({
+          'id':     ctrl.id|default(none),
+          'name':   ctrl.name|default(none),
+          'health': ctrl.health|default(none),
+          'drives': drives
+        }) -%}
+      {%- endfor -%}
+      {{ out }}
+    _rf_norm_physical_disks: >-
+      {%- set out = [] -%}
+      {%- set seen = [] -%}
+      {%- for ctrl in (_rf_d_storage | default([])) -%}
+        {%- for drv in (ctrl.drives | default([])) -%}
+          {%- set key = (drv.name|default(''))~(drv.model|default('')) -%}
+          {%- if key not in seen and (drv.name or drv.model) -%}
+            {%- set _ = seen.append(key) -%}
+            {%- set _ = out.append({
+              'device':     drv.name|default(none),
+              'model':      drv.model|default(none),
+              'serial':     drv.serial|default(none),
+              'total_mb':   ((drv.capacity_bytes|int)/1048576)|round(0,'floor')|int
+                            if drv.capacity_bytes else none,
+              'media_type': drv.media_type|default(none),
+              'protocol':   drv.protocol|default(none),
+              'health':     drv.health|default(none),
+              'failure_predicted':       drv.failure_predicted|default(none),
+              'predicted_life_percent':  drv.predicted_life_percent|default(none)
+            }) -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+# ── sections from redfish_gather module result ────────────────────────────────
+- name: "redfish | normalize_standard | map module sections to schema"
+  ansible.builtin.set_fact:
+    _rf_collected_raw: "{{ (_rf_raw_collect.collected | default([])) | to_json | from_json }}"
+    _rf_failed_raw:    "{{ (_rf_raw_collect.failed_sections | default([])) | to_json | from_json }}"
+    # processors → cpu, storage/network direct, firmware/power direct
+    _rf_proc_map:
+      processors: cpu
+      storage:    storage
+      network:    network
+      firmware:   firmware
+      power:      power
+      system:     system
+      hardware:   hardware
+      bmc:        bmc
+      memory:     memory
+  no_log: true
+
+# ── 표준 fragment 생성 ────────────────────────────────────────────────────────
+- name: "redfish | normalize_standard | build standard fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      system:
+        os_family:      null
+        distribution:   null
+        version:        null
+        kernel:         null
+        architecture:   null
+        uptime_seconds: null
+        selinux:        null
+        fqdn:           "{{ _rf_d_system.hostname | default(none) }}"
+      hardware:
+        vendor:       "{{ _rf_d_system.manufacturer | default(none) }}"
+        model:        "{{ _rf_d_system.model        | default(none) }}"
+        serial:       "{{ _rf_d_system.serial       | default(none) }}"
+        uuid:         "{{ _rf_d_system.uuid         | default(none) }}"
+        sku:          "{{ _rf_d_system.sku           | default(none) }}"
+        bios_version: "{{ _rf_d_system.bios_version | default(none) }}"
+        bios_date:    null
+        power_state:  "{{ _rf_d_system.power_state  | default(none) }}"
+        health:       "{{ _rf_d_system.health       | default(none) }}"
+        oem:          "{{ _rf_d_system.oem          | default({}) }}"
+      bmc: "{{ _rf_d_bmc }}"
+      cpu:
+        sockets:         "{{ _rf_d_procs | length if _rf_d_procs else none }}"
+        cores_physical: >-
+          {{ _rf_d_procs | map(attribute='total_cores') | select | list | sum | default(none) if _rf_d_procs else none }}
+        logical_threads: >-
+          {{ _rf_d_procs | map(attribute='total_threads') | select | list | sum | default(none) if _rf_d_procs else none }}
+        model: >-
+          {{ _rf_d_procs | map(attribute='model') | select | list | first | default(none) }}
+        max_speed_mhz: >-
+          {{ _rf_d_procs | map(attribute='speed_mhz') | select | list | first | default(none) }}
+        architecture: null
+      memory:
+        total_mb:     "{{ _rf_d_memory.total_mib | default(none) }}"
+        total_basis:  "physical_installed"
+        installed_mb: "{{ _rf_d_memory.total_mib | default(none) }}"
+        visible_mb:   null
+        free_mb:      null
+        slots:        "{{ _rf_d_memory.slots | default([]) }}"
+      storage:
+        filesystems:    []
+        physical_disks: "{{ _rf_norm_physical_disks }}"
+        datastores:     []
+        controllers:    "{{ _rf_norm_controllers }}"
+      network:
+        dns_servers:      []
+        default_gateways: "{{ _rf_norm_gateways }}"
+        interfaces:       "{{ _rf_norm_interfaces }}"
+      firmware: "{{ _rf_d_firmware }}"
+      power:    "{{ _rf_d_power }}"
+    _sections_supported_fragment: >-
+      {{ ['hardware','bmc','cpu','memory','storage','network','firmware','power'] }}
+    _sections_collected_fragment: >-
+      {%- set out = [] -%}
+      {%- set pmap = _rf_proc_map -%}
+      {%- for s in _rf_collected_raw -%}
+        {%- set mapped = pmap.get(s, s) -%}
+        {%- if mapped not in out -%}{%- set _ = out.append(mapped) -%}{%- endif -%}
+      {%- endfor -%}
+      {%- if 'system' in out and 'hardware' not in out -%}{%- set _ = out.append('hardware') -%}{%- endif -%}
+      {{ out }}
+    _sections_failed_fragment: >-
+      {%- set out = [] -%}
+      {%- set pmap = _rf_proc_map -%}
+      {%- for s in _rf_failed_raw -%}
+        {%- set mapped = pmap.get(s, s) -%}
+        {%- if mapped not in out -%}{%- set _ = out.append(mapped) -%}{%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+    _errors_fragment: "{{ _rf_raw_collect.errors | default([]) }}"
+  no_log: true
+
+- name: "redfish | normalize_standard | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

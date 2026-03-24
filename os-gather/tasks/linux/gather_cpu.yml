@@ -1,0 +1,43 @@
+---
+# os-gather/tasks/linux/gather_cpu.yml
+# CPU 정보 수집 → data.cpu fragment 생성
+
+- name: "linux | cpu | cores per socket"
+  ansible.builtin.shell: >
+    grep -m1 'cpu cores' /proc/cpuinfo 2>/dev/null | awk '{print $4}' || echo ""
+  register: _l_cpu_cores_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "linux | cpu | model"
+  ansible.builtin.shell: >
+    grep -m1 'model name' /proc/cpuinfo 2>/dev/null
+    | cut -d: -f2 | sed 's/^ *//' || echo ""
+  register: _l_cpu_model_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "linux | cpu | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      cpu:
+        sockets:         "{{ ansible_processor_count   | default(none) }}"
+        cores_physical:  >-
+          {{ (_l_cpu_cores_raw.stdout | trim | int)
+             * (ansible_processor_count | default(1) | int)
+             if _l_cpu_cores_raw.stdout | trim | length > 0
+             else none }}
+        logical_threads: "{{ ansible_processor_vcpus   | default(none) }}"
+        model:           "{{ _l_cpu_model_raw.stdout   | trim | default(none) }}"
+        architecture:    "{{ ansible_architecture      | default(none) }}"
+    _sections_supported_fragment: ['cpu']
+    _sections_collected_fragment: ['cpu']
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true
+
+- name: "linux | cpu | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

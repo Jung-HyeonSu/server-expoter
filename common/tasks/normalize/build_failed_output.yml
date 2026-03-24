@@ -1,0 +1,84 @@
+---
+# common/tasks/normalize/build_failed_output.yml
+#
+# rescue / connection failure 등 완전 실패 시 표준 failed _output 을 생성한다.
+# 이 파일 하나만 호출하면 sections/errors/data/status 가 모두 생성된다.
+# ※ 빈 데이터 뼈대(data skeleton)는 아래 세 파일에 복제되어 있음.
+#   구조 변경 시 반드시 세 파일 모두 동기화할 것:
+#     - common/tasks/normalize/init_fragments.yml
+#     - common/tasks/normalize/build_empty_data.yml
+#     - common/tasks/normalize/build_failed_output.yml (이 파일)
+#
+# 입력 변수 (호출 전 set_fact):
+#   _out_target_type       : str
+#   _out_collection_method : str
+#   _out_ip                : str
+#   _out_vendor            : str|null
+#   _fail_sec_supported    : list — 이 gather 에서 지원하는 섹션 목록
+#   _fail_error_section    : str  — 에러 발생 섹션명
+#   _fail_error_message    : str  — 에러 메시지
+#
+# 출력 변수:
+#   _output : dict — status=failed 인 최종 표준 JSON
+
+- name: "normalize | build_failed_output | build sections (all failed)"
+  ansible.builtin.set_fact:
+    _norm_sections: >-
+      {%- set all_sec = ['system','hardware','bmc','cpu','memory',
+                         'storage','network','firmware','users','power'] -%}
+      {%- set supported = _fail_sec_supported | default([]) -%}
+      {%- set out = {} -%}
+      {%- for s in all_sec -%}
+        {%- if s in supported -%}
+          {%- set _ = out.update({s: 'failed'}) -%}
+        {%- else -%}
+          {%- set _ = out.update({s: 'not_supported'}) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+    _norm_errors:
+      - section:  "{{ _fail_error_section | default('gather') }}"
+        message:  "{{ _fail_error_message | default('수집 실패') }}"
+        detail:   null
+    _out_status: "failed"
+
+- name: "normalize | build_failed_output | build fallback meta & correlation"
+  ansible.builtin.set_fact:
+    _meta: "{{ _meta | default({
+      'started_at':      _started_at | default(none),
+      'finished_at':     now(utc=true).isoformat() + 'Z',
+      'duration_ms':     none,
+      'adapter_id':      (_selected_adapter | default({})).adapter_id | default(none),
+      'adapter_version': (_selected_adapter | default({})).version | default(none),
+      'ansible_version': ansible_version.full | default('unknown')
+    }) }}"
+    _correlation: "{{ _correlation | default({
+      'serial_number': none,
+      'system_uuid':   none,
+      'bmc_ip':        none,
+      'host_ip':       _out_ip | default(inventory_hostname)
+    }) }}"
+
+- name: "normalize | build_failed_output | assemble output"
+  ansible.builtin.set_fact:
+    _output: "{{ {
+      'target_type':       _out_target_type       | default('unknown'),
+      'collection_method': _out_collection_method | default('unknown'),
+      'ip':                _out_ip                | default(inventory_hostname),
+      'hostname':          ((_merged_data | default({})).system | default({})).hostname | default(none) or _out_ip | default(inventory_hostname),
+      'vendor':            _out_vendor | default(none),
+      'status':            'failed',
+      'sections':          _norm_sections,
+      'diagnosis':         _diagnosis         | default(none),
+      'meta':              _meta              | default(none),
+      'correlation':       _correlation       | default(none),
+      'errors':            _norm_errors,
+      'data': _merged_data | default({
+        'system':   none, 'hardware': none, 'bmc': none,
+        'cpu':      none, 'memory':   none,
+        'storage':  {'filesystems':[], 'physical_disks':[],
+                     'datastores':[], 'controllers':[]},
+        'network':  {'dns_servers':[], 'default_gateways':[], 'interfaces':[]},
+        'users':    [], 'firmware': [], 'power': none
+      })
+    } }}"

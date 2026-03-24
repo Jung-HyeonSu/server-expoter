@@ -1,0 +1,86 @@
+---
+# os-gather/tasks/linux/gather_network.yml
+# 네트워크 인터페이스 수집 → data.network fragment
+
+- name: "linux | network | set primary info"
+  ansible.builtin.set_fact:
+    _l_norm_primary_iface: "{{ ansible_default_ipv4.interface | default('') }}"
+    _l_norm_default_gw:    "{{ ansible_default_ipv4.gateway   | default(none) }}"
+    _l_norm_dns_servers:   "{{ ansible_dns.nameservers | default([]) }}"
+  no_log: true
+
+- name: "linux | network | build interfaces"
+  ansible.builtin.set_fact:
+    _l_norm_interfaces: >-
+      {%- set out = [] -%}
+      {%- set skip_pfx = ['docker','br-','veth','virbr','vir','lo'] -%}
+      {%- for iface in (ansible_interfaces | default([])) -%}
+        {%- set skip = [] -%}
+        {%- for p in skip_pfx -%}
+          {%- if iface.startswith(p) -%}{%- set _ = skip.append(1) -%}{%- endif -%}
+        {%- endfor -%}
+        {%- if skip | length == 0 -%}
+          {%- set d   = hostvars[inventory_hostname]['ansible_' ~ iface] | default({}) -%}
+          {%- set ipv4 = d.ipv4.address | default(none) if d.ipv4 is defined else none -%}
+          {%- if ipv4 and ipv4 != '127.0.0.1' and d.macaddress is defined -%}
+            {%- set nm = d.ipv4.netmask | default('') if d.ipv4 is defined else '' -%}
+            {%- if nm -%}
+              {%- set ns = namespace(bits=0) -%}
+              {%- for octet in nm.split('.') -%}
+                {%- set val = octet | int -%}
+                {%- for bit in [128,64,32,16,8,4,2,1] -%}
+                  {%- if val >= bit -%}
+                    {%- set ns.bits = ns.bits + 1 -%}
+                    {%- set val = val - bit -%}
+                  {%- endif -%}
+                {%- endfor -%}
+              {%- endfor -%}
+              {%- set prefix = ns.bits -%}
+            {%- else -%}
+              {%- set prefix = none -%}
+            {%- endif -%}
+            {%- set is_primary = (iface == _l_norm_primary_iface) -%}
+            {%- set _ = out.append({
+              'id':          iface,
+              'name':        iface,
+              'kind':        'os_nic',
+              'mac':         d.macaddress | default(none),
+              'mtu':         d.mtu   | default(none),
+              'speed_mbps':  d.speed | default(none),
+              'link_status': 'up' if d.get('active',false) else 'unknown',
+              'is_primary':  is_primary,
+              'addresses': [{
+                'family':        'ipv4',
+                'address':       ipv4,
+                'prefix_length': prefix,
+                'subnet_mask':   nm if nm else none,
+                'gateway':       _l_norm_default_gw if is_primary else none
+              }]
+            }) -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+  no_log: true
+
+- name: "linux | network | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      network:
+        dns_servers: "{{ _l_norm_dns_servers }}"
+        default_gateways: >-
+          {%- set out = [] -%}
+          {%- if _l_norm_default_gw -%}
+            {%- set _ = out.append({'family':'ipv4','address':_l_norm_default_gw}) -%}
+          {%- endif -%}
+          {{ out }}
+        interfaces: "{{ _l_norm_interfaces }}"
+    _sections_supported_fragment: ['network']
+    _sections_collected_fragment: ['network']
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true
+
+- name: "linux | network | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

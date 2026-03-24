@@ -1,0 +1,360 @@
+---
+# =============================================================================
+# os-gather / site.yml  — orchestration 전용
+#
+# 입력:
+#   INVENTORY_JSON = [{"ip": "10.x.x.1"}]
+#   REPO_ROOT      = vault / common 경로 기준
+#
+# 출력 (json_only callback):
+#   확정 스키마 JSON (schema_version: "1")
+#
+# 흐름:
+#   Play1: 포트 감지 → Linux/_os_linux | Windows/_os_windows 분류
+#   Play2: Linux  → adapter 선택 → preflight → gather → meta → build_output
+#   Play3: Windows → adapter 선택 → gather → meta → build_output
+#
+# 실패 처리:
+#   포트 감지 실패 → Play1 에서 즉시 OUTPUT (diagnosis 포함)
+#   수집 예외 → block/rescue → build_failed_output.yml (단일 호출)
+# =============================================================================
+
+# ── PLAY 1: OS 타입 감지 ─────────────────────────────────────────────────────
+
+- name: "os-gather | detect"
+  hosts: all
+  gather_facts: no
+  connection: local
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    # 포트 감지 타임아웃 (초) — 느린 네트워크 환경에서 증가 가능
+    _probe_timeout: "{{ probe_timeout | default(5) }}"
+
+  tasks:
+
+    - name: "detect | WinRM HTTPS (5986)"
+      ansible.builtin.wait_for:
+        host:    "{{ ansible_host | default(inventory_hostname) }}"
+        port:    5986
+        timeout: "{{ _probe_timeout }}"
+      register:      _probe_winrm_https
+      ignore_errors: yes
+      no_log: true
+
+    - name: "detect | WinRM HTTP (5985)"
+      when: _probe_winrm_https is failed
+      ansible.builtin.wait_for:
+        host:    "{{ ansible_host | default(inventory_hostname) }}"
+        port:    5985
+        timeout: "{{ _probe_timeout }}"
+      register:      _probe_winrm_http
+      ignore_errors: yes
+      no_log: true
+
+    - name: "detect | SSH (22)"
+      when: >
+        _probe_winrm_https is failed and
+        (_probe_winrm_http is skipped or _probe_winrm_http is failed)
+      ansible.builtin.wait_for:
+        host:    "{{ ansible_host | default(inventory_hostname) }}"
+        port:    22
+        timeout: "{{ _probe_timeout }}"
+      register:      _probe_ssh
+      ignore_errors: yes
+      no_log: true
+
+    - name: "detect | set os_type"
+      ansible.builtin.set_fact:
+        _detected_os: >-
+          {%- if _probe_winrm_https is succeeded
+               or (_probe_winrm_http is not skipped
+                   and _probe_winrm_http is succeeded) -%}windows
+          {%- elif _probe_ssh is not skipped and _probe_ssh is succeeded -%}linux
+          {%- else -%}unknown{%- endif -%}
+        _winrm_port:   "{{ '5986' if _probe_winrm_https is succeeded else '5985' }}"
+        _winrm_scheme: "{{ 'https' if _probe_winrm_https is succeeded else 'http' }}"
+      no_log: true
+
+    # 포트 감지 실패 → build_failed_output 공통 모듈 사용
+    - name: "detect | port fail | set failed vars"
+      when: _detected_os | trim == 'unknown'
+      ansible.builtin.set_fact:
+        _out_target_type:       "os"
+        _out_collection_method: "agent"
+        _out_ip:                "{{ ansible_host | default(inventory_hostname) }}"
+        _out_vendor:            null
+        _fail_sec_supported:    "{{ ['system','cpu','memory','storage','network','users'] }}"
+        _fail_error_section:    "os_detect"
+        _fail_error_message:    "SSH(22)/WinRM(5985/5986) 모두 응답 없음 — 대상 서버의 방화벽, SSH/WinRM 서비스 상태, 네트워크 연결을 확인하세요."
+        _diagnosis:
+          reachable:          false
+          port_open:          false
+          protocol_supported: false
+          auth_success:       false
+          failure_stage:      "port"
+          failure_reason:     "SSH(22)/WinRM(5985/5986) 모두 응답 없음"
+          details:
+            checked_ports: [22, 5985, 5986]
+
+    - name: "detect | port fail | init fragments"
+      when: _detected_os | trim == 'unknown'
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/init_fragments.yml"
+
+    - name: "detect | port fail | build_failed_output"
+      when: _detected_os | trim == 'unknown'
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_failed_output.yml"
+
+    - name: "detect | port fail | inject schema_version"
+      when: _detected_os | trim == 'unknown'
+      ansible.builtin.set_fact:
+        _output: "{{ _output | combine({'schema_version': '1'}) }}"
+
+    - name: OUTPUT
+      when: _detected_os | trim == 'unknown'
+      ansible.builtin.debug:
+        msg: "{{ _output | to_json }}"
+
+    - name: "detect | register linux host"
+      when: _detected_os | trim == 'linux'
+      ansible.builtin.add_host:
+        name:                    "{{ inventory_hostname }}"
+        groups:                  _os_linux
+        ansible_host:            "{{ ansible_host | default(inventory_hostname) }}"
+        ansible_connection:      ssh
+        ansible_port:            22
+        ansible_ssh_common_args: >-
+          -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+          -o ConnectTimeout=15 -o ServerAliveInterval=10
+        _os_type:                linux
+      no_log: true
+
+    - name: "detect | register windows host"
+      when: _detected_os | trim == 'windows'
+      ansible.builtin.add_host:
+        name:                                  "{{ inventory_hostname }}"
+        groups:                                _os_windows
+        ansible_host:                          "{{ ansible_host | default(inventory_hostname) }}"
+        ansible_connection:                    winrm
+        ansible_port:                          "{{ _winrm_port }}"
+        ansible_winrm_scheme:                  "{{ _winrm_scheme }}"
+        ansible_winrm_transport:               ntlm
+        ansible_winrm_server_cert_validation:  ignore
+        ansible_winrm_operation_timeout_sec:   60
+        ansible_winrm_read_timeout_sec:        70
+        _os_type:                              windows
+      no_log: true
+
+
+# ── PLAY 2: Linux 수집 ───────────────────────────────────────────────────────
+
+- name: "os-gather | linux"
+  hosts: _os_linux
+  gather_facts: no
+  become: no
+
+  vars_files:
+    - "{{ lookup('env','REPO_ROOT') }}/vault/linux.yml"
+
+  vars:
+    _ip:      "{{ ansible_host | default(inventory_hostname) }}"
+    _os_type: "linux"
+
+  tasks:
+
+    - name: "linux | gather"
+      block:
+
+        - name: "linux | preflight"
+          ansible.builtin.include_tasks: tasks/linux/preflight.yml
+
+        - name: "linux | init fragments"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/init_fragments.yml"
+
+        # ── adapter 선택 ─────────────────────────────────────────────────
+        - name: "linux | select adapter"
+          ansible.builtin.set_fact:
+            _selected_adapter: >-
+              {{ lookup('adapter_loader',
+                         channel='os',
+                         facts={'os_type': 'linux',
+                                'distribution': ansible_distribution | default('')},
+                         repo_root=lookup('env','REPO_ROOT')) }}
+          no_log: true
+
+        - name: "linux | gather system"
+          ansible.builtin.include_tasks: tasks/linux/gather_system.yml
+
+        - name: "linux | gather cpu"
+          ansible.builtin.include_tasks: tasks/linux/gather_cpu.yml
+
+        - name: "linux | gather memory"
+          ansible.builtin.include_tasks: tasks/linux/gather_memory.yml
+
+        - name: "linux | gather storage"
+          ansible.builtin.include_tasks: tasks/linux/gather_storage.yml
+
+        - name: "linux | gather network"
+          ansible.builtin.include_tasks: tasks/linux/gather_network.yml
+
+        - name: "linux | gather users"
+          ansible.builtin.include_tasks: tasks/linux/gather_users.yml
+
+        # ── meta & correlation ───────────────────────────────────────────
+        - name: "linux | set output meta vars"
+          ansible.builtin.set_fact:
+            _out_target_type:       "os"
+            _out_collection_method: "agent"
+            _out_ip:                "{{ _ip }}"
+            _out_vendor:            null
+
+        - name: "linux | build_meta"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_meta.yml"
+
+        - name: "linux | build_correlation"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_correlation.yml"
+
+        - name: "linux | build output"
+          ansible.builtin.include_tasks: tasks/normalize/build_output.yml
+
+        # schema_version 주입
+        - name: "linux | inject schema_version"
+          ansible.builtin.set_fact:
+            _output: "{{ _output | combine({'schema_version': '1'}) }}"
+
+      rescue:
+        - name: "linux | rescue | build failed output"
+          ansible.builtin.set_fact:
+            _out_target_type:       "os"
+            _out_collection_method: "agent"
+            _out_ip:                "{{ _ip }}"
+            _out_vendor:            null
+            _fail_sec_supported:    "{{ ((_selected_adapter | default({})).capabilities | default({})).sections_supported
+                                        | default(['system','cpu','memory','storage','network','users']) }}"
+            _fail_error_section:    "linux_gather"
+            _fail_error_message:    "{{ ansible_failed_result.msg | default('Linux 수집 예외') }}"
+
+        - name: "linux | rescue | build_failed_output"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_failed_output.yml"
+
+        - name: "linux | rescue | inject schema_version"
+          ansible.builtin.set_fact:
+            _output: "{{ _output | combine({'schema_version': '1'}) }}"
+
+      always:
+        - name: OUTPUT
+          ansible.builtin.debug:
+            msg: "{{ (_output | default({'status':'failed','errors':[{'section':'gather','message':'_output 미생성 — block/rescue 모두 실패'}]})) | to_json }}"
+
+
+# ── PLAY 3: Windows 수집 ─────────────────────────────────────────────────────
+
+- name: "os-gather | windows"
+  hosts: _os_windows
+  gather_facts: no
+
+  vars_files:
+    - "{{ lookup('env','REPO_ROOT') }}/vault/windows.yml"
+
+  vars:
+    _ip:      "{{ ansible_host | default(inventory_hostname) }}"
+    _os_type: "windows"
+
+  tasks:
+
+    - name: "windows | setup"
+      ansible.builtin.setup:
+        gather_subset: ['hardware', 'network']
+      register:    _w_setup
+      failed_when: false
+      no_log: true
+
+    - name: "windows | gather"
+      block:
+
+        - name: "windows | init fragments"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/init_fragments.yml"
+
+        # ── adapter 선택 ─────────────────────────────────────────────────
+        - name: "windows | select adapter"
+          ansible.builtin.set_fact:
+            _selected_adapter: >-
+              {{ lookup('adapter_loader',
+                         channel='os',
+                         facts={'os_type': 'windows',
+                                'version': ansible_os_product_type | default('')},
+                         repo_root=lookup('env','REPO_ROOT')) }}
+          no_log: true
+
+        - name: "windows | gather system"
+          ansible.builtin.include_tasks: tasks/windows/gather_system.yml
+
+        - name: "windows | gather cpu"
+          ansible.builtin.include_tasks: tasks/windows/gather_cpu.yml
+
+        - name: "windows | gather memory"
+          ansible.builtin.include_tasks: tasks/windows/gather_memory.yml
+
+        - name: "windows | gather storage"
+          ansible.builtin.include_tasks: tasks/windows/gather_storage.yml
+
+        - name: "windows | gather network"
+          ansible.builtin.include_tasks: tasks/windows/gather_network.yml
+
+        - name: "windows | gather users"
+          ansible.builtin.include_tasks: tasks/windows/gather_users.yml
+
+        # ── meta & correlation ───────────────────────────────────────────
+        - name: "windows | set output meta vars"
+          ansible.builtin.set_fact:
+            _out_target_type:       "os"
+            _out_collection_method: "agent"
+            _out_ip:                "{{ _ip }}"
+            _out_vendor:            null
+
+        - name: "windows | build_meta"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_meta.yml"
+
+        - name: "windows | build_correlation"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_correlation.yml"
+
+        - name: "windows | build output"
+          ansible.builtin.include_tasks: tasks/normalize/build_output.yml
+
+        - name: "windows | inject schema_version"
+          ansible.builtin.set_fact:
+            _output: "{{ _output | combine({'schema_version': '1'}) }}"
+
+      rescue:
+        - name: "windows | rescue | set failed vars"
+          ansible.builtin.set_fact:
+            _out_target_type:       "os"
+            _out_collection_method: "agent"
+            _out_ip:                "{{ _ip }}"
+            _out_vendor:            null
+            _fail_sec_supported:    "{{ ((_selected_adapter | default({})).capabilities | default({})).sections_supported
+                                        | default(['system','cpu','memory','storage','network','users']) }}"
+            _fail_error_section:    "windows_gather"
+            _fail_error_message:    "{{ ansible_failed_result.msg | default('Windows 수집 예외') }}"
+
+        - name: "windows | rescue | build_failed_output"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/build_failed_output.yml"
+
+        - name: "windows | rescue | inject schema_version"
+          ansible.builtin.set_fact:
+            _output: "{{ _output | combine({'schema_version': '1'}) }}"
+
+      always:
+        - name: OUTPUT
+          ansible.builtin.debug:
+            msg: "{{ (_output | default({'status':'failed','errors':[{'section':'gather','message':'_output 미생성 — block/rescue 모두 실패'}]})) | to_json }}"

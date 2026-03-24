@@ -1,0 +1,42 @@
+---
+# common/tasks/normalize/build_output.yml
+#
+# 누적된 fragment 와 공통 빌더 결과로 최종 _output 을 조립한다.
+# 항상 가장 마지막에 호출한다.
+#
+# 사전 호출 필요:
+#   build_sections.yml → _norm_sections
+#   build_status.yml   → _out_status
+#   build_errors.yml   → _norm_errors
+#
+# 입력 변수:
+#   _out_target_type       : str
+#   _out_collection_method : str
+#   _out_ip                : str
+#   _out_vendor            : str|null
+#   _out_status            : str
+#   _norm_sections         : dict
+#   _norm_errors           : list
+#   _merged_data           : dict — merge_fragment 누적 결과
+#
+# 출력 변수:
+#   _output : dict — 최종 표준 JSON (OUTPUT 태스크로 방출)
+
+- name: "normalize | build_output"
+  ansible.builtin.set_fact:
+    _output: "{{ {
+      'target_type':       _out_target_type,
+      'collection_method': _out_collection_method,
+      'ip':                _out_ip,
+      'hostname':          ((_merged_data.system | default({})).hostname | default(none))
+                           or ((_merged_data.system | default({})).fqdn | default(none))
+                           or _out_ip,
+      'vendor':            _out_vendor,
+      'status':            _out_status,
+      'sections':          _norm_sections,
+      'diagnosis':         _diagnosis         | default(none),
+      'meta':              _meta              | default(none),
+      'correlation':       _correlation       | default(none),
+      'errors':            _norm_errors,
+      'data':              _merged_data
+    } }}"

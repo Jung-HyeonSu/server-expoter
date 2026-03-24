@@ -1,0 +1,111 @@
+---
+# os-gather/tasks/windows/gather_network.yml → data.network fragment
+
+- name: "windows | network | dns and gateway"
+  ansible.windows.win_shell: |
+    $gw  = (Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue |
+            Sort-Object RouteMetric | Select-Object -First 1).NextHop
+    $dns = @(Get-DnsClientServerAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+             Where-Object { $_.ServerAddresses } |
+             ForEach-Object { $_.ServerAddresses } | Select-Object -Unique)
+    [PSCustomObject]@{
+      gw  = $gw
+      dns = $dns
+    } | ConvertTo-Json -Compress
+  register: _w_net_meta_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "windows | network | parse meta"
+  ansible.builtin.set_fact:
+    _w_norm_net_meta: "{{ _w_net_meta_raw.stdout | default('{}') | from_json }}"
+  no_log: true
+
+- name: "windows | network | interfaces"
+  ansible.windows.win_shell: |
+    $gw = '{{ _w_norm_net_meta.gw | default("") }}'
+    Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+    Where-Object { $_.IPAddress -notlike '169.*' -and $_.IPAddress -ne '127.0.0.1' } |
+    ForEach-Object {
+      $addr    = $_
+      $adapter = Get-NetAdapter -InterfaceIndex $addr.InterfaceIndex -ErrorAction SilentlyContinue
+      $isGw    = $adapter -and ($adapter.InterfaceIndex -eq
+                  (Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue |
+                   Sort-Object RouteMetric | Select-Object -First 1).InterfaceIndex)
+      [PSCustomObject]@{
+        id         = $adapter.InterfaceDescription
+        name       = $addr.InterfaceAlias
+        mac        = $adapter.MacAddress
+        mtu        = $adapter.MtuSize
+        speed_mbps = $(if ($adapter.Speed) { [math]::Round($adapter.Speed / 1000000, 0) } else { $null })
+        status     = $adapter.Status
+        is_primary = $isGw
+        address    = $addr.IPAddress
+        prefix     = $addr.PrefixLength
+        gateway    = $(if ($isGw) { $gw } else { $null })
+      } | ConvertTo-Json -Compress
+    }
+  register: _w_iface_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "windows | network | normalize interfaces"
+  ansible.builtin.set_fact:
+    _w_norm_interfaces: >-
+      {%- set grouped = {} -%}
+      {%- for line in (_w_iface_raw.stdout_lines | default([])) -%}
+        {%- if line | trim -%}
+          {%- set n = line | from_json -%}
+          {%- set key = n.mac | default(n.name) -%}
+          {%- set addr = {
+              'family':        'ipv4',
+              'address':       n.address,
+              'prefix_length': n.prefix | default(none),
+              'subnet_mask':   none,
+              'gateway':       n.gateway | default(none)
+          } -%}
+          {%- if key in grouped -%}
+            {%- set _ = grouped[key]['addresses'].append(addr) -%}
+            {%- if n.is_primary | default(false) -%}
+              {%- set _ = grouped[key].update({'is_primary': true}) -%}
+            {%- endif -%}
+          {%- else -%}
+            {%- set _ = grouped.update({key: {
+              'id':          n.id   | default(n.name),
+              'name':        n.name,
+              'kind':        'os_nic',
+              'mac':         n.mac  | default(none),
+              'mtu':         n.mtu  | default(none),
+              'speed_mbps':  n.speed_mbps | default(none),
+              'link_status': (n.status | lower) if n.status is defined else 'unknown',
+              'is_primary':  n.is_primary | default(false),
+              'addresses':   [addr]
+            }}) -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ grouped.values() | list }}
+  no_log: true
+
+- name: "windows | network | build fragment"
+  ansible.builtin.set_fact:
+    _data_fragment:
+      network:
+        dns_servers: "{{ _w_norm_net_meta.dns | default([]) }}"
+        default_gateways: >-
+          {%- set out = [] -%}
+          {%- set gw = _w_norm_net_meta.gw | default(none) -%}
+          {%- if gw -%}{%- set _ = out.append({'family':'ipv4','address':gw}) -%}{%- endif -%}
+          {{ out }}
+        interfaces: "{{ _w_norm_interfaces }}"
+    _sections_supported_fragment: ['network']
+    _sections_collected_fragment: ['network']
+    _sections_failed_fragment:    []
+    _errors_fragment:             []
+  no_log: true
+
+- name: "windows | network | merge fragment"
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"

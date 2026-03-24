@@ -1,0 +1,86 @@
+---
+# ==============================================================================
+# sections.yml — 수집 섹션 정의
+# ==============================================================================
+# Output JSON의 data 및 sections 필드에 포함되는 9+1개 섹션을 정의합니다.
+#
+# 각 섹션의 key, 표시 이름, 지원 채널, 비어있을 때의 기본값을 정의합니다.
+# ==============================================================================
+
+sections:
+  system:
+    key: system
+    display_name: "시스템 정보"
+    description: "운영체제, 호스트명, 가동시간 등 기본 시스템 정보"
+    channels: [os, esxi, redfish]
+    empty_value: null
+
+  hardware:
+    key: hardware
+    display_name: "하드웨어 정보"
+    description: "벤더, 모델, 시리얼번호, BIOS 등 물리 장비 정보"
+    channels: [esxi, redfish]
+    empty_value: null
+
+  bmc:
+    key: bmc
+    display_name: "BMC 정보"
+    description: "BMC(iDRAC/iLO/XCC) 펌웨어, 상태 정보"
+    channels: [redfish]
+    empty_value: null
+
+  cpu:
+    key: cpu
+    display_name: "CPU 정보"
+    description: "프로세서 소켓, 코어, 스레드, 모델 정보"
+    channels: [os, esxi, redfish]
+    empty_value: null
+
+  memory:
+    key: memory
+    display_name: "메모리 정보"
+    description: "총 용량, 슬롯별 상세, 사용량 정보"
+    channels: [os, esxi, redfish]
+    empty_value: null
+
+  storage:
+    key: storage
+    display_name: "스토리지 정보"
+    description: "파일시스템, 물리 디스크, 컨트롤러, 데이터스토어"
+    channels: [os, esxi, redfish]
+    empty_value:
+      filesystems: []
+      physical_disks: []
+      datastores: []
+      controllers: []
+
+  network:
+    key: network
+    display_name: "네트워크 정보"
+    description: "인터페이스, IP 주소, DNS, 게이트웨이"
+    channels: [os, esxi, redfish]
+    empty_value:
+      dns_servers: []
+      default_gateways: []
+      interfaces: []
+
+  firmware:
+    key: firmware
+    display_name: "펌웨어 목록"
+    description: "설치된 펌웨어/드라이버 인벤토리"
+    channels: [redfish]
+    empty_value: []
+
+  users:
+    key: users
+    display_name: "사용자 목록"
+    description: "로컬 시스템 사용자 계정 정보"
+    channels: [os]
+    empty_value: []
+
+  power:
+    key: power
+    display_name: "전원 정보"
+    description: "전원 공급 장치(PSU) 상태 및 전력 정보"
+    channels: [redfish]
+    empty_value: null
