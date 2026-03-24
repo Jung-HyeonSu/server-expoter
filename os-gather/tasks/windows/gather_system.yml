@@ -39,7 +39,7 @@
         distribution:   "{{ _w_os_data.caption  | default(none) }}"
         version:        "{{ _w_os_data.rel_id    | default(_w_os_data.version | default(none)) }}"
         kernel:         "{{ _w_os_data.build     | default(none) | string }}"
-        architecture:   "{{ ansible_architecture | default(none) }}"
+        architecture:   "{{ 'x86_64' if (ansible_architecture | default('')) in ['64-bit', '64비트', 'AMD64', 'x86_64'] else ('x86' if (ansible_architecture | default('')) in ['32-bit', '32비트', 'x86'] else (ansible_architecture | default(none))) }}"
         uptime_seconds: "{{ (ansible_uptime_seconds | default(0)) | int }}"
         selinux:        null
         fqdn:           "{{ ansible_fqdn | default(inventory_hostname) }}"

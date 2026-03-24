@@ -18,6 +18,7 @@
 | `cpu.cores_physical` | `shell grep "cpu cores" × sockets` | `gather_cpu.yml` | |
 | `cpu.logical_threads` | `ansible_processor_vcpus` | `gather_cpu.yml` | |
 | `cpu.model` | `shell grep "model name"` | `gather_cpu.yml` | |
+| `cpu.architecture` | `ansible_architecture` | `gather_cpu.yml` | system.architecture와 동일 값 |
 | `memory.total_mb` | `ansible_memtotal_mb` | `gather_memory.yml` | |
 | `memory.total_basis` | hardcoded `"os_visible"` | `gather_memory.yml` | |
 | `storage.physical_disks[]` | `lsblk -J` | `gather_storage.yml` | |
@@ -36,7 +37,7 @@
 | `system.distribution` | `ansible_distribution` | `gather_system.yml` | WMI |
 | `system.version` | `ansible_distribution_version` | `gather_system.yml` | WMI |
 | `system.kernel` | `ansible_kernel` | `gather_system.yml` | WMI |
-| `system.architecture` | `ansible_architecture` | `gather_system.yml` | WMI |
+| `system.architecture` | `ansible_architecture` (정규화 적용) | `gather_system.yml` | "64비트"/"64-bit"/"AMD64"→"x86_64" 매핑 |
 | `system.uptime_seconds` | `ansible_uptime_seconds \| int` | `gather_system.yml` | WMI |
 | `system.selinux` | N/A | `gather_system.yml` | Windows에는 SELinux 없음 → null |
 | `system.fqdn` | `ansible_fqdn` | `gather_system.yml` | WMI |
@@ -44,8 +45,9 @@
 | `cpu.cores_physical` | `Win32_Processor.NumberOfCores` | `gather_cpu.yml` | WMI |
 | `cpu.logical_threads` | `Win32_Processor.NumberOfLogicalProcessors` | `gather_cpu.yml` | WMI |
 | `cpu.model` | `Win32_Processor.Name` | `gather_cpu.yml` | WMI |
+| `cpu.architecture` | `ansible_architecture` (정규화 적용) | `gather_cpu.yml` | `'64' in _arch` 조건으로 "64비트"→"x86_64" 매핑 |
 | `memory.total_mb` | `Win32_ComputerSystem.TotalPhysicalMemory` | `gather_memory.yml` | WMI |
-| `memory.total_basis` | hardcoded `"os_visible"` | `gather_memory.yml` | |
+| `memory.total_basis` | hardcoded `"physical_installed"` | `gather_memory.yml` | |
 | `storage.physical_disks[]` | `Win32_DiskDrive` | `gather_storage.yml` | WMI |
 | `storage.filesystems[]` | `Win32_LogicalDisk` | `gather_storage.yml` | WMI |
 | `network.interfaces[]` | `Win32_NetworkAdapterConfiguration` | `gather_network.yml` | WMI |
@@ -76,6 +78,7 @@
 | `cpu.cores_physical` | `vmware_host_facts` → `ansible_processor_cores` | `gather_cpu.yml` | vSphere API |
 | `cpu.logical_threads` | `vmware_host_facts` → `ansible_processor_vcpus` | `gather_cpu.yml` | vSphere API |
 | `cpu.model` | `vmware_host_facts` → processor model | `gather_cpu.yml` | vSphere API |
+| `cpu.architecture` | N/A | — | 현재 null — 추가 확인 필요 |
 | `memory.total_mb` | `vmware_host_facts` → `ansible_memtotal_mb` | `gather_memory.yml` | vSphere API |
 | `memory.total_basis` | hardcoded `"hypervisor_visible"` | `gather_memory.yml` | |
 | `storage.datastores[]` | `vmware_host_facts` → datastore info | `gather_storage.yml` | vSphere API |
