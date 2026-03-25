@@ -27,7 +27,7 @@
 
   vars:
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
-    _e_ip:   "{{ ansible_host | default(inventory_hostname) }}"
+    _e_ip:   "{{ hostvars[inventory_hostname].ansible_host | default(inventory_hostname) }}"
     _e_user: "{{ ansible_user }}"
     _e_pass: "{{ ansible_password }}"
 
@@ -45,9 +45,18 @@
           ansible.builtin.include_tasks:
             file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/precheck/run_precheck.yml"
           vars:
-            _precheck_host: "{{ _e_ip }}"
+            _precheck_host: "{{ hostvars[inventory_hostname].ansible_host | default(inventory_hostname) }}"
             _precheck_channel: "esxi"
             _precheck_timeout: 30
+
+        - name: "esxi | abort if precheck failed"
+          ansible.builtin.fail:
+            msg: >-
+              ESXi 호스트 연결 진단 실패 ({{ _e_ip }}) —
+              단계={{ (_diagnosis | default({})).failure_stage | default('unknown') }},
+              사유={{ (_diagnosis | default({})).failure_reason | default('연결 불가') }}.
+              ESXi 호스트 전원, 네트워크, vSphere API(443) 포트를 확인하세요.
+          when: not (_precheck_ok | bool)
 
         # ── adapter 선택 ─────────────────────────────────────────────────
         - name: "esxi | select adapter"

@@ -40,9 +40,18 @@
           ansible.builtin.include_tasks:
             file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/precheck/run_precheck.yml"
           vars:
-            _precheck_host: "{{ _rf_ip }}"
+            _precheck_host: "{{ hostvars[inventory_hostname].ansible_host | default(inventory_hostname) }}"
             _precheck_channel: "redfish"
             _precheck_timeout: "{{ _rf_timeout }}"
+
+        - name: "redfish | abort if precheck failed"
+          ansible.builtin.fail:
+            msg: >-
+              Redfish 호스트 연결 진단 실패 ({{ _rf_ip }}) —
+              단계={{ (_diagnosis | default({})).failure_stage | default('unknown') }},
+              사유={{ (_diagnosis | default({})).failure_reason | default('연결 불가') }}.
+              BMC 전원, 네트워크, Redfish API(443) 포트를 확인하세요.
+          when: not (_precheck_ok | bool)
 
         # ── detect vendor ────────────────────────────────────────────────
         - name: "redfish | detect vendor"

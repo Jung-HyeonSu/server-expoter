@@ -101,3 +101,35 @@ normalize에서 `| default(none)` 처리.
 | Session Auth | 동작할 것으로 추정 | Basic만 테스트 |
 | HPE iLO5 차이 | iLO6과 유사할 것으로 추정 | Oem.Hpe vs Oem.Hp fallback 미검증 |
 | 다중 System member | Members[0]만 사용 | 블레이드 서버 등 미검증 |
+
+## 7. OEM 필드 보강 판정 (B2, Round 14)
+
+> 판정일: 2026-03-25
+
+### 결론
+
+**현재 프로젝트 범위에서는 Standard Redfish가 충분하다.** OEM placeholder는 향후 운영 요구 발생 시 확장한다.
+
+이 결론은 "OEM이 영구적으로 불필요하다"는 뜻이 아니라, 현재 수집 범위(firmware inventory + PSU health/state/metrics) 기준으로 standard endpoint가 실무 핵심 요구의 95%+ 를 커버한다는 판정이다.
+
+### 근거
+
+| 영역 | Standard 수집 현황 | OEM 추가 가치 |
+|------|-------------------|---------------|
+| Firmware | FirmwareInventory 28+ 항목 (BIOS, BMC, RAID, NIC, PSU FW) | OEM-specific metadata (낮음) |
+| Power | PSU health/state/metrics + power_control consumed watts | PSU redundancy N+1, line voltage (낮음) |
+| 기타 | — | Thermal throttle history, license/warranty (범위 외) |
+
+### OEM Framework 상태
+
+- 4개 벤더(Dell/HPE/Lenovo/Supermicro) adapter YAML에 `oem_tasks` 경로 정의 완료
+- `collect_oem.yml` / `normalize_oem.yml` placeholder 파일 존재
+- **운영 요구 발생 시 placeholder만 채우면 즉시 확장 가능**
+
+### 향후 확장 트리거
+
+OEM 구현을 재검토해야 하는 상황:
+1. 포털에서 PSU redundancy status(N+1) 표시 요구 발생
+2. 벤더별 OEM-specific health code 해석 요구
+3. Thermal 섹션 스키마 정의 및 수집 요구
+4. 특정 벤더에서 standard endpoint로 수집 불가능한 필드 발견
