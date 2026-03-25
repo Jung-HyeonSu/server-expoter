@@ -15,8 +15,8 @@
 | `system.selinux` | `ansible_selinux.status` | `gather_system.yml` | |
 | `system.hosting_type` | `systemd-detect-virt` + `ansible_virtualization_type/role` + `ansible_system_vendor` | `gather_system.yml` | OS 채널 전용. enum: virtual/baremetal/unknown |
 | `system.fqdn` | `ansible_fqdn` | `gather_system.yml` | |
-| `system.serial_number` | `ansible_product_serial` (DMI) | `gather_system.yml` | NA/빈값→null 정규화. become 권장 |
-| `system.system_uuid` | `ansible_product_uuid` (DMI) | `gather_system.yml` | NA/빈값→null 정규화. become 권장. cross-channel 연결 키 |
+| `system.serial_number` | setup fact → DMI direct-read fallback (`become: true`) | `gather_system.yml` | setup fact가 NA일 경우 `/sys/class/dmi/id/product_serial` 직접 읽기. become 필수 |
+| `system.system_uuid` | setup fact → DMI direct-read fallback (`become: true`) | `gather_system.yml` | setup fact가 NA일 경우 `/sys/class/dmi/id/product_uuid` 직접 읽기. cross-channel 연결 키 |
 | `cpu.sockets` | `ansible_processor_count` | `gather_cpu.yml` | |
 | `cpu.cores_physical` | `shell grep "cpu cores" × sockets` | `gather_cpu.yml` | |
 | `cpu.logical_threads` | `ansible_processor_vcpus` | `gather_cpu.yml` | |
@@ -90,6 +90,22 @@
 | `storage.datastores[]` | `vmware_host_facts` → datastore info | `gather_storage.yml` | vSphere API |
 | `network.interfaces[]` | `vmware_host_facts` → vmkernel interfaces | `gather_network.yml` | vSphere API |
 | `network.default_gateways[]` | N/A | `normalize_network.yml` | vmware_host_facts / vsphere schema가 ansible_default_ipv4 구조 자체를 제공하지 않음. [] 유지. ESXi는 vmkernel 기반 네트워크 모델이므로 host-level default gateway 의미가 OS와 다름 |
+
+---
+
+### 식별자 수집 경로 (serial_number / system_uuid)
+
+| 채널 | 수집 경로 | 비고 |
+|------|----------|------|
+| Linux | setup fact → DMI direct-read fallback (`become: true`) | setup fact가 NA인 경우 DMI fallback이 사실상 필요. become 필수 |
+| Windows | WMI (setup fact에서 직접 취득) | NA/센티널 → null 정규화 |
+| ESXi | vmware_host_facts / normalize 결과 기준으로 수집 | 수집 경로와 정합성은 별도 관리 |
+| Redfish | Systems/{id} SerialNumber, UUID | normalize_standard.yml에서 매핑 |
+
+**Linux DMI fallback 동작:**
+- `become_password` 제공 시: `/sys/class/dmi/id/product_serial`, `/sys/class/dmi/id/product_uuid` 직접 읽기
+- `become_password` 미제공 시: block/rescue로 격리, null + `insufficient_privilege` diagnostic
+- 어느 경우든 status는 success (식별자 수집 실패는 non-fatal)
 
 ---
 

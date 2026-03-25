@@ -93,35 +93,99 @@
   failed_when: false
   no_log: true
 
-# 식별자 값 결정 — NA/빈값/센티널은 null 정규화
-- name: "linux | system | resolve identifiers"
+# Step 1: setup fact에서 유효한 값이 있는지 판정
+- name: "linux | system | check setup fact identifiers"
   ansible.builtin.set_fact:
-    _l_serial_val: >-
+    _l_serial_from_setup: >-
       {{ none if (ansible_product_serial | default('')) in ['', 'NA', 'None', 'Not Specified', 'To Be Filled By O.E.M.']
          else (ansible_product_serial | default(none)) }}
-    _l_uuid_val: >-
+    _l_uuid_from_setup: >-
       {{ none if (ansible_product_uuid | default('')) in ['', 'NA', 'None', 'Not Specified']
          else (ansible_product_uuid | default(none)) }}
   no_log: true
 
+# Step 2: setup fact가 NA/빈값이면 DMI 직접 읽기 fallback (become 사용)
+# become 비밀번호 없이 become: true → connection-level 실패 → block/rescue로 격리
+- name: "linux | system | DMI direct-read fallback"
+  when: (_l_serial_from_setup | default(none)) is none or
+        (_l_uuid_from_setup | default(none)) is none
+  block:
+    - name: "linux | system | DMI direct-read serial"
+      when: (_l_serial_from_setup | default(none)) is none
+      ansible.builtin.command: cat /sys/class/dmi/id/product_serial
+      become: true
+      register: _l_dmi_serial_direct
+      changed_when: false
+      failed_when: false
+      no_log: true
+
+    - name: "linux | system | DMI direct-read uuid"
+      when: (_l_uuid_from_setup | default(none)) is none
+      ansible.builtin.command: cat /sys/class/dmi/id/product_uuid
+      become: true
+      register: _l_dmi_uuid_direct
+      changed_when: false
+      failed_when: false
+      no_log: true
+  rescue:
+    - name: "linux | system | DMI fallback failed (become unavailable)"
+      ansible.builtin.set_fact:
+        _l_dmi_fallback_failed: true
+      no_log: true
+
+# Step 3: 최종 식별자 결정 — setup fact → DMI direct-read → null
+- name: "linux | system | resolve identifiers"
+  ansible.builtin.set_fact:
+    _l_serial_val: >-
+      {%- set sentinel = ['', 'NA', 'None', 'Not Specified', 'To Be Filled By O.E.M.'] -%}
+      {%- if (_l_serial_from_setup | default(none)) is not none -%}
+        {{ _l_serial_from_setup }}
+      {%- elif (_l_dmi_serial_direct is defined) and (_l_dmi_serial_direct.rc | default(1)) == 0
+              and (_l_dmi_serial_direct.stdout | default('') | trim) not in sentinel
+              and (_l_dmi_serial_direct.stdout | default('') | trim | length) > 0 -%}
+        {{ _l_dmi_serial_direct.stdout | trim }}
+      {%- else -%}
+        {{ none }}
+      {%- endif -%}
+    _l_uuid_val: >-
+      {%- set sentinel = ['', 'NA', 'None', 'Not Specified'] -%}
+      {%- if (_l_uuid_from_setup | default(none)) is not none -%}
+        {{ _l_uuid_from_setup }}
+      {%- elif (_l_dmi_uuid_direct is defined) and (_l_dmi_uuid_direct.rc | default(1)) == 0
+              and (_l_dmi_uuid_direct.stdout | default('') | trim) not in sentinel
+              and (_l_dmi_uuid_direct.stdout | default('') | trim | length) > 0 -%}
+        {{ _l_dmi_uuid_direct.stdout | trim }}
+      {%- else -%}
+        {{ none }}
+      {%- endif -%}
+  no_log: true
+
 # 식별자 diagnostic 생성 — non-fatal, status/sections에 영향 없음
+# source 추적: setup_fact / dmi_direct / null
 - name: "linux | system | build identifier diagnostics"
   ansible.builtin.set_fact:
     _l_id_diagnostics: >-
       {%- set diags = [] -%}
       {%- set serial_na = (_l_serial_val | default(none)) is none -%}
       {%- set uuid_na   = (_l_uuid_val   | default(none)) is none -%}
-      {%- set serial_noaccess = (_l_dmi_serial_access.rc | default(1)) != 0 -%}
-      {%- set uuid_noaccess   = (_l_dmi_uuid_access.rc   | default(1)) != 0 -%}
-      {%- if serial_na and serial_noaccess -%}
-        {%- set _ = diags.append({"section":"system","message":"식별자 수집 제한 (insufficient_privilege): serial_number — DMI 접근 권한 부족. become 사용을 권장합니다.","detail":"affected_fields: serial_number"}) -%}
-      {%- elif serial_na and not serial_noaccess -%}
-        {%- set _ = diags.append({"section":"system","message":"식별자 값 미제공 (identifier_not_available): serial_number — source에서 유효한 값을 반환하지 않았습니다.","detail":"affected_fields: serial_number"}) -%}
+      {%- set dmi_block_failed = (_l_dmi_fallback_failed | default(false)) | bool -%}
+      {%- set serial_dmi_tried  = _l_dmi_serial_direct is defined -%}
+      {%- set serial_dmi_failed = serial_dmi_tried and (_l_dmi_serial_direct.rc | default(1)) != 0 -%}
+      {%- set uuid_dmi_tried    = _l_dmi_uuid_direct is defined -%}
+      {%- set uuid_dmi_failed   = uuid_dmi_tried and (_l_dmi_uuid_direct.rc | default(1)) != 0 -%}
+      {%- if serial_na and (dmi_block_failed or serial_dmi_failed) -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 수집 제한 (insufficient_privilege): serial_number — setup fact=NA, DMI direct-read 실패. become 권한을 확인하세요.","detail":"affected_fields: serial_number, source: none"}) -%}
+      {%- elif serial_na and not serial_dmi_tried -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 수집 제한 (insufficient_privilege): serial_number — setup fact 미정의, DMI fallback 미시도.","detail":"affected_fields: serial_number, source: none"}) -%}
+      {%- elif serial_na -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 값 미제공 (identifier_not_available): serial_number — setup fact 및 DMI direct-read 모두 유효한 값을 반환하지 않았습니다.","detail":"affected_fields: serial_number, source: none"}) -%}
       {%- endif -%}
-      {%- if uuid_na and uuid_noaccess -%}
-        {%- set _ = diags.append({"section":"system","message":"식별자 수집 제한 (insufficient_privilege): system_uuid — DMI 접근 권한 부족. become 사용을 권장합니다.","detail":"affected_fields: system_uuid"}) -%}
-      {%- elif uuid_na and not uuid_noaccess -%}
-        {%- set _ = diags.append({"section":"system","message":"식별자 값 미제공 (identifier_not_available): system_uuid — source에서 유효한 값을 반환하지 않았습니다.","detail":"affected_fields: system_uuid"}) -%}
+      {%- if uuid_na and (dmi_block_failed or uuid_dmi_failed) -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 수집 제한 (insufficient_privilege): system_uuid — setup fact=NA, DMI direct-read 실패. become 권한을 확인하세요.","detail":"affected_fields: system_uuid, source: none"}) -%}
+      {%- elif uuid_na and not uuid_dmi_tried -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 수집 제한 (insufficient_privilege): system_uuid — setup fact 미정의, DMI fallback 미시도.","detail":"affected_fields: system_uuid, source: none"}) -%}
+      {%- elif uuid_na -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 값 미제공 (identifier_not_available): system_uuid — setup fact 및 DMI direct-read 모두 유효한 값을 반환하지 않았습니다.","detail":"affected_fields: system_uuid, source: none"}) -%}
       {%- endif -%}
       {{ diags }}
   no_log: true

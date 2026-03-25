@@ -27,8 +27,8 @@
     "ansible_version": "2.20.3"
   },
   "correlation": {
-    "serial_number": null,
-    "system_uuid": null,
+    "serial_number": "VMware-42 04 87 42 3c 2b 35 00-b7 2a 78 db 36 48 f4 03",
+    "system_uuid": "42870442-2b3c-0035-b72a-78db3648f403",
     "bmc_ip": null,
     "host_ip": "10.100.64.166"
   },
@@ -78,8 +78,8 @@
       "selinux": "disabled",
       "fqdn": "jenkins-test-linux01.gooddi.lab",
       "hosting_type": "virtual",
-      "serial_number": null,
-      "system_uuid": null
+      "serial_number": "VMware-42 04 87 42 3c 2b 35 00-b7 2a 78 db 36 48 f4 03",
+      "system_uuid": "42870442-2b3c-0035-b72a-78db3648f403"
     },
     "cpu": {
       "sockets": 2,

@@ -10,3 +10,4 @@
 ## 파일 규칙
 - `{vendor/os}_baseline.json` — json_only callback 출력 그대로
 - 수정 금지 — 다음 baseline 버전 생성 시 별도 디렉터리(baseline_v2 등) 사용
+- OS 식별자(serial_number, system_uuid) baseline 값은 권장 운영 모드(with-become) 기준으로 기록
