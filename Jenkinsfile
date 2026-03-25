@@ -149,6 +149,21 @@ pipeline {
                 }
             }
         }
+
+        // ── 3. Schema Validator ─────────────────────────────────────────────────
+        // field_dictionary.yml 정합성 검증
+        // 1단계: 실패 시 UNSTABLE (품질 게이트 부드럽게 도입)
+        // 2단계: 운영 안정화 후 FAIL 상향 검토
+        stage('Validate Schema') {
+            steps {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                    sh '''
+                        cd "${WORKSPACE}"
+                        python3 tests/validate_field_dictionary.py
+                    '''
+                }
+            }
+        }
     }
 
     // ── post 처리 ─────────────────────────────────────────────────────────────
