@@ -16,6 +16,16 @@ sections:
         description: "virtual / baremetal / unknown"
         note: "OS 채널 전용. Redfish/ESXi에는 적용하지 않음"
         enum: [virtual, baremetal, unknown]
+      serial_number:
+        type: string
+        display_name: "시리얼 번호"
+        description: "DMI/WMI product_serial. NA/빈값은 null로 정규화"
+        note: "채널/벤더에 따라 의미가 다를 수 있음. Linux에서 정확한 값 수집을 위해 become 권장"
+      system_uuid:
+        type: string
+        display_name: "시스템 UUID"
+        description: "DMI/WMI product_uuid. NA/빈값은 null로 정규화"
+        note: "cross-channel 연결의 우선 키. Linux에서 정확한 값 수집을 위해 become 권장"
       selinux:
         type: string
         display_name: "SELinux 상태"

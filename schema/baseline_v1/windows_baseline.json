@@ -44,7 +44,9 @@
       "uptime_seconds": 5433613,
       "selinux": null,
       "fqdn": "DESKTOP-99237QP",
-      "hosting_type": "virtual"
+      "hosting_type": "virtual",
+      "serial_number": "VMware-42 04 cc cc 3a 70 bf 67-4d 8c be c6 fb 82 c2 65",
+      "system_uuid": "CCCC0442-703A-67BF-4D8C-BEC6FB82C265"
     },
     "bmc": null,
     "memory": {

@@ -27,8 +27,8 @@
       system_uuid: >-
         {{ (_merged_data.hardware.uuid | default(none))
            if _merged_data.hardware is defined and _merged_data.hardware is mapping
-           else (_merged_data.system.uuid | default(none))
-           if _merged_data.system is mapping
+           else (_merged_data.system.system_uuid | default(none))
+           if _merged_data.system is defined and _merged_data.system is mapping
            else none }}
       bmc_ip: >-
         {{ (_merged_data.bmc.ip | default(none))

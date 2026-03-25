@@ -285,7 +285,24 @@ grep "stdout_callback\|callback_plugins" ansible.cfg
 
 ---
 
-## 8. 미지원 환경 요약
+## 8. OS 채널 식별자 및 엔티티 연결 정책
+
+### 8-1. 식별자 필드
+
+- OS 채널은 `system.serial_number`와 `system.system_uuid`를 제공할 수 있다.
+- 값이 없거나 의미없는 센티널 값(NA, Not Specified 등)은 `null`로 정규화한다.
+- Linux에서 정확한 DMI 식별자 수집을 위해 `become` 권한 사용을 권장한다.
+
+### 8-2. Cross-channel 연결 정책
+
+- `system_uuid`가 존재하면 cross-channel 엔티티 연결의 우선 키로 사용할 수 있다.
+- `serial_number`는 채널 및 벤더에 따라 의미가 다를 수 있으므로, direct match 시 추가 검증이 필요하다.
+- `hosting_type`이 `virtual`이면 물리 Redfish와 직접 매칭하지 않는다.
+- 물리 서버에 직접 설치된 OS는, 그 위에서 KVM/Hyper-V host 역할을 하더라도 `baremetal`로 분류한다.
+
+---
+
+## 9. 미지원 환경 요약
 
 | 환경 | 이유 |
 |------|------|

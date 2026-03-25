@@ -91,6 +91,8 @@
         uptime_seconds: "{{ (ansible_uptime_seconds | default(_l_fb.UPTIME | default(0))) | int }}"
         selinux:        "{{ ansible_selinux.status | default(none) }}"
         fqdn:           "{{ ansible_fqdn | default(inventory_hostname) }}"
+        serial_number:  "{{ none if (ansible_product_serial | default('')) in ['', 'NA', 'None', 'Not Specified', 'To Be Filled By O.E.M.'] else (ansible_product_serial | default(none)) }}"
+        system_uuid:    "{{ none if (ansible_product_uuid | default('')) in ['', 'NA', 'None', 'Not Specified'] else (ansible_product_uuid | default(none)) }}"
     _sections_supported_fragment: ['system']
     _sections_collected_fragment: >-
       {{ ['system'] if (ansible_distribution is defined

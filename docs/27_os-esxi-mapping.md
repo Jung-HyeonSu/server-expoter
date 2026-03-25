@@ -15,6 +15,8 @@
 | `system.selinux` | `ansible_selinux.status` | `gather_system.yml` | |
 | `system.hosting_type` | `systemd-detect-virt` + `ansible_virtualization_type/role` + `ansible_system_vendor` | `gather_system.yml` | OS 채널 전용. enum: virtual/baremetal/unknown |
 | `system.fqdn` | `ansible_fqdn` | `gather_system.yml` | |
+| `system.serial_number` | `ansible_product_serial` (DMI) | `gather_system.yml` | NA/빈값→null 정규화. become 권장 |
+| `system.system_uuid` | `ansible_product_uuid` (DMI) | `gather_system.yml` | NA/빈값→null 정규화. become 권장. cross-channel 연결 키 |
 | `cpu.sockets` | `ansible_processor_count` | `gather_cpu.yml` | |
 | `cpu.cores_physical` | `shell grep "cpu cores" × sockets` | `gather_cpu.yml` | |
 | `cpu.logical_threads` | `ansible_processor_vcpus` | `gather_cpu.yml` | |
@@ -43,6 +45,8 @@
 | `system.selinux` | N/A | `gather_system.yml` | Windows에는 SELinux 없음 → null |
 | `system.hosting_type` | `Win32_ComputerSystem` (Model, Manufacturer, HypervisorPresent) | `gather_system.yml` | OS 채널 전용. enum: virtual/baremetal/unknown |
 | `system.fqdn` | `ansible_fqdn` | `gather_system.yml` | WMI |
+| `system.serial_number` | `ansible_product_serial` (WMI/setup) | `gather_system.yml` | NA/빈값→null 정규화 |
+| `system.system_uuid` | `ansible_product_uuid` (WMI/setup) | `gather_system.yml` | NA/빈값→null 정규화. cross-channel 연결 키 |
 | `cpu.sockets` | `Win32_Processor` (WMI) | `gather_cpu.yml` | WMI |
 | `cpu.cores_physical` | `Win32_Processor.NumberOfCores` | `gather_cpu.yml` | WMI |
 | `cpu.logical_threads` | `Win32_Processor.NumberOfLogicalProcessors` | `gather_cpu.yml` | WMI |
