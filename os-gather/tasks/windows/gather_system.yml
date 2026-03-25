@@ -77,6 +77,39 @@
       {%- endif -%}
   no_log: true
 
+# 식별자 값 결정 — NA/빈값/센티널은 null 정규화
+- name: "windows | system | resolve identifiers"
+  ansible.builtin.set_fact:
+    _w_serial_val: >-
+      {{ none if (ansible_product_serial | default('')) in ['', 'NA', 'None', 'Not Specified', 'To Be Filled By O.E.M.']
+         else (ansible_product_serial | default(none)) }}
+    _w_uuid_val: >-
+      {{ none if (ansible_product_uuid | default('')) in ['', 'NA', 'None', 'Not Specified']
+         else (ansible_product_uuid | default(none)) }}
+  no_log: true
+
+# 식별자 diagnostic — non-fatal, status/sections에 영향 없음
+- name: "windows | system | build identifier diagnostics"
+  ansible.builtin.set_fact:
+    _w_id_diagnostics: >-
+      {%- set diags = [] -%}
+      {%- set serial_na = (_w_serial_val | default(none)) is none -%}
+      {%- set uuid_na   = (_w_uuid_val   | default(none)) is none -%}
+      {%- set serial_defined = ansible_product_serial is defined -%}
+      {%- set uuid_defined   = ansible_product_uuid is defined -%}
+      {%- if serial_na and not serial_defined -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 수집 제한 (insufficient_privilege): serial_number — 권한 또는 수집 경로 제한으로 fact를 취득하지 못했습니다.","detail":"affected_fields: serial_number"}) -%}
+      {%- elif serial_na and serial_defined -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 값 미제공 (identifier_not_available): serial_number — source에서 유효한 값을 반환하지 않았습니다.","detail":"affected_fields: serial_number"}) -%}
+      {%- endif -%}
+      {%- if uuid_na and not uuid_defined -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 수집 제한 (insufficient_privilege): system_uuid — 권한 또는 수집 경로 제한으로 fact를 취득하지 못했습니다.","detail":"affected_fields: system_uuid"}) -%}
+      {%- elif uuid_na and uuid_defined -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 값 미제공 (identifier_not_available): system_uuid — source에서 유효한 값을 반환하지 않았습니다.","detail":"affected_fields: system_uuid"}) -%}
+      {%- endif -%}
+      {{ diags }}
+  no_log: true
+
 - name: "windows | system | build fragment"
   ansible.builtin.set_fact:
     _data_fragment:
@@ -90,12 +123,12 @@
         uptime_seconds: "{{ (ansible_uptime_seconds | default(0)) | int }}"
         selinux:        null
         fqdn:           "{{ ansible_fqdn | default(inventory_hostname) }}"
-        serial_number:  "{{ none if (ansible_product_serial | default('')) in ['', 'NA', 'None', 'Not Specified', 'To Be Filled By O.E.M.'] else (ansible_product_serial | default(none)) }}"
-        system_uuid:    "{{ none if (ansible_product_uuid | default('')) in ['', 'NA', 'None', 'Not Specified'] else (ansible_product_uuid | default(none)) }}"
+        serial_number:  "{{ _w_serial_val | default(none) }}"
+        system_uuid:    "{{ _w_uuid_val | default(none) }}"
     _sections_supported_fragment: ['system']
     _sections_collected_fragment: ['system']
     _sections_failed_fragment:    []
-    _errors_fragment:             []
+    _errors_fragment: "{{ _w_id_diagnostics | default([]) }}"
   no_log: true
 
 - name: "windows | system | merge fragment"

@@ -78,6 +78,54 @@
       {%- endif -%}
   no_log: true
 
+# DMI 접근성 precheck — 권한/접근 진단 전용 (적재값은 setup fact에서 취득)
+- name: "linux | system | DMI serial precheck"
+  ansible.builtin.command: test -r /sys/class/dmi/id/product_serial
+  register: _l_dmi_serial_access
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "linux | system | DMI uuid precheck"
+  ansible.builtin.command: test -r /sys/class/dmi/id/product_uuid
+  register: _l_dmi_uuid_access
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+# 식별자 값 결정 — NA/빈값/센티널은 null 정규화
+- name: "linux | system | resolve identifiers"
+  ansible.builtin.set_fact:
+    _l_serial_val: >-
+      {{ none if (ansible_product_serial | default('')) in ['', 'NA', 'None', 'Not Specified', 'To Be Filled By O.E.M.']
+         else (ansible_product_serial | default(none)) }}
+    _l_uuid_val: >-
+      {{ none if (ansible_product_uuid | default('')) in ['', 'NA', 'None', 'Not Specified']
+         else (ansible_product_uuid | default(none)) }}
+  no_log: true
+
+# 식별자 diagnostic 생성 — non-fatal, status/sections에 영향 없음
+- name: "linux | system | build identifier diagnostics"
+  ansible.builtin.set_fact:
+    _l_id_diagnostics: >-
+      {%- set diags = [] -%}
+      {%- set serial_na = (_l_serial_val | default(none)) is none -%}
+      {%- set uuid_na   = (_l_uuid_val   | default(none)) is none -%}
+      {%- set serial_noaccess = (_l_dmi_serial_access.rc | default(1)) != 0 -%}
+      {%- set uuid_noaccess   = (_l_dmi_uuid_access.rc   | default(1)) != 0 -%}
+      {%- if serial_na and serial_noaccess -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 수집 제한 (insufficient_privilege): serial_number — DMI 접근 권한 부족. become 사용을 권장합니다.","detail":"affected_fields: serial_number"}) -%}
+      {%- elif serial_na and not serial_noaccess -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 값 미제공 (identifier_not_available): serial_number — source에서 유효한 값을 반환하지 않았습니다.","detail":"affected_fields: serial_number"}) -%}
+      {%- endif -%}
+      {%- if uuid_na and uuid_noaccess -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 수집 제한 (insufficient_privilege): system_uuid — DMI 접근 권한 부족. become 사용을 권장합니다.","detail":"affected_fields: system_uuid"}) -%}
+      {%- elif uuid_na and not uuid_noaccess -%}
+        {%- set _ = diags.append({"section":"system","message":"식별자 값 미제공 (identifier_not_available): system_uuid — source에서 유효한 값을 반환하지 않았습니다.","detail":"affected_fields: system_uuid"}) -%}
+      {%- endif -%}
+      {{ diags }}
+  no_log: true
+
 - name: "linux | system | build fragment"
   ansible.builtin.set_fact:
     _data_fragment:
@@ -91,8 +139,8 @@
         uptime_seconds: "{{ (ansible_uptime_seconds | default(_l_fb.UPTIME | default(0))) | int }}"
         selinux:        "{{ ansible_selinux.status | default(none) }}"
         fqdn:           "{{ ansible_fqdn | default(inventory_hostname) }}"
-        serial_number:  "{{ none if (ansible_product_serial | default('')) in ['', 'NA', 'None', 'Not Specified', 'To Be Filled By O.E.M.'] else (ansible_product_serial | default(none)) }}"
-        system_uuid:    "{{ none if (ansible_product_uuid | default('')) in ['', 'NA', 'None', 'Not Specified'] else (ansible_product_uuid | default(none)) }}"
+        serial_number:  "{{ _l_serial_val | default(none) }}"
+        system_uuid:    "{{ _l_uuid_val | default(none) }}"
     _sections_supported_fragment: ['system']
     _sections_collected_fragment: >-
       {{ ['system'] if (ansible_distribution is defined
@@ -102,7 +150,7 @@
       {{ [] if (ansible_distribution is defined
                 or (_l_fb is defined and _l_fb.DIST is defined))
          else ['system'] }}
-    _errors_fragment: []
+    _errors_fragment: "{{ _l_id_diagnostics | default([]) }}"
     # l_fb 를 후속 태스크가 참조할 수 있도록 유지
     _l_fb: "{{ _l_fb | default({}) }}"
   no_log: true

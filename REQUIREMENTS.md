@@ -300,6 +300,16 @@ grep "stdout_callback\|callback_plugins" ansible.cfg
 - `hosting_type`이 `virtual`이면 물리 Redfish와 직접 매칭하지 않는다.
 - 물리 서버에 직접 설치된 OS는, 그 위에서 KVM/Hyper-V host 역할을 하더라도 `baremetal`로 분류한다.
 
+### 8-3. 식별자 수집 권한 정책
+
+- Linux에서 DMI 기반 식별자(serial_number, system_uuid) 수집 정확도를 높이기 위해 become 권한 사용을 권장한다.
+- 권한 부족 또는 source 값 부재 시 식별자는 null로 반환한다.
+- 식별자 미수집은 gather 실패가 아니며, 수집은 계속 진행된다.
+- 미수집 원인은 non-fatal diagnostic으로 errors 배열에 기록할 수 있다. 이 diagnostic은 status 및 sections 판정에 영향을 주지 않는다.
+  - `insufficient_privilege`: 권한 부족 또는 수집 경로 제한으로 DMI/WMI 접근 불가
+  - `identifier_not_available`: source가 유효한 값을 제공하지 않음
+- Windows도 동일한 원칙을 따른다.
+
 ---
 
 ## 9. 미지원 환경 요약
