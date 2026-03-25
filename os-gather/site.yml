@@ -203,6 +203,23 @@
         - name: "linux | gather users"
           ansible.builtin.include_tasks: tasks/linux/gather_users.yml
 
+        # ── diagnosis (성공 경로) ───────────────────────────────────────
+        - name: "linux | build diagnosis (success path)"
+          ansible.builtin.set_fact:
+            _diagnosis:
+              reachable:          true
+              port_open:          true
+              protocol_supported: true
+              auth_success:       true
+              failure_stage:      null
+              failure_reason:     null
+              details:
+                channel:           "os"
+                adapter_candidate: "{{ (_selected_adapter | default({})).adapter_id | default(none) }}"
+                detected_os:       "linux"
+                selected_port:     22
+                checked_ports:     [22]
+
         # ── meta & correlation ───────────────────────────────────────────
         - name: "linux | set output meta vars"
           ansible.builtin.set_fact:
@@ -310,6 +327,23 @@
 
         - name: "windows | gather users"
           ansible.builtin.include_tasks: tasks/windows/gather_users.yml
+
+        # ── diagnosis (성공 경로) ───────────────────────────────────────
+        - name: "windows | build diagnosis (success path)"
+          ansible.builtin.set_fact:
+            _diagnosis:
+              reachable:          true
+              port_open:          true
+              protocol_supported: true
+              auth_success:       true
+              failure_stage:      null
+              failure_reason:     null
+              details:
+                channel:           "os"
+                adapter_candidate: "{{ (_selected_adapter | default({})).adapter_id | default(none) }}"
+                detected_os:       "windows"
+                selected_port:     "{{ ansible_port | default(5986) }}"
+                checked_ports:     [5985, 5986]
 
         # ── meta & correlation ───────────────────────────────────────────
         - name: "windows | set output meta vars"

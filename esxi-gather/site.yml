@@ -101,6 +101,15 @@
             _out_ip:                "{{ _e_ip }}"
             _out_vendor:            "{{ _e_raw_facts.ansible_system_vendor | default(none) }}"
 
+        - name: "esxi | enrich diagnosis with adapter"
+          ansible.builtin.set_fact:
+            _diagnosis: >-
+              {{ _diagnosis | default({}) | combine({
+                   'details': (_diagnosis | default({})).get('details', {}) | combine({
+                     'adapter_candidate': (_selected_adapter | default({})).adapter_id | default(none)
+                   })
+                 }) }}
+
         # ── meta & correlation ───────────────────────────────────────────
         - name: "esxi | build_meta"
           ansible.builtin.include_tasks:
