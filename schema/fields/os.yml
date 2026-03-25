@@ -10,6 +10,12 @@ channel: os
 sections:
   system:
     extra_fields:
+      hosting_type:
+        type: string
+        display_name: "호스팅 유형"
+        description: "virtual / baremetal / unknown"
+        note: "OS 채널 전용. Redfish/ESXi에는 적용하지 않음"
+        enum: [virtual, baremetal, unknown]
       selinux:
         type: string
         display_name: "SELinux 상태"

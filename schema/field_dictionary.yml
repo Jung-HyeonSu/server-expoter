@@ -485,6 +485,24 @@ fields:
     help_ko: "CPU 아키텍처 (예: x86_64)."
     help_en: "CPU architecture (e.g., x86_64)."
 
+  system.hosting_type:
+    type: "string"
+    enum: ["virtual", "baremetal", "unknown"]
+    priority: must
+    channel: [os]
+    help_ko: >-
+      호스팅 유형.
+      virtual=가상머신(VMware/KVM/Hyper-V 등의 guest),
+      baremetal=물리 서버에 직접 설치된 OS,
+      unknown=판별 근거 부족 또는 신호 충돌.
+      OS 채널 전용 필드. Redfish/ESXi에는 적용하지 않음.
+    help_en: >-
+      Hosting type.
+      virtual=VM guest (VMware/KVM/Hyper-V etc.),
+      baremetal=OS installed directly on physical server,
+      unknown=insufficient evidence or conflicting signals.
+      OS channel only. Not applicable to Redfish/ESXi.
+
   system.uptime_seconds:
     type: "integer|null"
     priority: skip

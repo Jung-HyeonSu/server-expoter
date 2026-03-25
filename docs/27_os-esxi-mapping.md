@@ -13,6 +13,7 @@
 | `system.architecture` | `ansible_architecture` | `gather_system.yml` | |
 | `system.uptime_seconds` | `ansible_uptime_seconds \| int` | `gather_system.yml` | |
 | `system.selinux` | `ansible_selinux.status` | `gather_system.yml` | |
+| `system.hosting_type` | `systemd-detect-virt` + `ansible_virtualization_type/role` + `ansible_system_vendor` | `gather_system.yml` | OS 채널 전용. enum: virtual/baremetal/unknown |
 | `system.fqdn` | `ansible_fqdn` | `gather_system.yml` | |
 | `cpu.sockets` | `ansible_processor_count` | `gather_cpu.yml` | |
 | `cpu.cores_physical` | `shell grep "cpu cores" × sockets` | `gather_cpu.yml` | |
@@ -40,6 +41,7 @@
 | `system.architecture` | `ansible_architecture` (정규화 적용) | `gather_system.yml` | "64비트"/"64-bit"/"AMD64"→"x86_64" 매핑 |
 | `system.uptime_seconds` | `ansible_uptime_seconds \| int` | `gather_system.yml` | WMI |
 | `system.selinux` | N/A | `gather_system.yml` | Windows에는 SELinux 없음 → null |
+| `system.hosting_type` | `Win32_ComputerSystem` (Model, Manufacturer, HypervisorPresent) | `gather_system.yml` | OS 채널 전용. enum: virtual/baremetal/unknown |
 | `system.fqdn` | `ansible_fqdn` | `gather_system.yml` | WMI |
 | `cpu.sockets` | `Win32_Processor` (WMI) | `gather_cpu.yml` | WMI |
 | `cpu.cores_physical` | `Win32_Processor.NumberOfCores` | `gather_cpu.yml` | WMI |

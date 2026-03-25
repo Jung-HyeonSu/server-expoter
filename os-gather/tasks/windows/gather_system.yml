@@ -31,6 +31,52 @@
       {%- endif -%}
   no_log: true
 
+- name: "windows | system | hosting detection"
+  ansible.windows.win_shell: |
+    $cs = Get-CimInstance Win32_ComputerSystem
+    [PSCustomObject]@{
+      Model            = $cs.Model
+      Manufacturer     = $cs.Manufacturer
+      HypervisorPresent = [string]$cs.HypervisorPresent
+    } | ConvertTo-Json -Compress
+  register: _w_hosting_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: "windows | system | parse hosting"
+  ansible.builtin.set_fact:
+    _w_hosting: >-
+      {%- if _w_hosting_raw.stdout is defined and _w_hosting_raw.stdout | trim | length > 0 -%}
+      {{ _w_hosting_raw.stdout | from_json }}
+      {%- else -%}
+      {}
+      {%- endif -%}
+  no_log: true
+
+# hosting_type 판정:
+#   - Model/Manufacturer가 알려진 VM 패턴 → virtual
+#   - VM 패턴 아님 + HypervisorPresent=False + 물리 OEM → baremetal
+#   - 그 외 → unknown
+# 물리 OEM evidence(Manufacturer)는 판정의 보강 근거로만 사용
+- name: "windows | system | determine hosting_type"
+  ansible.builtin.set_fact:
+    _w_hosting_type: >-
+      {%- set model = (_w_hosting.Model | default('')) | string -%}
+      {%- set mfr   = (_w_hosting.Manufacturer | default('')) | string -%}
+      {%- set hyp   = (_w_hosting.HypervisorPresent | default('')) | string -%}
+      {%- set vm_models = ['Virtual Machine', 'VMware Virtual Platform', 'VirtualBox', 'KVM', 'QEMU Virtual Machine', 'Standard PC'] -%}
+      {%- set vm_mfrs   = ['VMware, Inc.', 'QEMU', 'Xen', 'Amazon EC2', 'Google', 'DigitalOcean'] -%}
+      {%- set oem_mfrs  = ['Dell Inc.', 'HPE', 'Hewlett Packard Enterprise', 'Lenovo', 'Cisco Systems Inc', 'Supermicro', 'Fujitsu', 'Inspur'] -%}
+      {%- set is_vm_model = model in vm_models -%}
+      {%- set is_vm_mfr   = mfr in vm_mfrs -%}
+      {%- set is_ms_vm    = (mfr == 'Microsoft Corporation' and model == 'Virtual Machine') -%}
+      {%- if is_vm_model or is_vm_mfr or is_ms_vm -%}virtual
+      {%- elif hyp == 'False' and mfr in oem_mfrs -%}baremetal
+      {%- else -%}unknown
+      {%- endif -%}
+  no_log: true
+
 - name: "windows | system | build fragment"
   ansible.builtin.set_fact:
     _data_fragment:
@@ -40,6 +86,7 @@
         version:        "{{ _w_os_data.rel_id    | default(_w_os_data.version | default(none)) }}"
         kernel:         "{{ _w_os_data.build     | default(none) | string }}"
         architecture:   "{{ 'x86_64' if (ansible_architecture | default('')) in ['64-bit', '64비트', 'AMD64', 'x86_64'] else ('x86' if (ansible_architecture | default('')) in ['32-bit', '32비트', 'x86'] else (ansible_architecture | default(none))) }}"
+        hosting_type:   "{{ _w_hosting_type | default('unknown') | trim }}"
         uptime_seconds: "{{ (ansible_uptime_seconds | default(0)) | int }}"
         selinux:        null
         fqdn:           "{{ ansible_fqdn | default(inventory_hostname) }}"

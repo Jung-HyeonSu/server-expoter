@@ -43,7 +43,8 @@
       "architecture": "x86_64",
       "uptime_seconds": 5433613,
       "selinux": null,
-      "fqdn": "DESKTOP-99237QP"
+      "fqdn": "DESKTOP-99237QP",
+      "hosting_type": "virtual"
     },
     "bmc": null,
     "memory": {

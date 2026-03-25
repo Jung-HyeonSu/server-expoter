@@ -47,6 +47,37 @@
                     | list) }}"
   no_log: true
 
+- name: "linux | system | systemd-detect-virt"
+  ansible.builtin.command: systemd-detect-virt
+  register: _l_sdv_result
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+# hosting_type 판정:
+#   Step 1: systemd-detect-virt가 알려진 VM 신호 → virtual
+#          (sdv는 guest일 때만 VM 이름 반환, host면 "none")
+#   Step 2: sdv가 none이지만 vtype이 VM 신호 + role=guest → virtual
+#          (vtype=kvm + role=host는 KVM hypervisor이므로 virtual이 아님)
+#   Step 3: sdv=none + role=host + 물리 OEM evidence → baremetal
+#   Step 4: 그 외 → unknown
+# sys_vendor/product_name은 판정의 보강 근거로만 사용
+- name: "linux | system | determine hosting_type"
+  ansible.builtin.set_fact:
+    _l_hosting_type: >-
+      {%- set sdv = (_l_sdv_result.stdout | default('')) | trim | lower -%}
+      {%- set vtype = (ansible_virtualization_type | default('')) | lower -%}
+      {%- set vrole = (ansible_virtualization_role | default('')) | lower -%}
+      {%- set vendor = (ansible_system_vendor | default('')) -%}
+      {%- set vm_signals = ['vmware', 'kvm', 'qemu', 'xen', 'hyperv', 'microsoft', 'oracle', 'parallels', 'bhyve', 'lxc', 'docker', 'podman', 'openvz', 'virtualbox', 'bochs', 'uml'] -%}
+      {%- set oem_vendors = ['Dell Inc.', 'HPE', 'Hewlett Packard Enterprise', 'Hewlett-Packard', 'Lenovo', 'Cisco Systems Inc', 'Supermicro', 'Fujitsu', 'Inspur'] -%}
+      {%- if sdv in vm_signals -%}virtual
+      {%- elif vtype in vm_signals and vrole == 'guest' -%}virtual
+      {%- elif sdv == 'none' and vrole == 'host' and vendor in oem_vendors -%}baremetal
+      {%- else -%}unknown
+      {%- endif -%}
+  no_log: true
+
 - name: "linux | system | build fragment"
   ansible.builtin.set_fact:
     _data_fragment:
@@ -56,6 +87,7 @@
         version:        "{{ ansible_distribution_version | default(none) }}"
         kernel:         "{{ ansible_kernel         | default(_l_fb.KERNEL | default(none)) }}"
         architecture:   "{{ ansible_architecture   | default(_l_fb.ARCH | default(none)) }}"
+        hosting_type:   "{{ _l_hosting_type | default('unknown') | trim }}"
         uptime_seconds: "{{ (ansible_uptime_seconds | default(_l_fb.UPTIME | default(0))) | int }}"
         selinux:        "{{ ansible_selinux.status | default(none) }}"
         fqdn:           "{{ ansible_fqdn | default(inventory_hostname) }}"
