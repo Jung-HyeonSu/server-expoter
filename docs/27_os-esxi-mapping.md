@@ -66,7 +66,7 @@
 | `system.distribution` | `vmware_host_facts` → `ansible_distribution` | `gather_system.yml` | vSphere API |
 | `system.version` | `vmware_host_facts` → `ansible_distribution_version` | `gather_system.yml` | vSphere API |
 | `system.kernel` | `vmware_host_facts` → build number | `gather_system.yml` | vSphere API |
-| `system.architecture` | `vmware_host_facts` → `ansible_processor[0]` | `gather_system.yml` | vSphere API |
+| `system.architecture` | N/A | `gather_system.yml` | vmware_host_facts가 ansible_machine 키를 제공하지 않음. null 유지. CPU 모델명 기반 추정은 하지 않음 |
 | `system.uptime_seconds` | `vmware_host_facts` → uptime | `gather_system.yml` | vSphere API |
 | `system.selinux` | N/A | `gather_system.yml` | ESXi에는 SELinux 없음 → null |
 | `system.fqdn` | `vmware_host_facts` → FQDN | `gather_system.yml` | vSphere API |
@@ -80,12 +80,12 @@
 | `cpu.cores_physical` | `vmware_host_facts` → `ansible_processor_cores` | `gather_cpu.yml` | vSphere API |
 | `cpu.logical_threads` | `vmware_host_facts` → `ansible_processor_vcpus` | `gather_cpu.yml` | vSphere API |
 | `cpu.model` | `vmware_host_facts` → processor model | `gather_cpu.yml` | vSphere API |
-| `cpu.architecture` | N/A | — | 현재 null — 추가 확인 필요 |
+| `cpu.architecture` | N/A | — | system.architecture와 동일 — vmware_host_facts 미제공으로 null 유지 |
 | `memory.total_mb` | `vmware_host_facts` → `ansible_memtotal_mb` | `gather_memory.yml` | vSphere API |
 | `memory.total_basis` | hardcoded `"hypervisor_visible"` | `gather_memory.yml` | |
 | `storage.datastores[]` | `vmware_host_facts` → datastore info | `gather_storage.yml` | vSphere API |
 | `network.interfaces[]` | `vmware_host_facts` → vmkernel interfaces | `gather_network.yml` | vSphere API |
-| `network.default_gateways[]` | `vmware_host_facts` → default gateway | `gather_network.yml` | vSphere API |
+| `network.default_gateways[]` | N/A | `normalize_network.yml` | vmware_host_facts / vsphere schema가 ansible_default_ipv4 구조 자체를 제공하지 않음. [] 유지. ESXi는 vmkernel 기반 네트워크 모델이므로 host-level default gateway 의미가 OS와 다름 |
 
 ---
 
