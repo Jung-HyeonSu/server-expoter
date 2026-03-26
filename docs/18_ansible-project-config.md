@@ -8,7 +8,7 @@
 
 ## 1. 프로젝트 ansible.cfg
 
-프로젝트 루트의 `ansible.cfg` 핵심 설정:
+프로젝트 루트의 `ansible.cfg` 설정:
 
 ```ini
 [defaults]

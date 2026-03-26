@@ -82,7 +82,7 @@
 | os (Windows) | 5986/5985 | WinRM HTTPS/HTTP | NTLM |
 | esxi | 443 | GET /sdk | vSphere API |
 
-## 핵심 파일
+## 파일
 
 | 파일 | 역할 |
 |------|------|

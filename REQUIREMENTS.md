@@ -89,11 +89,11 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
 
 | ESXi 버전 | 수집 가능 여부 | 비고 |
 |----------|-------------|------|
-| 8.x | ✅ 완전 지원 | |
-| 7.x | ✅ 완전 지원 | |
-| 6.7 | ✅ 완전 지원 | |
-| 6.5 | ✅ 대부분 지원 | 일부 항목 `null` 가능 |
-| 6.0 이하 | ❌ 미지원 | `community.vmware` 모듈 호환 안 됨 |
+| 8.x | 완전 지원 | |
+| 7.x | 완전 지원 | |
+| 6.7 | 완전 지원 | |
+| 6.5 | 대부분 지원 | 일부 항목 `null` 가능 |
+| 6.0 이하 | 미지원 | `community.vmware` 모듈 호환 안 됨 |
 
 > **중요**: Free ESXi(vSphere Hypervisor)는 API write access 가 없어 `vmware_host_facts` 실행 시 오류 발생
 

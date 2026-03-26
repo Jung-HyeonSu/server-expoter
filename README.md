@@ -5,7 +5,7 @@
 
 ---
 
-## 핵심 원칙
+## 원칙
 
 **계정은 vault 에서 관리한다.** 포털이 전달하는 것은 `ip` 와 `target_type` 뿐이다.
 OS 타입과 벤더를 모르는 상태로 시작하며, gather 가 직접 감지하여 분기한다.
@@ -99,9 +99,9 @@ server-exporter/
 
 | 파라미터 | 필수 | 설명 |
 |---------|------|------|
-| `loc` | ✅ | Jenkins agent label: `ich` / `chj` / `yi` |
-| `target_type` | ✅ | `os` / `esxi` / `redfish` |
-| `inventory_json` | ✅ | `[{"ip": "10.x.x.1"}]` |
+| `loc` | 필수 | Jenkins agent label: `ich` / `chj` / `yi` |
+| `target_type` | 필수 | `os` / `esxi` / `redfish` |
+| `inventory_json` | 필수 | `[{"ip": "10.x.x.1"}]` |
 
 ---
 

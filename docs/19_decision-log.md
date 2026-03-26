@@ -110,7 +110,7 @@ normalize에서 `| default(none)` 처리.
 
 **현재 프로젝트 범위에서는 Standard Redfish가 충분하다.** OEM placeholder는 향후 운영 요구 발생 시 확장한다.
 
-이 결론은 "OEM이 영구적으로 불필요하다"는 뜻이 아니라, 현재 수집 범위(firmware inventory + PSU health/state/metrics) 기준으로 standard endpoint가 실무 핵심 요구의 95%+ 를 커버한다는 판정이다.
+현재 수집 범위(firmware inventory + PSU health/state/metrics) 기준으로 standard endpoint가 실무 요구의 95%+ 를 커버한다. OEM placeholder는 향후 운영 요구 발생 시 확장한다.
 
 ### 근거
 

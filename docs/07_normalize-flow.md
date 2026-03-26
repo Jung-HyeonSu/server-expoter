@@ -33,7 +33,7 @@ _all_errors:        []
 
 ---
 
-### merge_fragment.yml (핵심 엔진)
+### merge_fragment.yml
 
 각 gather/normalize 태스크가 fragment 생성 직후 호출한다.
 

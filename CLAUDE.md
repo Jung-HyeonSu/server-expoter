@@ -1,21 +1,21 @@
 # Server Exporter - 엔터프라이즈 서버 정보 수집 시스템
 
-## 📋 개요
+## 개요
 
-엔터프라이즈급 서버 정보 수집 파이프라인입니다. Jenkins-Ansible 기반의 **3-채널 통합 수집 시스템**으로 멀티벤더(Dell, HPE, Lenovo, Supermicro, Cisco) 하드웨어 및 OS 정보를 수집하고 표준화합니다.
+엔터프라이즈급 서버 정보 수집 파이프라인이다. Jenkins-Ansible 기반의 **3-채널 통합 수집 시스템**으로 멀티벤더(Dell, HPE, Lenovo, Supermicro, Cisco) 하드웨어 및 OS 정보를 수집하고 표준화한다.
 
-**핵심 특징:**
-- 🔄 **3중 채널**: OS-gather (Linux/Windows) + ESXi-gather + Redfish-gather (BMC/IPMI)
-- 🧩 **Fragment 기반 모듈화**: 각 gather가 자신의 역할만 하고, 공통 정규화 파이프라인이 병합
-- 📌 **Adapter 시스템**: 벤더/세대별 수집 방식을 YAML로 추상화 (코드 수정 X)
-- 🔐 **Vault 자동 로딩**: 포털은 IP만 전달, 인증정보는 ansible vault에서 자동 로드
-- 📊 **표준 JSON Output**: 3채널 공통 스키마 (status, sections, data, errors, meta, diagnosis)
+**특징:**
+- **3중 채널**: OS-gather (Linux/Windows) + ESXi-gather + Redfish-gather (BMC/IPMI)
+- **Fragment 모듈화**: 각 gather가 자신의 역할만 하고, 공통 정규화 파이프라인이 병합
+- **Adapter 시스템**: 벤더/세대별 수집 방식을 YAML로 추상화 (코드 수정 불필요)
+- **Vault 자동 로딩**: 포털은 IP만 전달, 인증정보는 ansible vault에서 자동 로드
+- **표준 JSON Output**: 3채널 공통 스키마 (status, sections, data, errors, meta, diagnosis)
 
-**상태**: 🟢 **프로덕션 준비 완료** (실장비 검증: Dell/HPE/Lenovo, Round 7-10 완료)
+**상태**: 프로덕션 준비 완료 (실장비 검증: Dell/HPE/Lenovo, Round 7-10 완료)
 
 ---
 
-## 🏗️ 아키텍처
+## 아키텍처
 
 ### 전체 흐름 (포털 → Jenkins → Ansible → 포털)
 
@@ -36,7 +36,7 @@
     포털 (console log 파싱 또는 artifact)
 ```
 
-### Fragment 기반 정규화 (핵심 설계)
+### Fragment 정규화
 
 ```
 Raw 수집 (각 gather_*.yml)
@@ -64,10 +64,10 @@ merge_fragment.yml (누적 병합)
   └─ build_output.yml → 최종 JSON + schema_version
 ```
 
-**설계 철학:**
-- 각 gather는 자신의 역할만 → **낮은 결합도**
-- 새 섹션 추가 시 site.yml 수정 불필요 → **높은 확장성**
-- Fragment 구조로 부분 실패 처리 → **우아한 오류 처리**
+**설계 원칙:**
+- 각 gather는 자신의 역할만 담당한다 → 낮은 결합도
+- 새 섹션 추가 시 site.yml 수정이 불필요하다 → 높은 확장성
+- Fragment 구조로 부분 실패를 개별 처리한다 → 안정적인 오류 처리
 
 ### Adapter 시스템 (벤더 자동 감지)
 
@@ -94,11 +94,11 @@ adapter_loader (lookup plugin)
 2. `adapters/redfish/{벤더}_*.yml` adapter YAML 생성 (match, capabilities, collect, normalize 경로)
 3. (선택) `redfish-gather/tasks/vendors/{벤더}/` OEM 태스크 추가
 
-**site.yml 수정 불필요!** adapter_loader가 동적으로 감지.
+**site.yml 수정 불필요** — adapter_loader가 동적으로 감지한다.
 
 ---
 
-## 📦 기술 스택
+## 기술 스택
 
 | 카테고리 | 기술 | 버전 | 용도 |
 |---------|------|------|------|
@@ -116,12 +116,12 @@ adapter_loader (lookup plugin)
 
 ---
 
-## 📁 파일 구조 (핵심)
+## 파일 구조
 
 ```
 server-exporter/ (프로젝트 루트)
 
-1️⃣ 수집 채널 (3개)
+[1] 수집 채널 (3개)
    ├── os-gather/
    │   ├── site.yml (3-Play: 포트감지→Linux→Windows)
    │   └── tasks/linux/ (6개) + windows/ (6개) → gather_*.yml
@@ -133,7 +133,7 @@ server-exporter/ (프로젝트 루트)
        ├── library/redfish_gather.py (300줄, Redfish API 엔진)
        └── tasks/ + vendors/{dell,hpe,lenovo,supermicro,cisco}/
 
-2️⃣ 공통 로직 (Fragment 정규화)
+[2] 공통 로직 (Fragment 정규화)
    ├── common/library/
    │   └── precheck_bundle.py (4단계 진단: ping→port→protocol→auth)
    └── common/tasks/normalize/
@@ -142,12 +142,12 @@ server-exporter/ (프로젝트 루트)
        ├── build_*.yml (10개: sections, status, errors, meta, correlation, output)
        └── supported_sections.yml, status_rules.yml
 
-3️⃣ Adapter 시스템 (13개 YAML)
+[3] Adapter 시스템 (13개 YAML)
    ├── adapters/redfish/ (9개: generic + dell/hpe/lenovo/supermicro/cisco)
    ├── adapters/os/ (7개: linux_*/windows_*)
    └── adapters/esxi/ (4개: generic + 6x/7x/8x)
 
-4️⃣ Schema & 데이터
+[4] Schema & 데이터
    ├── schema/
    │   ├── sections.yml (10개: system, hardware, bmc, cpu, memory, storage, network, firmware, users, power)
    │   ├── field_dictionary.yml (18 Must + Nice + Skip)
@@ -155,19 +155,19 @@ server-exporter/ (프로젝트 루트)
    │   └── examples/ (success/partial/failed 예시)
    └── vault/ (linux.yml, windows.yml, esxi.yml, redfish/{vendor}.yml)
 
-5️⃣ Python 플러그인 (12개)
+[5] Python 플러그인 (12개)
    ├── callback_plugins/json_only.py (stdout callback, OUTPUT 태스크만 JSON)
    ├── lookup_plugins/adapter_loader.py (adapter 동적 선택)
    ├── filter_plugins/diagnosis_mapper.py, field_mapper.py
    └── module_utils/adapter_common.py (점수 계산, 벤더 정규화)
 
-6️⃣ 테스트 (145개 Redfish fixture + 7개 baseline)
+[6] 테스트 (145개 Redfish fixture + 7개 baseline)
    ├── tests/redfish-probe/ (probe_redfish.py, deep_probe_redfish.py)
    ├── tests/fixtures/ (실장비 JSON 응답)
    ├── tests/evidence/ (Round 7-10 조건부 검토)
    └── tests/scripts/ (conditional_review.py, os_esxi_verify.sh)
 
-7️⃣ 문서 (23개: 루트 4 + docs/ 19)
+[7] 문서 (23개: 루트 4 + docs/ 19)
    ├── README.md, GUIDE_FOR_AI.md, REQUIREMENTS.md
    └── docs/
        ├── 01_jenkins-setup        — Jenkins 설치·플러그인·자격증명·RBAC
@@ -193,7 +193,7 @@ server-exporter/ (프로젝트 루트)
 
 ---
 
-## 🔌 ECC 활용 전략
+## ECC 활용 전략
 
 ### Python 부분 (100% ECC 지원)
 
@@ -288,7 +288,7 @@ python tests/redfish-probe/validate_fields.py \
 
 ---
 
-## 🔄 개발 워크플로우
+## 개발 워크플로우
 
 ### Daily Development
 
@@ -351,18 +351,18 @@ git commit -m "feat: Thermal 정보 수집 추가
 
 ---
 
-## ⚠️ 주의사항 & Best Practices
+## 주의사항 & Best Practices
 
-### 🔴 Critical: Fragment 철학 지키기
+### Critical: Fragment 철학 지키기
 
-❌ **WRONG** - 다른 gather의 fragment 수정:
+**WRONG** - 다른 gather의 fragment 수정:
 ```yaml
 - name: 다른 섹션의 fragment 수정 (금지!)
   set_fact:
     _sections_memory_collected_fragment: [...]
 ```
 
-✅ **CORRECT** - 자신의 fragment만:
+**CORRECT** - 자신의 fragment만:
 ```yaml
 - name: 자신의 fragment 생성
   set_fact:
@@ -371,7 +371,7 @@ git commit -m "feat: Thermal 정보 수집 추가
     _sections_cpu_collected_fragment: ['cpu']
 ```
 
-### 🟡 High: Adapter 점수 계산
+### High: Adapter 점수 계산
 
 ```
 score = priority × 1000 + specificity × 10 + match_score
@@ -383,7 +383,7 @@ score = priority × 1000 + specificity × 10 + match_score
 - 세대별 → priority=50-100
 - 구체적 모델 → match.model_patterns + 높은 specificity
 
-### 🟢 Medium: Vault 2단계 로딩
+### Medium: Vault 2단계 로딩
 
 **Redfish 특화:**
 ```yaml
@@ -405,7 +405,7 @@ score = priority × 1000 + specificity × 10 + match_score
     password: "{{ _rf_vault.password }}"
 ```
 
-### 🔵 Low: OEM 확장 (선택)
+### Low: OEM 확장 (선택)
 
 OEM이 없으면:
 ```yaml
@@ -422,7 +422,7 @@ collect:
 
 ---
 
-## 🚀 Git 워크플로우
+## Git 워크플로우
 
 ### Commit 메시지 포맷
 
@@ -455,21 +455,21 @@ main
 
 ---
 
-## 📊 3-채널 지원 현황
+## 3-채널 지원 현황
 
 | 기능 | OS (Linux/Windows) | ESXi | Redfish |
 |------|-------------------|------|---------|
-| 구현 완료 | ✅ | ✅ | ✅ |
+| 구현 완료 | O | O | O |
 | Adapter 수 | 7개 | 4개 | 9개 |
 | 지원 섹션 | 6개 | 6개 | 9개 |
-| Precheck | ✅ 포트 감지 | ✅ 4단계 | ✅ 4단계 |
-| Graceful Degradation | ✅ | ✅ | ✅ |
+| Precheck | 포트 감지 | 4단계 | 4단계 |
+| Graceful Degradation | O | O | O |
 | 벤더 지원 | N/A | VMware | Dell, HPE, Lenovo, Supermicro, Cisco |
-| 실장비 검증 | ✅ | ✅ (문서) | ✅ (3대: Dell/HPE/Lenovo) |
+| 실장비 검증 | O | O (문서) | O (3대: Dell/HPE/Lenovo) |
 
 ---
 
-## 🛠️ 트러블슈팅
+## 트러블슈팅
 
 ### Q1: Fragment 병합이 제대로 되지 않음
 **원인:** merge_fragment.yml을 호출하지 않음
@@ -501,7 +501,7 @@ cat common/vars/vendor_aliases.yml | grep "{{ detected_vendor }}"
 
 ---
 
-## 📚 주요 문서
+## 주요 문서
 
 | 문서 | 용도 |
 |------|------|
@@ -518,7 +518,7 @@ cat common/vars/vendor_aliases.yml | grep "{{ detected_vendor }}"
 
 ---
 
-## 🎯 ECC 명령어 빠른 참조
+## ECC 명령어 빠른 참조
 
 ```bash
 # 계획 수립 (새 기능 추가)
@@ -543,9 +543,8 @@ cat common/vars/vendor_aliases.yml | grep "{{ detected_vendor }}"
 
 ---
 
-## 📞 문의 & 개선
+## 기여 방식
 
-**기여 방식:**
 1. 새 기능은 /plan으로 계획 수립
 2. Python은 /tdd로 테스트부터
 3. Ansible은 /code-review 후 병합
@@ -557,12 +556,12 @@ cat common/vars/vendor_aliases.yml | grep "{{ detected_vendor }}"
 - ~~Diagnosis 필드가 부분 적용~~ → OS(Linux/Windows) + ESXi 전채널 diagnosis 생성 완료 (B1)
 - ESXi/Redfish host resolution bug → delegate_to: localhost 환경 대응 완료 (B5/B6)
 
-**현재 알려진 제한사항:**
+**알려진 제한사항:**
 - ESXi 수집은 community.vmware 컬렉션 의존 (프로덕션 Agent에 설치 필요, 03_agent-setup.md §3 참조)
 - OEM vendor task는 placeholder 상태 (Standard Redfish로 95%+ 커버, 향후 운영 요구 시 확장)
 
 ---
 
-**프로젝트 성숙도: 🟢 프로덕션 준비 완료**
+**프로젝트 상태: 프로덕션 준비 완료**
 
 최종 커밋: `5321646` (2026-03-24) - Windows 정규화 + Round 7-10 evidence

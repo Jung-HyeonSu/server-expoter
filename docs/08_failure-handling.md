@@ -59,7 +59,7 @@ always:
 
 Ansible `block/rescue` 는 unreachable 을 잡지 못한다.
 각 gather 는 수집 성공 여부를 `_*_ok` 변수로 체크하고,
-핵심 수집 실패 시 `ansible.builtin.fail` 로 rescue 로 진입시킨다.
+수집 실패 시 `ansible.builtin.fail` 로 rescue 로 진입시킨다.
 
 ```yaml
 - name: "abort if facts failed"
