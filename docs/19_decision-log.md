@@ -133,3 +133,25 @@ OEM 구현을 재검토해야 하는 상황:
 2. 벤더별 OEM-specific health code 해석 요구
 3. Thermal 섹션 스키마 정의 및 수집 요구
 4. 특정 벤더에서 standard endpoint로 수집 불가능한 필드 발견
+
+## 8. 리팩토링 이력 (실장비 검증 기반, 2026-03-18)
+
+### 완료 (P0/P1)
+
+| 항목 | 파일 | 내용 |
+|------|------|------|
+| P0-1 | `redfish_gather.py` | HPE Storage Controllers fallback (Controllers 서브링크 드릴다운) |
+| P0-2 | `redfish_gather.py` | gather_power() ServiceRoot 중복 호출 제거 (chassis_uri 직접 전달) |
+| P0-3 | `hpe_ilo6.yml` | HPE iLO 6 전용 adapter 신규 생성 |
+| P1-3 | `redfish_gather.py` | 벤더별 null 필드 경고 로깅 |
+| P1-4 | `redfish_gather.py` | HostName 빈 문자열 → None 변환 |
+| P1-7 | `redfish_gather.py` | MemorySummary Health → HealthRollup fallback |
+| P1-7-2 | `redfish_gather.py` | IndicatorLED → LocationIndicatorActive fallback |
+
+### 보류 (P1-P2)
+
+| 항목 | 사유 |
+|------|------|
+| 단위 변환 헬퍼 통일 | 현재 코드 정확, 우선순위 낮음 |
+| Thermal 수집 추가 | normalize 스키마 미정의, 향후 요구 시 구현 |
+| Supermicro/다중 System member/Session Auth/iLO5 차이 | 실장비 미보유로 검증 불가, 장비 확보 시 재검토 |

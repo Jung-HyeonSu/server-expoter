@@ -1,4 +1,4 @@
-# 08. Agent 노드 구성
+# 03. Agent 노드 구성
 
 Jenkins Agent 는 로케이션(이천 / 청주 / 용인)별로 구성하며,
 개발 / 운영 마스터 각각에 연결된 Agent 가 분리되어 있다.
@@ -6,7 +6,60 @@ Jenkins Agent 는 로케이션(이천 / 청주 / 용인)별로 구성하며,
 
 ---
 
-## 1. 기본 패키지 설치
+## 1. VM 리소스 산정
+
+### Jenkins 마스터
+
+| 항목 | 사양 |
+|------|------|
+| CPU | 8 core |
+| RAM | 32 GB (Jenkins 16GB + Redis 1GB + 여유) |
+| Disk | 500 GB (빌드 로그, 히스토리 누적 고려) |
+
+### Jenkins Agent
+
+| 항목 | 사양 |
+|------|------|
+| CPU | 8 core |
+| RAM | 16 GB |
+| Disk | 100 GB (Ansible 가상환경 + workspace) |
+
+### Redis (마스터 노드에 함께 설치)
+
+호스트 약 1만 대 기준:
+
+```
+호스트당 facts 평균 20~50KB × 10,000대 = 200~500MB
+여유분 포함 → maxmemory 1GB
+eviction policy: allkeys-lru
+fact_caching_timeout: 86400 (24시간)
+```
+
+```ini
+# /etc/redis.conf
+maxmemory 1gb
+maxmemory-policy allkeys-lru
+```
+
+---
+
+## 2. 방화벽 오픈 목록
+
+| 출발 | 목적지 | 포트 | 프로토콜 | 용도 |
+|------|--------|------|----------|------|
+| 포털 | Jenkins 마스터 | 8080 | TCP | Jenkins Job 트리거 |
+| Jenkins 마스터 | GitLab | 443 | TCP | Jenkinsfile / repo checkout |
+| Jenkins 마스터 | Agent | 22 | TCP | SSH — Agent 연결 |
+| Agent | Jenkins 마스터 | 6379 | TCP | Redis Fact 캐싱 |
+| Agent | 대상서버 Linux/ESXi | 22 | TCP | SSH |
+| Agent | 대상서버 Windows | 5985/5986 | TCP | WinRM |
+| Agent | 대상서버 Redfish | 443 | TCP | BMC HTTPS API |
+
+> Redis(6379) 는 내부망만 오픈. 외부 차단 필수.
+
+---
+
+## 3. 기본 패키지 설치
 
 ```bash
 # RHEL 계열
@@ -21,7 +74,7 @@ apt update && apt install -y openjdk-21-jdk python3 python3-venv git jq redis-to
 
 ---
 
-## 2. cloviradmin 계정 생성
+## 4. cloviradmin 계정 생성
 
 ```bash
 useradd -m -s /bin/bash cloviradmin
@@ -29,7 +82,7 @@ useradd -m -s /bin/bash cloviradmin
 
 ---
 
-## 3. Ansible 가상환경 설치
+## 5. Ansible 가상환경 설치
 
 ### Python 패키지
 
@@ -85,7 +138,7 @@ sudo /opt/ansible-env/bin/ansible-galaxy collection install ansible.utils       
 
 ---
 
-## 4. /etc/ansible/ansible.cfg 배치
+## 6. /etc/ansible/ansible.cfg 배치
 
 모든 계정에서 동일하게 적용되도록 `/etc/ansible/ansible.cfg` 에 배치한다.
 
@@ -136,7 +189,7 @@ EOF
 
 ---
 
-## 5. 신규 프로젝트 인벤토리 스크립트 실행 권한
+## 7. 신규 프로젝트 인벤토리 스크립트 실행 권한
 
 Windows 에서 커밋된 `.sh` 파일은 Git 에 실행 권한(100755)이 기록되지 않아
 Jenkins checkout 후 Ansible 동적 인벤토리가 동작하지 않는다.
@@ -156,7 +209,7 @@ git push
 
 ---
 
-## 6. Jenkins 노드 등록
+## 8. Jenkins 노드 등록
 
 경로: Jenkins → Manage Jenkins → Nodes → New Node
 
@@ -196,7 +249,7 @@ Jenkinsfile 의 `agent { label "${params.loc}" }` 기준:
 
 ---
 
-## 7. Node Properties 설정
+## 9. Node Properties 설정
 
 경로: Jenkins → Manage Jenkins → Nodes → {노드} → Configure → Node Properties
 
@@ -220,9 +273,9 @@ Jenkinsfile 의 `agent { label "${params.loc}" }` 기준:
 
 ---
 
-## 8. Redis 연결 테스트
+## 10. Redis 연결 테스트
 
-07_redis-install.md 의 마스터 Redis 설정이 완료된 상태에서 실행한다.
+02_redis-install.md 의 마스터 Redis 설정이 완료된 상태에서 실행한다.
 
 ```bash
 # Agent 에서 마스터 Redis 접속 확인

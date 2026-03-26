@@ -1,4 +1,4 @@
-# 07. Redis 설치 및 설정
+# 02. Redis 설치 및 설정
 
 Ansible `gather_facts` 결과를 Redis 에 캐싱하여 반복 실행 성능을 높인다.
 Redis 는 Jenkins 마스터 노드에 설치하며, Agent 가 마스터의 Redis 에 접속하는 구조다.
@@ -115,4 +115,4 @@ sudo ufw allow 6379/tcp
 ## 4. Agent 측 설정
 
 > Agent 측 Redis 연동(`pip install redis`, `ansible.cfg` 의 `fact_caching`, 연결 테스트)은
-> **08_agent-setup.md** 에서 Ansible 가상환경 설치와 함께 수행한다.
+> **03_agent-setup.md** 에서 Ansible 가상환경 설치와 함께 수행한다.

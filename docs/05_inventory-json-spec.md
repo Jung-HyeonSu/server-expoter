@@ -1,4 +1,4 @@
-# 10. inventory_json 필드 명세
+# 05. inventory_json 필드 명세
 
 포털이 Jenkins Job 트리거 시 전달하는 `inventory_json` 파라미터 명세.
 

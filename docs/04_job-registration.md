@@ -1,4 +1,4 @@
-# 09. Jenkins Job 등록
+# 04. Jenkins Job 등록
 
 경로: Jenkins → New Item → Pipeline 선택
 

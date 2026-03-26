@@ -1,4 +1,4 @@
-# 11. Gather 구조 설명
+# 06. Gather 구조 설명
 
 ## Fragment 기반 수집 철학
 

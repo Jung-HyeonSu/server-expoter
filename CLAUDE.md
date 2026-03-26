@@ -167,11 +167,11 @@ clovirone-portal/ (3.8MB, 369 files)
    ├── tests/evidence/ (Round 7-10 조건부 검토)
    └── tests/scripts/ (conditional_review.py, os_esxi_verify.sh)
 
-7️⃣ 문서 (27개)
+7️⃣ 문서 (23개: 루트 4 + docs/ 19)
    ├── README.md, GUIDE_FOR_AI.md, REQUIREMENTS.md
-   ├── 11_gather-structure.md, 12_normalize-flow.md, 18_adapter-system.md
-   ├── 21_redfish-live-validation.md (3대 실장비)
-   └── 22_adapter-matrix.md, 23_decision-log.md
+   ├── 06_gather-structure.md, 07_normalize-flow.md, 10_adapter-system.md
+   ├── 13_redfish-live-validation.md (3대 실장비)
+   └── 17_jenkins-pipeline.md, 19_decision-log.md
 ```
 
 ---
@@ -330,7 +330,7 @@ git commit -m "feat: Thermal 정보 수집 추가
 - [ ] `common/vars/supported_sections.yml` 업데이트
 - [ ] `schema/sections.yml` + `schema/fields/*.yml` 추가
 - [ ] Baseline JSON 예시 추가 (tests/fixtures 또는 examples)
-- [ ] 문서 업데이트 (`docs/16_output-examples.md`)
+- [ ] 문서 업데이트 (`docs/09_output-examples.md`)
 
 ---
 
@@ -491,11 +491,13 @@ cat common/vars/vendor_aliases.yml | grep "{{ detected_vendor }}"
 | **README.md** | 프로젝트 정체성, 3-채널 개요 |
 | **GUIDE_FOR_AI.md** | Fragment 철학, 새 gather 템플릿 |
 | **REQUIREMENTS.md** | 벤더/버전별 최소 요구사항 |
-| **docs/11_gather-structure.md** | 전체 구조 |
-| **docs/12_normalize-flow.md** | Fragment 정규화 흐름 |
-| **docs/18_adapter-system.md** | Adapter 상세 설명 |
-| **docs/21_redfish-live-validation.md** | 3대 실장비 검증 결과 |
-| **docs/23_decision-log.md** | 설계 의사결정 기록 |
+| **docs/06_gather-structure.md** | 전체 구조 |
+| **docs/07_normalize-flow.md** | Fragment 정규화 흐름 |
+| **docs/10_adapter-system.md** | Adapter 상세 설명 |
+| **docs/13_redfish-live-validation.md** | 3대 실장비 검증 결과 |
+| **docs/17_jenkins-pipeline.md** | Jenkins 파이프라인 런타임 |
+| **docs/18_ansible-project-config.md** | Ansible 프로젝트 설정 |
+| **docs/19_decision-log.md** | 설계 의사결정 기록 |
 
 ---
 
@@ -539,7 +541,7 @@ cat common/vars/vendor_aliases.yml | grep "{{ detected_vendor }}"
 - ESXi/Redfish host resolution bug → delegate_to: localhost 환경 대응 완료 (B5/B6)
 
 **현재 알려진 제한사항:**
-- ESXi 수집은 community.vmware 컬렉션 의존 (프로덕션 Agent에 설치 필요, 08_agent-setup.md §3 참조)
+- ESXi 수집은 community.vmware 컬렉션 의존 (프로덕션 Agent에 설치 필요, 03_agent-setup.md §3 참조)
 - OEM vendor task는 placeholder 상태 (Standard Redfish로 95%+ 커버, 향후 운영 요구 시 확장)
 
 ---

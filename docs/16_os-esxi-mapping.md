@@ -1,4 +1,4 @@
-# 27. OS / ESXi raw → normalize → output 매핑 표
+# 16. OS / ESXi raw → normalize → output 매핑 표
 
 ---
 

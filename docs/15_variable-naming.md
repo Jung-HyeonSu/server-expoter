@@ -1,70 +1,9 @@
-# 15. 변수 네이밍 규칙
+# 변수 네이밍 규칙
 
-## 규칙
-
-```
-_{채널}_{단계}_{의미}
-
-채널 : rf(Redfish) e(ESXi) l(Linux) w(Windows)
-단계 : raw   — 모듈/명령 직접 반환값
-       d     — raw 에서 추출한 하위 데이터
-       norm  — 정규화된 중간 변수
-       ok    — 수집 성공 bool
-       (없음) — 단일 값 또는 최종
-
-예:
-  _rf_raw_collect        Redfish 모듈 직접 반환값
-  _rf_d_system           raw 에서 추출한 system 데이터
-  _rf_norm_interfaces    정규화된 인터페이스 목록
-  _e_raw_facts           ESXi vmware_host_facts 직접 반환값
-  _e_norm_interfaces     정규화된 인터페이스
-  _l_norm_filesystems    Linux 정규화된 파일시스템
-  _l_norm_interfaces     Linux 정규화된 인터페이스
-  _l_norm_users_list     Linux 정규화된 사용자 목록
-  _w_norm_filesystems    Windows 정규화된 파일시스템
-  _w_norm_interfaces     Windows 정규화된 인터페이스
-  _w_norm_users_list     Windows 정규화된 사용자 목록
-```
+> 네이밍 공식과 Fragment/누적/builder 공통 변수는 `GUIDE_FOR_AI.md` 참조.
+> 이 문서는 **채널별 변수 사전**과 **금지 패턴**을 정의한다.
 
 ---
-
-## Fragment 관련 변수 (모든 gather 공통)
-
-| 변수 | 타입 | 설명 |
-|------|------|------|
-| `_data_fragment` | dict | 이번 태스크의 data 기여분 |
-| `_sections_supported_fragment` | list | 이번 태스크가 지원하는 섹션 |
-| `_sections_collected_fragment` | list | 이번 태스크에서 수집 성공한 섹션 |
-| `_sections_failed_fragment` | list | 이번 태스크에서 수집 실패한 섹션 |
-| `_errors_fragment` | list | 이번 태스크의 errors |
-
-## 누적 변수 (merge_fragment.yml 이 관리)
-
-| 변수 | 타입 | 설명 |
-|------|------|------|
-| `_merged_data` | dict | data 재귀 병합 결과 |
-| `_all_sec_supported` | list | 지원 섹션 누적 |
-| `_all_sec_collected` | list | 수집 성공 누적 |
-| `_all_sec_failed` | list | 수집 실패 누적 |
-| `_all_errors` | list | errors 누적 |
-
-## 공통 builder 입력 변수
-
-| 변수 | 설명 |
-|------|------|
-| `_out_target_type` | "os"\|"esxi"\|"redfish" |
-| `_out_collection_method` | "agent"\|"vsphere_api"\|"redfish_api" |
-| `_out_ip` | 접속 IP |
-| `_out_vendor` | 벤더 (null 허용) |
-| `_out_status` | build_status.yml 출력 |
-
-## 실패 전용 변수
-
-| 변수 | 설명 |
-|------|------|
-| `_fail_sec_supported` | 이 gather 가 지원하는 섹션 목록 |
-| `_fail_error_section` | 에러 섹션명 |
-| `_fail_error_message` | 에러 메시지 |
 
 ## OS 수집 변수
 

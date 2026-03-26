@@ -1,4 +1,4 @@
-# 20. 진단 출력 (diagnosis / meta / correlation)
+# 12. 진단 출력 (diagnosis / meta / correlation)
 
 ## 개요
 

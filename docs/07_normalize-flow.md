@@ -1,4 +1,4 @@
-# 12. Normalize 흐름 설명
+# 07. Normalize 흐름 설명
 
 ## 개요
 

@@ -141,35 +141,9 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
 | Supermicro | X10/X11/X12/X13/H11/H12 이상 | X9 이하 — Redfish 미지원 |
 | Cisco | UCS C-Series M4+ (CIMC Redfish 지원) | UCS C-Series M3 이하 — Redfish 미지원 |
 
-**벤더별 서버 세대 ↔ BMC 버전 호환성 매트릭스:**
-
 > 코드는 Redfish 표준 API(DSP0266)를 동적 탐색(API Discovery)하므로,
 > Redfish 를 지원하는 모든 모델에서 **표준 필드**는 정상 수집된다.
-> OEM 확장 필드(`data.*.oem`)는 아래 표의 BMC 버전에 맞춰 수집된다.
-
-| 벤더 | 서버 세대 | 대표 모델 | BMC 버전 | 지원 |
-|------|----------|----------|---------|------|
-| **Dell** | 16G | PowerEdge R660, R760, R6625 | iDRAC 9 (FW 7.x) | ✅ 완전 지원 |
-| Dell | 15G | PowerEdge R650, R750 | iDRAC 9 (FW 5.x–6.x) | ✅ 완전 지원 |
-| Dell | 14G | PowerEdge R640, R740, R940 | iDRAC 9 (FW 3.x–4.x) | ✅ 완전 지원 |
-| Dell | 13G | PowerEdge R630, R730 | iDRAC 8 | ❌ Redfish 미성숙 |
-| Dell | 12G | PowerEdge R620, R720 | iDRAC 7 | ❌ Redfish 미지원 |
-| **HPE** | Gen11 | ProLiant DL360/DL380 Gen11 | iLO 6 (FW 1.x+) | ✅ 완전 지원 |
-| HPE | Gen10 Plus | ProLiant DL360/DL380 Gen10+ | iLO 5 (FW 2.x+) | ✅ 완전 지원 |
-| HPE | Gen10 | ProLiant DL360/DL380 Gen10 | iLO 5 (FW 1.x+) | ✅ 완전 지원 |
-| HPE | Gen9 | ProLiant DL360/DL380 Gen9 | iLO 4 | ⚠️ 부분 지원 (`Oem.Hp` 폴백, OEM 필드 제한) |
-| HPE | Gen8 이하 | ProLiant DL360/DL380 Gen8 | iLO 4 이하 | ❌ Redfish 미지원 |
-| **Lenovo** | X11+ | ThinkSystem SR650 V3, SR630 V3 | XCC2 (FW 4.x+) | ✅ 완전 지원 |
-| Lenovo | X11 | ThinkSystem SR650, SR630 | XCC (FW 1.x+) | ✅ 완전 지원 |
-| Lenovo | — | ThinkServer RD650, TD350 | — | ❌ Redfish 미지원 |
-| **Supermicro** | X13/H13 | SYS-621C, SYS-222 시리즈 | BMC (FW 12.x+) | ✅ 완전 지원 |
-| Supermicro | X12/H12 | SYS-120C, AS-2024 시리즈 | BMC (FW 10.x+) | ✅ 완전 지원 |
-| Supermicro | X11/H11 | SYS-6019, AS-2023 시리즈 | BMC (FW 3.x+) | ✅ 완전 지원 |
-| Supermicro | X10 | SYS-6018 시리즈 | BMC (FW 3.x+) | ✅ 지원 (일부 엔드포인트 제한 가능) |
-| Supermicro | X9 이하 | — | IPMI only | ❌ Redfish 미지원 |
-| **Cisco** | M5+ | UCS C220 M5, C240 M5, C220 M6 | CIMC (FW 4.x+) | ✅ 완전 지원 |
-| Cisco | M4 | UCS C220 M4, C240 M4 | CIMC (FW 3.x+) | ✅ 지원 (일부 엔드포인트 제한 가능) |
-| Cisco | M3 이하 | — | — | ❌ Redfish 미지원 |
+> OEM 확장 필드(`data.*.oem`)는 위 표의 BMC 버전에 맞춰 수집된다.
 
 ---
 
@@ -209,122 +183,44 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
 
 ---
 
-## 6. 빠른 설치 체크리스트 (Agent 노드)
-
-```bash
-# Python 3.9+ 확인
-python3 --version
-
-# Ansible 2.12+ 확인
-ansible --version
-
-# 필수 Python 패키지
-pip install ansible pywinrm pyvmomi redis --break-system-packages
-
-# Ansible Collection
-ansible-galaxy collection install community.vmware ansible.windows
-
-# ansible.cfg 확인 (프로젝트 루트의 ansible.cfg 우선 적용)
-# 프로젝트에 ansible.cfg 포함 — callback_plugins, stdout_callback 등 설정 통합
-grep "stdout_callback\|callback_plugins" ansible.cfg
-```
-
----
-
-## 7. tasks/ 구조 요구사항
+## 6. tasks/ 구조 개요
 
 3개 gather 모두 `tasks/` 디렉터리로 수집/정규화 로직이 분리되어 있다.
+상세 구조와 흐름은 [docs/06_gather-structure.md](docs/06_gather-structure.md) 참조.
 
-### os-gather/tasks/
-
-| 파일 | 주요 명령 / 의존성 |
-|------|-----------------|
-| `linux/preflight.yml` | `python3`, `dmidecode`, `lsblk`, `lastlog`, `last` 존재 확인 |
-| `linux/gather_system.yml` | `ansible.builtin.setup`, `/proc/meminfo` fallback |
-| `linux/gather_memory.yml` | `dmidecode -t memory` (없으면 `/proc/meminfo` fallback) |
-| `linux/gather_storage.yml` | `lsblk -J` (없으면 `ansible_mounts` fallback) |
-| `linux/gather_network.yml` | `ansible_interfaces`, `ansible_default_ipv4` |
-| `linux/gather_users.yml` | `getent passwd/group`, `lastlog`, `last -F`, `utmpdump` |
-| `windows/gather_memory.yml` | `Win32_PhysicalMemory` (CIM) |
-| `windows/gather_storage.yml` | `Get-Volume`, `Win32_DiskDrive` |
-| `windows/gather_network.yml` | `Get-DnsClientServerAddress`, `Get-NetIPAddress` |
-| `windows/gather_users.yml` | `Get-LocalUser` → `Win32_UserAccount` fallback |
-| `normalize/build_output.yml` | common/tasks/normalize 호출 (Ansible 2.12+) |
-
-### esxi-gather/tasks/
-
-| 파일 | 의존성 |
-|------|--------|
-| `collect_facts.yml` | `community.vmware.vmware_host_facts` |
-| `collect_config.yml` | `community.vmware.vmware_host_config_info` |
-| `collect_datastores.yml` | `community.vmware.vmware_datastore_info` |
-| `normalize_*.yml` | Jinja2 필터 |
-
-### redfish-gather/tasks/
-
-| 파일 | 의존성 |
-|------|--------|
-| `detect_vendor.yml` | `library/redfish_gather.py` (stdlib only) |
-| `load_vault.yml` | `vault/redfish/{vendor}.yml` |
-| `collect_standard.yml` | `library/redfish_gather.py` |
-| `normalize_*.yml` | Jinja2 필터 |
-
-### common/tasks/normalize/
-
-모든 gather 가 공통으로 사용하는 normalize 태스크.
-`REPO_ROOT` 환경변수로 경로를 참조하므로 Jenkins 에서 `REPO_ROOT=${WORKSPACE}` 설정 필수.
-
-| 파일 | 역할 |
-|------|------|
-| `init_fragments.yml` | 누적 변수 초기화 |
-| `merge_fragment.yml` | fragment 재귀 병합 엔진 |
-| `build_sections.yml` | `_all_sec_*` → sections dict |
-| `build_errors.yml` | `_raw_errors` → 표준 errors 배열 |
-| `build_empty_data.yml` | failed 시 null/[] data 뼈대 |
-| `build_output.yml` | `_out_*` → `_output` 최종 조립 |
+> `REPO_ROOT` 환경변수로 공통 태스크 경로를 참조하므로 Jenkins 에서 `REPO_ROOT=${WORKSPACE}` 설정 필수.
 
 ---
 
-## 8. OS 채널 식별자 및 엔티티 연결 정책
+## 7. OS 채널 식별자 및 엔티티 연결 정책
 
-### 8-1. 식별자 필드
+### 7-1. 식별자 필드
 
 - OS 채널은 `system.serial_number`와 `system.system_uuid`를 제공할 수 있다.
 - 값이 없거나 의미없는 센티널 값(NA, Not Specified 등)은 `null`로 정규화한다.
 - Linux에서 정확한 DMI 식별자 수집을 위해 `become` 권한 사용을 권장한다.
 
-### 8-2. Cross-channel 연결 정책
+### 7-2. Cross-channel 연결 정책
 
 - `system_uuid`가 존재하면 cross-channel 엔티티 연결의 우선 키로 사용할 수 있다.
 - `serial_number`는 채널 및 벤더에 따라 의미가 다를 수 있으므로, direct match 시 추가 검증이 필요하다.
 - `hosting_type`이 `virtual`이면 물리 Redfish와 직접 매칭하지 않는다.
 - 물리 서버에 직접 설치된 OS는, 그 위에서 KVM/Hyper-V host 역할을 하더라도 `baremetal`로 분류한다.
 
-### 8-3. 식별자 수집 권한 정책
+### 7-3. 식별자 수집 권한 정책
 
-**Linux 수집 우선순위:**
-1. `ansible_product_serial` / `ansible_product_uuid` (setup fact) — 유효 값이면 사용
-2. `/sys/class/dmi/id/product_serial`, `/sys/class/dmi/id/product_uuid` 직접 읽기 (`become: true`) — setup fact가 NA/센티널일 때 fallback
-3. null + diagnostic
-
-**운영 권장사항:**
-- 정확한 식별자 수집을 위해 `become_password` 제공을 권장한다
-- become 미제공 시에도 수집은 성공하되, 식별자만 null이 될 수 있다 (non-fatal)
-- block/rescue로 격리하여 become 실패가 전체 gather에 영향하지 않는다
-
-**baseline 기준:**
-- 식별자 baseline 값은 권장 운영 모드(with-become) 기준으로 관리한다
-
-**공통 원칙 (Linux/Windows):**
-- 권한 부족 또는 source 값 부재 시 식별자는 null로 반환한다
-- 식별자 미수집은 gather 실패가 아니며, 수집은 계속 진행된다
-- 미수집 원인은 non-fatal diagnostic으로 errors 배열에 기록할 수 있다. 이 diagnostic은 status 및 sections 판정에 영향을 주지 않는다
-  - `insufficient_privilege`: 권한 부족 또는 수집 경로 제한으로 DMI/WMI 접근 불가
+- 권한 부족 또는 source 값 부재 시 식별자는 null로 반환한다.
+- 식별자 미수집은 gather 실패가 아니며, 수집은 계속 진행된다 (non-fatal).
+- 미수집 원인은 non-fatal diagnostic으로 errors 배열에 기록할 수 있다 (status/sections 판정에 무영향).
+  - `insufficient_privilege`: 권한 부족으로 DMI/WMI 접근 불가
   - `identifier_not_available`: source가 유효한 값을 제공하지 않음
+- 정확한 식별자 수집을 위해 `become_password` 제공을 권장한다.
+
+> 수집 우선순위, fallback 동작, baseline 기준 등 구현 상세는 [docs/16_os-esxi-mapping.md](docs/16_os-esxi-mapping.md) §식별자 수집 경로 참조.
 
 ---
 
-## 9. 미지원 환경 요약
+## 8. 미지원 환경 요약
 
 | 환경 | 이유 |
 |------|------|

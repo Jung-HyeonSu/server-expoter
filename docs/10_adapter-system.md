@@ -1,4 +1,4 @@
-# 18. Adapter 시스템
+# 10. Adapter 시스템
 
 ## 개요
 
@@ -150,6 +150,23 @@ diagnosis:
 ### 새 ESXi 버전
 
 1. `adapters/esxi/esxi_9x.yml` 생성 (version_patterns에 "^9\\." 추가)
+
+## redfish_gather.py vs Adapter 역할 분리
+
+| 계층 | 담당 |
+|------|------|
+| API 호출 (HTTP) | `redfish_gather.py` — 13개 표준 endpoint 직접 호출 |
+| 벤더 감지 | `redfish_gather.py` — `detect_vendor()` |
+| 데이터 정규화 | adapter YAML + normalize tasks |
+| 필드 매핑 | adapter capabilities + normalize tasks |
+
+## 설계 원칙 (실장비 검증 확정)
+
+1. **URI 패턴 하드코딩 금지** — 컬렉션 Members[0]에서 동적 취득
+2. **StorageControllers fallback 필수** — HPE Gen11+ 는 Controllers 링크 사용
+3. **null 허용 필드 명시** — 벤더마다 누락 필드 다름 (adapter에서 `optional_fields` 정의)
+4. **SimpleStorage는 fallback 전용** — Storage 실패 시만 시도
+5. **OEM은 최소 사용** — 표준 필드로 충분한 항목이 대부분
 
 ## 핵심 파일
 

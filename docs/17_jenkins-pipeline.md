@@ -1,4 +1,4 @@
-# Jenkins 런타임 요구사항
+# Jenkins 파이프라인 런타임
 
 > 검증일: 2026-03-18
 
@@ -89,11 +89,11 @@ ansiblePlaybook(
 
 ## 7. Jenkins Agent 요구사항
 
+> Python / Java / Ansible / 패키지 버전 요건은 `REQUIREMENTS.md` §4 참조.
+> 설치 절차는 `docs/03_agent-setup.md` §3-5 참조.
+
 | 항목 | 요구사항 |
 |------|---------|
-| OS | Linux (권장) |
-| Python | 3.9+ (3.11 권장) |
-| Ansible | 2.12+ |
 | Label | `loc` 파라미터 값 (ich/chj/yi) |
 | 네트워크 | BMC 대역 (10.50.x.x) 접근 가능 |
 | 디스크 | workspace + ansible 로그 공간 |
