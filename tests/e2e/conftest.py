@@ -26,25 +26,29 @@ COMMON_TOP_KEYS = [
 ]
 
 # ---------------------------------------------------------------------------
-# 채널별 핵심 필드 (MVP)
+# 채널별 핵심 필드
 #   - 각 채널은 자기 채널의 필드만 검증
 #   - 값이 None(null)인 경우 "키 존재"만 확인 (값 비교 안 함)
+#   - P2-2 1단계: 스칼라 Must 필드 확장
 # ---------------------------------------------------------------------------
 REDFISH_CRITICAL = {
     "system": ["serial_number", "system_uuid", "vendor", "model"],
-    "cpu": ["model", "count"],
-    "memory": ["total_gb"],
-    "bmc": ["firmware_version"],
+    "hardware": ["health", "sku", "oem"],
+    "cpu": ["model", "count", "cores_physical"],
+    "memory": ["total_gb", "total_basis"],
+    "bmc": ["firmware_version", "ip"],
 }
 
 OS_CRITICAL = {
-    "system": ["hostname", "os_type", "os_version"],
-    "cpu": ["model", "count"],
-    "memory": ["total_gb"],
+    "system": ["hostname", "os_type", "os_version", "hosting_type"],
+    "cpu": ["model", "count", "cores_physical"],
+    "memory": ["total_gb", "total_basis"],
 }
 
 ESXI_CRITICAL = {
     "system": ["hostname", "os_type"],
+    "cpu": ["cores_physical"],
+    "memory": ["total_basis"],
 }
 
 # ---------------------------------------------------------------------------
@@ -54,15 +58,16 @@ ESXI_CRITICAL = {
 #    os_version → version)
 # ---------------------------------------------------------------------------
 REDFISH_FIELD_MAP = {
-    "cpu": {"count": "sockets", "model": "model"},
-    "memory": {"total_gb": "total_mb"},
-    "bmc": {"firmware_version": "firmware_version"},
+    "cpu": {"count": "sockets", "model": "model", "cores_physical": "cores_physical"},
+    "memory": {"total_gb": "total_mb", "total_basis": "total_basis"},
+    "bmc": {"firmware_version": "firmware_version", "ip": "ip"},
     "system": {
         "serial_number": "serial_number",
         "system_uuid": "system_uuid",
         "vendor": "vendor",
         "model": "model",
     },
+    "hardware": {"health": "health", "sku": "sku", "oem": "oem"},
 }
 
 OS_FIELD_MAP = {
@@ -70,9 +75,10 @@ OS_FIELD_MAP = {
         "hostname": "fqdn",
         "os_type": "os_family",
         "os_version": "version",
+        "hosting_type": "hosting_type",
     },
-    "cpu": {"count": "sockets", "model": "model"},
-    "memory": {"total_gb": "total_mb"},
+    "cpu": {"count": "sockets", "model": "model", "cores_physical": "cores_physical"},
+    "memory": {"total_gb": "total_mb", "total_basis": "total_basis"},
 }
 
 ESXI_FIELD_MAP = {
@@ -80,6 +86,8 @@ ESXI_FIELD_MAP = {
         "hostname": "fqdn",
         "os_type": "os_family",
     },
+    "cpu": {"cores_physical": "cores_physical"},
+    "memory": {"total_basis": "total_basis"},
 }
 
 # ---------------------------------------------------------------------------
@@ -150,6 +158,30 @@ def assert_correlation_fields(output: dict):
         assert UUID_PATTERN.match(str(uuid_val)), (
             f"system_uuid UUID 형식 불일치: {uuid_val}"
         )
+
+
+def assert_correlation_host_ip(output: dict):
+    """correlation.host_ip 존재 + 값 존재 검증.
+
+    identity 기준이 아님 — primary key는 UUID.
+    """
+    correlation = output.get("correlation")
+    if correlation is None:
+        return
+    assert "host_ip" in correlation, "correlation.host_ip 키 누락"
+    assert correlation["host_ip"], "correlation.host_ip 값이 비어 있음"
+
+
+def assert_hardware_oem_is_object(output: dict):
+    """hardware.oem이 object(dict)인지 검증. 내부 키는 검증하지 않음."""
+    data = output.get("data", {})
+    hw = data.get("hardware")
+    if hw is None:
+        return  # hardware 섹션 없으면 건너뜀
+    assert "oem" in hw, "hardware.oem 키 누락"
+    assert isinstance(hw["oem"], dict), (
+        f"hardware.oem이 dict가 아님: {type(hw['oem'])}"
+    )
 
 
 def assert_channel_critical_fields(output: dict, critical_fields: dict,

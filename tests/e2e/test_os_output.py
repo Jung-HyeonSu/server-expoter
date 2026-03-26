@@ -11,6 +11,7 @@ from conftest import (
     assert_channel_critical_fields,
     assert_common_structure,
     assert_correlation_fields,
+    assert_correlation_host_ip,
     OS_CRITICAL,
     OS_FIELD_MAP,
 )
@@ -40,6 +41,9 @@ class TestUbuntuBaseline:
     def test_correlation(self, ubuntu_baseline):
         assert_correlation_fields(ubuntu_baseline)
 
+    def test_correlation_host_ip(self, ubuntu_baseline):
+        assert_correlation_host_ip(ubuntu_baseline)
+
 
 class TestWindowsBaseline:
     """OS-04: Windows baseline 검증."""
@@ -64,3 +68,6 @@ class TestWindowsBaseline:
     def test_correlation(self, windows_baseline):
         """Windows는 correlation.system_uuid가 null일 수 있음 — 키 존재만 확인."""
         assert_correlation_fields(windows_baseline)
+
+    def test_correlation_host_ip(self, windows_baseline):
+        assert_correlation_host_ip(windows_baseline)

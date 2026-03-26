@@ -10,6 +10,7 @@
 from conftest import (
     assert_channel_critical_fields,
     assert_common_structure,
+    assert_hardware_oem_is_object,
     REDFISH_CRITICAL,
     REDFISH_FIELD_MAP,
 )
@@ -35,6 +36,9 @@ class TestDellBaseline:
         collected = [k for k, v in sections.items() if v == "success"]
         assert len(collected) > 0, "수집된 섹션이 없음"
 
+    def test_hardware_oem_is_object(self, dell_baseline):
+        assert_hardware_oem_is_object(dell_baseline)
+
 
 class TestHpeBaseline:
     """RF-02: HPE iLO5 baseline 검증."""
@@ -54,6 +58,9 @@ class TestHpeBaseline:
         sections = hpe_baseline.get("sections", {})
         collected = [k for k, v in sections.items() if v == "success"]
         assert len(collected) > 0, "수집된 섹션이 없음"
+
+    def test_hardware_oem_is_object(self, hpe_baseline):
+        assert_hardware_oem_is_object(hpe_baseline)
 
 
 class TestLenovoBaseline:
@@ -75,6 +82,9 @@ class TestLenovoBaseline:
         collected = [k for k, v in sections.items() if v == "success"]
         assert len(collected) > 0, "수집된 섹션이 없음"
 
+    def test_hardware_oem_is_object(self, lenovo_baseline):
+        assert_hardware_oem_is_object(lenovo_baseline)
+
 
 class TestDellR760Output:
     """Dell R760 output fixture (baseline과 별도 장비) 검증."""
@@ -89,3 +99,6 @@ class TestDellR760Output:
         assert_channel_critical_fields(
             dell_r760_output, REDFISH_CRITICAL, REDFISH_FIELD_MAP
         )
+
+    def test_hardware_oem_is_object(self, dell_r760_output):
+        assert_hardware_oem_is_object(dell_r760_output)

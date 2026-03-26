@@ -18,6 +18,7 @@ from conftest import (
     assert_channel_critical_fields,
     assert_common_structure,
     assert_correlation_fields,
+    assert_correlation_host_ip,
     ESXI_CRITICAL,
     ESXI_FIELD_MAP,
 )
@@ -46,3 +47,6 @@ class TestEsxiBaseline:
 
     def test_correlation(self, esxi_baseline):
         assert_correlation_fields(esxi_baseline)
+
+    def test_correlation_host_ip(self, esxi_baseline):
+        assert_correlation_host_ip(esxi_baseline)
