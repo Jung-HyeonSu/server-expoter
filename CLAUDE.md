@@ -1,8 +1,8 @@
-# ClovirONE Portal - 엔터프라이즈 서버 정보 수집 시스템
+# Server Exporter - 엔터프라이즈 서버 정보 수집 시스템
 
 ## 📋 개요
 
-SK하이닉스 인프라 자동화를 위한 엔터프라이즈급 서버 정보 수집 파이프라인입니다. Jenkins-Ansible 기반의 **3-채널 통합 수집 시스템**으로 멀티벤더(Dell, HPE, Lenovo, Supermicro, Cisco) 하드웨어 및 OS 정보를 수집하고 표준화합니다.
+엔터프라이즈급 서버 정보 수집 파이프라인입니다. Jenkins-Ansible 기반의 **3-채널 통합 수집 시스템**으로 멀티벤더(Dell, HPE, Lenovo, Supermicro, Cisco) 하드웨어 및 OS 정보를 수집하고 표준화합니다.
 
 **핵심 특징:**
 - 🔄 **3중 채널**: OS-gather (Linux/Windows) + ESXi-gather + Redfish-gather (BMC/IPMI)
@@ -119,7 +119,7 @@ adapter_loader (lookup plugin)
 ## 📁 파일 구조 (핵심)
 
 ```
-clovirone-portal/ (3.8MB, 369 files)
+server-exporter/ (프로젝트 루트)
 
 1️⃣ 수집 채널 (3개)
    ├── os-gather/
@@ -169,9 +169,26 @@ clovirone-portal/ (3.8MB, 369 files)
 
 7️⃣ 문서 (23개: 루트 4 + docs/ 19)
    ├── README.md, GUIDE_FOR_AI.md, REQUIREMENTS.md
-   ├── 06_gather-structure.md, 07_normalize-flow.md, 10_adapter-system.md
-   ├── 13_redfish-live-validation.md (3대 실장비)
-   └── 17_jenkins-pipeline.md, 19_decision-log.md
+   └── docs/
+       ├── 01_jenkins-setup        — Jenkins 설치·플러그인·자격증명·RBAC
+       ├── 02_redis-install         — Redis 설치·설정
+       ├── 03_agent-setup           — Agent 노드 구성 (VM·방화벽·패키지·노드등록)
+       ├── 04_job-registration      — Jenkins Job 등록·네이밍
+       ├── 05_inventory-json-spec   — inventory_json 입력 스펙
+       ├── 06_gather-structure      — 3-채널 Gather 구조
+       ├── 07_normalize-flow        — Fragment 정규화 흐름
+       ├── 08_failure-handling      — block/rescue/always 실패 처리
+       ├── 09_output-examples       — 표준 JSON 출력 예시
+       ├── 10_adapter-system        — Adapter 시스템 (matrix 포함)
+       ├── 11_precheck-module       — Precheck 모듈 (4단계 진단)
+       ├── 12_diagnosis-output      — Diagnosis 출력 구조
+       ├── 13_redfish-live-validation — 3대 실장비 검증
+       ├── 14_add-new-gather        — 새 Gather 추가 가이드
+       ├── 15_variable-naming       — 변수 네이밍 사전
+       ├── 16_os-esxi-mapping       — OS/ESXi 필드 매핑
+       ├── 17_jenkins-pipeline      — Jenkins 파이프라인 런타임
+       ├── 18_ansible-project-config — Ansible 프로젝트 설정
+       └── 19_decision-log          — 의사결정 로그
 ```
 
 ---
@@ -277,7 +294,7 @@ python tests/redfish-probe/validate_fields.py \
 
 ```bash
 # 1. 프로젝트 진입
-cd clovirone-portal/
+cd server-exporter/
 
 # 2. 새 기능 계획
 /plan "새 섹션 추가: Thermal 정보"

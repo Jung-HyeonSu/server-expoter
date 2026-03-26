@@ -177,10 +177,10 @@ Job 이름이 Pattern 과 일치하면 권한이 자동 적용되므로 신규 J
 
 | Role | Pattern | 부여 권한 |
 |------|---------|----------|
-| `portal` | `clovirone-portal.*` | Job Build, Read |
-| `engineer` | `skhynix-infraops.*` | Job Build, Create, Configure, Read |
+| `portal` | `server-exporter.*` | Job Build, Read |
+| `engineer` | `infra-automation.*` | Job Build, Create, Configure, Read |
 
 ### 동작 확인
 
-- `engineer` 계정 로그인 시 `clovirone-portal.*` Job 이 보이지 않아야 함
-- `portal` 계정 로그인 시 `skhynix-infraops.*` Job 이 보이지 않아야 함
+- `engineer` 계정 로그인 시 `server-exporter.*` Job 이 보이지 않아야 함
+- `portal` 계정 로그인 시 `infra-automation.*` Job 이 보이지 않아야 함

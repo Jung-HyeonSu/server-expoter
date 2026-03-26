@@ -74,11 +74,13 @@ apt update && apt install -y openjdk-21-jdk python3 python3-venv git jq redis-to
 
 ---
 
-## 4. cloviradmin 계정 생성
+## 4. 서비스 계정 생성
 
 ```bash
-useradd -m -s /bin/bash cloviradmin
+useradd -m -s /bin/bash {서비스계정}
 ```
+
+> `{서비스계정}` 은 Jenkins Agent 전용 계정이다. 조직 정책에 맞는 이름을 사용한다.
 
 ---
 
@@ -176,13 +178,13 @@ EOF
 
 > `{Jenkins_마스터_IP}`, `{Redis비밀번호}` 는 실제 값으로 교체한 뒤 실행한다.
 
-> **범용 설정 원칙**: 이 파일은 모든 프로젝트(clovirone-portal, skhynix-infraops 등)의 공통 기본값이다.
+> **범용 설정 원칙**: 이 파일은 Agent에서 실행하는 모든 프로젝트의 공통 기본값이다.
 > Ansible은 ansible.cfg를 병합하지 않고 우선순위 1개만 사용하므로,
 > 프로젝트 루트에 `ansible.cfg`가 있으면 이 시스템 설정은 무시된다.
 >
-> - **clovirone-portal**: 프로젝트 루트 `ansible.cfg`에서 `stdout_callback = json_only`,
->   `gathering = explicit`, 커스텀 플러그인 경로 등을 설정하므로 이 파일과 무관.
-> - **skhynix-infraops**: 프로젝트 `ansible.cfg` 없음 → 이 시스템 설정이 그대로 적용됨.
+> - **프로젝트 루트에 ansible.cfg가 있는 경우**: 해당 설정이 우선 적용된다
+>   (예: `stdout_callback`, `gathering`, 커스텀 플러그인 경로 등).
+> - **프로젝트 루트에 ansible.cfg가 없는 경우**: 이 시스템 설정이 그대로 적용된다.
 >
 > `[inventory] enable_plugins = script, auto` — 동적 인벤토리 스크립트(inventory.sh)를
 > INI 파서보다 먼저 인식시킨다. 이 설정이 없으면 Python 스크립트가 INI로 파싱되어 실패한다.
@@ -205,7 +207,6 @@ git push
 ```
 
 > 한 번 커밋하면 이후 모든 clone / checkout 에서 실행 권한이 유지된다.
-> 기존 프로젝트(clovirone-portal, skhynix-infraops)는 이미 적용 완료.
 
 ---
 
@@ -220,7 +221,7 @@ git push
 | Name | `agent-{loc}-{dev\|ops}` | 예: `agent-ich-ops`, `agent-chj-dev` |
 | Description | `{로케이션} {개발\|운영} Agent` | 예: `이천 운영 Agent` |
 | Number of executors | `2` | 동시 실행 잡 수. 서버 사양에 따라 조정 |
-| Remote root directory | `/home/cloviradmin/jenkins-agent` | Agent 워크스페이스 경로 |
+| Remote root directory | `/home/{서비스계정}/jenkins-agent` | Agent 워크스페이스 경로 |
 | Labels | 로케이션 코드 | 아래 표 참조 |
 | Usage | `Only build jobs with label expressions matching this node` | 라벨 매칭 잡만 실행 |
 | Launch method | `Launch agents via SSH` | 아래 상세 참조 |
@@ -241,11 +242,11 @@ Jenkinsfile 의 `agent { label "${params.loc}" }` 기준:
 | 항목 | 값 |
 |------|-----|
 | Host | Agent 노드 IP |
-| Credentials | `cloviradmin` SSH 계정 (Jenkins Credentials 에 미리 등록) |
+| Credentials | `{서비스계정}` SSH 계정 (Jenkins Credentials 에 미리 등록) |
 | Host Key Verification Strategy | `Non verifying Verification Strategy` |
 
 > SSH Credentials 등록: Jenkins → Manage Jenkins → Credentials → Add Credentials
-> Kind: `SSH Username with private key`, Username: `cloviradmin`, Private Key: 마스터에서 생성한 SSH 키
+> Kind: `SSH Username with private key`, Username: `{서비스계정}`, Private Key: 마스터에서 생성한 SSH 키
 
 ---
 

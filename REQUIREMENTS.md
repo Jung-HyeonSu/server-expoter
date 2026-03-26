@@ -1,4 +1,4 @@
-# REQUIREMENTS — clovirone-portal Gather Pipeline
+# REQUIREMENTS — Server Exporter Gather Pipeline
 
 gather 플레이북 실행을 위한 **대상 서버 / Agent / 포털** 각각의 최소 요구사항이다.
 여기에 명시된 버전보다 낮으면 수집이 실패하거나 일부 필드가 `null` 로 반환된다.

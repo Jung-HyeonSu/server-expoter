@@ -8,16 +8,19 @@
 
 RBAC Pattern 과 일치해야 권한이 자동 적용된다.
 
-| 레포 | Job 이름 형식 |
-|------|-------------|
-| skhynix-infraops | `skhynix-infraops.{작업명}.{타입}` |
-| clovirone-portal | `clovirone-portal.{gather명}` |
+```
+{프로젝트명}.{작업명}
+```
 
-예시:
-- `skhynix-infraops.load-test.linux`
-- `clovirone-portal.os-gather`
-- `clovirone-portal.esxi-gather`
-- `clovirone-portal.redfish-gather`
+**수집 파이프라인 예시:**
+
+- `server-exporter.os-gather`
+- `server-exporter.esxi-gather`
+- `server-exporter.redfish-gather`
+
+**인프라 자동화 예시:**
+
+- `infra-automation.{작업명}.{타입}` (예: `infra-automation.load-test.linux`)
 
 ---
 
@@ -32,7 +35,20 @@ RBAC Pattern 과 일치해야 권한이 자동 적용된다.
 | Credentials | `gitlab-credentials` |
 | Branch | `*/main` |
 
-### skhynix-infraops Script Path 예시
+### 수집 파이프라인 Script Path
+
+Jenkinsfile 은 루트에 1개만 존재한다. 3개 Job 모두 동일한 Script Path 를 사용하고
+`target_type` 파라미터로 gather 종류를 구분한다.
+
+| Job 이름 | Script Path | target_type 기본값 |
+|----------|-------------|-------------------|
+| `{프로젝트명}.os-gather` | `Jenkinsfile` | `os` |
+| `{프로젝트명}.esxi-gather` | `Jenkinsfile` | `esxi` |
+| `{프로젝트명}.redfish-gather` | `Jenkinsfile` | `redfish` |
+
+> Script Path 는 모두 `Jenkinsfile` 이다. 각 gather 디렉토리에는 별도 Jenkinsfile 이 없다.
+
+### 인프라 자동화 Script Path (참고)
 
 | Script Path | 설명 |
 |-------------|------|
@@ -40,15 +56,4 @@ RBAC Pattern 과 일치해야 권한이 자동 적용된다.
 | `day1/{작업명}/{타입}/Jenkinsfile` | Day-1 작업 |
 | `day2/{작업명}/{타입}/Jenkinsfile` | Day-2 작업 |
 
-### clovirone-portal Script Path
-
-Jenkinsfile 은 루트에 1개만 존재한다. 3개 Job 모두 동일한 Script Path 를 사용하고
-`target_type` 파라미터로 gather 종류를 구분한다.
-
-| Job 이름 | Script Path | target_type 기본값 |
-|----------|-------------|-------------------|
-| `clovirone-portal.os-gather` | `Jenkinsfile` | `os` |
-| `clovirone-portal.esxi-gather` | `Jenkinsfile` | `esxi` |
-| `clovirone-portal.redfish-gather` | `Jenkinsfile` | `redfish` |
-
-> Script Path 는 모두 `Jenkinsfile` 이다. 각 gather 디렉토리에는 별도 Jenkinsfile 이 없다.
+> 인프라 자동화 프로젝트는 별도 저장소에서 관리한다.

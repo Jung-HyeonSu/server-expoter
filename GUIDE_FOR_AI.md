@@ -1,4 +1,4 @@
-# GUIDE FOR AI — clovirone-portal
+# GUIDE FOR AI — server-exporter
 
 이 파일과 repo 코드를 함께 AI 에 업로드하면,
 AI 가 이 repo 의 컨벤션에 맞게 새 gather 를 생성하거나 기존 gather 를 수정한다.
