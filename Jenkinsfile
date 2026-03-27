@@ -159,6 +159,7 @@ pipeline {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                     sh '''
                         cd "${WORKSPACE}"
+                        . /opt/ansible-env/bin/activate
                         python3 tests/validate_field_dictionary.py
                     '''
                 }
@@ -173,6 +174,7 @@ pipeline {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                     sh '''
                         cd "${WORKSPACE}"
+                        . /opt/ansible-env/bin/activate
                         python3 -m pytest tests/e2e/ -v --tb=short
                     '''
                 }
