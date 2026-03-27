@@ -256,7 +256,7 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
   - `identifier_not_available`: source가 유효한 값을 제공하지 않음
 - 정확한 식별자 수집을 위해 `become_password` 제공을 권장한다.
 
-> 수집 우선순위, fallback 동작, baseline 기준 등 구현 상세는 [docs/16_os-esxi-mapping.md](docs/16_os-esxi-mapping.md) §식별자 수집 경로 참조.
+> 수집 우선순위, fallback 동작, baseline 기준 등 구현 상세는 [docs/16_os-esxi-mapping.md](docs/16_os-esxi-mapping.md) "식별자 수집 경로" 절 참조.
 
 ---
 

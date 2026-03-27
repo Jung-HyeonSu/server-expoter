@@ -94,7 +94,7 @@ ufw allow 8080/tcp
 
 경로: Jenkins → Manage Jenkins → Plugins → Available plugins
 
-> §4 초기 설정에서 **Install suggested plugins** 를 선택하면
+> 4절 초기 설정에서 **Install suggested plugins** 를 선택하면
 > Pipeline, Credentials, Git 등 기본 플러그인은 자동 설치된다.
 > 아래 표에서 ★ 표시가 없는 항목만 별도 설치하면 된다.
 
@@ -129,7 +129,7 @@ ufw allow 8080/tcp
 | Name | `ansible` |
 | Path to ansible executables directory | `/opt/ansible-env/bin` |
 
-> 이 경로는 03_agent-setup.md §5 에서 Agent 에 가상환경을 생성한 뒤 실제로 동작한다.
+> 이 경로는 03_agent-setup.md 5절 에서 Agent 에 가상환경을 생성한 뒤 실제로 동작한다.
 > 마스터에서는 경로만 미리 등록해두면 된다.
 
 ---

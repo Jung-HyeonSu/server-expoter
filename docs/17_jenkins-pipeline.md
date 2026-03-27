@@ -100,8 +100,8 @@ ansiblePlaybook(
 
 ## 7. Jenkins Agent 요구사항
 
-> Python / Java / Ansible / 패키지 버전 요건은 `REQUIREMENTS.md` §4 참조.
-> 설치 절차는 `docs/03_agent-setup.md` §3-5 참조.
+> Python / Java / Ansible / 패키지 버전 요건은 `REQUIREMENTS.md` 4절 참조.
+> 설치 절차는 `docs/03_agent-setup.md` 3-5절 참조.
 
 | 항목 | 요구사항 |
 |------|---------|

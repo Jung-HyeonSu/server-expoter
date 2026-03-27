@@ -1,7 +1,7 @@
 # Ansible 프로젝트 설정
 
-> Python 패키지, Ansible 컬렉션, 기본 설치 절차는 `docs/03_agent-setup.md` §5 참조.
-> Agent 공통 요구사항(버전 요건)은 `REQUIREMENTS.md` §4 참조.
+> Python 패키지, Ansible 컬렉션, 기본 설치 절차는 `docs/03_agent-setup.md` 5절 참조.
+> Agent 공통 요구사항(버전 요건)은 `REQUIREMENTS.md` 4절 참조.
 > 이 문서는 **프로젝트 고유 설정** (ansible.cfg, 플러그인 경로, 환경변수, vault, 실행 예시)을 정의한다.
 
 ---

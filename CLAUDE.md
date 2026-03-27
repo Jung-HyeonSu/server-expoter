@@ -103,7 +103,7 @@ adapter_loader (lookup plugin)
 ## 기술 스택
 
 > 아래는 검증 기준 Agent (10.100.64.154) 에서 2026-03-27 확인한 값이다.
-> 최소 요구사항은 [REQUIREMENTS.md](REQUIREMENTS.md) §4 참조.
+> 최소 요구사항은 [REQUIREMENTS.md](REQUIREMENTS.md) 4절 참조.
 
 | 카테고리 | 기술 | 검증 기준 버전 | 용도 |
 |---------|------|--------------|------|
@@ -575,7 +575,7 @@ cat common/vars/vendor_aliases.yml | grep "{{ detected_vendor }}"
 - ESXi/Redfish host resolution bug → delegate_to: localhost 환경 대응 완료 (B5/B6)
 
 **알려진 제한사항:**
-- ESXi 수집은 community.vmware 컬렉션 의존 (프로덕션 Agent에 설치 필요, 03_agent-setup.md §3 참조)
+- ESXi 수집은 community.vmware 컬렉션 의존 (프로덕션 Agent에 설치 필요, 03_agent-setup.md 3절 참조)
 - OEM vendor task는 placeholder 상태 (Standard Redfish로 95%+ 커버, 향후 운영 요구 시 확장)
 
 ---
