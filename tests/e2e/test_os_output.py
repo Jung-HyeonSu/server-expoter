@@ -8,10 +8,12 @@
 """
 
 from conftest import (
+    assert_array_element_fields,
     assert_channel_critical_fields,
     assert_common_structure,
     assert_correlation_fields,
     assert_correlation_host_ip,
+    OS_ARRAY_FIELDS,
     OS_CRITICAL,
     OS_FIELD_MAP,
 )
@@ -44,6 +46,11 @@ class TestUbuntuBaseline:
     def test_correlation_host_ip(self, ubuntu_baseline):
         assert_correlation_host_ip(ubuntu_baseline)
 
+    def test_array_element_fields(self, ubuntu_baseline):
+        assert_array_element_fields(
+            ubuntu_baseline, OS_ARRAY_FIELDS, "ubuntu_baseline"
+        )
+
 
 class TestWindowsBaseline:
     """OS-04: Windows baseline 검증."""
@@ -71,3 +78,8 @@ class TestWindowsBaseline:
 
     def test_correlation_host_ip(self, windows_baseline):
         assert_correlation_host_ip(windows_baseline)
+
+    def test_array_element_fields(self, windows_baseline):
+        assert_array_element_fields(
+            windows_baseline, OS_ARRAY_FIELDS, "windows_baseline"
+        )

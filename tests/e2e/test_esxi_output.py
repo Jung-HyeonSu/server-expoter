@@ -15,10 +15,12 @@ baseline 필드 확인 결과:
 """
 
 from conftest import (
+    assert_array_element_fields,
     assert_channel_critical_fields,
     assert_common_structure,
     assert_correlation_fields,
     assert_correlation_host_ip,
+    ESXI_ARRAY_FIELDS,
     ESXI_CRITICAL,
     ESXI_FIELD_MAP,
 )
@@ -50,3 +52,8 @@ class TestEsxiBaseline:
 
     def test_correlation_host_ip(self, esxi_baseline):
         assert_correlation_host_ip(esxi_baseline)
+
+    def test_array_element_fields(self, esxi_baseline):
+        assert_array_element_fields(
+            esxi_baseline, ESXI_ARRAY_FIELDS, "esxi_baseline"
+        )

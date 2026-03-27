@@ -229,6 +229,69 @@ def assert_channel_critical_fields(output: dict, critical_fields: dict,
 
 
 # ---------------------------------------------------------------------------
+# 채널별 배열 내부 필드 정의
+#   - "section.array_key": 2단계 경로 → data[section][array_key]
+#   - "firmware": 1단계 경로 → data[firmware] (top-level 배열, section이 아님)
+#   - 배열이 비어있거나 섹션이 없으면 건너뜀 (graceful degradation)
+#   - P2-2 2단계
+# ---------------------------------------------------------------------------
+REDFISH_ARRAY_FIELDS = {
+    "storage.physical_disks": ["predicted_life_percent"],
+    "power.power_supplies": ["state"],
+    "firmware": ["component"],  # top-level 배열 (data.firmware[])
+    "network.interfaces": ["link_status"],
+}
+
+OS_ARRAY_FIELDS = {
+    # OS에는 predicted_life_percent / firmware / power 없음
+    "network.interfaces": ["link_status"],
+}
+
+ESXI_ARRAY_FIELDS = {
+    # ESXi baseline은 physical_disks 빈 배열, firmware/power 없음
+    "network.interfaces": ["link_status"],
+}
+
+
+def assert_array_element_fields(output: dict, array_fields: dict,
+                                fixture_label: str = ""):
+    """배열 내부 요소별 필드 존재 검증.
+
+    - 배열이 비어있거나 섹션이 없으면 건너뜀
+    - 요소가 있으면: dict 구조 확인 → required field 존재 확인
+    - fixture_label: 에러 메시지에 어떤 fixture인지 표시
+    """
+    data = output.get("data", {})
+    prefix = f"{fixture_label}: " if fixture_label else ""
+
+    for array_path, required_fields in array_fields.items():
+        parts = array_path.split(".")
+        if len(parts) == 2:
+            # "section.array_key" → data[section][array_key]
+            section = data.get(parts[0])
+            if not isinstance(section, dict):
+                continue
+            arr = section.get(parts[1], [])
+        elif len(parts) == 1:
+            # "firmware" → data[firmware] (top-level 배열)
+            arr = data.get(parts[0], [])
+        else:
+            continue
+
+        if not isinstance(arr, list) or len(arr) == 0:
+            continue
+
+        for i, elem in enumerate(arr):
+            assert isinstance(elem, dict), (
+                f"{prefix}{array_path}[{i}]이 dict가 아님: {type(elem).__name__}"
+            )
+            for field in required_fields:
+                assert field in elem, (
+                    f"{prefix}{array_path}[{i}].{field} 키 누락"
+                )
+
+
+# ---------------------------------------------------------------------------
 # Fixtures (pytest)
 # ---------------------------------------------------------------------------
 @pytest.fixture

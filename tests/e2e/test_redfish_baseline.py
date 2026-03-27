@@ -8,9 +8,11 @@
 """
 
 from conftest import (
+    assert_array_element_fields,
     assert_channel_critical_fields,
     assert_common_structure,
     assert_hardware_oem_is_object,
+    REDFISH_ARRAY_FIELDS,
     REDFISH_CRITICAL,
     REDFISH_FIELD_MAP,
 )
@@ -39,6 +41,11 @@ class TestDellBaseline:
     def test_hardware_oem_is_object(self, dell_baseline):
         assert_hardware_oem_is_object(dell_baseline)
 
+    def test_array_element_fields(self, dell_baseline):
+        assert_array_element_fields(
+            dell_baseline, REDFISH_ARRAY_FIELDS, "dell_baseline"
+        )
+
 
 class TestHpeBaseline:
     """RF-02: HPE iLO5 baseline 검증."""
@@ -61,6 +68,11 @@ class TestHpeBaseline:
 
     def test_hardware_oem_is_object(self, hpe_baseline):
         assert_hardware_oem_is_object(hpe_baseline)
+
+    def test_array_element_fields(self, hpe_baseline):
+        assert_array_element_fields(
+            hpe_baseline, REDFISH_ARRAY_FIELDS, "hpe_baseline"
+        )
 
 
 class TestLenovoBaseline:
@@ -85,6 +97,11 @@ class TestLenovoBaseline:
     def test_hardware_oem_is_object(self, lenovo_baseline):
         assert_hardware_oem_is_object(lenovo_baseline)
 
+    def test_array_element_fields(self, lenovo_baseline):
+        assert_array_element_fields(
+            lenovo_baseline, REDFISH_ARRAY_FIELDS, "lenovo_baseline"
+        )
+
 
 class TestDellR760Output:
     """Dell R760 output fixture (baseline과 별도 장비) 검증."""
@@ -102,3 +119,8 @@ class TestDellR760Output:
 
     def test_hardware_oem_is_object(self, dell_r760_output):
         assert_hardware_oem_is_object(dell_r760_output)
+
+    def test_array_element_fields(self, dell_r760_output):
+        assert_array_element_fields(
+            dell_r760_output, REDFISH_ARRAY_FIELDS, "dell_r760_output"
+        )
