@@ -325,5 +325,10 @@ def esxi_baseline():
 
 
 @pytest.fixture
+def cisco_baseline():
+    return load_json(BASELINE_DIR / "cisco_baseline.json")
+
+
+@pytest.fixture
 def dell_r760_output():
     return load_json(OUTPUT_DIR / "dell_r760_output.json")
