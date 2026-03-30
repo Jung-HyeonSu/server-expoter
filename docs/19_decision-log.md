@@ -19,7 +19,7 @@
 
 ## 2. Redfish Endpoint 선택 근거
 
-### 현재 코드가 호출하는 13개 엔드포인트
+### 코드가 호출하는 14개 엔드포인트
 
 | # | 엔드포인트 | 선택 근거 |
 |---|-----------|----------|
@@ -42,7 +42,7 @@
 
 | 엔드포인트 | 제외 근거 |
 |-----------|----------|
-| Chassis/{id}/Thermal | 온도/팬 정보 — 현재 normalize 스키마에 없음. 향후 추가 고려 |
+| Chassis/{id}/Thermal | 온도/팬 정보 — 판정 시점에 normalize 스키마 미정의. 향후 추가 고려 |
 | Managers/{id}/EthernetInterfaces | BMC NIC — system 레벨로 충분 |
 | Bios | BIOS 설정 — BiosVersion은 System에서 이미 취득 |
 | LogServices | 이벤트 로그 — 수집 범위 초과 |
@@ -75,11 +75,11 @@ normalize에서 `| default(none)` 처리.
 
 ### 빈 문자열 처리
 - HPE HostName = "" (빈 문자열) → normalize에서 `or _out_ip` fallback 필요
-- 현재 build_output.yml에서 처리 중 (2차 점검에서 수정)
+- build_output.yml에서 처리 (2차 점검에서 수정 완료)
 
 ### Storage Controllers fallback
-- 현재: `StorageControllers` 인라인 배열만 처리
-- HPE Gen11: `Controllers` 서브링크 사용 → **fallback 추가 필요** (refactor-checklist에 등록)
+- 판정 시점: `StorageControllers` 인라인 배열만 처리
+- HPE Gen11: `Controllers` 서브링크 사용 → **fallback 추가 필요** (P0-1에서 구현 완료, 8절 참조)
 
 ## 5. 실장비 검증으로 확정된 사항
 
@@ -108,9 +108,9 @@ normalize에서 `| default(none)` 처리.
 
 ### 결론
 
-**현재 프로젝트 범위에서는 Standard Redfish가 충분하다.** OEM placeholder는 향후 운영 요구 발생 시 확장한다.
+**판정 시점의 수집 범위에서는 Standard Redfish로 대응 가능하다.** OEM placeholder는 향후 운영 요구 발생 시 확장한다.
 
-현재 수집 범위(firmware inventory + PSU health/state/metrics) 기준으로 standard endpoint가 실무 요구의 95%+ 를 커버한다. OEM placeholder는 향후 운영 요구 발생 시 확장한다.
+수집 범위(firmware inventory + PSU health/state/metrics) 기준으로, 아래 근거 표의 모든 영역에서 standard endpoint만으로 필요 데이터를 확보할 수 있었다. OEM 추가 가치가 낮다고 판단한 근거는 아래 표 참조.
 
 ### 근거
 
@@ -152,6 +152,6 @@ OEM 구현을 재검토해야 하는 상황:
 
 | 항목 | 사유 |
 |------|------|
-| 단위 변환 헬퍼 통일 | 현재 코드 정확, 우선순위 낮음 |
+| 단위 변환 헬퍼 통일 | 검증 시점에 코드 동작 확인됨, 우선순위 낮음 |
 | Thermal 수집 추가 | normalize 스키마 미정의, 향후 요구 시 구현 |
 | Supermicro/다중 System member/Session Auth/iLO5 차이 | 실장비 미보유로 검증 불가, 장비 확보 시 재검토 |

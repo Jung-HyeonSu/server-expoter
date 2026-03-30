@@ -40,36 +40,11 @@
 
 ### Fragment 정규화
 
-```
-Raw 수집 (각 gather_*.yml)
-  ↓
-Fragment 생성
-  ├─ _data_fragment
-  ├─ _sections_supported_fragment
-  ├─ _sections_collected_fragment
-  ├─ _sections_failed_fragment
-  └─ _errors_fragment
-  ↓
-merge_fragment.yml (누적 병합)
-  ├─ _merged_data (재귀 dict 병합)
-  ├─ _all_sec_supported (list 합산)
-  ├─ _all_sec_collected
-  ├─ _all_sec_failed
-  └─ _all_errors
-  ↓
-공통 정규화 빌더 (common/tasks/normalize/)
-  ├─ build_sections.yml → sections dict
-  ├─ build_status.yml → status (success|partial|failed)
-  ├─ build_errors.yml → errors[]
-  ├─ build_meta.yml → meta (adapter_id, duration_ms)
-  ├─ build_correlation.yml → correlation (serial_number, system_uuid)
-  └─ build_output.yml → 최종 JSON + schema_version
-```
+각 gather는 자신의 fragment만 생성하고, merge_fragment.yml이 누적 병합한다.
+공통 builder(build_sections/status/errors/meta/correlation/output)가 최종 JSON을 조립한다.
+각 gather는 자신의 역할만 담당하며, 새 섹션 추가 시 build_output.yml 전체 수정은 필요하지 않다. 필요한 경우 site.yml에는 include_tasks 한 줄만 추가하면 된다.
 
-**설계 원칙:**
-- 각 gather는 자신의 역할만 담당한다 → 낮은 결합도
-- 새 섹션 추가 시 site.yml 수정이 불필요하다 → 높은 확장성
-- Fragment 구조로 부분 실패를 개별 처리한다 → 안정적인 오류 처리
+Fragment 변수 규칙, 네이밍 컨벤션, 실패 처리 패턴은 GUIDE_FOR_AI.md 참조.
 
 ### Adapter 시스템 (벤더 자동 감지)
 
@@ -160,8 +135,8 @@ server-exporter/ (프로젝트 루트)
        ├── build_*.yml (10개: sections, status, errors, meta, correlation, output)
        └── supported_sections.yml, status_rules.yml
 
-[3] Adapter 시스템 (13개 YAML)
-   ├── adapters/redfish/ (9개: generic + dell/hpe/lenovo/supermicro/cisco)
+[3] Adapter 시스템 (25개 YAML)
+   ├── adapters/redfish/ (14개: generic + dell×3 + hpe×4 + lenovo×2 + supermicro×3 + cisco)
    ├── adapters/os/ (7개: linux_*/windows_*)
    └── adapters/esxi/ (4개: generic + 6x/7x/8x)
 
@@ -202,7 +177,6 @@ server-exporter/ (프로젝트 루트)
        ├── 12_diagnosis-output      — Diagnosis 출력 구조
        ├── 13_redfish-live-validation — 3대 실장비 검증
        ├── 14_add-new-gather        — 새 Gather 추가 가이드
-       ├── 15_variable-naming       — 변수 네이밍 사전
        ├── 16_os-esxi-mapping       — OS/ESXi 필드 매핑
        ├── 17_jenkins-pipeline      — Jenkins 파이프라인 런타임
        ├── 18_ansible-project-config — Ansible 프로젝트 설정
@@ -211,161 +185,27 @@ server-exporter/ (프로젝트 루트)
 
 ---
 
-## ECC 활용 전략
+## ECC 활용
 
-### Python 부분 (100% ECC 지원)
+| 작업 | 명령어 | 비고 |
+|------|--------|------|
+| 새 기능 계획 | `/plan "기능명"` | 구현 전 아키텍처·단계 계획 |
+| TDD | `/tdd "기능명"` | Python 부분: 테스트 먼저 |
+| Python 리뷰 | `/python-review` | redfish_gather.py, precheck_bundle.py 등 |
+| 일반 리뷰 | `/code-review` | Ansible YAML 포함 |
+| 보안 검사 | `/security-review` | 커밋 전 점검 |
 
-**redfish_gather.py 개선:**
-```bash
-# TDD: 테스트 먼저 작성
-/tdd "Redfish API 타임아웃 처리"
-
-# 코드 품질 검사
-/python-review
-
-# 보안 취약점 검사
-/security-review
-```
-
-**precheck_bundle.py 개선:**
-```bash
-/tdd "4단계 진단 중 protocol 단계 개선"
-/python-review
-```
-
-### Ansible 플레이북 설계 (계획 수립)
-
-**새 벤더 추가:**
-```bash
-# Step 1: 아키텍처 계획
-/plan "Huawei Redfish 벤더 지원 추가"
-# → 파일 구조, 단계별 구현, 테스트 계획 받음
-
-# Step 2: Python 부분 (새 정규화 로직이 있으면)
-/tdd "Huawei OEM 필드 정규화"
-/python-review
-
-# Step 3: Ansible YAML은 /plan 결과 참고해서 직접 작성
-cat > adapters/redfish/huawei.yml << 'EOF'
-adapter_id: huawei_redfish
-channel: redfish
-priority: 100
-match:
-  vendor: [huawei]
-  firmware_patterns: ["BMC.*"]
-capabilities:
-  sections_supported: [...]
-collect:
-  strategy: standard+oem
-  oem_tasks: redfish-gather/tasks/vendors/huawei/collect_oem.yml
-normalize:
-  oem_tasks: redfish-gather/tasks/vendors/huawei/normalize_oem.yml
-EOF
-
-# Step 4: OEM 태스크 작성
-mkdir -p redfish-gather/tasks/vendors/huawei
-cat > redfish-gather/tasks/vendors/huawei/collect_oem.yml << 'EOF'
----
-- name: Huawei OEM 확장 수집
-  ...
-EOF
-```
-
-### 버그 수정 (TDD)
-
-**Fragment 병합 엣지 케이스:**
-```bash
-# 1. 실패 테스트 작성
-/tdd "Fragment 병합 - null값 처리"
-
-# 2. 버그 수정
-vim common/tasks/normalize/merge_fragment.yml
-
-# 3. 코드 리뷰
-/python-review
-
-# 4. 커밋
-git add .
-git commit -m "fix: Fragment 병합 시 null값 재귀 처리"
-```
-
-### 통합 테스트
-
-```bash
-# 로컬 테스트 (실장비 아님)
-ansible-playbook redfish-gather/site.yml \
-  -i tests/inventory/local/ \
-  -e "target_ip=10.x.x.1" \
-  -e "target_type=redfish"
-
-# Fixture 검증
-python tests/redfish-probe/validate_fields.py \
-  --fixture tests/fixtures/redfish/dell_r760/ \
-  --schema schema/field_dictionary.yml
-```
-
----
-
-## 개발 워크플로우
-
-### Daily Development
-
-```bash
-# 1. 프로젝트 진입
-cd server-exporter/
-
-# 2. 새 기능 계획
-/plan "새 섹션 추가: Thermal 정보"
-
-# 3. Python 부분 (TDD)
-/tdd "Thermal 정보 파싱 로직"
-
-# 4. Ansible YAML 작성 (gather + normalize)
-vi redfish-gather/tasks/collect_thermal.yml
-vi common/tasks/normalize/build_thermal.yml
-
-# 5. Fragment 추가
-vi common/tasks/normalize/init_fragments.yml
-# → thermal: 섹션명 추가
-# → _sections_thermal_fragment 초기화
-
-# 6. Schema 업데이트
-vi schema/sections.yml
-# → thermal 섹션 추가
-vi schema/fields/redfish.yml
-# → thermal 필드 정의
-
-# 7. 통합 테스트
-ansible-playbook redfish-gather/site.yml -i tests/inventory/
-
-# 8. 코드 리뷰
-/python-review
-/code-review
-
-# 9. 커밋
-git add .
-git commit -m "feat: Thermal 정보 수집 추가
-
-- redfish-gather: collect_thermal.yml 추가
-- common: build_thermal.yml 추가
-- schema: thermal 섹션 정의
-- tests: thermal fixture 추가 (Dell R760)"
-```
+새 벤더/gather 추가 상세 절차는 docs/14_add-new-gather.md 참조.
 
 ### Fragment 추가 체크리스트
 
 - [ ] `gather_*.yml` 또는 `collect_*.yml` 작성 (raw 수집)
-- [ ] Fragment 변수 생성
-  - `_data_fragment`
-  - `_sections_<name>_supported_fragment`
-  - `_sections_<name>_collected_fragment` (선택)
-  - `_errors_fragment` (실패 시)
+- [ ] Fragment 변수 생성 (`_data_fragment`, `_sections_<name>_supported_fragment`, `_errors_fragment`)
 - [ ] `normalize_*.yml` 또는 `common/tasks/normalize/build_*.yml` 작성
 - [ ] `merge_fragment.yml` 호출 확인 (각 gather 후)
 - [ ] `common/vars/supported_sections.yml` 업데이트
 - [ ] `schema/sections.yml` + `schema/fields/*.yml` 추가
-- [ ] Baseline JSON 예시 추가 (tests/fixtures 또는 examples)
-- [ ] 문서 업데이트 (`docs/09_output-examples.md`)
+- [ ] Baseline JSON 예시 추가 + 문서 업데이트
 
 ---
 
@@ -478,7 +318,7 @@ main
 | 기능 | OS (Linux/Windows) | ESXi | Redfish |
 |------|-------------------|------|---------|
 | 구현 완료 | O | O | O |
-| Adapter 수 | 7개 | 4개 | 9개 |
+| Adapter 수 | 7개 | 4개 | 14개 |
 | 지원 섹션 | 6개 | 6개 | 9개 |
 | Precheck | 포트 감지 | 4단계 | 4단계 |
 | Graceful Degradation | O | O | O |
@@ -501,12 +341,10 @@ main
 **원인:** match 조건이 맞지 않음
 **해결:**
 ```bash
-# Adapter 점수 계산 디버깅
-ansible-debug-adapter:
-  vars:
-    debug_adapter: true
-  tasks:
-    - debug: var=_adapter_candidates
+# -vvv로 adapter_loader lookup 디버그 출력 확인
+ansible-playbook redfish-gather/site.yml \
+  -i redfish-gather/inventory.sh \
+  -e "target_ip=10.x.x.1" -vvv 2>&1 | grep -i "adapter"
 ```
 
 ### Q3: Vault 로딩 실패
@@ -536,50 +374,13 @@ cat common/vars/vendor_aliases.yml | grep "{{ detected_vendor }}"
 
 ---
 
-## ECC 명령어 빠른 참조
+## 알려진 제한사항
 
-```bash
-# 계획 수립 (새 기능 추가)
-/plan "새 벤더/섹션 추가"
-
-# TDD (테스트 먼저)
-/tdd "기능명"
-
-# 코드 리뷰 (구현 후)
-/python-review
-/code-review
-
-# 보안 검사
-/security-review
-
-# 문서 생성
-/docs "주제"
-
-# E2E 테스트
-/e2e "시나리오"
-```
-
----
-
-## 기여 방식
-
-1. 새 기능은 /plan으로 계획 수립
-2. Python은 /tdd로 테스트부터
-3. Ansible은 /code-review 후 병합
-4. 문서는 /docs로 자동화
-
-**해결된 제한사항 (Round 14):**
-- ~~ESXi precheck이 block/rescue 내부~~ → precheck guard 추가로 조기 중단 구현 완료 (B3)
-- ~~OEM 확장 경로 상수 참조~~ → 조사 결과 adapter config 기반 동적 로딩 이미 구현 완료 (C1)
-- ~~Diagnosis 필드가 부분 적용~~ → OS(Linux/Windows) + ESXi 전채널 diagnosis 생성 완료 (B1)
-- ESXi/Redfish host resolution bug → delegate_to: localhost 환경 대응 완료 (B5/B6)
-
-**알려진 제한사항:**
 - ESXi 수집은 community.vmware 컬렉션 의존 (프로덕션 Agent에 설치 필요, 03_agent-setup.md 3절 참조)
-- OEM vendor task는 placeholder 상태 (Standard Redfish로 95%+ 커버, 향후 운영 요구 시 확장)
+- OEM vendor task는 placeholder 상태 (향후 운영 요구 시 확장)
+
+> 해결 완료된 항목(B1/B3/B5/B6/C1)은 docs/19_decision-log.md 참조.
 
 ---
 
-**프로젝트 상태: 프로덕션 준비 완료**
-
-최종 커밋: `5321646` (2026-03-24) - Windows 정규화 + Round 7-10 evidence
+**프로젝트 상태: 핵심 수집 경로 검증 완료**

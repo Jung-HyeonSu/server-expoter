@@ -34,17 +34,17 @@ Stage 3/4는 venv Python을 사용한다 (`. /opt/ansible-env/bin/activate`).
 | `target_type` | choice | 필수 | os / esxi / redfish |
 | `inventory_json` | text | 필수 | 포털이 조립한 호스트 JSON 배열 |
 
-### inventory_json 형식 (redfish)
+### inventory_json 형식
 ```json
 [
   {
-    "ip": "10.50.11.232",
-    "vendor": "lenovo",
-    "username": "USERID",
-    "password": "VMware1!"
+    "ip": "10.50.11.232"
   }
 ]
 ```
+
+> 포털은 ip만 전달한다. 계정은 vault에서 자동 로딩된다.
+> 상세 명세는 [docs/05_inventory-json-spec.md](05_inventory-json-spec.md) 참조.
 
 ## 3. 환경변수 설정
 
@@ -58,7 +58,7 @@ environment {
 
 ### 추가 필요 환경변수
 
-| 변수 | 현재 상태 | 필요 조치 |
+| 변수 | 상태 | 필요 조치 |
 |------|----------|----------|
 | `ANSIBLE_CONFIG` | 미설정 | `${WORKSPACE}/ansible.cfg` 추가 권장 |
 | `PYTHONPATH` | 미설정 | ansible.cfg가 module_utils 경로 처리하므로 불필요 |
@@ -93,8 +93,8 @@ ansiblePlaybook(
 
 ## 6. Credentials 관리
 
-| ID | 타입 | 용도 | 현재 상태 |
-|----|------|------|----------|
+| ID | 타입 | 용도 | 상태 (검증 시점) |
+|----|------|------|-----------------|
 | vault-pass | Secret file | Ansible vault 복호화 | 미등록 — 등록 필요 |
 | bmc-credentials | Username/Password | BMC 인증 (선택) | 포털에서 inventory_json으로 전달 |
 
@@ -109,7 +109,7 @@ ansiblePlaybook(
 | 네트워크 | BMC 대역 (10.50.x.x) 접근 가능 |
 | 디스크 | workspace + ansible 로그 공간 |
 
-## 8. 현재 누락 설정
+## 8. 검증 시점 미완료 설정
 
 | # | 항목 | 영향 | 우선순위 |
 |---|------|------|---------|
@@ -142,10 +142,10 @@ post {
 |------|------|------|
 | Jenkinsfile 구조 | ✅ 정상 | v3 — 검증 완료 |
 | 파라미터 검증 | ✅ 정상 | loc, target_type, inventory_json 검증 |
-| ansible.cfg | ✅ 생성 완료 | 2026-03-18 신규 생성 |
-| Agent 환경 | ⚠️ 미확인 | Jenkins agent에서 직접 확인 필요 |
+| ansible.cfg | ✅ 생성 완료 | 2026-03-18 생성 |
+| Agent 환경 | ✅ 확인 완료 | 2026-03-27 SSH 접속 확인 (Python 3.12.3, ansible-core 2.20.3) |
 | Credentials | ⚠️ 미등록 | vault-pass 등록 필요 |
-| 컬렉션 설치 | ⚠️ 미확인 | agent에서 확인 필요 |
+| 컬렉션 설치 | ✅ 확인 완료 | 2026-03-27 ansible-galaxy list 확인 |
 
 ## 10. 준비 순서
 

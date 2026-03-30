@@ -106,7 +106,7 @@ python3 tests/validate_field_dictionary.py
                  "probe_facts": {}, "checked_ports": [22] },
   "meta": { "started_at": "2026-03-18T10:00:00Z", "finished_at": "2026-03-18T10:00:12Z",
             "duration_ms": 12350, "adapter_id": "os_linux_generic",
-            "adapter_version": "1.0.0", "ansible_version": "2.19.1" },
+            "adapter_version": "1.0.0", "ansible_version": "2.20.3" },
   "correlation": { "serial_number": null, "system_uuid": null, "bmc_ip": null, "host_ip": "10.x.x.1" }
 }
 ```
@@ -148,7 +148,7 @@ python3 tests/validate_field_dictionary.py
                                  "free_mb": 2097152, "used_mb": 8388608, "usage_percent": 80.0, "accessible": true}],
                  "controllers": [] },
     "network": { "dns_servers": ["10.x.x.53"],
-                 "default_gateways": [{"family": "ipv4", "address": "10.x.x.254"}],
+                 "default_gateways": [],
                  "interfaces": [{"id": "vmk0", "name": "vmk0", "kind": "vmkernel",
                                  "mac": "00:11:22:33:44:66", "mtu": 1500, "speed_mbps": null,
                                  "link_status": "up", "is_primary": true,
@@ -162,7 +162,7 @@ python3 tests/validate_field_dictionary.py
                  "probe_facts": {}, "checked_ports": [443] },
   "meta": { "started_at": "2026-03-18T10:03:00Z", "finished_at": "2026-03-18T10:03:15Z",
             "duration_ms": 15230, "adapter_id": "esxi_generic",
-            "adapter_version": "1.0.0", "ansible_version": "2.19.1" },
+            "adapter_version": "1.0.0", "ansible_version": "2.20.3" },
   "correlation": { "serial_number": "CZ12345678", "system_uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
                    "bmc_ip": null, "host_ip": "10.x.x.10" }
 }
@@ -230,7 +230,7 @@ python3 tests/validate_field_dictionary.py
                  "checked_ports": [443] },
   "meta": { "started_at": "2026-03-18T10:05:00Z", "finished_at": "2026-03-18T10:05:18Z",
             "duration_ms": 18420, "adapter_id": "redfish_dell_idrac9",
-            "adapter_version": "1.0.0", "ansible_version": "2.19.1" },
+            "adapter_version": "1.0.0", "ansible_version": "2.20.3" },
   "correlation": { "serial_number": "ABC1234", "system_uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
                    "bmc_ip": "10.x.x.201", "host_ip": null }
 }

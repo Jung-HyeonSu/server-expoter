@@ -2,14 +2,14 @@
 
 ## 개요
 
-리팩토링을 통해 output JSON에 3개 신규 필드가 추가되었습니다.
-기존 필드는 변경 없이 유지됩니다 (하위 호환).
+output JSON에는 diagnosis, meta, correlation 3개 필드가 포함된다.
+기존 필드는 변경 없이 유지된다 (하위 호환).
 
-## 신규 필드
+## 필드 상세
 
 ### diagnosis
 
-수집 실패 원인을 단계별로 보여줍니다.
+수집 실패 원인을 단계별로 기록한다.
 
 ```json
 {
@@ -37,7 +37,7 @@
 
 ### meta
 
-수집 메타데이터입니다.
+수집 메타데이터를 담는다.
 
 ```json
 {
@@ -47,15 +47,15 @@
     "duration_ms": 18420,
     "adapter_id": "redfish_dell_idrac9",
     "adapter_version": "1.0.0",
-    "ansible_version": "2.19.1"
+    "ansible_version": "2.20.3"
   }
 }
 ```
 
 ### correlation
 
-다중 채널 결과를 연결하기 위한 키입니다.
-같은 물리 장비에 대해 redfish/os/esxi 결과를 매칭할 때 사용합니다.
+다중 채널 결과를 연결하기 위한 키다.
+같은 물리 장비에 대해 redfish/os/esxi 결과를 매칭할 때 사용한다.
 
 ```json
 {

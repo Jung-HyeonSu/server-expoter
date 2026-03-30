@@ -2,9 +2,9 @@
 
 ## 개요
 
-`precheck_bundle.py`는 수집 대상 호스트에 대해 **4단계 연결 진단**을 수행하는 Ansible 커스텀 모듈입니다.
+`precheck_bundle.py`는 수집 대상 호스트에 대해 **4단계 연결 진단**을 수행하는 Ansible 커스텀 모듈이다.
 
-수집 실패 시 "왜 실패했는지"를 운영자가 즉시 파악할 수 있도록 단계별 결과를 제공합니다.
+수집 실패 시 "왜 실패했는지"를 운영자가 즉시 파악할 수 있도록 단계별 결과를 제공한다.
 
 ## 진단 단계
 
@@ -16,10 +16,10 @@
  4.  auth_success — 인증 성공 여부 (선택적, 채널에 따라 스킵)
 ```
 
-> Stage 1(reachable)과 2(port_open)는 TCP 포트 연결로 통합 처리됩니다.
-> 호스트가 살아있지만 서비스 포트가 닫힌 경우 `failure_stage="reachable"`로 보고됩니다.
+> Stage 1(reachable)과 2(port_open)는 TCP 포트 연결로 통합 처리된다.
+> 호스트가 살아있지만 서비스 포트가 닫힌 경우 `failure_stage="reachable"`로 보고된다.
 
-각 단계 실패 시 후속 단계는 건너뛰고 `failure_stage`와 `failure_reason`을 반환합니다.
+각 단계 실패 시 후속 단계는 건너뛰고 `failure_stage`와 `failure_reason`을 반환한다.
 
 ## 사용법
 
