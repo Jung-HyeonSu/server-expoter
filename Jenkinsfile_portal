@@ -55,10 +55,10 @@ pipeline {
             choices     : ['os', 'esxi', 'redfish'],
             description : '수집 대상 종류'
         )
-        text(
-            name        : 'inventory_json',
-            description : '호스트 JSON 배열 (os/esxi: service_ip, redfish: bmc_ip, fallback: ip)'
-        )
+        //text(
+        //    name        : 'inventory_json',
+        //    description : '호스트 JSON 배열 (os/esxi: service_ip, redfish: bmc_ip, fallback: ip)'
+        //)
         string(
             name        : 'deploymentEnvironmentId',
             defaultValue: '',
@@ -80,7 +80,7 @@ pipeline {
     }
 
     environment {
-        INVENTORY_JSON          = "${params.inventory_json}"
+        //INVENTORY_JSON          = "${params.inventory_json}"
         // __pycache__ 권한 충돌 차단 — 외부 root 진입 흔적으로 .pyc 가 root 소유로 굳을 경우
         // jenkins user 가 갱신 못 해 plugin path 로드 실패 (errno 13). bytecode 캐시 자체를 끔.
         PYTHONDONTWRITEBYTECODE = '1'
