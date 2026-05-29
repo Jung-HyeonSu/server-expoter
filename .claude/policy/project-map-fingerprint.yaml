@@ -9,6 +9,6 @@ filter_plugins: 05bc54c219b9
 lookup_plugins: 980c134e246e
 module_utils: 8d488705375c
 os-gather: 0f6d657cedaf
-redfish-gather: 1e5125c04e36
+redfish-gather: 6d3870d61fbf
 schema: 8a0fb1b89128
 tests: 235f94e45813
