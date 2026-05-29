@@ -10,6 +10,8 @@
 - **stale 26곳 정정**: redfish_gather.py 3430→**3812**, field_dict 74·65→**83**(39 Must/38 Nice/6 Skip), pytest 148→**699**, adapter 41·30→**42·31**, README 28→**31**, test 41·365→**42·375**.
 - **dead code 제거**: `pre_edit_guard.py`(broken+unwired), `collect.yml`/`normalize_sections.yml`(deprecated shim), `build_errors_from_diagnosis` 필터, `adapter_common` 미사용 `import os`. (`registry.yml` 은 test 소비 — 보존.)
 - **redfish dedup**: `_ne`/`_ne_p` 중복 stripping 3→1 (`_strip_or_none` 위임).
+- **redfish perf (CQ-02)**: SSL context `verify_ssl` 별 캐시 (`_CTX_CACHE`) — host당 30~150 재생성 제거 (동작 동일).
+- **EX-01 오탐 확인**: `gather_cpu.yml` `\| float` raise 주장 → WSL ansible 실측 `'abc'\|float`=0.0 (raise 안 함) → 변경 불필요 (empirical 반증).
 - **docs 정리**: 완료-cycle 덤프 164 삭제 + 26 archive(harness 006-015/handoff/ticket summary) + dangling ref 26 수정.
 - **CSUS 정직성**: mock baseline registry 라벨 `_MOCK` + "정식 지원"→"lab 부재 미검증" + self-consistency 가드 테스트 4 신설 (`tests/regression/test_csus_mock_consistency.py`).
 - **신규 문서**: `docs/ai/AUDIT-2026-05-29.md`(권고 backlog), `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md`(보안 — 문서화만), `ADR-2026-05-29-audit-cleanup.md`.

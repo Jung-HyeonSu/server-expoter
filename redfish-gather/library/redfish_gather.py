@@ -79,6 +79,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 # ── HTTP 유틸 ────────────────────────────────────────────────────────────────
 
+# verify_ssl(bool) 별 SSLContext 캐시 (cycle 2026-05-29 audit — host 당 재생성 제거)
+_CTX_CACHE = {}
+
+
 def _ctx(verify_ssl):
     """HTTPS context — verify_ssl=False 시 self-signed BMC 인증서 허용.
 
@@ -93,7 +97,16 @@ def _ctx(verify_ssl):
     구 BMC TLS 1.0/1.1 만 지원하면 본 코드는 핸드셰이크 실패 → graceful
     degradation 으로 status=failed (precheck protocol 단계). 별 사고 신호
     없으면 minimum_version 유지. (rule 92 R2)
+
+    cycle 2026-05-29 (audit): verify_ssl(bool) 별 1회만 빌드 후 재사용 (_CTX_CACHE).
+    SSLContext 는 다중 연결 재사용이 표준 (Python 권장). host 당 30~150 회 재생성
+    제거 — 동작 동일 (controller-side CPU/alloc 절감). Ansible module 은 host 당
+    단일 subprocess → thread-safety 무관.
     """
+    _cache_key = bool(verify_ssl)
+    _cached = _CTX_CACHE.get(_cache_key)
+    if _cached is not None:
+        return _cached
     ctx = ssl.create_default_context()
     # TLS 1.2 minimum (DSP0266 §10.2). TLS 1.0/1.1 은 이미 DMTF/HPE/Cisco/Dell 모두 deprecated.
     if hasattr(ssl, 'TLSVersion'):
@@ -112,6 +125,7 @@ def _ctx(verify_ssl):
             ctx.set_ciphers('DEFAULT@SECLEVEL=0')
         except ssl.SSLError:
             pass
+    _CTX_CACHE[_cache_key] = ctx
     return ctx
 
 def _auth(username, password):
