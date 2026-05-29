@@ -2,6 +2,21 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-05-29 (cycle audit-cleanup — 전수 audit + 안전 정리)
+
+### 신규 테스트 (+4)
+- `tests/regression/test_csus_mock_consistency.py` 신규 4: CSUS mock baseline 자기 일관성 가드 (summary 카운트 == list 길이 / representative == partitions[0] / multi_node enabled+layout / mock 표식 유지 — 실측 교체 시 skip).
+
+### 변경
+- `tests/regression/conftest.py`: CSUS registry 라벨 `hpe_csus_3200_redfish` → `hpe_csus_3200_redfish_MOCK` (실측 4 + mock 1 명시). `test_cross_channel_consistency.py:232` 주석 동기화.
+- dead code 제거 후 영향 영역 회귀 (diagnosis/adapter/filter/precheck 206 + full 699).
+
+### 회귀 결과
+- pytest **703 PASS / 0 FAIL** (699 + CSUS 가드 4).
+- `verify_harness_consistency` PASS (rules 28 / skills 51 / agents 60 / policies 10), `verify_vendor_boundary` PASS, `check_project_map_drift` (fingerprint 갱신).
+- py_compile: `redfish_gather.py` / `diagnosis_mapper.py` / `adapter_common.py` OK.
+- 환경 제약: ansible 미설치 → `ansible-playbook --syntax-check` 미실행 (rule 24 R1 환경 제약 명시). ansible YAML 동작 변경은 미적용 (AUDIT-2026-05-29.md 로 위임).
+
 ## 2026-05-29 (cycle hba-ib-csus — CSUS 3200 전 공통 섹션 + HBA/InfiniBand 전 채널)
 
 ### 신규 테스트 (+14)
@@ -564,7 +579,7 @@
 - 2차 (fix 후): 4 vendor 정상 envelope 13 필드. precheck OK / detect_vendor OK / adapter 자동 선택 OK / collect 401 → rescue → 13 필드 envelope.
 - curl 자격 검증 (자격 transcript 노출 0): ServiceRoot 4 vendor HTTP 200 / vault primary+recovery 모두 HTTP 401 → vault ↔ BMC sync 안 됨 (OPS-3 우선순위 격상).
 - redfish 공통계정 자동 생성 (P2 account_service): recovery 자격 fail로 진입 미발생 (의도된 동작) → cycle-015 이월.
-- Evidence: `tests/evidence/cycle-014/README.md` + 4 log + `docs/ai/harness/cycle-014.md`
+- Evidence: `tests/evidence/cycle-014/README.md` + 4 log + `docs/ai/archive/harness/cycle-014.md`
 - Git: main `bf247266` push 완료.
 
 ---
@@ -590,7 +605,7 @@
 - 결과: 정적 검증 4/4 PASS. 도메인 코드 변경 없음 (catalog/문서만), 회귀 영향 없음.
 - Baseline 갱신: 없음.
 - Git: feature/3channel-expansion 3 commit (`0150fa2e` / `57745bd1` / `b1d8014c`) push 완료. main 머지는 OPS-8 (rule 93 R2 사용자 명시 승인) 대기.
-- Evidence: `docs/ai/harness/cycle-012.md` (cycle-012 보존), `docs/ai/harness/cycle-013.md` (본 cycle 보고서), `docs/ai/decisions/ADR-2026-04-29-vault-encrypt-adoption.md`, `docs/ai/handoff/2026-04-29-cycle-013.md`, `docs/ai/archive/README.md`
+- Evidence: `docs/ai/archive/harness/cycle-012.md` (cycle-012 보존), `docs/ai/archive/harness/cycle-013.md` (본 cycle 보고서), `docs/ai/decisions/ADR-2026-04-29-vault-encrypt-adoption.md`, `docs/ai/archive/handoff/2026-04-29-cycle-013.md`, `docs/ai/archive/README.md`
 
 ### Phase 3 추가 작업 (본 응답 후반)
 
@@ -649,7 +664,7 @@
   - `ansible-playbook --syntax-check` → SKIP (Windows 메인 환경 제약)
 - 결과: 정적 검증 4/5 PASS + 1 SKIP (환경 제약)
 - Baseline 갱신: 없음 (T3-04는 schema 영향 없음)
-- Evidence: `docs/ai/harness/cycle-010.md`
+- Evidence: `docs/ai/archive/harness/cycle-010.md`
 
 ---
 
@@ -724,7 +739,7 @@
   - `verify_vendor_boundary.py` (sweep 전 PASS)
   - `check_project_map_drift.py` (sweep 전 PASS)
   - `scan_suspicious_patterns.py` (sweep 전 PASS)
-- 결과: full-sweep 보고서 `docs/ai/harness/full-sweep-2026-04-28.md` 참조
+- 결과: full-sweep 보고서 `docs/ai/archive/harness/full-sweep-2026-04-28.md` 참조
 - 회귀: docs/rule/policy/code 정합 변경 — 영향 vendor baseline 회귀 별도 결정 필요
 
 ## 2026-04-28 — full-sweep 잔여 (T2-B2 / T2-C2 / T2-C8) 적용

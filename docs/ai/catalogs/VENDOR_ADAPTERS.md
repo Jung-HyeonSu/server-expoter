@@ -6,7 +6,7 @@
 > **cycle 2026-05-12 변경**: adapter 카운트 변경 없음 (31 그대로). `vendor_notes` 보강만:
 >   - `hpe_csus_3200.yml` / `hpe_superdome_flex.yml` 에 `multi_node_support: true` Additive (ADR-2026-05-12).
 >   - `data.multi_node` Additive envelope 컨테이너 — RMC primary 시스템 (manager_layout=rmc_*) 전수 수집.
->   - field_dictionary 65→74 entries (+9 nice — multi_node.* / diagnosis.details.*).
+>   - field_dictionary → 83 entries (Must 39 / Nice 38 / Skip 6 — 2026-05-29 재실측).
 >   - mock fixture `tests/fixtures/redfish/hpe_csus_3200/` 7 파일 합성 (3-partition × 4-manager × 3-chassis).
 >
 > **cycle 2026-05-11 변경**: 30 adapter → 31 adapter

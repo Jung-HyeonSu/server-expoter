@@ -8,7 +8,7 @@
 
 ## 현재 관찰된 현실
 
-- 41개 adapter YAML (Redfish 30 + OS 7 + ESXi 4 — cycle 2026-05-11 실측)
+- 42개 adapter YAML (Redfish 31 + OS 7 + ESXi 4 — cycle 2026-05-29 재실측)
 - 9 vendor (Dell / HPE / Lenovo / Supermicro / Cisco / Huawei / Inspur / Fujitsu / Quanta) + generic fallback
 - adapter_loader (lookup plugin)이 동적 점수 계산으로 선택
 - vendor-specific OEM tasks는 `redfish-gather/tasks/vendors/{vendor}/`

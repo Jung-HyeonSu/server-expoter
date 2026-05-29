@@ -1,5 +1,31 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-05-29 (cycle audit-cleanup — 전수 audit + 안전 정리 [DONE])
+
+### 컨텍스트
+- 사용자 명시: dead code/중복/리팩토링/성능/예외/아키텍처/기술부채 전수 점검 + "개더링 안 되는데 스키마에 잡아넣은 것" + 쓰레기 문서 삭제 + CSUS 3200 출력 재검토. "운영 깨지면 안됨, 특히 인증". branch `refactor/audit-cleanup-20260529`.
+- 8-auditor 병렬 전수조사 + web 검증 (BMC lockout / Superdome RMC 모델).
+
+### 적용 (검증됨 — pytest 699→703 PASS / harness·vendor-boundary PASS)
+- **stale 26곳 정정**: redfish_gather.py 3430→**3812**, field_dict 74·65→**83**(39 Must/38 Nice/6 Skip), pytest 148→**699**, adapter 41·30→**42·31**, README 28→**31**, test 41·365→**42·375**.
+- **dead code 제거**: `pre_edit_guard.py`(broken+unwired), `collect.yml`/`normalize_sections.yml`(deprecated shim), `build_errors_from_diagnosis` 필터, `adapter_common` 미사용 `import os`. (`registry.yml` 은 test 소비 — 보존.)
+- **redfish dedup**: `_ne`/`_ne_p` 중복 stripping 3→1 (`_strip_or_none` 위임).
+- **docs 정리**: 완료-cycle 덤프 164 삭제 + 26 archive(harness 006-015/handoff/ticket summary) + dangling ref 26 수정.
+- **CSUS 정직성**: mock baseline registry 라벨 `_MOCK` + "정식 지원"→"lab 부재 미검증" + self-consistency 가드 테스트 4 신설 (`tests/regression/test_csus_mock_consistency.py`).
+- **신규 문서**: `docs/ai/AUDIT-2026-05-29.md`(권고 backlog), `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md`(보안 — 문서화만), `ADR-2026-05-29-audit-cleanup.md`.
+
+### 스키마 "bloat" 판정 (사용자 핵심 질문)
+- 대부분 **fake gathering 아님** — (a) stale baseline (코드는 채우는데 baseline 이 코드보다 오래됨) 또는 (b) lab 에 FC HBA/InfiniBand 하드웨어 부재. envelope 은 frozen 계약(ADR-2026-05-11). 유일한 "mock-only" 노출 = CSUS `multi_node` 9 필드 (gated null, 타 벤더 무영향).
+- 필드 삭제 0 (계약 안전). 권고 = stale baseline 재캡처 (lab).
+
+### 미적용 (사용자 결정 / lab / ansible 미설치) → `docs/ai/AUDIT-2026-05-29.md` + NEXT_ACTIONS §0
+- 보안 회전(사용자), AUTH lockout/dryrun(lab), esxi vendor 정규화 버그·perf·refactor(ansible 검증 필요).
+
+### 관련
+- ADR: `docs/ai/decisions/ADR-2026-05-29-audit-cleanup.md`
+
+---
+
 ## 일자: 2026-05-29 (cycle hba-ib-csus — CSUS 3200 전 공통 섹션 + HBA/InfiniBand 전 채널 [DONE])
 
 ### 컨텍스트
@@ -1312,7 +1338,7 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 ### 보고서
 - `docs/ai/harness/cycle-017.md` (cycle 보고서)
 - `docs/ai/decisions/ADR-2026-05-01-harness-reinforcement.md` (governance)
-- `docs/ai/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md` (G절 적용 결과)
+- `docs/ai/archive/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md` (G절 적용 결과)
 
 ### 후속 (다음 세션)
 - harness-evolution-coordinator 6단계 정기 cycle 진입
@@ -1987,7 +2013,7 @@ pytest tests/                         : PASS — 95/95
 
 ## 다음 작업 (cycle-007 후보)
 
-> `docs/ai/NEXT_ACTIONS.md` 참조. 2026-04-28 full-sweep 보고서: `docs/ai/harness/full-sweep-2026-04-28.md`
+> `docs/ai/NEXT_ACTIONS.md` 참조. 2026-04-28 full-sweep 보고서: `docs/ai/archive/harness/full-sweep-2026-04-28.md`
 
 ### 사용자 결정 / 외부 의존
 - T2-D2: `schema/baseline_v1/cisco_baseline.json` `data.users: null` → `[]` (rule 13 R4 — 실측 evidence 필요)
@@ -2008,7 +2034,7 @@ pytest tests/                         : PASS — 95/95
 - `CLAUDE.md` (Tier 0 정본, 보강됨)
 - `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`, `README.md`
 - `docs/01_jenkins-setup` ~ `docs/19_decision-log`
-- 직전 cycle: `docs/ai/harness/cycle-004.md`
+- 직전 cycle: `docs/ai/archive/harness/cycle-004.md`
 - vendor 경계 분석: `docs/ai/impact/2026-04-27-vendor-boundary-57.md`
 - DRIFT 카탈로그: `docs/ai/catalogs/CONVENTION_DRIFT.md`
 - plan: `C:/Users/hshwa/.claude/plans/rosy-wishing-crescent.md`

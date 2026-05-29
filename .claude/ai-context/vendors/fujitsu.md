@@ -50,7 +50,7 @@
 ## Reference
 
 - `docs/19_decision-log.md` — 2026-05-01 신규 vendor 4종 도입 결정
-- `docs/ai/tickets/2026-05-01-gather-coverage/fixes/F46.md` — 본 vendor cold-start ticket
+- ticket F46 (cycle 2026-05-01 — git history) — 본 vendor cold-start ticket
 - iRMCtools (vendor 공식 GitHub): https://github.com/fujitsu/iRMCtools
 - iRMC-REST-API (vendor 공식 GitHub): https://github.com/fujitsu/iRMC-REST-API
 - Fujitsu PRIMERGY iRMC S5 RESTful API Spec: manualzz.com

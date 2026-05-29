@@ -82,7 +82,7 @@ server-exporter/
 ├── redfish-gather/          서버 BMC 수집 (Redfish API)
 │
 ├── adapters/                벤더 / 세대별 어댑터 YAML
-│   ├── redfish/             28개 (Dell / HPE / Lenovo / Supermicro / Cisco / Huawei / Inspur / Fujitsu / Quanta + HPE Superdome)
+│   ├── redfish/             31개 (Dell / HPE / Lenovo / Supermicro / Cisco / Huawei / Inspur / Fujitsu / Quanta + HPE Superdome)
 │   ├── os/                  7개 (Linux / Windows 변형)
 │   └── esxi/                4개 (ESXi 6.x / 7.x / 8.x)
 │

@@ -41,7 +41,7 @@ callback_plugins/json_only.py가 OUTPUT 태스크에만 JSON 직렬화. 표준 6
 
 ## 3. Field Dictionary 39 Must
 
-`schema/field_dictionary.yml`에서 분류 (실측 2026-05-29 = 39 Must / 29 Nice / 6 Skip = 74 entries, 16 section prefixes):
+`schema/field_dictionary.yml`에서 분류 (실측 2026-05-29 = 39 Must / 38 Nice / 6 Skip = 83 entries, 16 section prefixes):
 - **Must (39)**: 모든 vendor의 모든 baseline에 존재해야 함. 누락 시 schema validate FAIL (Jenkins Stage 3).
 - **Nice (29)**: vendor-specific 허용. 있으면 좋고 없어도 OK.
 - **Skip (6)**: 의도적 미수집 (예: 너무 큰 stack trace).

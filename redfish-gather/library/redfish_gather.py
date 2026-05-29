@@ -1348,12 +1348,8 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
     # 2026-04-30 추가: Cisco 등 일부 BMC가 trailing whitespace 포함하는 PartNumber 반환 →
     # cross-vendor consistency 위해 strip().
     def _ne(*keys):
-        v = _safe(data, *keys)
-        if isinstance(v, str):
-            v = v.strip()
-            if not v:
-                return None
-        return v
+        # _strip_or_none + _safe 조합 (중복 stripping 로직 3곳 → 1곳 dedup, cycle 2026-05-29)
+        return _strip_or_none(_safe(data, *keys))
 
     result = {
         'manufacturer':   _ne('Manufacturer'),
@@ -1586,12 +1582,8 @@ def gather_processors(bmc_ip, system_uri, username, password, timeout, verify_ss
         # None 으로 정규화. cycle-016 Phase N 풍부 필드는 그대로 유지.
         # 2026-04-30: Cisco 등 trailing whitespace 정규화 추가.
         def _ne_p(*ks):
-            v = _safe(pdata, *ks)
-            if isinstance(v, str):
-                v = v.strip()
-                if not v:
-                    return None
-            return v
+            # _strip_or_none + _safe 조합 (중복 stripping 로직 3곳 → 1곳 dedup, cycle 2026-05-29)
+            return _strip_or_none(_safe(pdata, *ks))
 
         processors.append({
             'id':                _safe(pdata, 'Id'),

@@ -3,7 +3,24 @@
 > **본 파일**: 진정 active PENDING 만 유지 (rule 70 R5 / R6 / R7 cycle 자문 정책).
 > **lab 매트릭스**: `docs/ai/catalogs/LAB_PENDING_MATRIX.md` (8 vendor × generation × 4 column).
 > **archive**: `docs/ai/archive/NEXT_ACTIONS-history-2026-04-to-05.md` (OPS-* + cycle-013/014/015/016 잔여).
-> **마지막 정리**: 2026-05-21 (1371 줄 → 압축).
+> **마지막 정리**: 2026-05-29 (audit-cleanup cycle).
+
+---
+
+## 0. 2026-05-29 audit-cleanup 후속 (전수 audit 결과 — 미적용 backlog)
+
+> 정본: `docs/ai/AUDIT-2026-05-29.md` (전체 권고 + 정확 file:line + diff).
+
+| 우선 | 항목 | 분류 | 결정 주체 |
+|---|---|---|---|
+| **[CRIT]** | vault 마스터 암호(`Goodmit0802!`) + 자격 회전 + (선택) git 히스토리 purge | 보안 | **사용자** — `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md` |
+| **[HIGH]** | BMC/AD lockout 회피 (detect 선인증 4-GET / OS backoff 부재 / account_service dryrun=false) | `[AUTH][LAB]` | 사용자+lab — AUDIT §1 |
+| MED | esxi vendor 정규화 substring fallback 누락 (`vendor` 필드 divergence 버그) | `[ANSIBLE]` | AUDIT §4 AR-1 |
+| MED | perf: CSUS 대표 partition 2회 fetch / firmware fetch-then-discard / SSL ctx 재생성 | `[LAB]` | AUDIT §2 |
+| MED | refactor: `account_service_provision` 381줄 분할 / HTTP verb 통합 / status 문자열매칭→숫자 | `[AUTH][CONTRACT]` | AUDIT §3 |
+| LOW | JEDEC 테이블 단일화 / registry.yml 문서 명확화 / build_output 명명 / vendor debug dead var | `[ANSIBLE]` | AUDIT §4 |
+
+> 본 cycle 미적용 사유: 본 환경에 **ansible 미설치**(syntax/런타임 검증 불가) + 일부는 **실장비/인증 동작** 변경 (사용자 "운영 깨지면 안됨, 특히 인증"). 적용은 Jenkins agent(ansible+lab) 에서 검증 후.
 
 ---
 

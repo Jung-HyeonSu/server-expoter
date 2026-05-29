@@ -7,7 +7,7 @@
 
 ## 컨텍스트 (Why)
 
-cycle 2026-05-01 종료 시점, 사용자 명시 "하네스 보강 작업 모두 수행해라 남겨두지말고 모두" 와 "하네스 전체 점검 하네스 작업을 마무리해라 전부해라". 본 cycle 종료 ticket `docs/ai/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md` 의 B1~B8 부족 + D 신규 후보 + E 권한 완화 모두 일괄 적용.
+cycle 2026-05-01 종료 시점, 사용자 명시 "하네스 보강 작업 모두 수행해라 남겨두지말고 모두" 와 "하네스 전체 점검 하네스 작업을 마무리해라 전부해라". 본 cycle 종료 ticket `docs/ai/archive/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md` 의 B1~B8 부족 + D 신규 후보 + E 권한 완화 모두 일괄 적용.
 
 ### 2주간 학습 (HARNESS-RETROSPECTIVE A 절)
 

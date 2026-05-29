@@ -12,7 +12,6 @@ __metaclass__ = type
 
 import re
 import yaml
-import os
 
 
 def load_vendor_aliases(aliases_path):
