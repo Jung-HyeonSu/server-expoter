@@ -35,7 +35,19 @@
 - **trigger**: RMC IP 확보 + Redfish 활성화 (`docs/22_rmc-activation-guide.md` 4 절)
 - **상세 8 항목 (C1~C8)**: `docs/ai/catalogs/LAB_PENDING_MATRIX.md` HPE 행
 - **handoff 후보 A**: `docs/ai/handoff/2026-05-11-next-cycles.md` "후보 A — HPE CSUS 3200 lab 검증"
-- **ADR**: `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md`
+- **ADR**: `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md`, `ADR-2026-05-29-hba-ib-csus.md`
+- **cycle 2026-05-29 (hba-ib-csus)**: baseline 을 전 공통 섹션 realistic mock 으로 채움 (FC HBA + RAID1 SATA + DDR5 + 3 partition canonical). 여전히 **mock** — C1 사이트 fixture 캡처 후 실 baseline 으로 교체 의무 ("검증됨" 주장 금지 — rule 25 R7-B).
+
+### 2.4 HBA / InfiniBand 사이트 fixture (lab 부재 — cycle 2026-05-29)
+
+- **trigger**: FC HBA / IB HCA 보유 사이트 BMC/OS/ESXi 접근
+- **항목**:
+  - FC HBA 보유 Dell/HPE/Lenovo/Cisco BMC → Redfish `storage.hbas` 실측 fixture + baseline (현 4 redfish baseline 은 FC 미보유로 빈)
+  - FC HBA 보유 Windows/Linux 호스트 → `Get-InitiatorPort`+`MSFC_*` / sysfs 실측 (현 ubuntu/windows/rhel baseline 빈)
+  - IB HCA (Mellanox/NVIDIA) 보유 호스트 → Linux ibstat/sysfs 실측 (IB 정본 채널)
+  - ESXi FC SAN 호스트 → vmhba FC speed/wwnn 실측 (현 esxi_baseline 은 offline FC 2)
+- **ESXi esxcli-over-SSH fallback (D1-B 재평가)**: SSH 활성 운영·보안 결정 시 `esxcli storage san fc list` / `rdma device list` 보강
+- **절차**: `capture-site-fixture` skill + rule 13 R4 (실측 baseline) + EXTERNAL-CONTRACTS 갱신
 
 ### 2.3 8 vendor × generation 후속 매트릭스
 

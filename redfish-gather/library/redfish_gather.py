@@ -2132,14 +2132,164 @@ def _detect_nic_sriov_capable(adata):                                         # 
     return None
 
 
+def _normalize_wwn(value):
+    """WWN(WWPN/WWNN) → 소문자 colon-grouped hex 정규화 (cross-channel 매칭 키).
+
+    입력 변형 흡수: '20:00:00:24:..', '0x200000..', '200000..', None.
+    16 hex(8 octet) 가 아니면 정리본(소문자) 보존 — 날조 금지 (rule 25 R7-B).
+    """
+    if value is None:
+        return None
+    s = str(value).strip().lower()
+    if not s or s in ('none', 'null', '0', '0x0'):
+        return None
+    s = _removeprefix(s, '0x')
+    hexonly = ''.join(c for c in s if c in '0123456789abcdef')
+    if len(hexonly) != 16:
+        return str(value).strip().lower()
+    return ':'.join(hexonly[i:i + 2] for i in range(0, 16, 2))
+
+
+def _classify_port_protocol(port_protocol, link_tech, ndf, pdata=None):
+    """포트/디바이스펑션 → 'FibreChannel'|'FCoE'|'InfiniBand'|'Ethernet'|None.
+
+    DMTF 정본 (EXTERNAL-CONTRACTS §1/§2 — cycle 2026-05-29):
+      - FC : Port.PortProtocol(Protocol enum) ∈ {FC,FCP,FCoE}
+             또는 NetworkDeviceFunction.NetDevFuncType ∈ {FibreChannel,FibreChannelOverEthernet}
+      - IB : Port.LinkNetworkTechnology=='InfiniBand' (또는 ActiveLinkTechnology)
+             또는 NetworkDeviceFunction.NetworkDeviceTechnology=='InfiniBand'
+    PortType enum 에는 FC/IB 값이 없어 사용 금지 (구 코드 dead-code 원인).
+    rule 12 R1 Allowed — DMTF Protocol/NetDevFuncType spec 직접 의존 (vendor 분기 아님).
+    """
+    pp = (port_protocol or '').strip().upper()
+    lt = (link_tech or '').strip().lower()
+    ndf_type = ''
+    ndf_tech = ''
+    if isinstance(ndf, dict):
+        ndf_type = (ndf.get('func_type') or '').strip().lower()
+        ndf_tech = (ndf.get('net_dev_tech') or '').strip().lower()
+    # IB 우선 (IB NDF 가 Ethernet 으로 오인되지 않도록)
+    if lt == 'infiniband' or ndf_tech == 'infiniband' or ndf_type == 'infiniband':
+        return 'InfiniBand'
+    if isinstance(pdata, dict) and isinstance(pdata.get('InfiniBand'), dict):
+        return 'InfiniBand'
+    if pp == 'FCOE' or ndf_type == 'fibrechanneloverethernet':
+        return 'FCoE'
+    if pp in ('FC', 'FCP', 'FIBRECHANNEL') or ndf_type == 'fibrechannel':
+        return 'FibreChannel'
+    if isinstance(pdata, dict) and isinstance(pdata.get('FibreChannel'), dict):
+        return 'FibreChannel'
+    if pp == 'ETHERNET' or lt == 'ethernet' or ndf_type == 'ethernet':
+        return 'Ethernet'
+    return None
+
+
+def _fetch_ndf_index(bmc_ip, adata, username, password, timeout, verify_ssl):
+    """NetworkAdapter.NetworkDeviceFunctions 수집 → 식별 dict 리스트.
+
+    각 entry: {id, func_type, net_dev_tech, wwpn, wwnn, fc_id, node_guid, port_guid, port_uri}.
+    port_uri = Links.PhysicalPortAssignment / PhysicalNetworkPortAssignment (정규화) — Port join 용.
+    WWPN/WWNN(FC) 와 Node/Port GUID(IB) 는 Port 가 아니라 NetworkDeviceFunction 에 존재 (DMTF).
+    미지원/오류 시 빈 리스트 (graceful — Port 기반 분류로 fallback).
+    """
+    ndfs = []
+    ndf_link = _safe(adata, 'NetworkDeviceFunctions', '@odata.id')
+    if not ndf_link:
+        return ndfs
+    st, coll, err = _get(bmc_ip, _p(ndf_link), username, password, timeout, verify_ssl)
+    if err or st != 200:
+        return ndfs
+    for m in (_safe(coll, 'Members') or []):
+        u = _safe(m, '@odata.id')
+        if not u:
+            continue
+        s2, nd, e2 = _get(bmc_ip, _p(u), username, password, timeout, verify_ssl)
+        if e2 or s2 != 200 or not isinstance(nd, dict):
+            continue
+        fc = _safe(nd, 'FibreChannel') or {}
+        ib = _safe(nd, 'InfiniBand') or {}
+        port_uri = (_safe(nd, 'Links', 'PhysicalPortAssignment', '@odata.id')
+                    or _safe(nd, 'Links', 'PhysicalNetworkPortAssignment', '@odata.id'))
+        ndfs.append({
+            'id':           _safe(nd, 'Id'),
+            'func_type':    _safe(nd, 'NetDevFuncType'),
+            'net_dev_tech': _safe(nd, 'NetworkDeviceTechnology'),
+            'wwpn':         _normalize_wwn(_safe(fc, 'WWPN') or _safe(fc, 'PermanentWWPN')),
+            'wwnn':         _normalize_wwn(_safe(fc, 'WWNN') or _safe(fc, 'PermanentWWNN')),
+            'fc_id':        _safe(fc, 'FibreChannelId'),
+            'node_guid':    _safe(ib, 'NodeGUID') or _safe(ib, 'PermanentNodeGUID'),
+            'port_guid':    _safe(ib, 'PortGUID') or _safe(ib, 'PermanentPortGUID'),
+            'port_uri':     _p(port_uri) if port_uri else None,
+        })
+    return ndfs
+
+
+def _make_fc_hba(adapter_id, adapter_info, port_id, cls, link_status, speed_gbps,
+                 primary_addr, ndf):
+    """canonical storage.hbas[] entry 생성 (전 채널 통일 shape — EXTERNAL-CONTRACTS §1)."""
+    wwpn = ndf.get('wwpn') if isinstance(ndf, dict) else None
+    wwnn = ndf.get('wwnn') if isinstance(ndf, dict) else None
+    if not wwpn:
+        wwpn = _normalize_wwn(primary_addr)
+    return {
+        'adapter_id':      adapter_id,
+        'adapter_model':   adapter_info.get('model'),
+        'port_id':         port_id,
+        'wwpn':            wwpn,
+        'wwnn':            wwnn,
+        'model':           adapter_info.get('model'),
+        'vendor':          adapter_info.get('manufacturer'),
+        'driver':          None,
+        'firmware':        adapter_info.get('firmware_version'),
+        'link_status':     link_status,
+        'link_speed_gbps': speed_gbps,
+        'port_type':       cls,
+        'source':          'redfish',
+    }
+
+
+def _make_ib_port(adapter_id, adapter_info, port_id, link_status, speed_gbps, pdata, ndf):
+    """canonical storage.infiniband[] entry 생성 (전 채널 통일 shape — EXTERNAL-CONTRACTS §2)."""
+    node_guid = ndf.get('node_guid') if isinstance(ndf, dict) else None
+    port_guid = ndf.get('port_guid') if isinstance(ndf, dict) else None
+    if isinstance(pdata, dict):
+        ibobj = pdata.get('InfiniBand') or {}
+        if not node_guid:
+            arr = ibobj.get('AssociatedNodeGUIDs') or []
+            node_guid = arr[0] if arr else None
+        if not port_guid:
+            arr = ibobj.get('AssociatedPortGUIDs') or []
+            port_guid = arr[0] if arr else None
+    return {
+        'adapter':       adapter_id,
+        'adapter_model': adapter_info.get('model'),
+        'port':          port_id,
+        'node_guid':     node_guid,
+        'port_guid':     port_guid,
+        'link_status':   link_status,
+        'rate':          None,
+        'rate_gbps':     speed_gbps,
+        'vendor':        adapter_info.get('manufacturer'),
+        'firmware':      adapter_info.get('firmware_version'),
+        'source':        'redfish',
+    }
+
+
 def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
-    """P4 (cycle 2026-04-28): Chassis/{id}/NetworkAdapters 수집.
+    """Chassis/{id}/NetworkAdapters 수집 + FC HBA / InfiniBand 분류.
 
-    NetworkAdapters → adapters[] (NIC 카드 모델/firmware)
-    NetworkPorts    → ports[]    (port-level link state)
-    PortType 기반 분류 → fc_hbas[] / infiniband[] (HBA/IB 별도 buckets)
+    NetworkAdapters         → adapters[] (NIC 카드 모델/firmware)
+    Ports/NetworkPorts      → ports[]    (port-level link/speed)
+    NetworkDeviceFunctions  → 식별 (FC WWPN/WWNN, IB Node/Port GUID)
 
-    일부 vendor (Cisco CIMC 등)에서 미지원 가능 → 빈 결과로 graceful degradation.
+    분류 정본 (DMTF — cycle 2026-05-29 fix, EXTERNAL-CONTRACTS §1/§2):
+      - FC : Port.PortProtocol ∈ {FC,FCP,FCoE} 또는 NDF.NetDevFuncType=FibreChannel(OverEthernet)
+      - IB : Port.LinkNetworkTechnology=='InfiniBand' 또는 NDF.NetworkDeviceTechnology=='InfiniBand'
+      - 구 코드의 PortType('fibrechannel'/'infiniband') 분류는 dead-code (PortType enum 에
+        FC/IB 값 없음 → 실장비 영원히 미매치). 본 cycle 에서 protocol/technology 기반으로 정정.
+
+    WWPN/WWNN/GUID 는 NetworkDeviceFunction 에서 추출 (Port 아님). Port 가 없는 FC/IB NDF 도
+    식별만으로 emit. 일부 vendor (Cisco CIMC 등) 미지원 → 빈 결과 graceful degradation.
     """
     out = {'adapters': [], 'ports': [], 'fc_hbas': [], 'infiniband': []}
     errors = []
@@ -2200,73 +2350,103 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
         out['adapters'].append(adapter_info)
         adapter_idx = len(out['adapters']) - 1
 
+        # NetworkDeviceFunctions — FC WWPN/WWNN + IB GUID 식별 (cycle 2026-05-29).
+        ndfs = _fetch_ndf_index(bmc_ip, adata, username, password, timeout, verify_ssl)
+        ndf_by_port = {n['port_uri']: i for i, n in enumerate(ndfs) if n.get('port_uri')}
+        ndf_matched = set()
+
         # NetworkPorts (Redfish 1.5 이전) 또는 Ports (1.6+)
         ports_link = (_safe(adata, 'NetworkPorts', '@odata.id')
                       or _safe(adata, 'Ports', '@odata.id'))
-        if not ports_link:
-            continue
-        st3, pcoll, perr = _get(bmc_ip, _p(ports_link), username, password, timeout, verify_ssl)
-        if perr or st3 != 200:
-            errors.append(_err('network_adapters',
-                               f'NetworkPorts {ports_link} 실패: {perr or st3}'))
-            continue
+        if ports_link:
+            st3, pcoll, perr = _get(bmc_ip, _p(ports_link), username, password, timeout, verify_ssl)
+            if perr or st3 != 200:
+                errors.append(_err('network_adapters',
+                                   f'Ports {ports_link} 실패: {perr or st3}'))
+            else:
+                for pmember in (_safe(pcoll, 'Members') or []):
+                    p_uri = _safe(pmember, '@odata.id')
+                    if not p_uri:
+                        continue
+                    st4, pdata, perr2 = _get(bmc_ip, _p(p_uri), username, password, timeout, verify_ssl)
+                    if perr2 or st4 != 200:
+                        continue
+                    # 속도: 신 CurrentSpeedGbps(Gbps) 우선 > 구 CurrentLinkSpeedMbps/1000
+                    cur_gbps = _safe(pdata, 'CurrentSpeedGbps')
+                    speed_mbps = _safe(pdata, 'CurrentLinkSpeedMbps')
+                    if isinstance(cur_gbps, (int, float)):
+                        speed_gbps = cur_gbps
+                    elif isinstance(speed_mbps, (int, float)):
+                        speed_gbps = speed_mbps / 1000.0
+                    else:
+                        speed_gbps = None
+                    assoc = _safe(pdata, 'AssociatedNetworkAddresses', default=[]) or []
+                    primary_addr = assoc[0] if assoc else None
+                    raw_port_type = _safe(pdata, 'PortType') or ''
+                    port_protocol = _safe(pdata, 'PortProtocol')
+                    link_tech = (_safe(pdata, 'LinkNetworkTechnology')
+                                 or _safe(pdata, 'ActiveLinkTechnology'))
+                    # 2026-04-29 fix B13: ports의 link_status도 동일 enum 정규화.
+                    normalized_link = _normalize_link_status(_safe(pdata, 'LinkStatus'))
+                    port_id = _safe(pdata, 'Id')
 
-        for pmember in (_safe(pcoll, 'Members') or []):
-            p_uri = _safe(pmember, '@odata.id')
-            if not p_uri:
-                continue
-            st4, pdata, perr2 = _get(bmc_ip, _p(p_uri), username, password, timeout, verify_ssl)
-            if perr2 or st4 != 200:
-                continue
-            speed_mbps = _safe(pdata, 'CurrentLinkSpeedMbps')
-            speed_gbps = (speed_mbps / 1000.0) if isinstance(speed_mbps, (int, float)) else None
-            assoc = _safe(pdata, 'AssociatedNetworkAddresses', default=[]) or []
-            primary_addr = assoc[0] if assoc else None
-            port_type = _safe(pdata, 'PortType') or ''
-            # 2026-04-29 fix B13: ports의 link_status도 동일 enum 정규화.
-            normalized_link = _normalize_link_status(_safe(pdata, 'LinkStatus'))
-            port_info = {
-                'adapter_id':              adapter_id,
-                'adapter_model':           adapter_info['model'],
-                'port_id':                 _safe(pdata, 'Id'),
-                'name':                    _safe(pdata, 'Name'),
-                'physical_port_number':    _safe(pdata, 'PhysicalPortNumber'),
-                'link_status':             normalized_link,
-                'link_state':              _safe(pdata, 'LinkState'),
-                'current_link_speed_mbps': speed_mbps,
-                'port_type':               port_type,
-                'health':                  _safe(pdata, 'Status', 'Health'),
-                'associated_address':      primary_addr,
-            }
-            out['ports'].append(port_info)
-            # 2026-04-29 fix B93: adapter level에 ports의 첫 active 메타 fold-in.
-            # 우선순위: link_status='up' > mac/speed 존재 > 첫 port.
-            cur = out['adapters'][adapter_idx]
-            if cur.get('mac') is None and primary_addr:
-                cur['mac'] = primary_addr
-            if cur.get('link_status') == 'unknown' or (cur.get('link_status') != 'up' and normalized_link == 'up'):
-                cur['link_status'] = normalized_link
-            if cur.get('speed_mbps') is None and speed_mbps:
-                cur['speed_mbps'] = speed_mbps
+                    # NDF join (식별 정보)
+                    ndf_idx = ndf_by_port.get(_p(p_uri)) if p_uri else None
+                    ndf = ndfs[ndf_idx] if ndf_idx is not None else None
+                    if ndf_idx is not None:
+                        ndf_matched.add(ndf_idx)
 
-            pt_lower = (port_type or '').lower()
-            if 'fibrechannel' in pt_lower or pt_lower == 'fc':
-                out['fc_hbas'].append({
-                    'adapter_id':       adapter_id,
-                    'adapter_model':    adapter_info['model'],
-                    'port_id':          _safe(pdata, 'Id'),
-                    'wwpn':             primary_addr,
-                    'link_status':      _safe(pdata, 'LinkStatus'),
-                    'link_speed_gbps':  speed_gbps,
-                })
-            elif 'infiniband' in pt_lower or pt_lower == 'ib':
-                out['infiniband'].append({
-                    'adapter_id':       adapter_id,
-                    'adapter_model':    adapter_info['model'],
-                    'port_id':          _safe(pdata, 'Id'),
-                    'link_status':      _safe(pdata, 'LinkStatus'),
-                    'link_speed_gbps':  speed_gbps,
-                })
+                    cls = _classify_port_protocol(port_protocol, link_tech, ndf, pdata)
+
+                    port_info = {
+                        'adapter_id':              adapter_id,
+                        'adapter_model':           adapter_info['model'],
+                        'port_id':                 port_id,
+                        'name':                    _safe(pdata, 'Name'),
+                        'physical_port_number':    _safe(pdata, 'PhysicalPortNumber'),
+                        'link_status':             normalized_link,
+                        'link_state':              _safe(pdata, 'LinkState'),
+                        'current_link_speed_mbps': speed_mbps,
+                        # port_type = 분류 결과 (FibreChannel/InfiniBand/Ethernet). 구 raw PortType
+                        # (Upstream 등 — FC/IB 무관) 대체. 미분류 시 raw 보존.
+                        'port_type':               cls or (raw_port_type or None),
+                        'health':                  _safe(pdata, 'Status', 'Health'),
+                        'associated_address':      primary_addr,
+                    }
+                    out['ports'].append(port_info)
+                    # 2026-04-29 fix B93: adapter level에 ports의 첫 active 메타 fold-in.
+                    # FC/IB 포트의 WWPN/GUID 는 NIC mac 이 아니므로 fold-in 제외.
+                    cur = out['adapters'][adapter_idx]
+                    if cur.get('mac') is None and primary_addr and cls not in ('FibreChannel', 'FCoE', 'InfiniBand'):
+                        cur['mac'] = primary_addr
+                    if cur.get('link_status') == 'unknown' or (cur.get('link_status') != 'up' and normalized_link == 'up'):
+                        cur['link_status'] = normalized_link
+                    if cur.get('speed_mbps') is None and speed_mbps:
+                        cur['speed_mbps'] = speed_mbps
+
+                    if cls in ('FibreChannel', 'FCoE'):
+                        out['fc_hbas'].append(_make_fc_hba(
+                            adapter_id, adapter_info, port_id, cls,
+                            normalized_link, speed_gbps, primary_addr, ndf))
+                    elif cls == 'InfiniBand':
+                        out['infiniband'].append(_make_ib_port(
+                            adapter_id, adapter_info, port_id,
+                            normalized_link, speed_gbps, pdata, ndf))
+
+        # Port 가 없거나 Port 에 join 되지 않은 FC/IB NetworkDeviceFunction 도 식별만으로 emit.
+        # (port-less HBA / 구 펌웨어 — link_status/speed 는 미상)
+        for i, ndf in enumerate(ndfs):
+            if i in ndf_matched:
+                continue
+            cls = _classify_port_protocol(None, None, ndf, None)
+            if cls in ('FibreChannel', 'FCoE'):
+                out['fc_hbas'].append(_make_fc_hba(
+                    adapter_id, adapter_info, ndf.get('id'), cls,
+                    'unknown', None, None, ndf))
+            elif cls == 'InfiniBand':
+                out['infiniband'].append(_make_ib_port(
+                    adapter_id, adapter_info, ndf.get('id'),
+                    'unknown', None, None, ndf))
 
     return out, errors
 
@@ -2607,11 +2787,210 @@ def gather_managers_multi(bmc_ip, managers_coll_uri, vendor, username, password,
     return out
 
 
+def _summarize_partition_disks(physical_disks):
+    """physical_disks[] → storage.summary {groups, grand_total_gb} (per-partition).
+
+    top-level normalize_standard.yml 의 _rf_summary_storage 와 동일 grouping 규칙
+    (단위용량 × media × protocol × model). cycle 2026-05-29.
+    """
+    groups, seen, total = [], {}, 0
+    for d in (physical_disks or []):
+        cap_mb = d.get('total_mb') or 0
+        cap_gb = int(cap_mb // 1024) if cap_mb else 0
+        if cap_gb <= 0:
+            continue
+        mt, pr, md = d.get('media_type'), d.get('protocol'), d.get('model')
+        key = '%s|%s|%s|%s' % (cap_gb, mt, pr, md)
+        if key in seen:
+            g = groups[seen[key]]
+            g['quantity'] += 1
+            g['group_total_gb'] = g['quantity'] * cap_gb
+        else:
+            seen[key] = len(groups)
+            groups.append({'unit_capacity_gb': cap_gb, 'model': md, 'media_type': mt,
+                           'protocol': pr, 'quantity': 1, 'group_total_gb': cap_gb})
+        total += cap_gb
+    return {'groups': groups, 'grand_total_gb': total}
+
+
+def _normalize_storage_raw(raw):
+    """raw gather_storage {controllers, volumes} → canonical storage section.
+
+    cycle 2026-05-29: multi_node.partitions[].storage 가 raw 로 노출되던 문제 해소.
+    top-level normalize_standard.yml(Ansible) 과 동일 canonical shape 를 Python 에서 생성
+    (multi_node 전용 parallel — 두 경로 모두 같은 schema 보장). hbas/infiniband 는 chassis
+    레벨 NetworkAdapter 소관이라 partition storage 에는 빈 list (Additive 자리만 유지).
+    """
+    raw = raw if isinstance(raw, dict) else {}
+    controllers_out, physical, seen = [], [], set()
+    for ctrl in (raw.get('controllers') or []):
+        drives_out = []
+        for drv in (ctrl.get('drives') or []):
+            cap = drv.get('capacity_bytes')
+            tmb = int(cap // 1048576) if isinstance(cap, (int, float)) and cap else None
+            drives_out.append({
+                'device': drv.get('name'), 'model': drv.get('model'),
+                'total_mb': tmb, 'media_type': drv.get('media_type'),
+                'protocol': drv.get('protocol'), 'health': drv.get('health'),
+            })
+            key = '%s%s%s' % (drv.get('name') or '', drv.get('model') or '', drv.get('serial') or '')
+            if key not in seen and (drv.get('name') or drv.get('model')):
+                seen.add(key)
+                physical.append({
+                    'id': drv.get('id'), 'device': drv.get('name'), 'model': drv.get('model'),
+                    'serial': drv.get('serial'), 'total_mb': tmb,
+                    'media_type': drv.get('media_type'), 'protocol': drv.get('protocol'),
+                    'health': drv.get('health'),
+                    'failure_predicted': drv.get('failure_predicted'),
+                    'predicted_life_percent': drv.get('predicted_life_percent'),
+                })
+        controllers_out.append({
+            'id': ctrl.get('id'), 'name': ctrl.get('name'), 'health': ctrl.get('health'),
+            'controller_model': ctrl.get('controller_model'),
+            'controller_firmware': ctrl.get('controller_firmware'),
+            'controller_manufacturer': ctrl.get('controller_manufacturer'),
+            'controller_health': ctrl.get('controller_health'),
+            'drives': drives_out,
+        })
+    logical = []
+    for vol in (raw.get('volumes') or []):
+        logical.append({
+            'id': vol.get('id'), 'name': vol.get('name'),
+            'controller_id': vol.get('controller_id'),
+            'member_drive_ids': vol.get('member_drive_ids') or [],
+            'raid_level': vol.get('raid_level'), 'total_mb': vol.get('total_mb'),
+            'health': vol.get('health'), 'state': vol.get('state'),
+            'boot_volume': vol.get('boot_volume'),
+        })
+    return {
+        'filesystems': [], 'physical_disks': physical, 'datastores': [],
+        'controllers': controllers_out, 'logical_volumes': logical,
+        'summary': _summarize_partition_disks(physical),
+        'hbas': [], 'infiniband': [],
+    }
+
+
+def _normalize_network_raw(raw_nics):
+    """raw gather_network (NIC list) → canonical network section (per-partition).
+
+    cycle 2026-05-29: multi_node.partitions[].network 가 list 로 노출되던 schema 불일치
+    해소 (top-level network 와 동일 dict shape). normalize_standard.yml interfaces 로직 parallel.
+    """
+    nics = raw_nics if isinstance(raw_nics, list) else []
+    interfaces, gws = [], []
+    for nic in nics:
+        if not isinstance(nic, dict):
+            continue
+        addrs = []
+        for a in (nic.get('ipv4') or []):
+            addr = a.get('address') if isinstance(a, dict) else None
+            if addr and addr not in ('0.0.0.0', ''):
+                addrs.append({'family': 'ipv4', 'address': addr, 'prefix_length': None,
+                              'subnet_mask': a.get('subnet_mask'), 'gateway': a.get('gateway'),
+                              'origin': a.get('address_origin')})
+        interfaces.append({
+            'id': nic.get('id') or nic.get('name'), 'name': nic.get('name'),
+            'kind': 'server_nic', 'mac': nic.get('mac'), 'mtu': nic.get('mtu'),
+            'speed_mbps': nic.get('speed_mbps'),
+            'link_status': _normalize_link_status(nic.get('link_status')),
+            'is_primary': False, 'addresses': addrs,
+        })
+    for iface in interfaces:
+        for a in iface['addresses']:
+            if a.get('gateway') and a['gateway'] not in ('0.0.0.0', ''):
+                e = {'family': a['family'], 'address': a['gateway']}
+                if e not in gws:
+                    gws.append(e)
+    return {'dns_servers': [], 'default_gateways': gws, 'interfaces': interfaces,
+            'adapters': [], 'ports': [], 'summary': {'groups': []}}
+
+
+def _normalize_cpu_raw(procs):
+    """raw gather_processors (list) → canonical cpu section (per-partition).
+
+    cycle 2026-05-29: top-level normalize_standard.yml 의 B01 필터 + 합산 + summary 와
+    동일 결과를 Python 에서 생성 (multi_node.partitions[].cpu 일관성).
+    """
+    procs = procs if isinstance(procs, list) else []
+    cpus = [p for p in procs if isinstance(p, dict)
+            and (str(p.get('processor_type') or '').strip().upper() in ('CPU', 'CORE', ''))]
+    cores = sum(int(p.get('total_cores') or 0) for p in cpus)
+    threads = sum(int(p.get('total_threads') or 0) for p in cpus)
+    models = [p.get('model') for p in cpus if p.get('model')]
+    speeds = [p.get('speed_mhz') for p in cpus if p.get('speed_mhz')]
+    archs = [p.get('architecture') for p in cpus if p.get('architecture')]
+    isets = [p.get('instruction_set') for p in cpus if p.get('instruction_set')]
+    groups, seen = [], {}
+    for p in cpus:
+        m = p.get('model') or 'unknown'
+        tc = int(p.get('total_cores') or 0)
+        if m in seen:
+            g = groups[seen[m]]
+            g['sockets'] += 1
+            g['total_cores'] += tc
+        else:
+            seen[m] = len(groups)
+            groups.append({'model': m, 'manufacturer': p.get('manufacturer'),
+                           'max_speed_mhz': p.get('speed_mhz'),
+                           'architecture': p.get('architecture') or p.get('instruction_set'),
+                           'sockets': 1, 'cores_per_socket': tc, 'total_cores': tc})
+    return {
+        'sockets': (len(cpus) or None),
+        'cores_physical': (cores or None),
+        'logical_threads': (threads or None),
+        'model': (models[0] if models else None),
+        'max_speed_mhz': (speeds[0] if speeds else None),
+        'architecture': (archs[0] if archs else (isets[0] if isets else None)),
+        'summary': {'groups': groups},
+    }
+
+
+def _normalize_memory_raw(raw_mem):
+    """raw gather_memory {total_mib, slots} → canonical memory section (per-partition).
+
+    cycle 2026-05-29: top-level normalize_standard.yml _rf_summary_memory 와 동일 grouping.
+    """
+    raw_mem = raw_mem if isinstance(raw_mem, dict) else {}
+    slots = raw_mem.get('slots') or []
+    total_mib = raw_mem.get('total_mib')
+    groups, seen, total_gb = [], {}, 0
+    for s in slots:
+        if not isinstance(s, dict):
+            continue
+        cap_mb = s.get('capacity_mb') or s.get('capacity_mib') or 0
+        cap_mb = int(cap_mb) if cap_mb else 0
+        if cap_mb <= 0:
+            continue
+        cap_gb = cap_mb // 1024
+        t, sp = s.get('type'), s.get('speed_mhz')
+        mfr, pn = s.get('manufacturer'), s.get('part_number')
+        key = '%s|%s|%s|%s|%s' % (cap_gb, t, sp, mfr, pn)
+        if key in seen:
+            g = groups[seen[key]]
+            g['quantity'] += 1
+            g['group_total_gb'] = g['quantity'] * cap_gb
+        else:
+            seen[key] = len(groups)
+            groups.append({'unit_capacity_gb': cap_gb, 'type': t, 'speed_mhz': sp,
+                           'manufacturer': mfr, 'part_number': pn, 'quantity': 1,
+                           'group_total_gb': cap_gb})
+        total_gb += cap_gb
+    return {
+        'total_mb': total_mib, 'total_basis': 'physical_installed',
+        'installed_mb': total_mib, 'visible_mb': None, 'free_mb': None,
+        'slots': slots, 'summary': {'groups': groups, 'grand_total_gb': total_gb},
+    }
+
+
 def gather_systems_multi(bmc_ip, systems_coll_uri, vendor, username, password,
                          timeout, verify_ssl, chassis_uri=None):
     """모든 Systems Member 별 gather_system + per-partition summary (cycle 2026-05-12).
 
     nPartition 환경 — 각 Partition 별 cpu / memory / storage / network 모두 수집.
+
+    cycle 2026-05-29: storage/network 를 canonical shape 로 정규화 (구: raw 노출).
+    storage = {controllers, physical_disks, logical_volumes, hbas, infiniband, summary};
+    network = {dns_servers, default_gateways, interfaces, adapters, ports, summary}.
 
     Returns: {'partitions': [{id, system_uri, system, cpu, memory, storage, network}],
               'errors': [...]}
@@ -2635,10 +3014,13 @@ def gather_systems_multi(bmc_ip, systems_coll_uri, vendor, username, password,
             'id':         m['id'],
             'system_uri': m['uri'],
             'system':     sys_data,
-            'cpu':        cpu_data,
-            'memory':     mem_data,
-            'storage':    sto_data,
-            'network':    net_data,
+            # cycle 2026-05-29: per-partition 전 섹션 canonical 정규화.
+            # 구: cpu=raw list / memory=raw dict / storage=raw / network=raw list
+            #     → normalize 누락 (top-level 과 shape 불일치 + network 가 list).
+            'cpu':        _normalize_cpu_raw(cpu_data),
+            'memory':     _normalize_memory_raw(mem_data),
+            'storage':    _normalize_storage_raw(sto_data),
+            'network':    _normalize_network_raw(net_data),
         })
         out['errors'].extend(sys_errs)
         out['errors'].extend(cpu_errs)

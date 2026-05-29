@@ -561,3 +561,13 @@ cycle 2026-05-07 M-K1 검증: 30/30 adapter origin 주석 일관성 PASS (verify
 | 검증 결과가 baseline 과 다른데? | 펌웨어 / 모델 변경으로 응답이 달라졌는지 먼저 확인. 변경이 정당하면 baseline_v2/ 로 새 정답지 도입 (rule 13 R4). |
 | 새 펌웨어는 어디서 raw 응답을 캡처? | `tests/redfish-probe/probe_redfish.py` 또는 `deep_probe_redfish.py` 로 endpoint 별 응답 수집. |
 | 미검증 벤더의 어댑터를 도입해도 되나? | 가능하지만 호환성 매트릭스에 "미검증" 으로 표시 필요. 실장비 검증 후 baseline 업데이트 권장. |
+
+## CSUS 3200 / HBA·InfiniBand — lab 부재 (cycle 2026-05-29)
+
+| 대상 | 상태 | 비고 |
+|---|---|---|
+| HPE CSUS 3200 | **mock baseline (미검증)** | cycle 2026-05-29 에 전 공통 섹션 realistic mock 작성 (FC HBA + RAID1 SATA + DDR5 + 3 partition). web evidence (HPE Superdome Flex Admin Guide P/N 10-192008-Q123 등). **사이트 RMC 실측 시 정정 의무** — NEXT_ACTIONS §2.2 |
+| FC HBA (전 vendor) | **미검증** | redfish/os/windows baseline 은 lab FC 부재로 빈. esxi_baseline 은 offline FC 2 (Cisco UCS VIC). NEXT_ACTIONS §2.4 |
+| InfiniBand | **미검증** | Linux sysfs 가 정본 채널. lab IB HCA 부재. NEXT_ACTIONS §2.4 |
+
+> mock/미검증 = pytest 통과 ≠ 사이트 실측 통과 (rule 25 R7-B). 실장비 확보 시 `capture-site-fixture` + rule 13 R4 절차로 실 baseline 교체.

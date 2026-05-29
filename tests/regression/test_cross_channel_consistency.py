@@ -229,7 +229,7 @@ def test_schema_version_is_one(baseline_envelope: dict) -> None:
 @pytest.mark.parametrize(
     "channel,expected_min",
     [
-        ("redfish", 4),  # dell + hpe + lenovo + cisco
+        ("redfish", 5),  # dell + hpe + lenovo + cisco + hpe_csus_3200
         ("os", 3),       # ubuntu + windows + rhel810_raw_fallback
         ("esxi", 1),     # esxi
     ],

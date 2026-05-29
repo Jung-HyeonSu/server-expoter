@@ -1,5 +1,30 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-05-29 (cycle hba-ib-csus — CSUS 3200 전 공통 섹션 + HBA/InfiniBand 전 채널 [DONE])
+
+### 컨텍스트
+- 사용자 명시: "csus 3200 장비도 다른 장비처럼 공통 json 내용이 모두 담기게 ... 대대적인 개편" + "HBA / InfiniBand 도 개더링 (모든 서버)". lab 부재 → web 검색.
+- 결정 D1=ESXi API-only / D2=Linux 보강 포함 / D3=Additive schema_version "1" 유지 (ADR-2026-05-29).
+
+### 결과 (P1~P6 완료, Additive only — envelope 13 필드 변경 0)
+- **[CRIT 버그 fix] Redfish HBA/IB 분류 dead-code 정정**: `Port.PortType`(FC/IB 값 없음) → `PortProtocol`/`LinkNetworkTechnology`/`NetDevFuncType` 기반. WWPN/WWNN/GUID 는 NetworkDeviceFunction 에서. `redfish_gather.py` `gather_network_adapters_chassis` 재작성 + helper 5종 (`_fetch_ndf_index`/`_classify_port_protocol`/`_make_fc_hba`/`_make_ib_port`/`_normalize_wwn`).
+- **CSUS 3200 개편**: 전 Partition 순회 + per-partition cpu/memory/storage/network **canonical 정규화** (`_normalize_{cpu,memory,storage,network}_raw`). 구 "Partition0 만 + raw/빈" 해소. baseline 현실 mock 전면 작성 (FC HBA 2 + RAID1 SATA boot + DDR5 2TB + 3 partition).
+- **HBA/IB 전 채널 통일 canonical shape**: Linux(sysfs +WWNN/driver/fw/GID), Windows(Get-InitiatorPort FC 필터 + MSFC_* enrich + Get-NetAdapter IB), ESXi(vmhba FC 2-signal + nmlx IB 추론, API-only), Redfish(DMTF NDF). `source` 필드로 출처 식별.
+- **schema (D3 Additive)**: field_dictionary 74 → **83** (+9 Nice 서브필드). schema_version "1" 유지. esxi_baseline hbas 5→2 (FC 만, SATA/SAS 제외). CSUS baseline regression registry 등록 (9 baseline).
+- **docs**: docs/20 §6.3.1 + EXTERNAL-CONTRACTS + ADR-2026-05-29 + 본 cycle ticket.
+
+### 회귀 검증
+- pytest **699 PASS / 0 FAIL** (full suite; CSUS baseline regression registry 등록 parametrize + per-partition 7 + canonical HBA/IB 신규).
+- validate_field_dictionary PASS (83 entries, 0 error). YAML/JSON/Jinja(Windows+Linux render harness) 검증 PASS.
+
+### NEXT_ACTIONS (lab 부재 — rule 96 R1-C)
+- CSUS / FC HBA / IB HCA 사이트 fixture 캡처 → 실 baseline. ESXi esxcli-SSH 재평가. (NEXT_ACTIONS §2.2 / §2.4)
+
+### 관련
+- ADR: `docs/ai/decisions/ADR-2026-05-29-hba-ib-csus.md`, ticket: `docs/ai/tickets/2026-05-29-csus-hba-ib/`
+
+---
+
 ## 일자: 2026-05-12 (cycle hpe-csus-rmc-multi-node — HPE CSUS 3200 / Superdome Flex RMC 멀티-노드 정식 지원 [DONE])
 
 ### 컨텍스트

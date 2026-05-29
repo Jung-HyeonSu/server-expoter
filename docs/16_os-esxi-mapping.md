@@ -124,10 +124,28 @@
 
 ---
 
+## HBA / InfiniBand 채널 매핑 (cycle 2026-05-29)
+
+`data.storage.hbas[]` (FC HBA) / `data.storage.infiniband[]` 는 전 채널 동일 canonical 키
+(`wwpn`/`wwnn`/`port_type`/`link_speed_gbps`/`source` 등). 채널별 수집원:
+
+| 채널 | FC HBA 수집원 | InfiniBand 수집원 | 비고 |
+|---|---|---|---|
+| OS Linux | `/sys/class/fc_host/*` (port_name/node_name/driver/fw) | `/sys/class/infiniband/*` (node_guid/port GID/rate/fw) — **IB 정본** | raw fallback 양 모드 |
+| OS Windows | `Get-InitiatorPort` (FC 만 필터) + `MSFC_*` WMI (model/vendor/driver/fw/speed) | `Get-NetAdapter` PhysicalMediaType=InfiniBand + `Get-PnpDevice VEN_15B3`. **node_guid=null** (표준 API 부재) | try/catch graceful |
+| ESXi | `vmware_host_vmhba_info` (type+driver 2-signal, FC/iSCSI 만 — SAS/RAID 제외) | native IB 미노출 → `nmlx` NIC best-effort 추론 (`note`) | **API-only** (SSH 미사용, D1) |
+| Redfish | `Chassis/NetworkAdapters/NetworkDeviceFunctions` (FC=`PortProtocol`/`NetDevFuncType`) | `Port.LinkNetworkTechnology` / `NetworkDeviceFunction` IB GUID | 주류 BMC 는 add-in IB 거의 미노출 → OS 채널 정본 |
+
+- `source` ∈ {redfish, os, esxi} 로 출처 식별. `wwpn`/`node_guid` 로 동일 장치 cross-channel 상관.
+- FC/IB 미보유 호스트 → 빈 list (graceful, error 아님). `port_type` ∈ {FibreChannel, FCoE, iSCSI}.
+- 상세: [20_json-schema-fields.md §6.3.1](20_json-schema-fields.md), `schema/field_dictionary.yml`.
+
+---
+
 ## 다음 단계
 
 | 다음 작업 | 문서 |
 |---|---|
-| envelope 13 필드 + 65 field 의미 | [20_json-schema-fields.md](20_json-schema-fields.md) |
+| envelope 13 필드 + field 의미 | [20_json-schema-fields.md](20_json-schema-fields.md) |
 | 채널별 실제 응답 예시 | [09_output-examples.md](09_output-examples.md) |
 | OS / ESXi 환경 요건 | [REQUIREMENTS.md](../REQUIREMENTS.md) |

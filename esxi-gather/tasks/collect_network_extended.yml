@@ -11,8 +11,8 @@
 #   data.network.adapters[]         — vmnic (NIC HW)
 #   data.network.virtual_switches[] — vSwitch + portgroup
 #   data.network.vmkernels[]        — vmkernel adapter
-#   data.storage.hbas[]             — vmhba (FC / iSCSI / SAS)
-#   data.storage.infiniband[]       — port_type 기준 분리 (해당 시)
+#   data.storage.hbas[]             — vmhba FC / iSCSI 만 (SAS/RAID 제외 — 2-signal type+driver)
+#   data.storage.infiniband[]       — nmlx NIC best-effort 추론 (ESXi native IB 미노출, D1=API-only)
 
 - block:
     - name: "esxi | extended | vmnic info"
@@ -98,33 +98,50 @@
             }) -%}
           {%- endfor -%}
           {{ out }}
+        # cycle 2026-05-29 (hba-ib-csus, D1=API-only): FC/iSCSI HBA 만 hbas[] 로.
+        #   - 분류 2-signal: type + driver (lpfc/qlnativefc=FC, iscsi_vmk=iSCSI).
+        #     SAS/RAID 컨트롤러 (nhpsa/lsi_mr3/smartpqi/vmw_ahci/nvme...) 는 hbas 제외 (storage controller 영역).
+        #   - 구 'infiniband' in type 분기는 dead-code (vmhba type 에 InfiniBand 없음) → 제거.
+        #     IB 는 _e_ext_ib (nmlx NIC best-effort 추론) 로 별도 — 아래 build vswitch task.
+        #   - 누락 필드 보강: port_type / link_speed_gbps (FC speed) / source. 빈 placeholder vmhba (device 없음) skip.
+        #   source: community.vmware vmware_host_vmhba_info + Broadcom esxcli ref (EXTERNAL-CONTRACTS §3).
         _e_ext_hbas: >-
           {%- set out = [] -%}
-          {%- set ib  = [] -%}
           {%- set d = _e_vmhba.hosts_vmhbas_info | default({}) -%}
           {%- set key = _e_hostname if (_e_hostname in d) else ((d.keys() | list | first) if d else none) -%}
           {%- set vmhbas = (d.get(key, {}).get('vmhba_details', [])) if key else [] -%}
+          {%- set fc_drivers = ['lpfc', 'qlnativefc', 'brcmnvmefc', 'qlnativefcoe'] -%}
+          {%- set iscsi_drivers = ['iscsi_vmk'] -%}
           {%- for h in vmhbas -%}
-            {%- set adapter_type = (h.type | default('')) | lower -%}
-            {%- set is_ib = 'infiniband' in adapter_type -%}
-            {%- set entry = {
-              'name':         h.device     | default(none),
-              'driver':       h.driver     | default(none),
-              'model':        h.model      | default(none),
-              'adapter_type': h.type       | default(none),
-              'link_status':  h.status     | default(none),
-              'wwpn':         h.port_wwn   | default(none),
-              'wwnn':         h.node_wwn   | default(none),
-              'pci':          h.location   | default(none),
-              'bus':          h.bus        | default(none),
-            } -%}
-            {%- if is_ib -%}
-              {%- set _ = ib.append(entry) -%}
-            {%- else -%}
-              {%- set _ = out.append(entry) -%}
+            {%- set dev = h.device | default(none) -%}
+            {%- set drv = (h.driver | default('')) | lower -%}
+            {%- set atype = (h.type | default('')) | lower -%}
+            {%- if dev -%}
+              {%- set is_fc = ('fibre' in atype) or (drv in fc_drivers) -%}
+              {%- set is_iscsi = ('iscsi' in atype) or (drv in iscsi_drivers) -%}
+              {%- if is_fc or is_iscsi -%}
+                {%- set raw_sp = h.speed | default(none) -%}
+                {%- set sp_gbps = (raw_sp | int) if (raw_sp is number) else none -%}
+                {%- set _ = out.append({
+                  'name':            dev,
+                  'driver':          h.driver | default(none),
+                  'model':           h.model | default(none),
+                  'vendor':          none,
+                  'firmware':        none,
+                  'adapter_type':    h.type | default(none),
+                  'link_status':     h.status | default(none),
+                  'wwpn':            h.port_wwn | default(none),
+                  'wwnn':            h.node_wwn | default(none),
+                  'link_speed_gbps': sp_gbps,
+                  'port_type':       ('FibreChannel' if is_fc else 'iSCSI'),
+                  'pci':             h.location | default(none),
+                  'bus':             h.bus | default(none),
+                  'source':          'esxi',
+                }) -%}
+              {%- endif -%}
             {%- endif -%}
           {%- endfor -%}
-          {{ {'hbas': out, 'infiniband': ib} }}
+          {{ out }}
         _e_ext_portgroups: >-
           {%- set d = _e_portgroup.hosts_portgroup_info | default({}) -%}
           {%- set key = _e_hostname if (_e_hostname in d) else ((d.keys() | list | first) if d else none) -%}
@@ -161,6 +178,33 @@
             {%- endfor -%}
           {%- endif -%}
           {{ out }}
+        # cycle 2026-05-29 (D1=API-only): InfiniBand best-effort 추론.
+        # ESXi 는 native IB 를 host adapter 로 노출하지 않음 (NVIDIA/VMware: SR-IOV/passthrough-to-VM 만).
+        # Mellanox nmlx/mlx 드라이버 NIC 존재 시 IB/RoCE-capable 로 informational 표기 (node_guid=null,
+        # note 명시 — false-positive 가능). 실 IB 포트 인벤토리는 OS 채널 (Linux ibstat/sysfs) 이 정본.
+        # source: NVIDIA ConnectX VPI on ESXi + VMware IB whitepaper (EXTERNAL-CONTRACTS §3).
+        _e_ext_ib: >-
+          {%- set ib = [] -%}
+          {%- for a in (_e_ext_adapters | default([])) -%}
+            {%- set adrv = (a.driver | default('')) | lower -%}
+            {%- if adrv.startswith('nmlx') or adrv.startswith('mlx') -%}
+              {%- set sp = a.speed_mbps | default(none) -%}
+              {%- set _ = ib.append({
+                'adapter':     a.name | default(none),
+                'port':        none,
+                'node_guid':   none,
+                'port_guid':   none,
+                'link_status': a.link_status | default(none),
+                'rate':        none,
+                'rate_gbps':   ((sp | int) / 1000) if (sp is number) else none,
+                'vendor':      'Mellanox',
+                'firmware':    none,
+                'source':      'esxi',
+                'note':        'RoCE/IB-capable Mellanox NIC; ESXi exposes IB only via SR-IOV/passthrough (no native host IB port). OS channel (ibstat) is authoritative.',
+              }) -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ ib }}
       no_log: true
 
     - name: "esxi | extended | merge fragment"
@@ -171,12 +215,12 @@
             virtual_switches: "{{ _e_ext_vswitches | default([]) }}"
             portgroups:       "{{ _e_ext_portgroups | default([]) }}"
           storage:
-            hbas:             "{{ (_e_ext_hbas | default({'hbas':[]})).hbas }}"
-            infiniband:       "{{ (_e_ext_hbas | default({'infiniband':[]})).infiniband }}"
+            hbas:             "{{ _e_ext_hbas | default([]) }}"
+            infiniband:       "{{ _e_ext_ib | default([]) }}"
         _sections_supported_fragment: ['network', 'storage']
         _sections_collected_fragment: >-
           {{ (['network'] if (_e_ext_adapters | length > 0 or _e_ext_vswitches | length > 0) else [])
-             + (['storage'] if ((_e_ext_hbas | default({'hbas':[]})).hbas | length > 0) else []) }}
+             + (['storage'] if ((_e_ext_hbas | default([])) | length > 0 or (_e_ext_ib | default([])) | length > 0) else []) }}
         _sections_failed_fragment:    []
         _errors_fragment:             []
       no_log: true

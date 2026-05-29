@@ -11,6 +11,8 @@
 #   data.network.driver_map   — interface → driver 매핑 (P5 NIC 깊이)
 
 - block:
+    # cycle 2026-05-29 (hba-ib-csus, D2): WWNN(node_name) + driver + firmware 보강.
+    # delimiter '|' 9 필드: FC|host|wwpn|wwnn|symbolic|state|speed|driver|firmware
     - name: "linux | hba_ib | enumerate fc_host"
       ansible.builtin.raw: |
         if [ -d /sys/class/fc_host ]; then
@@ -18,10 +20,19 @@
             [ -d "$h" ] || continue
             host=$(basename "$h")
             wwpn=$(cat "$h/port_name" 2>/dev/null)
+            wwnn=$(cat "$h/node_name" 2>/dev/null)
             sym=$(cat "$h/symbolic_name" 2>/dev/null)
             state=$(cat "$h/port_state" 2>/dev/null)
             speed=$(cat "$h/speed" 2>/dev/null)
-            echo "FC|$host|$wwpn|$sym|$state|$speed"
+            drv=""
+            if [ -e "$h/device/driver" ]; then
+              drv=$(basename "$(readlink -f "$h/device/driver" 2>/dev/null)" 2>/dev/null)
+            fi
+            fwver=""
+            for fwp in "$h/device/fw_version" "$h"/device/scsi_host/*/fw_version; do
+              if [ -f "$fwp" ]; then fwver=$(cat "$fwp" 2>/dev/null); break; fi
+            done
+            echo "FC|$host|$wwpn|$wwnn|$sym|$state|$speed|$drv|$fwver"
           done
         fi
       register: _l_fc_raw
@@ -29,6 +40,8 @@
       failed_when: false
       no_log: true
 
+    # cycle 2026-05-29 (hba-ib-csus, D2): per-port GID(port_guid) + rate + fw_ver + hca(vendor) 보강.
+    # delimiter '|' 9 필드: IB|adapter|port|node_guid|gid0|state|rate|firmware|hca
     - name: "linux | hba_ib | enumerate infiniband"
       ansible.builtin.raw: |
         if [ -d /sys/class/infiniband ]; then
@@ -36,12 +49,16 @@
             [ -d "$ib" ] || continue
             adp=$(basename "$ib")
             guid=$(cat "$ib/node_guid" 2>/dev/null)
+            fwver=$(cat "$ib/fw_ver" 2>/dev/null)
+            hca=$(cat "$ib/hca_type" 2>/dev/null)
+            [ -z "$hca" ] && hca=$(cat "$ib/board_id" 2>/dev/null)
             for p in "$ib"/ports/*; do
               [ -d "$p" ] || continue
               port=$(basename "$p")
               state=$(awk '{print $2}' "$p/state" 2>/dev/null)
-              rate=$(awk '{print $1" "$2}' "$p/rate" 2>/dev/null)
-              echo "IB|$adp|$port|$guid|$state|$rate"
+              rate=$(cat "$p/rate" 2>/dev/null)
+              gid0=$(sed -n '1p' "$p/gids/0" 2>/dev/null)
+              echo "IB|$adp|$port|$guid|$gid0|$state|$rate|$fwver|$hca"
             done
           done
         fi
@@ -83,14 +100,21 @@
           {%- set out = [] -%}
           {%- for line in (_l_fc_raw.stdout_lines | default([])) -%}
             {%- set parts = line.split('|') -%}
-            {%- if parts | length >= 6 and parts[0] == 'FC' -%}
+            {%- if parts | length >= 9 and parts[0] == 'FC' -%}
+              {%- set spdig = (parts[6] | default('')) | regex_replace('[^0-9]', '') -%}
+              {%- set st = (parts[5] | default('')) | lower -%}
               {%- set _ = out.append({
-                'host':        parts[1],
-                'wwpn':        parts[2] | default(none),
-                'model':       parts[3] | default(none),
-                'link_status': parts[4] | default(none),
-                'speed':       parts[5] | default(none),
-                'port_type':   'FibreChannel',
+                'host':            parts[1],
+                'wwpn':            parts[2] if parts[2] else none,
+                'wwnn':            parts[3] if parts[3] else none,
+                'model':           parts[4] if parts[4] else none,
+                'vendor':          none,
+                'driver':          parts[7] if parts[7] else none,
+                'firmware':        parts[8] if parts[8] else none,
+                'link_status':     ('up' if 'online' in st else ('down' if ('offline' in st or 'linkdown' in st or 'down' in st) else (parts[5] if parts[5] else 'unknown'))),
+                'link_speed_gbps': (spdig | int) if spdig else none,
+                'port_type':       'FibreChannel',
+                'source':          'os',
               }) -%}
             {%- endif -%}
           {%- endfor -%}
@@ -99,13 +123,24 @@
           {%- set out = [] -%}
           {%- for line in (_l_ib_raw.stdout_lines | default([])) -%}
             {%- set parts = line.split('|') -%}
-            {%- if parts | length >= 6 and parts[0] == 'IB' -%}
+            {%- if parts | length >= 9 and parts[0] == 'IB' -%}
+              {%- set gidp = (parts[4] | default('')).split(':') -%}
+              {%- set pg = (gidp[-4:] | join(':')) if (gidp | length >= 8) else none -%}
+              {%- set rate = parts[6] | default('') -%}
+              {%- set rfirst = (rate.split(' ')[0]) if rate else '' -%}
+              {%- set rdig = rfirst | regex_replace('[^0-9]', '') -%}
+              {%- set st = (parts[5] | default('')) | lower -%}
               {%- set _ = out.append({
                 'adapter':     parts[1],
                 'port':        parts[2],
-                'node_guid':   parts[3] | default(none),
-                'link_status': parts[4] | default(none),
-                'rate':        parts[5] | default(none),
+                'node_guid':   parts[3] if parts[3] else none,
+                'port_guid':   pg,
+                'link_status': ('up' if 'active' in st else ('down' if 'down' in st else (parts[5] if parts[5] else 'unknown'))),
+                'rate':        rate if rate else none,
+                'rate_gbps':   (rdig | int) if rdig else none,
+                'vendor':      parts[8] if parts[8] else none,
+                'firmware':    parts[7] if parts[7] else none,
+                'source':      'os',
               }) -%}
             {%- endif -%}
           {%- endfor -%}

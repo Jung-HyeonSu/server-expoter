@@ -2,6 +2,28 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-05-29 (cycle hba-ib-csus — CSUS 3200 전 공통 섹션 + HBA/InfiniBand 전 채널)
+
+### 신규 테스트 (+14)
+- `tests/unit/test_hpe_csus_multi_node.py` +7: per-partition `_normalize_{storage,network,cpu,memory}_raw` (canonical shape / B01 GPU 제외 / 단위 grouping / 빈 graceful) + 토폴로지 per-partition dict shape.
+- `tests/regression/test_hba_ib_canonical.py` 신규: 전 baseline `storage.hbas[]`/`infiniband[]` canonical 키 + port_type/source enum + multi_node partition hbas/ib 키.
+- `tests/regression/conftest.py`: CSUS baseline registry 등록 (9 baseline) + T10 redfish min 4→5.
+
+### 회귀 결과
+- **pytest 699 PASS / 0 FAIL** (full suite; 기존 652 + CSUS baseline regression registry 등록 parametrize + per-partition/canonical 신규 테스트).
+- `tests/validate_field_dictionary.py` PASS (83 entries, 0 error, warnings only).
+- Windows/Linux HBA·IB Jinja **standalone render harness** PASS (ansible 부재 환경 — `from_json`/`regex_replace` 등록 후 FC/iSCSI 분류·SAS 제외·단일원소 collapse·IB rate 파싱 검증).
+- YAML(esxi/windows/linux/adapter) + JSON(csus/esxi baseline, fixture) parse PASS.
+
+### Baseline 갱신
+- `schema/baseline_v1/hpe_csus_3200_baseline.json` — 전 공통 섹션 realistic mock 전면 작성 (FC HBA 2 + RAID1 SATA + DDR5 2TB + 3 canonical partition). **여전히 mock (lab 부재)** — 사이트 fixture 후 교체 의무.
+- `schema/baseline_v1/esxi_baseline.json` — hbas 5→2 (FC `nfnic` 만 — SATA AHCI/SAS RAID 재분류 제외, 동일 raw).
+
+### 환경 제약
+- ansible-playbook `--syntax-check` 미실행 (Windows 로컬 ansible 부재) — YAML parse + Jinja render harness 로 대체 검증.
+
+---
+
 ## 2026-05-12 (cycle hpe-csus-rmc-multi-node — HPE CSUS 3200 / Superdome Flex RMC 멀티-노드 정식 지원)
 
 ### 신규 단위 테스트 3 모듈 (29 PASS)

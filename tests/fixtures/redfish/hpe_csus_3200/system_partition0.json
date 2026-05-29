@@ -3,8 +3,8 @@
   "@odata.id": "/redfish/v1/Systems/Partition0",
   "@odata.type": "#ComputerSystem.v1_20_0.ComputerSystem",
   "Id": "Partition0",
-  "Name": "Partition 0 (Bare Metal nPAR)",
-  "SystemType": "Physical",
+  "Name": "Npar 0",
+  "SystemType": "PhysicallyPartitioned",
   "Manufacturer": "HPE",
   "Model": "Compute Scale-up Server 3200",
   "SerialNumber": "MOCK-CSUS-P0-001",
@@ -33,6 +33,16 @@
   "Memory":     {"@odata.id": "/redfish/v1/Systems/Partition0/Memory"},
   "Storage":    {"@odata.id": "/redfish/v1/Systems/Partition0/Storage"},
   "EthernetInterfaces": {"@odata.id": "/redfish/v1/Systems/Partition0/EthernetInterfaces"},
+  "NetworkInterfaces":  {"@odata.id": "/redfish/v1/Systems/Partition0/NetworkInterfaces"},
+  "Links": {
+    "Chassis": [
+      {"@odata.id": "/redfish/v1/Chassis/Base"},
+      {"@odata.id": "/redfish/v1/Chassis/Expansion1"}
+    ],
+    "ManagedBy": [
+      {"@odata.id": "/redfish/v1/Managers/RMC"}
+    ]
+  },
   "Oem": {
     "Hpe": {
       "@odata.type": "#HpeComputerSystemExt.v2_22_0.HpeComputerSystemExt",

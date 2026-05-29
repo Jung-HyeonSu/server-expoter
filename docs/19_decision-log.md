@@ -6,7 +6,37 @@
 > 검증 라운드(Round) 결과, 사용자 의심 분석, 정책 변경 같은 큰 결정은 모두 이 문서에 시간순으로 추가된다.
 > 코드만 읽고는 알 수 없는 맥락(왜 이 fallback 이 있는지 등)이 여기 있다.
 
-> 최종 갱신: 2026-05-12
+> 최종 갱신: 2026-05-29
+
+## 2026-05-29 — CSUS 3200 전 공통 섹션 수집 + HBA/InfiniBand 전 채널 (lab 부재 — web sources)
+
+### 사용자 의심 / 요청
+
+- "csus 3200 장비도 다른 장비처럼 공통 json 내용이 모두 담기게 ... 대대적인 개편이 필요". "HBA / InfiniBand 도 개더링 (모든 서버)". lab 부재 → web 검색.
+
+### 분석 (10-agent recon + web research)
+
+- **CSUS baseline 이 빈 skeleton** — cycle 2026-05-12 는 multi_node 토폴로지(id) 만 채우고 per-partition cpu/memory/storage/network 는 raw/빈 + mock 미완성.
+- **HBA/IB 분류가 dead-code** — Redfish `Port.PortType` 에 FC/IB 값 없음 (DMTF Port.v1_9_0). ESXi `'infiniband' in type` 도 dead. Windows FC 필터 없음 + IB hardcoded []. → "안 담긴다" 의 실제 원인.
+- HBA/IB schema 는 이미 v1 존재 → 구현 + 정합 문제이지 schema 신설 아님.
+
+### 결정 (ADR-2026-05-29 — D1/D2/D3)
+
+- FC/IB 분류를 DMTF `PortProtocol`/`LinkNetworkTechnology`/`NetDevFuncType` 기반으로 정정 (PortType 사용 금지). WWPN/WWNN/GUID 는 NetworkDeviceFunction 에서.
+- 전 채널 통일 canonical shape + `source` 필드. CSUS 전 Partition canonical 정규화 + realistic mock baseline.
+- D1=ESXi API-only / D2=Linux 보강 / D3=Additive (schema_version "1" 유지, field_dictionary 74→83).
+
+### 영향
+
+- Additive only (envelope 13 필드 / 기존 path 변경 0). 4 채널 gather + redfish library + field_dictionary + esxi/csus baseline + docs/20.
+- esxi_baseline hbas 5→2 (FC 만 — 동일 raw 재분류, SATA AHCI/SAS RAID 제외).
+
+### 회귀
+
+- pytest **699 PASS / 0 FAIL** (full suite; CSUS baseline regression registry 등록 + per-partition/canonical 신규 테스트). validate_field_dictionary PASS. Windows/Linux Jinja render harness PASS.
+- lab 부재: mock "검증됨" 주장 금지 (rule 25 R7-B). 사이트 fixture 캡처 NEXT_ACTIONS.
+
+---
 
 ## 2026-05-12 — HPE CSUS 3200 / Superdome Flex RMC 멀티-노드 Redfish 수집 정식 지원 (lab 부재 — 별도 cycle)
 

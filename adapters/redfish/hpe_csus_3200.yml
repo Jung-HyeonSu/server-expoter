@@ -35,6 +35,13 @@
 # source: https://hewlettpackard.github.io/ilo-rest-api-docs/ilo5/
 #         (iLO 5 API Reference — Oem.Hpe namespace reference, Superdome 공유)
 # DRIFT 추적: Manufacturer string / ServiceRoot.Product / RMC firmware version 사이트 실측 시 정정 가능
+# cycle 2026-05-29 (hba-ib-csus / ADR-2026-05-29): 전 공통 섹션 수집 완성.
+#   - 전 Partition 순회 + per-partition cpu/memory/storage/network canonical 정규화
+#     (구: Members[0] 한계 + per-partition raw/빈). gather_systems_multi normalize.
+#   - storage.hbas FC HBA 는 Chassis NetworkAdapters/NetworkDeviceFunctions PortProtocol=FC
+#     기반 분류 (P1 dead-code fix). Superdome Flex Grid (UPI/ASIC) 는 IB 아님 → infiniband=[].
+#   - baseline (schema/baseline_v1/hpe_csus_3200_baseline.json) 현실 mock 으로 전면 채움.
+#   source: HPE Superdome Flex Admin Guide P/N 10-192008-Q123 + Marvell SN1610Q FC HBA + DMTF.
 # Next action: lab 도입 후 별도 cycle (`hpe-csus-3200-lab-validation` round) — NEXT_ACTIONS.md 등재
 # ──────────────────────────────────────────────────────────────────────────────
 adapter_id: redfish_hpe_csus_3200
@@ -80,7 +87,9 @@ collect:
 normalize:
   standard_tasks: "redfish-gather/tasks/normalize_standard.yml"
   oem_tasks: "redfish-gather/tasks/vendors/hpe/normalize_oem.yml"
-  # 첫 Partition (Partition0) 만 수집되는 한계는 diagnosis.details 에 multi_partition_warning emit 권장.
+  # cycle 2026-05-29: 전 Partition 수집 + per-partition canonical 정규화 완료
+  # (구 "첫 Partition0 만 수집" 한계 해소 — gather_systems_multi). data.multi_node.partitions[]
+  # 각 entry 가 cpu/memory/storage/network 정규화 결과 보유. top-level data.* 는 Partition0 representative.
 
 credentials:
   profile: "hpe"  # vault/redfish/hpe.yml 재사용 (rule 50 R2 단계 4 — vault 분리는 NEXT_ACTIONS 등재)

@@ -291,3 +291,146 @@ def test_gather_bmc_manager_layout_rmc_overrides_label(monkeypatch) -> None:
         manager_layout="rmc_primary",
     )
     assert data["name"] == "RMC"
+
+
+# ── cycle 2026-05-29: per-partition storage/network 정규화 (canonical shape) ──
+
+
+def test_partition_storage_normalized_to_canonical_shape() -> None:
+    """raw gather_storage {controllers, volumes} → canonical storage section.
+
+    physical_disks dedup + summary.groups + hbas/infiniband 자리 + 표준 키 보장.
+    """
+    raw = {
+        "controllers": [{
+            "id": "RSTe.SATA.1", "name": "Intel RSTe SATA",
+            "controller_model": "C741 SATA", "controller_firmware": "1.2.3",
+            "controller_manufacturer": "Intel", "controller_health": "OK",
+            "health": "OK",
+            "drives": [
+                {"id": "Disk.0", "name": "Disk 0", "model": "MZ7L3480",
+                 "serial": "S1", "capacity_bytes": 480103981056,
+                 "media_type": "SSD", "protocol": "SATA", "health": "OK"},
+                {"id": "Disk.1", "name": "Disk 1", "model": "MZ7L3480",
+                 "serial": "S2", "capacity_bytes": 480103981056,
+                 "media_type": "SSD", "protocol": "SATA", "health": "OK"},
+            ],
+        }],
+        "volumes": [{
+            "id": "Vol.0", "name": "OS Mirror", "controller_id": "RSTe.SATA.1",
+            "member_drive_ids": ["Disk.0", "Disk.1"], "raid_level": "RAID1",
+            "total_mb": 457862, "health": "OK", "state": "Enabled",
+            "boot_volume": True,
+        }],
+    }
+    out = rg._normalize_storage_raw(raw)
+    # canonical 키 전부 존재 (top-level storage 와 동일 schema)
+    for key in ("filesystems", "physical_disks", "datastores", "controllers",
+                "logical_volumes", "summary", "hbas", "infiniband"):
+        assert key in out, f"canonical storage key missing: {key}"
+    assert len(out["controllers"]) == 1
+    assert len(out["physical_disks"]) == 2  # dedup by name+model+serial (서로 다른 serial)
+    assert out["logical_volumes"][0]["raid_level"] == "RAID1"
+    # summary: 동일 480GB SATA SSD 2개 그룹
+    assert out["summary"]["groups"][0]["quantity"] == 2
+    assert out["summary"]["grand_total_gb"] == 2 * (480103981056 // 1048576 // 1024)
+    assert out["hbas"] == [] and out["infiniband"] == []
+
+
+def test_partition_storage_normalize_empty_raw() -> None:
+    """빈/None raw → 빈 canonical (graceful — 404 partition storage)."""
+    for raw in ({}, None, {"controllers": [], "volumes": []}):
+        out = rg._normalize_storage_raw(raw)
+        assert out["controllers"] == []
+        assert out["physical_disks"] == []
+        assert out["summary"] == {"groups": [], "grand_total_gb": 0}
+
+
+def test_partition_network_normalized_to_dict() -> None:
+    """raw gather_network (NIC list) → canonical network dict (구: list 노출 버그)."""
+    raw = [{
+        "id": "Eth0", "name": "Partition NIC 0", "mac": "aa:bb:cc:00:00:01",
+        "speed_mbps": 25000, "mtu": 1500, "link_status": "LinkUp", "health": "OK",
+        "ipv4": [{"address": "10.1.2.3", "subnet_mask": "255.255.255.0",
+                  "gateway": "10.1.2.1", "address_origin": "DHCP"}],
+    }]
+    out = rg._normalize_network_raw(raw)
+    assert isinstance(out, dict)  # 구 버그: list 였음
+    for key in ("dns_servers", "default_gateways", "interfaces", "adapters",
+                "ports", "summary"):
+        assert key in out
+    assert out["interfaces"][0]["link_status"] == "up"  # 정규화
+    assert {"family": "ipv4", "address": "10.1.2.1"} in out["default_gateways"]
+
+
+def test_partition_network_normalize_empty() -> None:
+    """빈/None → 빈 canonical dict (404 partition network graceful)."""
+    for raw in ([], None, "not-a-list"):
+        out = rg._normalize_network_raw(raw)
+        assert isinstance(out, dict)
+        assert out["interfaces"] == []
+
+
+def test_multi_node_partition_sections_are_canonical(monkeypatch) -> None:
+    """전체 토폴로지에서 partitions[].storage 는 dict(canonical), network 도 dict.
+
+    (Partition Storage/EthernetInterfaces 가 404 인 mock 이라도 shape 는 dict 보장.)
+    """
+    _patch_get(monkeypatch)
+    service_root = {
+        "Systems":  {"@odata.id": "/redfish/v1/Systems"},
+        "Managers": {"@odata.id": "/redfish/v1/Managers"},
+        "Chassis":  {"@odata.id": "/redfish/v1/Chassis"},
+    }
+    result = rg._collect_multi_node_topology(
+        "10.0.0.1", "hpe", service_root,
+        "u", "p", 10, False, manager_layout="rmc_primary",
+    )
+    p0 = result["partitions"][0]
+    assert isinstance(p0["storage"], dict)
+    assert set(("controllers", "physical_disks", "logical_volumes",
+                "hbas", "infiniband", "summary")).issubset(p0["storage"].keys())
+    assert isinstance(p0["network"], dict)
+    assert "interfaces" in p0["network"]
+    # cpu/memory 도 canonical (구: raw list/dict)
+    assert isinstance(p0["cpu"], dict) and "summary" in p0["cpu"]
+    assert isinstance(p0["memory"], dict) and "total_mb" in p0["memory"]
+
+
+def test_partition_cpu_normalized_b01_filter() -> None:
+    """raw gather_processors(list) → canonical cpu (B01 GPU 제외 + 합산 + summary)."""
+    procs = [
+        {"id": "1", "model": "Intel(R) Xeon(R) Platinum 8480+",
+         "manufacturer": "Intel", "total_cores": 56, "total_threads": 112,
+         "speed_mhz": 3800, "processor_type": "CPU"},
+        {"id": "2", "model": "Intel(R) Xeon(R) Platinum 8480+",
+         "manufacturer": "Intel", "total_cores": 56, "total_threads": 112,
+         "speed_mhz": 3800, "processor_type": "CPU"},
+        # GPU 는 B01 필터로 제외되어야 함
+        {"id": "GPU1", "model": "NVIDIA H100", "total_cores": 0,
+         "processor_type": "GPU"},
+    ]
+    out = rg._normalize_cpu_raw(procs)
+    assert out["sockets"] == 2  # GPU 제외
+    assert out["cores_physical"] == 112
+    assert out["logical_threads"] == 224
+    assert out["model"] == "Intel(R) Xeon(R) Platinum 8480+"
+    assert out["summary"]["groups"][0]["sockets"] == 2
+    assert out["summary"]["groups"][0]["total_cores"] == 112
+
+
+def test_partition_memory_normalized_summary() -> None:
+    """raw gather_memory {total_mib, slots} → canonical memory + summary grouping."""
+    raw = {"total_mib": 2097152, "slots": [
+        {"id": f"DIMM{i}", "capacity_mb": 131072, "type": "DDR5",
+         "speed_mhz": 4800, "manufacturer": "Samsung", "part_number": "M321",
+         "health": "OK"} for i in range(16)
+    ]}
+    out = rg._normalize_memory_raw(raw)
+    assert out["total_mb"] == 2097152
+    assert out["total_basis"] == "physical_installed"
+    assert len(out["slots"]) == 16
+    g = out["summary"]["groups"][0]
+    assert g["unit_capacity_gb"] == 128 and g["quantity"] == 16
+    assert g["group_total_gb"] == 2048
+    assert out["summary"]["grand_total_gb"] == 2048

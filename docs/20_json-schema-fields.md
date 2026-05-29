@@ -268,7 +268,7 @@ if response["data"]["hardware"].get("health") == "Critical":
 
 ### 6.3 `data.storage`
 
-스토리지는 4개 하위 list 가 있다.
+스토리지는 다음 하위 list 가 있다.
 
 | 키 | 무엇 | 누가 채우나 |
 |---|---|---|
@@ -277,6 +277,8 @@ if response["data"]["hardware"].get("health") == "Critical":
 | `logical_volumes[]` | RAID 논리 볼륨 | Redfish |
 | `filesystems[]` | OS 파일시스템 마운트 | OS-gather |
 | `datastores[]` | ESXi 데이터스토어 | ESXi-gather |
+| `hbas[]` | FC HBA (+ iSCSI) | 모든 채널 |
+| `infiniband[]` | InfiniBand 어댑터 | 모든 채널 (best-effort) |
 
 물리 디스크와 논리 볼륨 사이는 ID 로 묶인다.
 
@@ -286,6 +288,41 @@ physical_disks[*].id  ─┐
 controllers[*].id  ────┤
                        └─ logical_volumes[*].controller_id 에서 참조
 ```
+
+#### 6.3.1 `hbas[]` / `infiniband[]` — FC HBA / InfiniBand (cycle 2026-05-29)
+
+전 채널 (Redfish / OS Linux·Windows / ESXi) 이 **동일 canonical 키** 로 emit 한다.
+호출자는 채널 무관하게 같은 키로 파싱하고, `wwpn` / `node_guid` 로 동일 물리 장치를
+채널 간 상관(correlation)할 수 있다. `source` 필드로 출처 채널을 구분한다.
+
+```json
+"storage": {
+  "hbas": [
+    { "wwpn": "20:00:...:01", "wwnn": "20:00:...:00", "model": "HPE SN1610Q 32Gb 2p FC HBA",
+      "vendor": "Marvell", "driver": null, "firmware": "9.12.00",
+      "link_status": "up", "link_speed_gbps": 32, "port_type": "FibreChannel",
+      "source": "redfish" }
+  ],
+  "infiniband": [
+    { "adapter": "mlx5_0", "port": "1", "node_guid": "0011:...:6677", "port_guid": "...",
+      "link_status": "up", "rate": "200 Gb/sec (4X HDR)", "rate_gbps": 200,
+      "vendor": "MT4125", "firmware": "20.35.1012", "source": "os" }
+  ]
+}
+```
+
+채널별 수집원 + 한계:
+
+| 채널 | FC HBA 수집원 | InfiniBand 수집원 / 한계 |
+|---|---|---|
+| Redfish | `Chassis/NetworkAdapters/NetworkDeviceFunctions` (FC=`PortProtocol`/`NetDevFuncType`, **PortType enum 아님**) | `Port.LinkNetworkTechnology`/`NetworkDeviceTechnology`. 주류 BMC(iDRAC/iLO/XCC) 는 add-in IB HCA 거의 미노출 → OS 채널 정본 |
+| OS Linux | `/sys/class/fc_host/*` (wwpn/wwnn/driver/firmware) | `/sys/class/infiniband/*` (node_guid/port_guid/rate/fw) — **정본** |
+| OS Windows | `Get-InitiatorPort` + `MSFC_*` WMI (FC 만 필터) | `Get-NetAdapter` PhysicalMediaType=InfiniBand. **node_guid 표준 API 부재 → null** |
+| ESXi | `vmware_host_vmhba_info` (FC/iSCSI, SAS/RAID 제외) | native IB 미노출 (SR-IOV/passthrough 만) → `nmlx` NIC best-effort 추론 (`note` 포함) |
+
+- `wwpn`/`wwnn`/`link_speed_gbps`/`node_guid` 는 미연결·미노출 시 `null` (정상 — error 아님).
+- `port_type` ∈ {`FibreChannel`, `FCoE`, `iSCSI`}. `source` ∈ {`redfish`, `os`, `esxi`}.
+- 서브필드 정의는 `schema/field_dictionary.yml` (`storage.hbas[].*` / `storage.infiniband[].*`, Nice).
 
 ### 6.4 `data.network`
 

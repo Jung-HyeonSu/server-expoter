@@ -263,59 +263,36 @@
       "logical_volumes": [],
       "hbas": [
         {
-          "name": "vmhba0",
-          "driver": "vmw_ahci",
-          "model": "Wellsburg AHCI Controller",
-          "adapter_type": "BlockHba",
-          "link_status": "unknown",
-          "wwpn": null,
-          "wwnn": null,
-          "pci": "0000:00:11.4",
-          "bus": 0
-        },
-        {
-          "name": "vmhba1",
-          "driver": "vmw_ahci",
-          "model": "Wellsburg AHCI Controller",
-          "adapter_type": "BlockHba",
-          "link_status": "unknown",
-          "wwpn": null,
-          "wwnn": null,
-          "pci": "0000:00:1f.2",
-          "bus": 0
-        },
-        {
           "name": "vmhba2",
           "driver": "nfnic",
           "model": "Cisco UCS VIC Fnic Controller",
+          "vendor": null,
+          "firmware": null,
           "adapter_type": "Fibre Channel",
           "link_status": "offline",
           "wwpn": "20:00:00:27:E3:6C:A6:6E",
           "wwnn": "10:00:00:27:E3:6C:A6:6E",
+          "link_speed_gbps": null,
+          "port_type": "FibreChannel",
           "pci": "0000:0d:00.0",
-          "bus": 13
+          "bus": 13,
+          "source": "esxi"
         },
         {
           "name": "vmhba3",
           "driver": "nfnic",
           "model": "Cisco UCS VIC Fnic Controller",
+          "vendor": null,
+          "firmware": null,
           "adapter_type": "Fibre Channel",
           "link_status": "offline",
           "wwpn": "20:00:00:27:E3:6C:A6:6F",
           "wwnn": "10:00:00:27:E3:6C:A6:6F",
+          "link_speed_gbps": null,
+          "port_type": "FibreChannel",
           "pci": "0000:0e:00.0",
-          "bus": 14
-        },
-        {
-          "name": "vmhba4",
-          "driver": "lsi_mr3",
-          "model": "MegaRAID SAS Invader Controller",
-          "adapter_type": "SAS",
-          "link_status": "unknown",
-          "wwpn": null,
-          "wwnn": "5f:80:bc:be:ac:32:6e:b0",
-          "pci": "0000:05:00.0",
-          "bus": 5
+          "bus": 14,
+          "source": "esxi"
         }
       ],
       "physical_disks": [],
