@@ -139,7 +139,7 @@ targets:
 
   field_usage_matrix:
     id: 13
-    description: "FIELD_USAGE_MATRIX (field × baseline × 4 상태) — field_dictionary 65 entries × 8 baseline 실측 사용 실태 + 분류 1/2/3 후보 + channel drift"
+    description: "FIELD_USAGE_MATRIX (field × baseline × 4 상태) — field_dictionary 74 entries × 9 baseline 실측 사용 실태 + 분류 1/2/3 후보 + channel drift"
     measure_command: "python scripts/ai/measure_field_usage_matrix.py --update-md"
     storage:
       - "docs/ai/catalogs/FIELD_USAGE_MATRIX.md"

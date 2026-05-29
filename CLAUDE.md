@@ -125,7 +125,7 @@ server-exporter/ (프로젝트 루트)
    │   └── tasks/ → collect_facts/config/datastores + normalize_*
    └── redfish-gather/
        ├── site.yml (1-Play: precheck→detect→adapter→collect→normalize)
-       ├── library/redfish_gather.py (~350줄, Redfish API 엔진 — Storage+Volumes 수집)
+       ├── library/redfish_gather.py (약 3,430줄, Redfish API 엔진 — Storage+Volumes 수집, 2026-05-29 재실측)
        └── tasks/ + vendors/{dell,hpe,lenovo,supermicro,cisco}/
 
 [2] 공통 로직 (Fragment 정규화)
@@ -146,6 +146,8 @@ server-exporter/ (프로젝트 루트)
    │   - cycle 2026-05-06 M-E2: hpe_superdome_flex (priority=95, lab 부재 web sources 14건)
    │   - cycle 2026-05-07 M-B1~B4: supermicro x9 + x10 + ars + bmc 보강 (4 adapter — 6 generation)
    │   - cycle 2026-05-11 hpe-csus-add: hpe_csus_3200 (priority=96, Compute Scale-up Server 3200, lab 부재 web sources 7건)
+   │   - cycle 2026-05-12 csus-rmc-multi-node: CSUS/Superdome RMC 멀티노드 정식 지원 (전 Partition/Manager/Chassis 수집,
+   │     data.multi_node Additive 컨테이너, redfish_gather.py +384줄, lab 부재 web sources, ADR-2026-05-12)
    │   - cycle 2026-05-01 신규 vendor 4개 (vault SKIP, 사용자 명시 승인): F44 huawei_ibmc /
    │     F45 inspur_isbmc / F46 fujitsu_irmc / F47 quanta_qct_bmc
    ├── adapters/os/ (7개: linux_*/windows_*)
@@ -154,8 +156,8 @@ server-exporter/ (프로젝트 루트)
 [4] Schema & 데이터
    ├── schema/
    │   ├── sections.yml (10개: system, hardware, bmc, cpu, memory, storage, network, firmware, users, power)
-   │   ├── field_dictionary.yml (39 Must + 20 Nice + 6 Skip = 65 entries — 실측 2026-05-01 cycle-018, 16 section prefixes)
-   │   ├── baseline_v1/ (8 baseline JSON: 7 vendor + rhel810_raw_fallback)
+   │   ├── field_dictionary.yml (39 Must + 29 Nice + 6 Skip = 74 entries — 2026-05-29 재실측, 16 section prefixes)
+   │   ├── baseline_v1/ (9 baseline JSON: redfish 5 [cisco/dell/hpe/hpe_csus_3200/lenovo] + esxi/ubuntu/windows + rhel810_raw_fallback)
    │   └── examples/ (success/partial/failed 예시)
    └── vault/ (linux.yml, windows.yml, esxi.yml, redfish/{vendor}.yml)
 
@@ -165,7 +167,7 @@ server-exporter/ (프로젝트 루트)
    ├── filter_plugins/diagnosis_mapper.py, field_mapper.py
    └── module_utils/adapter_common.py (점수 계산, 벤더 정규화)
 
-[6] 테스트 (145개 Redfish fixture + 7개 baseline)
+[6] 테스트 (tests/fixtures 353개 + 9 baseline + test_*.py 41파일/365 함수 — 2026-05-29 재실측)
    ├── tests/redfish-probe/ (probe_redfish.py, deep_probe_redfish.py)
    ├── tests/fixtures/ (실장비 JSON 응답)
    ├── tests/evidence/ (Round 7-10 조건부 검토)
@@ -357,7 +359,7 @@ main
 | 기능 | OS (Linux/Windows) | ESXi | Redfish |
 |------|-------------------|------|---------|
 | 구현 완료 | O | O | O |
-| Adapter 수 | 7개 | 4개 | 30개 (cycle 2026-05-11 실측) |
+| Adapter 수 | 7개 | 4개 | 31개 (2026-05-29 재실측) |
 | 지원 섹션 | 6개 | 6개 | 9개 |
 | Precheck | 포트 감지 | 4단계 | 4단계 |
 | Graceful Degradation | O | O | O |

@@ -6,7 +6,7 @@
 
 ## 목적
 
-`schema/field_dictionary.yml` 65 entries (Must 39 + Nice 20 + Skip 6) 각 필드가 8 baseline (실장비 회귀 기준선) 에서 **실제로 어떻게 채워지는가** 를 자동 측정한 매트릭스. 호출자 시스템 / 운영자 / 개발자가 어느 필드가 의미 있게 수집되는지 한눈에 파악.
+`schema/field_dictionary.yml` 74 entries (Must 39 + Nice 29 + Skip 6) 각 필드가 9 baseline (실장비 회귀 기준선) 에서 **실제로 어떻게 채워지는가** 를 자동 측정한 매트릭스. 호출자 시스템 / 운영자 / 개발자가 어느 필드가 의미 있게 수집되는지 한눈에 파악. (2026-05-29 measure_field_usage_matrix.py 재생성)
 
 본 매트릭스는 다음 3 분류 cycle 의 input:
 1. **정말 수집 불가** (외부 시스템 spec 미제공) → `field_dictionary.yml` channel 배열 축소
@@ -110,8 +110,8 @@ Phase 2 cycle 안에서 즉시 fix 대상 코드 버그 — **0건 확정**.
 # Field Usage Matrix — 측정 결과
 
 - field_dictionary entries: 74
-- baselines: 8
-- 총 cells: 592
+- baselines: 9
+- 총 cells: 666
 
 ## 4 상태 카운트 (channel × state)
 
@@ -210,82 +210,82 @@ Phase 2 cycle 안에서 즉시 fix 대상 코드 버그 — **0건 확정**.
 
 ## 전수 매트릭스 (65 × 8)
 
-| Field | Channel 선언 | cisco | dell | esxi | hpe | lenovo | rhel810_ra | ubuntu | windows | 분류 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| `schema_version` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `target_type` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `collection_method` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `ip` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `hostname` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `vendor` | redfish,os,esxi | O | O | O | O | O | n | n | n | os:1 |
-| `meta` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `correlation` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `status` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `sections.*` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `hardware.health` | redfish | O | O | _ | O | O | - | - | - | OK |
-| `hardware.sku` | redfish | n | O | _ | O | O | - | - | - | redfish:2 |
-| `hardware.oem` | redfish | e | O | _ | O | O | - | - | - | redfish:2 |
-| `memory.total_basis` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `memory.installed_mb` | redfish,os | O | O | _ | O | O | O | n | O | os:2 |
-| `memory.visible_mb` | os,esxi | _ | _ | O | _ | _ | O | O | O | OK |
-| `storage.physical_disks[]` | redfish,os,esxi | O | O | e | O | O | O | O | O | esxi:1 |
-| `storage.physical_disks[].id` | redfish,os | O | O | e | O | O | O | O | O | OK |
-| `storage.physical_disks[].predicted_life_percent` | redfish | O | O | e | O | O | _ | _ | _ | OK |
-| `storage.controllers[].drives[]` | redfish | O | O | e | O | O | e | e | e | OK |
-| `storage.logical_volumes[]` | redfish | O | O | e | O | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].raid_level` | redfish | O | O | e | O | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].member_drive_ids` | redfish | O | O | e | O | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].controller_id` | redfish | O | O | e | O | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].id` | redfish | O | O | e | O | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].name` | redfish | O | O | e | O | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].total_mb` | redfish | O | O | e | O | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].health` | redfish | O | O | e | O | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].state` | redfish | O | O | e | O | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].boot_volume` | redfish | n | O | e | n | e | e | e | e | redfish:3? |
-| `network.interfaces[].link_status` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `power.power_supplies[].state` | redfish | O | O | - | O | O | - | - | - | OK |
-| `cpu.cores_physical` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `firmware[].component` | redfish | O | O | - | O | O | - | - | - | OK |
-| `users[]` | os | - | - | - | - | - | O | O | O | OK |
-| `users[].name` | os | - | - | - | - | - | O | O | O | OK |
-| `users[].uid` | os | - | - | - | - | - | O | O | O | OK |
-| `users[].groups` | os | - | - | - | - | - | O | O | O | OK |
-| `users[].home` | os | - | - | - | - | - | O | O | O | OK |
-| `users[].last_access_time` | os | - | - | - | - | - | O | O | O | OK |
-| `bmc.ip` | redfish | O | O | - | O | O | - | - | - | OK |
-| `correlation.host_ip` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `diagnosis.auth_success` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `hardware.power_state` | redfish | O | O | _ | O | O | - | - | - | OK |
-| `storage.physical_disks[].failure_predicted` | redfish | O | O | e | O | O | _ | _ | _ | OK |
-| `network.interfaces[].kind` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `meta.duration_ms` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `diagnosis.failure_stage` | redfish,os,esxi | n | n | n | n | n | n | n | n | redfish:1,os:1,esxi:1 |
-| `storage.physical_disks[].media_type` | redfish,os | O | O | e | O | O | O | O | O | OK |
-| `storage.physical_disks[].protocol` | redfish | O | O | e | O | O | n | n | n | OK |
-| `cpu.architecture` | os,esxi | n | n | O | n | n | O | O | O | OK |
-| `system.hosting_type` | os | - | - | O | - | - | O | O | O | esxi:DRIFT-B? |
-| `system.uptime_seconds` | os,esxi | - | - | O | - | - | O | O | O | OK |
-| `firmware[].updateable` | redfish | O | O | - | O | O | - | - | - | OK |
-| `cpu.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `memory.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `storage.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `network.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | OK |
-| `network.adapters[]` | redfish,esxi | _ | _ | O | _ | _ | _ | _ | _ | redfish:1 |
-| `network.ports[]` | redfish | _ | _ | _ | _ | _ | _ | _ | _ | redfish:1 |
-| `network.virtual_switches[]` | esxi | _ | _ | O | _ | _ | _ | _ | _ | OK |
-| `network.driver_map[]` | os | _ | _ | _ | _ | _ | _ | _ | _ | os:1 |
-| `storage.hbas[]` | redfish,os,esxi | _ | _ | O | _ | _ | _ | _ | _ | redfish:1,os:1 |
-| `storage.infiniband[]` | redfish,os,esxi | _ | _ | e | _ | _ | _ | _ | _ | redfish:1,os:1,esxi:1 |
-| `system.runtime` | os,esxi | - | - | O | - | - | O | O | O | OK |
-| `multi_node` | redfish | _ | _ | _ | _ | _ | _ | _ | _ | redfish:1 |
-| `multi_node.enabled` | redfish | _ | _ | _ | _ | _ | _ | _ | _ | redfish:1 |
-| `multi_node.layout` | redfish | _ | _ | _ | _ | _ | _ | _ | _ | redfish:1 |
-| `multi_node.summary` | redfish | _ | _ | _ | _ | _ | _ | _ | _ | redfish:1 |
-| `multi_node.partitions[]` | redfish | _ | _ | _ | _ | _ | _ | _ | _ | redfish:1 |
-| `multi_node.managers[]` | redfish | _ | _ | _ | _ | _ | _ | _ | _ | redfish:1 |
-| `multi_node.chassis[]` | redfish | _ | _ | _ | _ | _ | _ | _ | _ | redfish:1 |
-| `diagnosis.details.multi_node_layout` | redfish | _ | _ | _ | _ | _ | _ | _ | _ | redfish:1 |
-| `diagnosis.details.rmc_activation_check` | redfish | _ | _ | _ | _ | _ | _ | _ | _ | redfish:1 |
+| Field | Channel 선언 | cisco | dell | esxi | hpe | hpe_csus_3 | lenovo | rhel810_ra | ubuntu | windows | 분류 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| `schema_version` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `target_type` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `collection_method` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `ip` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `hostname` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `vendor` | redfish,os,esxi | O | O | O | O | O | O | n | n | n | os:1 |
+| `meta` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `correlation` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `status` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `sections.*` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `hardware.health` | redfish | O | O | _ | O | O | O | - | - | - | OK |
+| `hardware.sku` | redfish | n | O | _ | O | O | O | - | - | - | redfish:2 |
+| `hardware.oem` | redfish | e | O | _ | O | e | O | - | - | - | redfish:2 |
+| `memory.total_basis` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `memory.installed_mb` | redfish,os | O | O | _ | O | O | O | O | n | O | os:2 |
+| `memory.visible_mb` | os,esxi | _ | _ | O | _ | n | _ | O | O | O | OK |
+| `storage.physical_disks[]` | redfish,os,esxi | O | O | e | O | e | O | O | O | O | esxi:1 |
+| `storage.physical_disks[].id` | redfish,os | O | O | e | O | e | O | O | O | O | OK |
+| `storage.physical_disks[].predicted_life_percent` | redfish | O | O | e | O | e | O | _ | _ | _ | OK |
+| `storage.controllers[].drives[]` | redfish | O | O | e | O | e | O | e | e | e | OK |
+| `storage.logical_volumes[]` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].raid_level` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].member_drive_ids` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].controller_id` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].id` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].name` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].total_mb` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].health` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].state` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].boot_volume` | redfish | n | O | e | n | e | e | e | e | e | redfish:3? |
+| `network.interfaces[].link_status` | redfish,os,esxi | O | O | O | O | e | O | O | O | O | OK |
+| `power.power_supplies[].state` | redfish | O | O | - | O | n | O | - | - | - | OK |
+| `cpu.cores_physical` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `firmware[].component` | redfish | O | O | - | O | e | O | - | - | - | OK |
+| `users[]` | os | - | - | - | - | - | - | O | O | O | OK |
+| `users[].name` | os | - | - | - | - | - | - | O | O | O | OK |
+| `users[].uid` | os | - | - | - | - | - | - | O | O | O | OK |
+| `users[].groups` | os | - | - | - | - | - | - | O | O | O | OK |
+| `users[].home` | os | - | - | - | - | - | - | O | O | O | OK |
+| `users[].last_access_time` | os | - | - | - | - | - | - | O | O | O | OK |
+| `bmc.ip` | redfish | O | O | - | O | n | O | - | - | - | OK |
+| `correlation.host_ip` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `diagnosis.auth_success` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `hardware.power_state` | redfish | O | O | _ | O | O | O | - | - | - | OK |
+| `storage.physical_disks[].failure_predicted` | redfish | O | O | e | O | e | O | _ | _ | _ | OK |
+| `network.interfaces[].kind` | redfish,os,esxi | O | O | O | O | e | O | O | O | O | OK |
+| `meta.duration_ms` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `diagnosis.failure_stage` | redfish,os,esxi | n | n | n | n | n | n | n | n | n | redfish:1,os:1,esxi:1 |
+| `storage.physical_disks[].media_type` | redfish,os | O | O | e | O | e | O | O | O | O | OK |
+| `storage.physical_disks[].protocol` | redfish | O | O | e | O | e | O | n | n | n | OK |
+| `cpu.architecture` | os,esxi | n | n | O | n | n | n | O | O | O | OK |
+| `system.hosting_type` | os | - | - | O | - | - | - | O | O | O | esxi:DRIFT-B? |
+| `system.uptime_seconds` | os,esxi | - | - | O | - | - | - | O | O | O | OK |
+| `firmware[].updateable` | redfish | O | O | - | O | e | O | - | - | - | OK |
+| `cpu.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `memory.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `storage.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `network.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
+| `network.adapters[]` | redfish,esxi | _ | _ | O | _ | e | _ | _ | _ | _ | redfish:1 |
+| `network.ports[]` | redfish | _ | _ | _ | _ | e | _ | _ | _ | _ | redfish:1 |
+| `network.virtual_switches[]` | esxi | _ | _ | O | _ | _ | _ | _ | _ | _ | OK |
+| `network.driver_map[]` | os | _ | _ | _ | _ | _ | _ | _ | _ | _ | os:1 |
+| `storage.hbas[]` | redfish,os,esxi | _ | _ | O | _ | e | _ | _ | _ | _ | redfish:1,os:1 |
+| `storage.infiniband[]` | redfish,os,esxi | _ | _ | e | _ | e | _ | _ | _ | _ | redfish:1,os:1,esxi:1 |
+| `system.runtime` | os,esxi | - | - | O | - | - | - | O | O | O | OK |
+| `multi_node` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
+| `multi_node.enabled` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
+| `multi_node.layout` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
+| `multi_node.summary` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
+| `multi_node.partitions[]` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
+| `multi_node.managers[]` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
+| `multi_node.chassis[]` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
+| `diagnosis.details.multi_node_layout` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
+| `diagnosis.details.rmc_activation_check` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
 
 **범례**: O=present / n=null / e=empty / -=not_supported / _=missing
 

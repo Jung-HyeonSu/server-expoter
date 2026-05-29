@@ -60,7 +60,7 @@
 | `Vault 2단계` | "Vault 2단계 로딩 (무인증 detect → vendor vault → 인증 수집)" |
 | `Linux 2-tier` | "Linux 2-tier (Python ok / raw fallback)" |
 | `Sections 10` | "10 섹션 (system/hardware/bmc/cpu/memory/storage/network/firmware/users/power)" |
-| `Field Dictionary 39 Must` | "Field Dictionary (39 Must + 20 Nice + 6 Skip = 65 entries)" |
+| `Field Dictionary 39 Must` | "Field Dictionary (39 Must + 29 Nice + 6 Skip = 74 entries)" |
 | `Baseline` | "Baseline (실장비 회귀 기준선 JSON)" |
 | `loc` | "loc (운영 사이트: ich/chj/yi)" |
 | `target_type` | "target_type (os/esxi/redfish)" |

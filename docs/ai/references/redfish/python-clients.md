@@ -14,7 +14,7 @@
 
 ## server-exporter 선택: stdlib 자체구현
 
-`redfish-gather/library/redfish_gather.py` (~350줄) — `urllib + ssl + json + base64`만 사용 (rule 10 R2).
+`redfish-gather/library/redfish_gather.py` (약 3,430줄, 2026-05-29 재실측) — `urllib + ssl + json + base64`만 사용 (rule 10 R2).
 
 ### 선택 근거
 

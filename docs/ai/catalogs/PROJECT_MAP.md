@@ -32,9 +32,9 @@ server-exporter/
 │   └── tasks/vendors/{vendor}/      (OEM tasks — dell/hpe/lenovo/supermicro)
 ├── schema/
 │   ├── sections.yml         # 10 섹션 정의
-│   ├── field_dictionary.yml # 39 Must + 20 Nice + 6 Skip = 65 entries (cycle-018 실측 2026-05-01, 16 section prefixes)
+│   ├── field_dictionary.yml # 39 Must + 29 Nice + 6 Skip = 74 entries (2026-05-29 재실측, 16 section prefixes)
 │   ├── fields/              # 섹션별 상세
-│   ├── baseline_v1/         # 7 vendor + rhel810_raw_fallback = 8 baseline JSON
+│   ├── baseline_v1/         # 9 baseline JSON (redfish 5 + esxi/ubuntu/windows + rhel810_raw_fallback)
 │   └── examples/            # success/partial/failed
 ├── tests/
 │   ├── redfish-probe/       # probe_redfish.py + deep_probe_redfish.py
