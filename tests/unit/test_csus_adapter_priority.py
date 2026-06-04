@@ -228,3 +228,35 @@ def test_a1_blank_chassis_normalizes_to_none(monkeypatch):
                               "u", "p", 5, False, chassis_uri="/redfish/v1/Chassis/1")
     assert res["manufacturer"] is None
     assert res["model"] is None
+
+
+# ── Bug C: cpu.model ProcessorSummary fallback (web 실측 — sdflexutils system.json) ──
+# Superdome/CSUS partition System 은 /Processors drill-in 부재, ProcessorSummary 만 존재.
+# sockets/cores/threads/memory-total 은 기존 BUG-13/14 fallback 으로 이미 커버,
+# cpu.model 만 누락이었음 → normalize_standard.yml 에 cpu_summary.model fallback 추가.
+
+NORMALIZE_STD = REPO / "redfish-gather" / "tasks" / "normalize_standard.yml"
+
+
+def test_bugc_normalize_has_cpu_model_summary_fallback():
+    """normalize_standard.yml cpu.model 이 cpu_summary.model fallback 보유 (제거 회귀 차단)."""
+    txt = NORMALIZE_STD.read_text(encoding="utf-8")
+    assert "cpu_summary | default({})).model" in txt, (
+        "cpu.model 의 ProcessorSummary.Model fallback 누락 — Bug C 회귀"
+    )
+
+
+def test_bugc_cpu_model_fallback_jinja_render():
+    """fallback Jinja 로직 검증: per-proc 비면 summary.model, 있으면 per-proc 우선."""
+    jinja2 = __import__("pytest").importorskip("jinja2")
+    expr = ("{%- set _m = _rf_d_cpus | map(attribute='model') | select | list | first | default(none) -%}"
+            "{{ _m if _m else (_rf_d_system.cpu_summary | default({})).model | default(none) }}")
+    t = jinja2.Environment().from_string(expr)
+    # CSUS partition: per-proc 비고 ProcessorSummary.Model 만
+    a = t.render(_rf_d_cpus=[], _rf_d_system={"cpu_summary": {"model": "Intel(R) Xeon(R) Gold 6142 Processor"}})
+    assert a.strip() == "Intel(R) Xeon(R) Gold 6142 Processor"
+    # 정상 vendor: per-proc model 우선 (summary 무시 — 무회귀)
+    b = t.render(_rf_d_cpus=[{"model": "Intel(R) Xeon(R) Gold 6430"}], _rf_d_system={"cpu_summary": {"model": "X"}})
+    assert b.strip() == "Intel(R) Xeon(R) Gold 6430"
+    # 둘 다 없으면 None
+    assert t.render(_rf_d_cpus=[], _rf_d_system={}).strip() == "None"

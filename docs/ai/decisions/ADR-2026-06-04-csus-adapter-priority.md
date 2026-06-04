@@ -69,3 +69,32 @@ lab 부재(baseline 은 MOCK) → 사용자 실측이 spec/mock 보다 우선(ru
 | B1 단독 | firmware 가 facts 에 들어와야만 작동(불확정). 단독 불충분 — 시뮬레이션 S2='hp'. (안전 hardening 으로는 유지) |
 | iLO6 에 model_patterns 추가 | iLO6 가 모델 known-mismatch 시 실격 → 모델 미열거 Gen11 회귀 위험. 거절. |
 | A1 에 ServiceRoot.Product 폴백 | gather_system 이 product 미수신 + Dell/Lenovo 는 Product=BMC명 → 회귀 위험. Chassis 폴백만 채택, product 폴백은 DEFERRED. |
+
+## 8. Amendment 2026-06-04 — web 캡처 JSON 으로 Bug C 근본 원인 확인 + cpu.model 부분 fix
+
+### 컨텍스트
+사용자 질의 "CSUS raw JSON 을 너가 찾아볼 수 없어?" → AI web hunt (5 source 병렬). HPE 자체 repo `HewlettPackard/sdflexutils` 테스트 픽스처에서 **실 Superdome Flex RMC Redfish 캡처** 확보 (CSUS 3200 의 전신, 동일 RMC 스택). AI 가 raw URL 직접 fetch 로 검증 (subagent 보고 신뢰 안 함 — rule 25 R7-A).
+
+### 검증된 사실 ([REAL-JSON], 출처 verbatim fetch)
+- `.../json_samples/root.json` (ServiceRoot): `Product`/`Vendor`/`Oem` **전부 부재**, RedfishVersion `1.0.2` (구). → 단 **사용자 CSUS 는 `details.product="Compute Scale-up Server 3200"` 노출** = 더 신 펌웨어 (전신보다 rich). 사용자 장비 우선 (rule 25 R7-A-1).
+- `.../json_samples/system.json` (ComputerSystem `Partition1`, SystemType `PhysicallyPartitioned`):
+  - **`Manufacturer`/`Model`/`SerialNumber` 부재** → **Bug A 확정** (A1 Chassis 폴백이 정답).
+  - **`Processors`/`Memory`/`Storage`/`EthernetInterfaces` drill-in sub-collection 전부 부재**, `ProcessorSummary`(Count=4/LogicalProcessorCount=64/Model="Xeon Gold 6142") + `MemorySummary`(735 GiB) **만 존재** → **Bug C 근본 원인 확정**.
+  - `Oem.Hpe`=`#HpeNpar`, `Links.ManagedBy`→`/Managers/RMC`, `Links.Chassis`→`/Chassis/r001i01b`.
+- source: `https://raw.githubusercontent.com/HewlettPackard/sdflexutils/master/sdflexutils/tests/unit/redfish/json_samples/{root,system}.json`
+
+### Bug C 재해석 (대부분 이미 처리됨)
+top-level `normalize_standard.yml` 이 **이미** summary fallback 보유:
+- `cpu.sockets` ← `ProcessorSummary.Count` (L473) / `cores_physical` ← `CoreCount` (L477, BUG-13) / `logical_threads` ← `LogicalProcessorCount` (L480) / `memory.total_mb` ← `MemorySummary.TotalSystemMemoryGiB×1024` (L494, BUG-14).
+- → 사용자 CSUS 의 socket/thread/메모리총량 은 **이미 0 이 아닐 가능성 높음** (gather_system 이 System 읽었다면).
+- **유일한 명확 누락**: `cpu.model` 이 per-processor list 만 보고 `ProcessorSummary.Model` fallback 부재 → **본 amendment 에서 추가** (L483, Additive — 정상 vendor per-proc 우선).
+- **B2 의 간접 Bug C 효과**: B2 가 CSUS adapter 를 선택 → `manager_layout=rmc_primary` → `_collect_multi_node_topology` 활성 → `data.multi_node.partitions[]` 에 **전 partition 별 cpu/memory/storage/network** 수집. 구(오선택 ilo6)에서는 multi_node=null 이라 이 rich 데이터 자체가 미수집이었음.
+
+### 남은 한계 (실 장비 필요 — rule 25 R7-A-1)
+- `memory.slots[]` / `storage.physical_disks[]` / `network.interfaces[]` 의 top-level **상세**: partition System drill-in 부재라 summary 로 대체 불가. 데이터는 `data.multi_node` (B2 활성) 또는 Chassis/NetworkAdapters 에 있을 수 있음. **사용자 newer 펌웨어가 drill-in 을 노출하는지는 실 envelope 확인 필요** (전신 캡처는 미노출, 사용자 장비는 ServiceRoot.Product 노출하는 신 펌웨어라 다를 수 있음).
+
+### 검증
+- ✅ AI 가 raw JSON 2개 직접 fetch (root.json/system.json) — subagent 보고와 일치 확인.
+- ✅ `cpu.model` fallback jinja2 3.1.6 render: CSUS→summary.Model / 정상→per-proc 우선 / 둘다없음→None.
+- ✅ pytest `test_csus_adapter_priority.py` 15 (cpu.model 2 guard 포함).
+- ❌ 실 CSUS 장비 end-to-end (cpu.model + multi_node 채워지는지): 장비 부재 — 사용자 확인 필요.

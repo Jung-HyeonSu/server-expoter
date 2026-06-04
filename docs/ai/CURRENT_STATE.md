@@ -16,8 +16,9 @@
   - ✅ 실 `gather_system`(monkeypatch _get): System null → Chassis 폴백 채움 / 정상 Dell 무회귀 / 빈문자열→None.
   - ❌ **실 CSUS 장비 end-to-end**: 장비·raw JSON 부재 → 이 환경 확인 불가. 사용자 사이트 재실행 필요.
 - **신규 회귀**: `tests/unit/test_csus_adapter_priority.py` 13 (A1/B1/B2 lock-in).
-- **PENDING (Bug C — NEXT_ACTIONS §0.5)**: 각종 null/0/empty counts 는 실 장비 구조 의존 → 추측 금지. raw JSON 확보 후 정밀 수정 + 회귀 fixture. 사용자 "지금은 데이터 없음" 선택.
-- **governance**: `docs/ai/decisions/ADR-2026-06-04-csus-adapter-priority.md` 신규. `vendor-boundary-map.yaml` csus_3200 sub_line 보강.
+- **web hunt (사용자 "raw JSON 찾아봐")**: HPE `sdflexutils` 실 캡처 JSON 확보·AI 직접 fetch 검증 (root.json/system.json). → partition System 은 Manufacturer/Model 부재 + Processors/Memory/Storage/EthernetInterfaces drill-in **부재**, ProcessorSummary/MemorySummary 만 존재 = **Bug A/C 근본 원인 확정**.
+- **Bug C 재해석**: 대부분 **이미 처리됨** — sockets/cores/threads/memory-total 은 기존 BUG-13/14 summary fallback 커버. 유일 누락 `cpu.model` → **fallback 추가** (normalize_standard.yml L483, jinja2 검증). B2 가 multi_node 수집 활성(구 ilo6 오선택 시 null). **잔여**: memory.slots/storage/network top-level 상세는 drill-in 부재라 실 envelope 필요 (NEXT_ACTIONS §0.5).
+- **governance**: `docs/ai/decisions/ADR-2026-06-04-csus-adapter-priority.md` (§8 web findings 포함). `vendor-boundary-map.yaml` csus_3200 sub_line 보강.
 - **branch**: `refactor/audit-cleanup-20260529`.
 
 ---
