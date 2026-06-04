@@ -167,7 +167,7 @@ server-exporter/ (프로젝트 루트)
    ├── filter_plugins/diagnosis_mapper.py, field_mapper.py
    └── module_utils/adapter_common.py (점수 계산, 벤더 정규화)
 
-[6] 테스트 (tests/fixtures 353개 + 9 baseline + test_*.py 44파일/384 함수 [e2e_browser 2 포함] — 2026-06-04 재실측)
+[6] 테스트 (tests/fixtures 353개 + 9 baseline + test_*.py 45파일/405 함수 [e2e_browser 2 포함] — 2026-06-04 재실측)
    ├── tests/redfish-probe/ (probe_redfish.py, deep_probe_redfish.py)
    ├── tests/fixtures/ (실장비 JSON 응답)
    ├── tests/evidence/ (Round 7-10 조건부 검토)
