@@ -355,3 +355,14 @@
 - 영향: BMC lockout 환경 + 디버깅 시간 증가.
 - 수정 (부분): cycle 2026-04-30 — 실패 시 1초 backoff + status/vendor/first_error 로그 보강.
 - 미적용 (사용자 결정 대기): primary `partial` 결과를 fallback 시도 차단으로 처리하는 정책 변경 (`_rf_attempt_ok = status == 'success'` 강화).
+
+## 2026-06-04 — PROJECT_MAP fingerprint Windows autocrlf/pyc noise (반복 churn 근절)
+
+- 카테고리: tooling-noise (drift 오탐 — 반복 패턴)
+- 발견 위치: `scripts/ai/check_project_map_drift.py::fingerprint_dir`
+- 증상: 작업 트리 clean + 직전 fingerprint 갱신 커밋(ea71f04c) 직후에도 4개 디렉터리(redfish-gather/filter_plugins/module_utils/tests) drift 상시 감지. git log에 `PROJECT_MAP drift 갱신` 커밋 반복(434d0ada/18845699/61a1dba0/41056341/ea71f04c).
+- 원인: fingerprint가 디스크 `f.stat().st_size` + `rglob("*")` 기반. (a) `core.autocrlf=true` + `.gitattributes` 부재 → 에이전트 Write(LF) ↔ git 체크아웃(CRLF) 크기 차이 (예: `module_utils/adapter_common.py` git 9307B / disk 9593B, Δ286=CRLF \r 개수). (b) `rglob`가 gitignore 무시 → `__pycache__/*.pyc` 62개 + `tests/reference/local/*` untracked 포함 → pytest 실행만으로 fingerprint 변동. **실제 구조 변경(추적 소스 add/remove)은 0건.**
+- 영향: 매 세션 session_start hook이 false drift 경고 noise → 진짜 구조 변경 식별 곤란 + 불필요한 fingerprint 갱신 커밋 churn.
+- 수정: cycle 2026-06-04 — `fingerprint_dir`을 `git ls-files -s -- <dir>`의 (경로:blob OID) 해싱으로 변경. git index OID는 줄바꿈 정규화 + 추적 파일만 대상이라 CRLF/pyc/local untracked 전부 면역. baseline 재측정. git 불가 환경 disk fallback 유지. 검증: ① .pyc 추가 ② 디스크 줄바꿈 토글 → fingerprint 불변(exit 0) 실증.
+- 재발 방지: 이 사례 기록 + 스크립트 결정론화. (`.gitattributes` 줄바꿈 정규화는 저장소 전반 영향이라 별도 검토 — 본 수정으로 fingerprint는 무관해짐.)
+- 관련 rule: rule 28 R1 #2 (PROJECT_MAP 측정 대상), rule 70 R2

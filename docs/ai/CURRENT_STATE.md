@@ -1,5 +1,14 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-04 (PROJECT_MAP fingerprint 결정론화 [DONE])
+
+- **증상**: 작업 트리 clean인데도 session_start hook이 PROJECT_MAP drift 상시 경고 (redfish-gather/filter_plugins/module_utils/tests). git log에 `PROJECT_MAP drift 갱신` 커밋 반복 churn.
+- **진단**: 실제 구조 변경 0건. 원인 = `check_project_map_drift.py`가 디스크 `st_size`+`rglob` 기반 → ① Windows autocrlf 줄바꿈 크기 차이 ② untracked `__pycache__/*.pyc`·local 파일 포함. (상세 `docs/ai/catalogs/FAILURE_PATTERNS.md` 2026-06-04)
+- **수정**: `fingerprint_dir`을 `git ls-files -s`의 (경로:blob OID) 해싱으로 변경 (CRLF/pyc/untracked 면역). baseline 재측정. git 불가 시 disk fallback 유지. harness 정합성 PASS.
+- **branch**: `refactor/audit-cleanup-20260529` (전 cycle 연속).
+
+---
+
 ## 일자: 2026-05-29 (cycle audit-cleanup — 전수 audit + 안전 정리 [DONE])
 
 ### 컨텍스트
