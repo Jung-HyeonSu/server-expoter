@@ -27,10 +27,11 @@
 - **JEDEC 가드 (B)**: `behavior_preserved` (가드 유효 — 단일 테이블 변조 시 FAIL 입증, vacuous-pass 경로 없음). LOW 1: docstring 과장 → byte-INDEX 도출 모델로 정밀화 (입력 수용 경계 A≥4자/B≥2자 차이는 value drift 아님 명시).
 
 ### 연속 작업 (stat 리프레시 + fingerprint path-set + AR-2 완결)
-- 실측 정정: redfish_gather.py 3812→3830줄 (R-4 +18) / test_*.py 42·375→45·405 (jedec 4 + vendor-name 1 + redfish 순수헬퍼 21). fixtures 353 json · adapter 42·31 · 9 vendor · baseline 9 정확 유지. historical(AUDIT/CURRENT_STATE 2026-05-29) 보존.
+- 실측 정정: redfish_gather.py 3812→3830줄 (R-4 +18) / test_*.py 42·375→46·421 (jedec 4 + vendor-name 1 + redfish 순수헬퍼 21 + adapter 점수 16). fixtures 353 json · adapter 42·31 · 9 vendor · baseline 9 정확 유지. historical(AUDIT/CURRENT_STATE 2026-05-29) 보존.
 - fingerprint OID→경로집합 정밀화 (내용 편집에도 drift 0 — commit 후 drift clean 입증).
 - `tests/unit/test_redfish_pure_helpers.py` 신규 21: `_safe`/`_safe_int`/`_removeprefix`/`_strip_or_none`/`_canonical_vendor_name`/`_normalize_jedec` 특성화 (이전 0 커버 — rule 96 robustness 보호). 전부 현재 동작과 일치 (버그 0).
-- commit: ABCD `6cf40e3b` / stat `43099d96` / vendor-name 가드 `02a014a9` / 순수헬퍼 테스트 (본 commit).
+- `tests/unit/test_adapter_scoring.py` 신규 16: `adapter_score` 공식(priority×1000+spec×10+match) 우세관계 + 불일치 -9999 disqualify + `normalize_vendor`(G7 trailing-dot) + `pattern_match_any`(invalid-regex fallback) + specificity 고정 (rule 12 R2 / 50 R3 계약). 버그 0.
+- commit: ABCD `6cf40e3b` / stat `43099d96` / vendor-name 가드 `02a014a9` / 순수헬퍼 `407d31ce` / adapter 점수 (본 commit).
 
 ## 2026-05-29 (cycle audit-cleanup — 전수 audit + 안전 정리)
 
