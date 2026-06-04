@@ -20,7 +20,9 @@
 | MED | refactor: `account_service_provision` 381줄 분할 / HTTP verb 통합 / status 문자열매칭→숫자 | `[AUTH][CONTRACT]` | AUDIT §3 |
 | LOW | JEDEC 테이블 단일화 / registry.yml 문서 명확화 / build_output 명명 / vendor debug dead var | `[ANSIBLE]` | AUDIT §4 |
 
-> 본 cycle 미적용 사유: 본 환경에 **ansible 미설치**(syntax/런타임 검증 불가) + 일부는 **실장비/인증 동작** 변경 (사용자 "운영 깨지면 안됨, 특히 인증"). 적용은 Jenkins agent(ansible+lab) 에서 검증 후.
+> 본 cycle 미적용 사유: 본 환경에 **ansible-playbook CLI 부재**(playbook syntax/런타임 검증 불가) + 일부는 **실장비/인증 동작** 변경 (사용자 "운영 깨지면 안됨, 특히 인증"). ansible YAML 적용은 Jenkins agent(ansible-playbook+lab) 에서 검증 후.
+>
+> **2026-06-04 환경 정정**: ansible **라이브러리** 2.19.9 는 설치되어 있어 (`import ansible` OK) Python 모듈/필터/플러그인은 **pytest 로 로컬 검증 가능** (704 pass). 단 `ansible-playbook` **CLI 는 PATH 부재**(rc=127) — playbook syntax-check/런타임은 여전히 Jenkins Agent 위임. 따라서 §0 의 `[ANSIBLE]` 태그 항목(YAML/playbook 변경)은 계속 보류, Python-only 항목(R-4 등)은 본 환경에서 진행 가능.
 
 ---
 
@@ -115,6 +117,21 @@
 | rule 28 측정 11종 drift 검사 | `measure-reality-snapshot` skill |
 | repo 정리 (죽은 코드 / 중복 / archive 후보) | `repo-hygiene-planner` agent |
 | `docs/ai/handoff/2026-05-11-next-cycles.md` 후보 B/C/D | handoff 후보 참조 |
+
+---
+
+## 6. repo-hygiene 후보 (2026-06-04 스캔 — 실측 검증됨, 미적용 / 계획만)
+
+> D 작업: read-only 스캔 + 실측 참조 카운트 검증 (rule 25 R7-A). 제거/archive 는 사용자 결정 대기 (수정 안 함).
+
+| 우선 | 후보 | 검증 결과 | 권고 |
+|---|---|---|---|
+| **[HIGH]** | `scripts/ai/bug_tracker/verify_all_tickets.py` | 외부 참조 **0건**, `verify_v2.py` 로 대체 (v1 field 명명 오류 수정본) | 삭제 또는 `scripts/ai/archive/one_off/` |
+| MED | `esxi-gather/tasks/normalize_sections.yml` | esxi-gather 내 include 참조 **0건**, deprecated 쉼 (의도적 no-op) | archive 또는 삭제 (rule 70 R6) |
+| LOW | `scripts/ai/bug_tracker/capture_raw_redfish.py` | 참조 **2건** (문서 — 완전 dead 아님), 2026-04-29 ticket cycle one-off | archive 후보 (sister: generate_tickets/verify_v2) |
+| LOW | `module_utils/adapter_common.py::_flatten_aliases` | 1회 호출 (line 79, dead 아님 — inline 후보) | 저우선 cleanup |
+| 중복 | JEDEC 매핑 (`jedec_mapper.py` ↔ `_JEDEC_VENDORS`) | 2026-06-04 **drift-guard 테스트로 보호** (`test_jedec_drift_guard.py`) | 통합 대신 가드 유지 (rule 10 stdlib 제약상 통합 비용 큼) |
+| 중복 | HTTP/SSL 유틸 3중 (`precheck_bundle.py` / `redfish_gather.py` / `capture_raw_redfish.py`) | `_ctx`/`_auth`/`_get` 등 재구현 | `module_utils/` 공유 모듈 통합 — 별도 cycle (rule 10 stdlib 준수 + 회귀 큼) |
 
 ---
 

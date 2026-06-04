@@ -2,6 +2,30 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-04 (cycle ABCD — R-4 상수화 + JEDEC 가드 + fingerprint + stale 정정)
+
+### 환경 정정 (직전 cycle 의 "ansible 미설치" stale)
+- `import ansible` → **2.19.9 설치 확인**. pytest 로 Python 모듈/필터/플러그인 검증 가능.
+- `ansible-playbook` CLI 는 PATH 부재 (rc=127) → playbook syntax-check/런타임은 Jenkins Agent 위임 (변동 없음).
+
+### 신규 테스트 (+4)
+- `tests/unit/test_jedec_drift_guard.py` 신규 4 (AR-2): `jedec_mapper.JEDEC_MAP` ↔ `redfish_gather._JEDEC_VENDORS` 두 테이블 정규화 후 공유키 vendor 동일 + 내부 self-consistency + B⊆A 방향성. cross-channel memory.manufacturer drift 가드.
+
+### 변경 (동작보존)
+- `redfish-gather/library/redfish_gather.py` (R-4): 매직넘버 9 사이트 → 명명 상수 (`BYTES_PER_GB_DECIMAL`/`BYTES_PER_MIB`/`MIB_PER_GIB`/`MBPS_PER_GBPS`) + `_VOLUMETYPE_RAID_MAP` module-level hoist. HTTP-status/auth 경로 미변경.
+- `scripts/ai/check_project_map_drift.py`: fingerprint 를 git ls-files blob OID 기반으로 결정론화 (CRLF/pyc/untracked 면역).
+
+### 회귀 결과
+- pytest **704 PASS / 1 skip / 2 fail**. 2 fail = `tests/e2e_browser/test_jenkins_master.py` (내부망 `10.100.64.152:8080` Playwright — 외부망 환경 제약, 변경 무관). `--ignore=tests/e2e_browser` 시 **704 PASS / 0 fail**.
+- A 영향 영역 집중 (storage/volume/capacity/memory/jedec/network/csus/multi_node): **112 PASS**.
+- py_compile: `redfish_gather.py` / `test_jedec_drift_guard.py` / `check_project_map_drift.py` OK.
+- 잔여 매직넘버 grep: 0 (정의부 제외). 잔여 `raid_map`(lowercase): 0.
+
+### 적대적 검증 (workflow 3 스켑틱 — ultracode)
+- **단위 상수 (A)**: `behavior_preserved`, 이슈 0. 200만 값 empirical sweep 으로 `round(x/1e9,2)==round(x/1_000_000_000,2)` bit-identical 확인 (int 상수 ↔ float 리터럴 등가). decimal↔binary 무교환 / `/`·`//`·`*` 연산자 보존 / MBPS 미병합.
+- **raid_map hoist (A)**: `behavior_preserved`, 이슈 0. 키·값 정확 / 변이(.update/.pop/del) 0 / `.get()` RAIDType-first 단락 동일.
+- **JEDEC 가드 (B)**: `behavior_preserved` (가드 유효 — 단일 테이블 변조 시 FAIL 입증, vacuous-pass 경로 없음). LOW 1: docstring 과장 → byte-INDEX 도출 모델로 정밀화 (입력 수용 경계 A≥4자/B≥2자 차이는 value drift 아님 명시).
+
 ## 2026-05-29 (cycle audit-cleanup — 전수 audit + 안전 정리)
 
 ### 신규 테스트 (+4)

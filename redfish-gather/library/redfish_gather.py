@@ -46,6 +46,15 @@ options:
 
 import json, socket, sys, traceback
 
+# ── 단위 변환 상수 (cycle 2026-06-04 R-4 — 매직넘버 명명) ──────────────────────
+# 주의: decimal(10^n) 과 binary(2^n) 는 의미가 다르므로 절대 통합 금지.
+#   capacity_gb = DECIMAL GB (÷1e9) / total_mb·capacity_mb = BINARY MiB (÷2^20).
+BYTES_PER_GB_DECIMAL = 1_000_000_000   # 10^9 — CapacityBytes ↔ capacity_gb (decimal GB)
+BYTES_PER_MIB = 1048576                # 2^20 — CapacityBytes → total_mb (binary MiB)
+MIB_PER_GIB = 1024                     # 2^10 — MiB → GiB (binary, grouping key)
+MBPS_PER_GBPS = 1000.0                 # 10^3 — 네트워크 Mbps → Gbps (decimal bitrate, byte 아님)
+
+
 def _removeprefix(s, prefix):
     """str.removeprefix() 호환 (Python 3.8 이하 지원)"""
     if s.startswith(prefix):
@@ -1700,7 +1709,7 @@ def _gather_simple_storage(bmc_ip, members, username, password, timeout, verify_
                 'media_type':     None,
                 'protocol':       None,
                 'capacity_bytes': cap_int,
-                'capacity_gb':    round(cap_int / 1e9, 2) if cap_int else None,
+                'capacity_gb':    round(cap_int / BYTES_PER_GB_DECIMAL, 2) if cap_int else None,
                 'health':         _safe(dev, 'Status', 'Health'),
             })
         controllers.append({
@@ -1794,12 +1803,20 @@ def _extract_storage_drives(sdata, bmc_ip, username, password, timeout, verify_s
             'media_type':     _safe(ddata, 'MediaType'),
             'protocol':       _safe(ddata, 'Protocol'),
             'capacity_bytes': cap_int,
-            'capacity_gb':    round(cap_int / 1e9, 2) if cap_int else None,
+            'capacity_gb':    round(cap_int / BYTES_PER_GB_DECIMAL, 2) if cap_int else None,
             'health':         _safe(ddata, 'Status', 'Health') or _safe(ddata, 'Status', 'HealthRollup'),
             'failure_predicted':      _safe(ddata, 'FailurePredicted'),
             'predicted_life_percent': life_pct,
         })
     return drives, errors
+
+
+# Redfish VolumeType enum → canonical RAID level (cycle 2026-06-04 R-4 — module-level hoist)
+_VOLUMETYPE_RAID_MAP = {
+    'NonRedundant': 'RAID0', 'Mirrored': 'RAID1',
+    'StripedWithParity': 'RAID5', 'SpannedMirrors': 'RAID10',
+    'SpannedStripesWithParity': 'RAID50',
+}
 
 
 def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, timeout, verify_ssl):
@@ -1813,11 +1830,6 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
     if verr or vst != 200:
         # Volumes 미지원(HBA 모드 등)은 정상 — 에러 추가하지 않음
         return volumes, errors
-    raid_map = {
-        'NonRedundant': 'RAID0', 'Mirrored': 'RAID1',
-        'StripedWithParity': 'RAID5', 'SpannedMirrors': 'RAID10',
-        'SpannedStripesWithParity': 'RAID50',
-    }
     for v_member in (_safe(vcoll, 'Members') or []):
         v_uri = _safe(v_member, '@odata.id')
         if not v_uri:
@@ -1827,7 +1839,7 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
             errors.append(_err('storage', f'Volume {v_uri} 실패: {verr2 or vst2}'))
             continue
         # RAIDType 표준 우선, Dell VolumeType fallback
-        raid_type = _safe(vdata, 'RAIDType') or raid_map.get(_safe(vdata, 'VolumeType'))
+        raid_type = _safe(vdata, 'RAIDType') or _VOLUMETYPE_RAID_MAP.get(_safe(vdata, 'VolumeType'))
         # member_drive_ids: Links.Drives[]의 @odata.id에서 마지막 path segment
         member_ids = [
             d_oid.rstrip('/').rsplit('/', 1)[-1]
@@ -1866,7 +1878,7 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
             'controller_id':    controller_id,
             'member_drive_ids': member_ids,
             'raid_level':       raid_type,
-            'total_mb':         (vcap_int // 1048576) if vcap_int else None,
+            'total_mb':         (vcap_int // BYTES_PER_MIB) if vcap_int else None,
             # BUG-19 fix: drive 와 동일하게 Status.Health 누락 시 HealthRollup fallback.
             'health':           _safe(vdata, 'Status', 'Health') or _safe(vdata, 'Status', 'HealthRollup'),
             'state':            _safe(vdata, 'Status', 'State'),
@@ -1963,7 +1975,7 @@ def _gather_smart_storage(bmc_ip, system_uri, username, password, timeout, verif
                             continue
                         cap_int = _safe_int(_safe(pddata, 'CapacityGB')) or _safe_int(_safe(pddata, 'CapacityMiB'))
                         # CapacityGB (iLO4) → bytes
-                        cap_bytes = (cap_int * 1_000_000_000) if cap_int and _safe(pddata, 'CapacityGB') else None
+                        cap_bytes = (cap_int * BYTES_PER_GB_DECIMAL) if cap_int and _safe(pddata, 'CapacityGB') else None
                         drives.append({
                             'id':             _safe(pddata, 'Id'),
                             'name':           _safe(pddata, 'Model') or _safe(pddata, 'Name'),
@@ -2383,7 +2395,7 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
                     if isinstance(cur_gbps, (int, float)):
                         speed_gbps = cur_gbps
                     elif isinstance(speed_mbps, (int, float)):
-                        speed_gbps = speed_mbps / 1000.0
+                        speed_gbps = speed_mbps / MBPS_PER_GBPS
                     else:
                         speed_gbps = None
                     assoc = _safe(pdata, 'AssociatedNetworkAddresses', default=[]) or []
@@ -2802,7 +2814,7 @@ def _summarize_partition_disks(physical_disks):
     groups, seen, total = [], {}, 0
     for d in (physical_disks or []):
         cap_mb = d.get('total_mb') or 0
-        cap_gb = int(cap_mb // 1024) if cap_mb else 0
+        cap_gb = int(cap_mb // MIB_PER_GIB) if cap_mb else 0
         if cap_gb <= 0:
             continue
         mt, pr, md = d.get('media_type'), d.get('protocol'), d.get('model')
@@ -2833,7 +2845,7 @@ def _normalize_storage_raw(raw):
         drives_out = []
         for drv in (ctrl.get('drives') or []):
             cap = drv.get('capacity_bytes')
-            tmb = int(cap // 1048576) if isinstance(cap, (int, float)) and cap else None
+            tmb = int(cap // BYTES_PER_MIB) if isinstance(cap, (int, float)) and cap else None
             drives_out.append({
                 'device': drv.get('name'), 'model': drv.get('model'),
                 'total_mb': tmb, 'media_type': drv.get('media_type'),
@@ -2967,7 +2979,7 @@ def _normalize_memory_raw(raw_mem):
         cap_mb = int(cap_mb) if cap_mb else 0
         if cap_mb <= 0:
             continue
-        cap_gb = cap_mb // 1024
+        cap_gb = cap_mb // MIB_PER_GIB
         t, sp = s.get('type'), s.get('speed_mhz')
         mfr, pn = s.get('manufacturer'), s.get('part_number')
         key = '%s|%s|%s|%s|%s' % (cap_gb, t, sp, mfr, pn)

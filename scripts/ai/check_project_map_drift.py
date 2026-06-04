@@ -4,12 +4,13 @@
 `.claude/policy/project-map-fingerprint.yaml`에 baseline 디렉터리별 SHA-1을 기록.
 실제 저장소와 비교하여 drift 감지.
 
-fingerprint는 **git 추적 파일의 (경로:blob OID)** 를 해싱한다. 따라서:
-- 줄바꿈(LF/CRLF, autocrlf) 차이에 영향받지 않음 — git blob은 정규화된 내용
+fingerprint는 **git 추적 파일의 경로 집합(정렬된 파일 목록)** 을 해싱한다. 따라서:
+- 줄바꿈(LF/CRLF, autocrlf) 차이에 영향받지 않음 — 파일 내용을 보지 않음
 - `__pycache__/*.pyc`, untracked 로컬 파일에 영향받지 않음 — git 추적 파일만 대상
-- 실제 구조/내용 변경(파일 추가/삭제/수정)만 추적
+- 파일 내용 편집에도 반응하지 않음 — PROJECT_MAP 은 구조 문서이므로 내용 변경 시 갱신 불요
+- **구조 변경만 추적** — 파일/디렉터리 추가·삭제·이름변경 (rule 28 R1 #2 목적과 정합)
 
-git 사용 불가 환경에서는 디스크 rglob+size fallback (CRLF noise 가능).
+git 사용 불가 환경에서는 디스크 rglob 경로 fallback.
 
 Exit codes:
     0 = 일치 (drift 없음)
@@ -73,27 +74,29 @@ def _git_ls_files_staged(repo_root: Path, subdir: str) -> Optional[List[Tuple[st
 
 
 def _fingerprint_dir_disk(d: Path) -> str:
-    """fallback: 디스크 rglob + size 기반 (git 불가 환경). CRLF noise 가능."""
+    """fallback: 디스크 rglob 경로 집합 기반 (git 불가 환경).
+
+    내용/크기를 보지 않고 파일 경로만 해싱 (구조 변경만 추적). 단 git 부재라
+    __pycache__/untracked 도 포함될 수 있어 git 경로보다 noise 여지 있음 (degraded).
+    """
     if not d.is_dir():
         return "missing"
     h = hashlib.sha1()
     for f in sorted(d.rglob("*")):
         if f.is_file():
             try:
-                rel = f.relative_to(d).as_posix()
-                size = f.stat().st_size
-                h.update(f"{rel}:{size}\n".encode("utf-8"))
+                h.update(f"{f.relative_to(d).as_posix()}\n".encode("utf-8"))
             except Exception:
                 pass
     return h.hexdigest()[:12]
 
 
 def fingerprint_dir(repo_root: Path, subdir: str) -> str:
-    """디렉터리의 git 추적 파일 (경로:blob OID) list를 SHA-1로 해싱.
+    """디렉터리의 git 추적 파일 경로 집합을 SHA-1로 해싱 (구조 변경만 추적).
 
-    git index의 blob OID를 사용하므로 줄바꿈(CRLF/LF) 차이, __pycache__/.pyc,
-    untracked 로컬 파일에 영향받지 않는다 (구조/내용 변경만 추적).
-    git 사용 불가 시 디스크 rglob+size fallback.
+    경로 목록만 해싱하므로 줄바꿈(CRLF/LF) 차이, __pycache__/.pyc, untracked
+    로컬 파일, **파일 내용 편집** 에 영향받지 않는다 — 파일/디렉터리 추가·삭제·
+    이름변경에만 반응. git 사용 불가 시 디스크 rglob 경로 fallback.
     """
     entries = _git_ls_files_staged(repo_root, subdir)
     if entries is None:
@@ -101,8 +104,8 @@ def fingerprint_dir(repo_root: Path, subdir: str) -> str:
     if not entries and not (repo_root / subdir).is_dir():
         return "missing"
     h = hashlib.sha1()
-    for path, oid in sorted(entries):
-        h.update(f"{path}:{oid}\n".encode("utf-8"))
+    for path, _oid in sorted(entries):
+        h.update(f"{path}\n".encode("utf-8"))
     return h.hexdigest()[:12]
 
 

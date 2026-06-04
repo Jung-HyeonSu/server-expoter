@@ -1,5 +1,17 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-04 (R-4 상수화 + JEDEC drift 가드 + repo-hygiene + stale 정정 [DONE])
+
+- **환경 정정**: ansible **라이브러리 2.19.9 설치** (`import ansible` OK) → Python 모듈/필터/플러그인 **pytest 로컬 검증 가능** (704 pass). 단 `ansible-playbook` **CLI 는 PATH 부재**(rc=127) — playbook syntax/런타임은 Jenkins Agent 위임. (직전까지 docs 가 "ansible 미설치" 로 stale — NEXT_ACTIONS §0 정정)
+- **A (R-4)**: `redfish_gather.py` 매직넘버 → 명명 상수 4개 (`BYTES_PER_GB_DECIMAL`=10^9 / `BYTES_PER_MIB`=2^20 / `MIB_PER_GIB`=2^10 / `MBPS_PER_GBPS`=10^3) + `_VOLUMETYPE_RAID_MAP` module-level hoist. 9 사이트 동작보존. **GB(decimal)/GiB(binary) 분리 명시** (혼동 함정 방지). 인증/HTTP-status 경로 의도적 미변경 ("특히 인증" — R-3 [CONTRACT] 와 결합되어 별도).
+- **B (AR-2)**: `tests/unit/test_jedec_drift_guard.py` 신규 4 — 두 JEDEC 테이블(`jedec_mapper.JEDEC_MAP` ↔ `redfish_gather._JEDEC_VENDORS`) 정규화 후 공유키 값 동일 + 내부 self-consistency + B⊆A 방향성. cross-channel memory.manufacturer drift 차단.
+- **C**: stale "ansible 미설치" 정정 — 살아있는 근거(NEXT_ACTIONS §0)만 수정, 날짜 박힌 기록물(ADR/AUDIT/과거 cycle 로그)은 append-only 보존 (rule 70).
+- **D**: repo-hygiene 스캔 (읽기전용, 미적용) → NEXT_ACTIONS §6 (verify_all_tickets.py dead 0-ref / esxi normalize_sections.yml 쉼 / HTTP 유틸 3중).
+- **회귀**: pytest **704 pass / 1 skip** (e2e_browser 2 fail = 내부망 `10.100.64.152` Playwright — 환경 제약, A/B 무관). A 영향 영역 집중 112 pass.
+- **branch**: `refactor/audit-cleanup-20260529`.
+
+---
+
 ## 일자: 2026-06-04 (PROJECT_MAP fingerprint 결정론화 [DONE])
 
 - **증상**: 작업 트리 clean인데도 session_start hook이 PROJECT_MAP drift 상시 경고 (redfish-gather/filter_plugins/module_utils/tests). git log에 `PROJECT_MAP drift 갱신` 커밋 반복 churn.
