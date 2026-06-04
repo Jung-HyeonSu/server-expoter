@@ -407,6 +407,13 @@ _BMC_PRODUCT_HINTS = {
     # 부재 펌웨어 환경에서 BMC 제품명으로 정규화 강건성 향상.
     # source: HPE Superdome Flex Server Admin Guide + sdflexutils GitHub
     'superdome': 'hpe', 'superdome flex': 'hpe',                            # nosec rule12-r1
+    # 2026-06-04 (HP CSUS 3200 사이트 사고): RMC 가 ServiceRoot.Product/Name 에
+    # "Compute Scale-up Server 3200" 으로 응답 — Manufacturer/alias 시그니처 부재
+    # 펌웨어에서 무인증 probe 벤더 감지 강건성 향상 (rule 96 R1-A web 검증).
+    # 복합 키만 사용 — 'csus'/'compute' 단독은 비-HPE Product/Name 와 substring 충돌
+    # 위험 (워크플로 adversarial 검증 — `if hint in p` plain substring, L614/L626).
+    # source: HPE Compute Scale-up Server 3200 FAQ + Superdome Flex Admin Guide (CSUS = Superdome Flex 후속).
+    'compute scale-up server': 'hpe', 'csus 3200': 'hpe',                   # nosec rule12-r1
 }
 
 
@@ -1420,6 +1427,23 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
         # `_*` prefix 키 (예: `_bios_date`) 를 result hardware-level 로 끌어올린 뒤
         # OEM dict 에서는 제거. 기존 envelope 키만 채움 — 새 키 추가 없음.
         result['oem'] = _hoist_oem_extras(raw_oem, result)
+
+    # A1 (2026-06-04, HP CSUS 3200 사이트 사고): Chassis 폴백 — System.Manufacturer/Model
+    # 부재(None) 시 이미 fetch 한 chassis_data(상단)에서 보충. Additive only (rule 92 R2):
+    #   - result 값이 None 일 때만 발동 (정상 13 vendor 는 System.Manufacturer/Model 보유 → 미발동).
+    #   - _strip_or_none 으로 '' → None 정규화 유지 (파이프라인 불변식: 빈 문자열 금지).
+    #   - chassis 값이 strip 후 truthy 일 때만 대입 (None→None / ''→None 무의미 대입 방지).
+    # 근거: HPE Scale-up (CSUS 3200 / Superdome Flex) RMC 는 Partition0 System.Manufacturer/
+    # Model 이 비고 Chassis 에만 존재 (DMTF ComputerSystem Manufacturer/Model optional+nullable).
+    if isinstance(chassis_data, dict):
+        if result['manufacturer'] is None:
+            _cm = _strip_or_none(_safe(chassis_data, 'Manufacturer'))
+            if _cm is not None:
+                result['manufacturer'] = _cm
+        if result['model'] is None:
+            _cmod = _strip_or_none(_safe(chassis_data, 'Model'))
+            if _cmod is not None:
+                result['model'] = _cmod
 
     # 주요 필드 누락은 경고 수준 — 수집 자체는 성공으로 처리.
     # errors에 추가하지 않아 _run()에서 failed로 분류되지 않음.

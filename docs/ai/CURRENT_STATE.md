@@ -1,5 +1,27 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-04 (HP CSUS 3200 사이트 사고: vendor=hp 오선택 + hardware null fix [A1/B1/B2 DONE, Bug C PENDING])
+
+- **요청 (사용자)**: 실 CSUS 3200 수집 시 `vendor=hp`(→`hpCsus` 여야), `data.hardware.vendor/model=null`, 그 외 null/0/empty 다수. "웹검색·멀티에이전트·모든 도구로 fix".
+- **진단 (8-agent 워크플로 — web 3 + code 2 + synth + adversarial)**: 근본 원인 2 단.
+  - **B2 (핵심)**: `hpe_ilo6` 은 `model_patterns` 부재 firmware-only catch-all → 절대 실격 안 됨. 점수 공식상 priority 지배 → 구 CSUS(96)/Superdome(95) 가 모델 매치해도 iLO6(100) 에 패배 → `_out_vendor`=`vendor_output_display[hpe]`=`hp`. (실 adapter 시뮬레이션 확정)
+  - **A1**: `gather_system` 이 `System.Manufacturer/Model` 폴백 없음. CSUS Partition0 는 비고 Chassis 에만 존재.
+- **Fix (Additive only — rule 92 R2)**:
+  - **A1**: `gather_system` Chassis 폴백 (result None 일 때만 + `_strip_or_none`). hardware.vendor/model 채움.
+  - **B1**: `_BMC_PRODUCT_HINTS` 복합 키 `'compute scale-up server'`/`'csus 3200'`→`hpe` (단독 키 충돌 회피).
+  - **B2 (사용자 승인 2026-06-04)**: `hpe_csus_3200` 96→**102**, `hpe_superdome_flex` 95→**101** (iLO6 catch-all 위). firmware 무관 `hpCsus` 보장.
+- **검증 (✅ 확인층 / ❌ 미확인층)**:
+  - ✅ pytest **762 pass** (e2e_browser 2 = 내부망 Jenkins 환경 제약 제외) / vendor-boundary PASS / harness-consistency PASS.
+  - ✅ 실 adapter_common + 실 adapter YAML 시뮬레이션: model=CSUS/fw="" → `hpCsus`(post-B2). 무회귀(Gen11→iLO6/hp, Gen12→iLO7/hp, Dell→idrac9/dell, empty→iLO7 불변).
+  - ✅ 실 `gather_system`(monkeypatch _get): System null → Chassis 폴백 채움 / 정상 Dell 무회귀 / 빈문자열→None.
+  - ❌ **실 CSUS 장비 end-to-end**: 장비·raw JSON 부재 → 이 환경 확인 불가. 사용자 사이트 재실행 필요.
+- **신규 회귀**: `tests/unit/test_csus_adapter_priority.py` 13 (A1/B1/B2 lock-in).
+- **PENDING (Bug C — NEXT_ACTIONS §0.5)**: 각종 null/0/empty counts 는 실 장비 구조 의존 → 추측 금지. raw JSON 확보 후 정밀 수정 + 회귀 fixture. 사용자 "지금은 데이터 없음" 선택.
+- **governance**: `docs/ai/decisions/ADR-2026-06-04-csus-adapter-priority.md` 신규. `vendor-boundary-map.yaml` csus_3200 sub_line 보강.
+- **branch**: `refactor/audit-cleanup-20260529`.
+
+---
+
 ## 일자: 2026-06-04 (vendor 출력 표시값 hpe→hp / CSUS 3200→hpCsus [DONE])
 
 - **요청 (사용자)**: 결과 출력 JSON envelope 의 `vendor` 값을 HPE 계열 `hp`, HPE CSUS 3200 `hpCsus` 로 변경.

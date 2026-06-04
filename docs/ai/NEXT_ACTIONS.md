@@ -26,6 +26,23 @@
 
 ---
 
+## 0.5 HP CSUS 3200 사이트 사고 후속 — Bug C (각종 null/0/empty) [PENDING — 실 데이터 필요]
+
+> 2026-06-04 사이트 사고. A1/B1/B2 (vendor=hpCsus + hardware null) 적용·검증 완료 (ADR-2026-06-04-csus-adapter-priority).
+> 사용자 "지금은 데이터 없음" 선택 → 아래는 실 장비 데이터 확보 후 진행.
+
+| 항목 | 상태 | 결정 주체 / 진입 |
+|---|---|---|
+| **raw Redfish JSON 캡처** (ServiceRoot + Systems/Partition0 + 그 Processors/Memory + Chassis + Managers/RMC) | trigger 충족 (사고 발생) | 사용자 — `capture-site-fixture` skill. sanitize 후 fixture |
+| **Bug C 정밀 수정** (cpu/memory/storage/network/power 의 null/0/empty) | **BLOCKED** — raw JSON 부재. 추측 수정 금지 (다른 vendor 회귀 위험, rule 92 R2) | 위 캡처 후 |
+| **LOAD-BEARING 확인**: 실 RMC 무인증 ServiceRoot 가 `facts.firmware` 채우는지 → B1 단독 충분 여부 | 미확정 | raw ServiceRoot JSON |
+| **실 baseline 교체**: 현 MOCK `schema/baseline_v1/hpe_csus_3200_baseline.json` → 사이트 실측 | 보류 (lab 부재, rule 96 R1-C) | 사용자 실장비 검증 후 (rule 13 R4) |
+| **end-to-end 확인**: A1/B1/B2 적용 후 실 장비에서 `vendor=hpCsus` + `hardware.vendor/model` 채워지는지 | ❌ 이 환경 확인 불가 | 사용자 사이트 재실행 (Jenkins Agent) |
+
+> A1/B1/B2 는 실 코드/시뮬레이션/pytest 762 로 **로직층 ✅ 검증**. 실 장비 결과는 사용자 확인 필요(❌ 미확인).
+
+---
+
 ## 1. AI 환경에서 즉시 가능 — F6 OS baseline expansion (사용자 access 제공 완료)
 
 | 항목 | 상태 | 진입 |
