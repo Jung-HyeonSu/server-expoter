@@ -2,6 +2,29 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-04 (vendor 출력 표시값 hpe→hp / CSUS 3200→hpCsus — ADR-2026-06-04)
+
+### 신규 테스트 (+6, TDD RED→GREEN)
+- `tests/regression/test_vendor_output_display.py` 신규 D1~D6:
+  - D1 vendor_aliases 표시 맵 보유 (hpe→hp / csus adapter→hpCsus)
+  - D2 hpe_baseline envelope vendor == `hp`
+  - D3 hpe_csus_3200_baseline envelope vendor == `hpCsus`
+  - D4 field_dictionary vendor enum 이 hp + hpCsus 노출 + `hpe` 미노출
+  - D5 내부 canonical `hpe` 보존 (라우팅 무손상)
+  - D6 `CANONICAL_VENDORS` 게이트가 hp/hpCsus 허용
+- RED 확인: 구현 전 D2/D3/D4/D6 FAIL (baseline=hpe, enum=hpe, frozenset 미포함) → 구현 후 전부 PASS.
+
+### 변경 (출력 표시값만 — 내부 canonical 불변)
+- `common/vars/vendor_aliases.yml`: `vendor_output_display`/`adapter_output_display` 신규
+- `redfish-gather/site.yml` / `esxi-gather/site.yml` / `os-gather/site.yml`: `_out_vendor` 표시 매핑
+- `schema/field_dictionary.yml` enum + baseline 2 + output_examples 2 + `CANONICAL_VENDORS`
+
+### 회귀 결과
+- pytest **748 PASS / 1 skip / 2 fail**. 2 fail = `tests/e2e_browser/test_jenkins_master.py` (내부망 `10.100.64.152:8080` Playwright — 환경 제약, 본 변경 무관).
+- vendor-boundary PASS (data-driven — common/3-channel 하드코딩 0) / harness-consistency PASS / validate_field_dictionary PASS (Stage 3 gate) / output_schema_drift PASS.
+- Jinja 표시식 단위 검증 (jinja2 직접 렌더): redfish 7 케이스 (hpe→hp, CSUS→hpCsus, Superdome Flex→hp, dell/cisco 무변, None 보존) + esxi 4 케이스 전부 OK.
+- `ansible-playbook --syntax-check`: Windows dev box ansible CLI 부재 → Jenkins Agent 위임 (YAML 구조는 pyyaml parse PASS).
+
 ## 2026-06-04 (cycle ABCD — R-4 상수화 + JEDEC 가드 + fingerprint + stale 정정)
 
 ### 환경 정정 (직전 cycle 의 "ansible 미설치" stale)

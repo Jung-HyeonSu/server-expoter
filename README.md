@@ -141,7 +141,7 @@ server-exporter/
   "collection_method": "agent | vsphere_api | redfish_api",
   "ip":                "10.x.x.1",
   "hostname":          "10.x.x.1",
-  "vendor":            "dell | hpe | lenovo | supermicro | cisco | huawei | inspur | fujitsu | quanta | null",
+  "vendor":            "dell | hp | hpCsus | lenovo | supermicro | cisco | huawei | inspur | fujitsu | quanta | null",
   "status":            "success | partial | failed",
   "sections":          { "system": "success", "cpu": "success", ... },
   "diagnosis":         { "precheck": {...}, "details": [...] },

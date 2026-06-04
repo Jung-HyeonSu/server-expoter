@@ -231,7 +231,7 @@ CSUS3200 매칭 패턴이 부재하여 현재 `hpe_ilo.yml` (priority=10) generi
 | 대안 | 거절 사유 |
 |---|---|
 | Superdome Flex adapter 의 model_patterns 만 확장 | CSUS3200 은 DDR5 신라인 + RMC firmware 세대 다름. 펌웨어/모델 매트릭스 추적 흐려짐. Round 검증 후 별도 baseline 필요 |
-| 새 HPE sub-vendor 신설 (`hpe_csus` 별도) | HPE 동일 vendor (Manufacturer = "HPE / Hewlett Packard Enterprise"). vendor_aliases.yml 변경 불필요 |
+| 새 HPE sub-vendor 신설 (`hpe_csus` 별도) | HPE 동일 vendor (Manufacturer = "HPE / Hewlett Packard Enterprise"). vendor_aliases.yml 변경 불필요. **(2026-06-04 refine: 내부 canonical 은 여전히 `hpe` 로 유지하되, 출력 표시값만 `hpCsus` 로 분기 — ADR-2026-06-04 참조. 본 거절 사유는 canonical 차원에서 유효)** |
 | OEM tasks 별도 분리 (collect_csus_oem.yml 신설) | Oem.Hpe namespace 동일 + PartitionInfo/FlexNodeInfo 상속. 재사용이 단순 + Additive 검증 용이 |
 
 ### 적용 변경
@@ -270,6 +270,48 @@ CSUS3200 매칭 패턴이 부재하여 현재 `hpe_ilo.yml` (priority=10) generi
 - trigger 2 (표면 카운트 변경 — `.claude/policy/surface-counts.yaml`): 0 (하네스 surface 카운트 — adapter 카운트는 별도)
 - trigger 3 (보호 경로 정책 변경): 0
 - → ADR 의무 아님. 본 decision-log entry + VENDOR_ADAPTERS / hpe.md 갱신으로 governance trace
+
+---
+
+## 2026-06-04 — 출력 envelope vendor 표시값 매핑 (hpe→hp, CSUS 3200→hpCsus)
+
+> 정본 reasoning: `docs/ai/decisions/ADR-2026-06-04-vendor-output-display.md`
+
+### 결정 (사용자 명시)
+
+호출자 노출 envelope `vendor` 값을 HPE 계열 `hp`, HPE CSUS 3200 `hpCsus` 로 변경.
+**Design A — 출력 라벨만 변경**: 내부 canonical `hpe` 유지(라우팅 무손상), 출력만 data-driven
+표시 맵(`common/vars/vendor_aliases.yml` 의 `vendor_output_display`/`adapter_output_display`)으로 치환.
+
+### 범위 (사용자 결정 4건)
+
+| 항목 | 결정 |
+|---|---|
+| 구현 방식 | 출력 라벨만 변경 (내부 canonical 불변) |
+| hpCsus 범위 | CSUS 3200 한정 (`adapter_id == redfish_hpe_csus_3200`). Superdome Flex 는 `hp` |
+| 채널 범위 | 3 채널 전체 (redfish/os/esxi) `hp` |
+| 표기 | `hpCsus` camelCase 유지 + schema enum 변경 승인 |
+
+### 적용 변경
+
+- `common/vars/vendor_aliases.yml`: `vendor_output_display` / `adapter_output_display` 신규
+- `redfish-gather/site.yml` / `esxi-gather/site.yml` / `os-gather/site.yml`: `_out_vendor` 표시 매핑
+- `schema/field_dictionary.yml`: vendor enum `hpe`→`hp` + `hpCsus` (Stage 3 gate). `schema_version` 정수 `"1"` 유지 (shape 13필드 불변)
+- `schema/baseline_v1/hpe_baseline.json`(→`hp`) / `hpe_csus_3200_baseline.json`(→`hpCsus`)
+- `schema/output_examples/redfish_hpe_ilo6.jsonc`(→`hp`) / `redfish_hpe_csus_3200.jsonc`(→`hpCsus`)
+- `tests/regression/test_vendor_output_display.py` (신규 D1~D6) + `test_cross_channel_consistency.py` `CANONICAL_VENDORS`
+- docs: `docs/20`, `README.md`, `.claude/ai-context/vendors/hpe.md`
+
+### 검증
+
+- pytest 748 passed / vendor-boundary PASS / harness-consistency PASS /
+  validate_field_dictionary PASS / output_schema_drift PASS / Jinja 표시식 단위 검증 PASS
+- `ansible-playbook --syntax-check`: Windows dev box ansible 부재로 미실행 (Linux Agent/CI 수행)
+
+### 호환성 주의 (rule 96 R1-B)
+
+envelope `vendor` 는 외부 계약. `hpe` 로 필터링하던 다운스트림 소비자는 `hp`/`hpCsus` 로 갱신 필요.
+(본 변경 자체가 다운스트림 요구에서 출발.)
 
 ### lab 도입 후 NEXT_ACTIONS 4 항목 (rule 96 R1-C)
 

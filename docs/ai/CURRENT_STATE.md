@@ -1,5 +1,21 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-04 (vendor 출력 표시값 hpe→hp / CSUS 3200→hpCsus [DONE])
+
+- **요청 (사용자)**: 결과 출력 JSON envelope 의 `vendor` 값을 HPE 계열 `hp`, HPE CSUS 3200 `hpCsus` 로 변경.
+- **방식**: **Design A — 출력 라벨만 변경** (내부 canonical `hpe` 유지 → adapter 선택 / vault 경로 / OEM 추출 / account 복구 분기 / `Oem.Hpe` namespace 전부 무손상). 출력만 data-driven 표시 맵으로 치환.
+- **표시 맵 정본**: `common/vars/vendor_aliases.yml` 신규 `vendor_output_display: {hpe: hp}` + `adapter_output_display: {redfish_hpe_csus_3200: hpCsus}` (rule 12 R1 Allowed 위치 — vendor 하드코딩 회피).
+- **적용 3 채널**: redfish(`site.yml` `_out_vendor` 성공/rescue/always 3 경로, CSUS=adapter_id 정확 매칭) / esxi(`site.yml` `_out_vendor`) / os(`site.yml` Linux+Windows emit literal `hpe→hp`, 기존 nosec inline).
+- **schema**: `field_dictionary.yml` vendor enum `hpe`→`hp` + `hpCsus` + help (camelCase 예외 명시). **`schema_version` 정수 `"1"` 유지** (envelope 13필드 shape 불변 — enum 값만 변경. `"2"` bump 필요 시 사용자 결정).
+- **baseline/example**: `hpe_baseline.json`→`hp` / `hpe_csus_3200_baseline.json`→`hpCsus` / 2 jsonc 예시 갱신.
+- **테스트**: `tests/regression/test_vendor_output_display.py` 신규 (D1~D6, TDD RED→GREEN) + `CANONICAL_VENDORS` 에 hp/hpCsus.
+- **검증**: pytest **748 pass / 1 skip** (e2e_browser 2 fail = 내부망 Playwright 환경 제약, 무관) / vendor-boundary PASS / harness-consistency PASS / validate_field_dictionary PASS / output_schema_drift PASS / Jinja 표시식 단위 검증 7+4 케이스 PASS.
+- **governance**: `docs/ai/decisions/ADR-2026-06-04-vendor-output-display.md` 신규 + `docs/19` 2026-06-04 entry (2026-05-12 "CSUS sub-vendor 거절" refine — canonical 차원 유효).
+- **호환성 주의 (rule 96 R1-B)**: envelope `vendor` 는 외부 계약. `hpe` 필터링 다운스트림은 `hp`/`hpCsus` 로 갱신 필요.
+- **branch**: `refactor/audit-cleanup-20260529`.
+
+---
+
 ## 일자: 2026-06-04 (R-4 상수화 + JEDEC drift 가드 + repo-hygiene + stale 정정 [DONE])
 
 - **환경 정정**: ansible **라이브러리 2.19.9 설치** (`import ansible` OK) → Python 모듈/필터/플러그인 **pytest 로컬 검증 가능** (705 pass). 단 `ansible-playbook` **CLI 는 PATH 부재**(rc=127) — playbook syntax/런타임은 Jenkins Agent 위임. (직전까지 docs 가 "ansible 미설치" 로 stale — NEXT_ACTIONS §0 정정)

@@ -3,7 +3,7 @@
   "collection_method": "redfish_api",
   "ip": "10.50.11.231",
   "hostname": "10.50.11.231",
-  "vendor": "hpe",
+  "vendor": "hp",
   "status": "success",
   "sections": {
     "system": "not_supported",

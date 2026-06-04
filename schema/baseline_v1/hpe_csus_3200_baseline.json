@@ -3,7 +3,7 @@
   "collection_method": "redfish_api",
   "ip": "10.50.11.999",
   "hostname": "csus-3200-mock",
-  "vendor": "hpe",
+  "vendor": "hpCsus",
   "status": "success",
   "sections": {
     "system": "not_supported",

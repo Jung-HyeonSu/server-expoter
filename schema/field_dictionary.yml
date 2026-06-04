@@ -104,16 +104,20 @@ fields:
 
   vendor:
     type: "string|null"
-    enum: ["dell", "hpe", "lenovo", "supermicro", "cisco", null]
+    enum: ["dell", "hp", "hpCsus", "lenovo", "supermicro", "cisco", null]
     priority: must
     channel: [redfish, os, esxi]
     help_ko: >-
-      정규화된 벤더 (소문자). vendor_aliases.yml로 매핑.
-      OS 채널은 hardware 정보 미수집 시 null.
-      ESXi는 hosting hardware 벤더.
+      호출자 노출용 벤더 표시값. 내부 canonical(예: 'hpe')을 vendor_aliases.yml 의
+      vendor_output_display / adapter_output_display 로 매핑한 결과.
+      HPE 계열 → 'hp', HPE CSUS 3200 → 'hpCsus' (camelCase 예외 — 2026-06-04 사용자 결정).
+      대부분 소문자이나 CSUS 3200 만 camelCase. OS 채널은 hardware 미수집 시 null.
+      ESXi 는 hosting hardware 벤더.
     help_en: >-
-      Normalized vendor (lowercase) via vendor_aliases.yml.
-      OS channel may be null when hardware section unavailable.
+      Caller-facing vendor display value: internal canonical (e.g. 'hpe') mapped
+      via vendor_aliases.yml vendor_output_display / adapter_output_display.
+      HPE family -> 'hp', HPE CSUS 3200 -> 'hpCsus' (camelCase exception, 2026-06-04).
+      Mostly lowercase; only CSUS 3200 is camelCase. OS channel may be null.
       ESXi reports hosting hardware vendor.
 
   meta:

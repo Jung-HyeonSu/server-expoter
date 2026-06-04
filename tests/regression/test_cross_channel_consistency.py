@@ -44,11 +44,15 @@ VALID_SECTION_STATUS: frozenset[str] = frozenset(
     {"success", "not_supported", "failed", "partial"}
 )
 # rule 50 R1 — vendor 정규화 정본 (vendor_aliases.yml + 신규 4 vendor)
+# cycle 2026-06-04 (사용자 결정): 출력 표시값 매핑 — 내부 canonical 'hpe' 는 envelope
+# 에서 'hp' (CSUS 3200 → 'hpCsus') 로 노출. 'hpe' 는 always-fallback degradation 대비 허용 유지.
 CANONICAL_VENDORS: frozenset[str | None] = frozenset(
     {
         None,  # OS channel can be null (vendor-agnostic)
         "dell",
-        "hpe",
+        "hpe",       # 내부 canonical (always-fallback degradation 시 출력 가능)
+        "hp",        # HPE 출력 표시값 (vendor_output_display)
+        "hpCsus",    # HPE CSUS 3200 출력 표시값 (adapter_output_display)
         "lenovo",
         "supermicro",
         "cisco",
