@@ -6,7 +6,8 @@
 - **Aliases**: HPE, HP, Hewlett Packard Enterprise, iLO
 - **BMC 이름**: iLO5 / iLO6
 - **vendor_aliases.yml** 내부 canonical 정규화: `hpe` (adapter/vault/OEM 라우팅 키 — 불변)
-- **출력 envelope vendor 표시값** (2026-06-04 ADR): `hp` (CSUS 3200 → `hpCsus`).
+- **출력 envelope vendor 표시값** (2026-06-04 ADR): `hp`.
+  HPE Compute Scale-up Servers 패밀리(**CSUS 3200 + Superdome Flex**, 둘 다 RMC 관리)는 → `hpCsus`.
   내부 canonical `hpe` 유지, `vendor_output_display`/`adapter_output_display` 로 출력만 매핑.
 
 ## Adapter 매핑

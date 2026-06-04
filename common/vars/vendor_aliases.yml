@@ -112,5 +112,12 @@ vendor_output_display:
   hpe: hp          # 호출자 노출값: 'hpe' → 'hp'
 
 # adapter_id 별 출력 표시값 (특정 모델 라인을 별도 vendor 값으로 노출 — vendor_output_display 보다 우선)
+# HPE "Compute Scale-up Servers" 패밀리 전체 → hpCsus (2026-06-04 web 검증 — rule 96 R1-A).
+# HPE 공식 분류상 Superdome Flex + CSUS 3200 은 동일 scale-up 패밀리 (둘 다 RMC 관리).
+# CSUS 3200 = Superdome Flex 의 successor ("built on the proven Superdome Flex architecture").
+# source: https://www.hpe.com/us/en/servers/superdome.html (페이지 제목 = "Compute Scale-up Servers")
+# source: https://support.hpe.com/hpesc/public/docDisplay?docId=sd00001798en_us (CSUS 3200 + Superdome Flex 함께 문서화)
+# source: HPE 보안 bulletin hpesbhf04632 / hpesbhf04633 (둘을 동일 영향군으로 묶음)
 adapter_output_display:
-  redfish_hpe_csus_3200: hpCsus   # HPE Compute Scale-up Server 3200 → 'hpCsus' (CSUS 3200 한정)
+  redfish_hpe_csus_3200:      hpCsus   # HPE Compute Scale-up Server 3200
+  redfish_hpe_superdome_flex: hpCsus   # HPE Superdome Flex (동일 Compute Scale-up 패밀리 — CSUS 3200 predecessor)

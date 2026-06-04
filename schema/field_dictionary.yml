@@ -110,14 +110,14 @@ fields:
     help_ko: >-
       호출자 노출용 벤더 표시값. 내부 canonical(예: 'hpe')을 vendor_aliases.yml 의
       vendor_output_display / adapter_output_display 로 매핑한 결과.
-      HPE 계열 → 'hp', HPE CSUS 3200 → 'hpCsus' (camelCase 예외 — 2026-06-04 사용자 결정).
-      대부분 소문자이나 CSUS 3200 만 camelCase. OS 채널은 hardware 미수집 시 null.
+      HPE 계열 → 'hp', HPE Compute Scale-up Servers (Superdome Flex + CSUS 3200) → 'hpCsus'
+      (camelCase 예외 — 2026-06-04 사용자 결정 + HPE 공식 분류 web 검증). OS 채널은 hardware 미수집 시 null.
       ESXi 는 hosting hardware 벤더.
     help_en: >-
       Caller-facing vendor display value: internal canonical (e.g. 'hpe') mapped
       via vendor_aliases.yml vendor_output_display / adapter_output_display.
-      HPE family -> 'hp', HPE CSUS 3200 -> 'hpCsus' (camelCase exception, 2026-06-04).
-      Mostly lowercase; only CSUS 3200 is camelCase. OS channel may be null.
+      HPE family -> 'hp', HPE Compute Scale-up Servers (Superdome Flex + CSUS 3200)
+      -> 'hpCsus' (camelCase exception, 2026-06-04). OS channel may be null.
       ESXi reports hosting hardware vendor.
 
   meta:

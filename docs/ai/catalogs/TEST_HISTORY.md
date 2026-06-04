@@ -12,7 +12,9 @@
   - D4 field_dictionary vendor enum 이 hp + hpCsus 노출 + `hpe` 미노출
   - D5 내부 canonical `hpe` 보존 (라우팅 무손상)
   - D6 `CANONICAL_VENDORS` 게이트가 hp/hpCsus 허용
+  - D7 HPE Compute Scale-up Servers 패밀리 (CSUS 3200 + Superdome Flex) → hpCsus (2026-06-04 amendment, web 검증)
 - RED 확인: 구현 전 D2/D3/D4/D6 FAIL (baseline=hpe, enum=hpe, frozenset 미포함) → 구현 후 전부 PASS.
+- amendment RED: D7 추가 시 superdome_flex 미매핑 FAIL → `adapter_output_display` 에 추가 후 PASS. Jinja sim (superdome_flex→hpCsus, iLO6/7→hp) PASS.
 
 ### 변경 (출력 표시값만 — 내부 canonical 불변)
 - `common/vars/vendor_aliases.yml`: `vendor_output_display`/`adapter_output_display` 신규

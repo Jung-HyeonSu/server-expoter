@@ -4,8 +4,9 @@
 
 - **요청 (사용자)**: 결과 출력 JSON envelope 의 `vendor` 값을 HPE 계열 `hp`, HPE CSUS 3200 `hpCsus` 로 변경.
 - **방식**: **Design A — 출력 라벨만 변경** (내부 canonical `hpe` 유지 → adapter 선택 / vault 경로 / OEM 추출 / account 복구 분기 / `Oem.Hpe` namespace 전부 무손상). 출력만 data-driven 표시 맵으로 치환.
-- **표시 맵 정본**: `common/vars/vendor_aliases.yml` 신규 `vendor_output_display: {hpe: hp}` + `adapter_output_display: {redfish_hpe_csus_3200: hpCsus}` (rule 12 R1 Allowed 위치 — vendor 하드코딩 회피).
-- **적용 3 채널**: redfish(`site.yml` `_out_vendor` 성공/rescue/always 3 경로, CSUS=adapter_id 정확 매칭) / esxi(`site.yml` `_out_vendor`) / os(`site.yml` Linux+Windows emit literal `hpe→hp`, 기존 nosec inline).
+- **표시 맵 정본**: `common/vars/vendor_aliases.yml` 신규 `vendor_output_display: {hpe: hp}` + `adapter_output_display: {redfish_hpe_csus_3200: hpCsus, redfish_hpe_superdome_flex: hpCsus}` (rule 12 R1 Allowed 위치 — vendor 하드코딩 회피).
+- **hpCsus 범위 (2026-06-04 amendment)**: HPE Compute Scale-up Servers 패밀리 = **CSUS 3200 + Superdome Flex** (둘 다 RMC 관리 scale-up). HPE 공식 분류 web 검증 (hpe.com superdome 페이지 제목 = "Compute Scale-up Servers" / support.hpe.com sd00001798en_us). 초기 "CSUS 3200 한정" → 사용자 조건부 지시로 확대. (ADR §6 / rule 96 R1-A)
+- **적용 3 채널**: redfish(`site.yml` `_out_vendor` 성공/rescue/always 3 경로, hpCsus=adapter_id set 매칭) / esxi(`site.yml` `_out_vendor`) / os(`site.yml` Linux+Windows emit literal `hpe→hp`, 기존 nosec inline).
 - **schema**: `field_dictionary.yml` vendor enum `hpe`→`hp` + `hpCsus` + help (camelCase 예외 명시). **`schema_version` 정수 `"1"` 유지** (envelope 13필드 shape 불변 — enum 값만 변경. `"2"` bump 필요 시 사용자 결정).
 - **baseline/example**: `hpe_baseline.json`→`hp` / `hpe_csus_3200_baseline.json`→`hpCsus` / 2 jsonc 예시 갱신.
 - **테스트**: `tests/regression/test_vendor_output_display.py` 신규 (D1~D6, TDD RED→GREEN) + `CANONICAL_VENDORS` 에 hp/hpCsus.

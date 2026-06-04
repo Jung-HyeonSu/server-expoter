@@ -87,3 +87,18 @@ def test_d6_canonical_vendors_gate_allows_display_values() -> None:
 
     assert "hp" in CANONICAL_VENDORS
     assert "hpCsus" in CANONICAL_VENDORS
+
+
+def test_d7_compute_scaleup_family_maps_to_hpcsus() -> None:
+    """HPE 'Compute Scale-up Servers' 패밀리 전체 → hpCsus (2026-06-04 web 검증).
+
+    HPE 공식 분류상 CSUS 3200 + Superdome Flex 는 동일 'Compute Scale-up Servers'
+    패밀리 (둘 다 RMC 관리 scale-up). CSUS 3200 은 Superdome Flex 의 successor.
+    source: hpe.com/.../servers/superdome.html (페이지 제목 = "Compute Scale-up Servers"),
+            support.hpe.com sd00001798en_us / hpesbhf04632 (둘을 함께 문서화).
+    """
+    adapter_map = _load_yaml(ALIASES).get("adapter_output_display", {})
+    for adapter_id in ("redfish_hpe_csus_3200", "redfish_hpe_superdome_flex"):
+        assert adapter_map.get(adapter_id) == "hpCsus", (
+            f"{adapter_id} 는 Compute Scale-up 패밀리 → hpCsus 여야 함"
+        )

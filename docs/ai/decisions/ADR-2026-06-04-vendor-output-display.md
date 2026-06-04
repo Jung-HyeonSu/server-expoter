@@ -31,11 +31,14 @@
 - 적용 (data-driven — vendor 이름 하드코딩 없음):
   - redfish: `redfish-gather/site.yml` `_out_vendor` (성공/rescue/always 3 경로) —
     `adapter_output_display[adapter_id]` 우선 → `vendor_output_display[canonical]` → canonical.
-    CSUS 식별 = `_selected_adapter.adapter_id == 'redfish_hpe_csus_3200'` (정확히 CSUS 3200 만).
+    hpCsus 식별 = `_selected_adapter.adapter_id ∈ {redfish_hpe_csus_3200, redfish_hpe_superdome_flex}`
+    (HPE Compute Scale-up Servers 패밀리 — 2026-06-04 amendment 참조).
   - esxi: `esxi-gather/site.yml` `_out_vendor` — `vendor_output_display` 적용 (CSUS 무관).
   - os: `os-gather/site.yml` Linux/Windows inline 매핑의 emit literal `hpe→hp`
     (기존 `# nosec rule12-r1` raw-fallback inline 매핑 — 표시 맵 mirror).
-- 범위: 3 채널 전체 `hp`, `hpCsus` 는 redfish CSUS 3200 한정 (사용자 결정).
+- 범위: 3 채널 전체 `hp`, `hpCsus` 는 redfish Compute Scale-up Servers 패밀리
+  (CSUS 3200 + Superdome Flex — 2026-06-04 amendment). 초기 결정은 CSUS 3200 한정이었으나
+  HPE 공식 분류 web 검증 후 Superdome Flex 포함으로 확대 (사용자 조건부 지시).
 - schema enum: `schema/field_dictionary.yml` `fields.vendor.enum` 에서 `hpe`→`hp` + `hpCsus` 추가.
   (envelope 13 필드 shape 불변 → `schema_version` 정수는 `"1"` 유지.)
 
@@ -71,7 +74,7 @@ PASS / validate_field_dictionary PASS / output_schema_drift PASS / Jinja 표시�
 | **A. 출력 라벨만 변경 (채택)** | ~10 파일, MED. 내부 라우팅 무손상. CSUS 구분은 adapter_id 단일 신호. |
 | B. 내부 canonical 전면 rename (`hpe→hp`) | ~45~50 파일 + 암호화 vault rename + 런타임 인증 실패 위험. 기능 이득 0. **거절.** |
 | C. CSUS 를 vendor 말고 diagnosis 로만 | 이미 `diagnosis.details.adapter_candidate` / `multi_node_layout` 존재하나, 사용자는 `vendor` 필드값 `hpCsus` 자체를 요구. **불충족.** |
-| `manager_layout == 'rmc_primary'` 로 CSUS 식별 | 동작은 하나 Superdome Flex(`rmc_primary_ilo_secondary`)와의 구분이 layout 값에 암묵 의존. `adapter_id` 가 더 명시적 → adapter_id 채택. |
+| `manager_layout` (rmc_primary 계열) 로 식별 | 동작 가능하나 layout 값 암묵 의존. `adapter_id` set 매칭이 더 명시적 → adapter_id 채택. (2026-06-04 amendment 로 CSUS 3200 + Superdome Flex 둘 다 hpCsus 가 되어 두 방식 결과는 동일.) |
 
 ## 5. 2026-05-12 결정과의 관계
 
@@ -79,3 +82,25 @@ PASS / validate_field_dictionary PASS / output_schema_drift PASS / Jinja 표시�
 변경 불필요")은 **내부 canonical 차원에서 여전히 유효** (canonical `hpe` 유지, vendor_aliases
 의 vendor 목록 불변, OEM tasks 재사용). 본 ADR 은 그 위에 **출력 표시 계층**만 추가한 것으로
 충돌이 아니라 refine. CSUS 는 내부적으로 `hpe` 로 라우팅되고 출력에서만 `hpCsus` 로 표시된다.
+
+## 6. Amendment 2026-06-04 — hpCsus 범위를 Compute Scale-up Servers 패밀리로 확대
+
+### 컨텍스트
+사용자 질의: "Superdome Flex 도 CSUS 인가요? 검색해서 맞다면 그것도 hpCsus." → AI web 검증 (rule 96 R1-A).
+
+### 검증 결과 (HPE 공식 분류)
+- HPE 제품 페이지 `https://www.hpe.com/us/en/servers/superdome.html` 의 **페이지 제목 = "Compute Scale-up Servers"** → Superdome 페이지가 곧 Compute Scale-up Servers 패밀리 페이지.
+- HPE support 문서 `sd00001798en_us` 가 "HPE Compute Scale-up Server 3200 **and** HPE Superdome Flex" 를 함께 문서화.
+- HPE 보안 bulletin `hpesbhf04632` / `hpesbhf04633` 가 CSUS 3200 + Superdome Flex 를 동일 영향군으로 묶음.
+- HPE 펌웨어 depot 경로 `vibsdepot.hpe.com/superdome/sdflex/...` + 둘 다 **RMC (Rack Management Controller) 관리**.
+- CSUS 3200 = Superdome Flex 의 successor ("built on the proven HPE Superdome Flex architecture").
+
+### 결정
+**Superdome Flex 도 `hpCsus`.** `adapter_output_display` 에 `redfish_hpe_superdome_flex: hpCsus` 추가.
+hpCsus 범위 = HPE Compute Scale-up Servers 패밀리 (CSUS 3200 + Superdome Flex). 초기(§2) "CSUS 3200 한정" 대체.
+
+### 영향
+- `common/vars/vendor_aliases.yml`: `adapter_output_display` 에 `redfish_hpe_superdome_flex` 추가 (data-only, 코드 무변경 — data-driven 표시 맵).
+- `tests/regression/test_vendor_output_display.py`: D7 (Compute Scale-up 패밀리 → hpCsus) 추가.
+- baseline/example: Superdome Flex baseline/example 부재 → 변경 없음 (lab 부재 — 사이트 도입 시 capture).
+- 검증: pytest D1~D7 PASS / Jinja 매핑 sim (Superdome Flex → hpCsus, iLO6/7 → hp) PASS.

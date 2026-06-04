@@ -288,7 +288,7 @@ CSUS3200 매칭 패턴이 부재하여 현재 `hpe_ilo.yml` (priority=10) generi
 | 항목 | 결정 |
 |---|---|
 | 구현 방식 | 출력 라벨만 변경 (내부 canonical 불변) |
-| hpCsus 범위 | CSUS 3200 한정 (`adapter_id == redfish_hpe_csus_3200`). Superdome Flex 는 `hp` |
+| hpCsus 범위 | HPE Compute Scale-up Servers 패밀리 — CSUS 3200 + Superdome Flex (둘 다 RMC 관리 scale-up). 초기 "CSUS 3200 한정" → 2026-06-04 HPE 공식 분류 web 검증 후 Superdome Flex 포함 확대 (ADR §6 amendment) |
 | 채널 범위 | 3 채널 전체 (redfish/os/esxi) `hp` |
 | 표기 | `hpCsus` camelCase 유지 + schema enum 변경 승인 |
 
