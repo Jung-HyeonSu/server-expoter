@@ -2,13 +2,14 @@
 
 ## 일자: 2026-06-04 (R-4 상수화 + JEDEC drift 가드 + repo-hygiene + stale 정정 [DONE])
 
-- **환경 정정**: ansible **라이브러리 2.19.9 설치** (`import ansible` OK) → Python 모듈/필터/플러그인 **pytest 로컬 검증 가능** (704 pass). 단 `ansible-playbook` **CLI 는 PATH 부재**(rc=127) — playbook syntax/런타임은 Jenkins Agent 위임. (직전까지 docs 가 "ansible 미설치" 로 stale — NEXT_ACTIONS §0 정정)
+- **환경 정정**: ansible **라이브러리 2.19.9 설치** (`import ansible` OK) → Python 모듈/필터/플러그인 **pytest 로컬 검증 가능** (705 pass). 단 `ansible-playbook` **CLI 는 PATH 부재**(rc=127) — playbook syntax/런타임은 Jenkins Agent 위임. (직전까지 docs 가 "ansible 미설치" 로 stale — NEXT_ACTIONS §0 정정)
 - **A (R-4)**: `redfish_gather.py` 매직넘버 → 명명 상수 4개 (`BYTES_PER_GB_DECIMAL`=10^9 / `BYTES_PER_MIB`=2^20 / `MIB_PER_GIB`=2^10 / `MBPS_PER_GBPS`=10^3) + `_VOLUMETYPE_RAID_MAP` module-level hoist. 9 사이트 동작보존. **GB(decimal)/GiB(binary) 분리 명시** (혼동 함정 방지). 인증/HTTP-status 경로 의도적 미변경 ("특히 인증" — R-3 [CONTRACT] 와 결합되어 별도).
-- **B (AR-2)**: `tests/unit/test_jedec_drift_guard.py` 신규 4 — 두 JEDEC 테이블(`jedec_mapper.JEDEC_MAP` ↔ `redfish_gather._JEDEC_VENDORS`) 정규화 후 공유키 값 동일 + 내부 self-consistency + B⊆A 방향성. cross-channel memory.manufacturer drift 차단.
+- **B (AR-2)**: `tests/unit/test_jedec_drift_guard.py` 신규 5 — 두 JEDEC 테이블(`jedec_mapper.JEDEC_MAP` ↔ `redfish_gather._JEDEC_VENDORS`) 정규화 후 공유키 값 동일 + 내부 self-consistency + B⊆A 방향성 (4) + `VENDOR_NAME_NORMALIZATION` 두 채널 mirror 가드 (1 — AR-2 두 번째 중복 테이블 완결). cross-channel memory.manufacturer drift 차단.
 - **C**: stale "ansible 미설치" 정정 — 살아있는 근거(NEXT_ACTIONS §0)만 수정, 날짜 박힌 기록물(ADR/AUDIT/과거 cycle 로그)은 append-only 보존 (rule 70).
 - **D**: repo-hygiene 스캔 (읽기전용, 미적용) → NEXT_ACTIONS §6 (verify_all_tickets.py dead 0-ref / esxi normalize_sections.yml 쉼 / HTTP 유틸 3중).
-- **회귀**: pytest **704 pass / 1 skip** (e2e_browser 2 fail = 내부망 `10.100.64.152` Playwright — 환경 제약, A/B 무관). A 영향 영역 집중 112 pass.
-- **branch**: `refactor/audit-cleanup-20260529`.
+- **회귀**: pytest **705 pass / 1 skip** (e2e_browser 2 fail = 내부망 `10.100.64.152` Playwright — 환경 제약, A/B 무관). A 영향 영역 집중 112 pass. 적대적 검증 3 스켑틱 모두 `behavior_preserved`.
+- **stat 리프레시**: redfish_gather.py 3812→3830줄 / test_*.py 42·375→44·384 정정 (live 참조 + CLAUDE.md). fixtures 353 json·adapter 42·31·9 vendor 정확 유지.
+- **branch**: `refactor/audit-cleanup-20260529`. commit ABCD `6cf40e3b` / stat `43099d96` / vendor-name `02a014a9`.
 
 ---
 
@@ -16,7 +17,7 @@
 
 - **증상**: 작업 트리 clean인데도 session_start hook이 PROJECT_MAP drift 상시 경고 (redfish-gather/filter_plugins/module_utils/tests). git log에 `PROJECT_MAP drift 갱신` 커밋 반복 churn.
 - **진단**: 실제 구조 변경 0건. 원인 = `check_project_map_drift.py`가 디스크 `st_size`+`rglob` 기반 → ① Windows autocrlf 줄바꿈 크기 차이 ② untracked `__pycache__/*.pyc`·local 파일 포함. (상세 `docs/ai/catalogs/FAILURE_PATTERNS.md` 2026-06-04)
-- **수정**: `fingerprint_dir`을 `git ls-files -s`의 (경로:blob OID) 해싱으로 변경 (CRLF/pyc/untracked 면역). baseline 재측정. git 불가 시 disk fallback 유지. harness 정합성 PASS.
+- **수정**: `fingerprint_dir`을 `git ls-files -s`의 **경로 집합** 해싱으로 변경 (CRLF/pyc/untracked + **내용 편집** 면역 — 파일 추가·삭제·이름변경 등 구조 변경만). baseline 재측정. git 불가 시 disk 경로 fallback. harness 정합성 PASS. (초기안 blob OID → 내용편집마다 drift → 경로집합 정밀화로 content-only churn 제거.)
 - **branch**: `refactor/audit-cleanup-20260529` (전 cycle 연속).
 
 ---
