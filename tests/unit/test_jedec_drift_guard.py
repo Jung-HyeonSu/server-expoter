@@ -4,6 +4,9 @@ server-exporter 는 JEDEC JEP106 제조사 ID → DRAM vendor 이름 매핑을 �
   TABLE A: filter_plugins/jedec_mapper.py        :: JEDEC_MAP        (OS-gather / Jinja 필터 경로)
   TABLE B: redfish-gather/library/redfish_gather.py :: _JEDEC_VENDORS (Redfish 경로, stdlib-only)
 
+추가로 vendor 이름 canonical 정규화 테이블(VENDOR_NAME_NORMALIZATION)도 같은 두 파일에
+mirror 되어 있어 동일한 cross-channel 위험이 있다 — test_vendor_name_normalization_mirrors 로 보호.
+
 두 경로가 같은 JEDEC byte 를 **다른 vendor 이름**으로 해석하면 통합 envelope 의
 `data.memory[].manufacturer` 가 채널별로 divergence (rule 13 cross-channel 정합 위반).
 본 테스트는 그 drift 만 잡고, 두 테이블이 **scope/표현**(A 는 '0x'·4자리 alias row 보유)에서
@@ -60,6 +63,27 @@ def _load_jedec_vendors():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod._JEDEC_VENDORS
+
+
+def _load_vendor_name_norms():
+    """두 VENDOR_NAME_NORMALIZATION dict 반환 (filter, redfish).
+
+    AR-2 두 번째 중복 테이블 — vendor 이름 canonical 정규화도 두 채널에 mirror.
+    """
+    sys.path.insert(0, str(REPO / "filter_plugins"))
+    from jedec_mapper import VENDOR_NAME_NORMALIZATION as filter_norm
+
+    if "ansible.module_utils.basic" not in sys.modules:
+        mock_basic = types.ModuleType("ansible.module_utils.basic")
+        mock_basic.AnsibleModule = type("AnsibleModule", (), {})
+        sys.modules.setdefault("ansible", types.ModuleType("ansible"))
+        sys.modules.setdefault("ansible.module_utils", types.ModuleType("ansible.module_utils"))
+        sys.modules["ansible.module_utils.basic"] = mock_basic
+    src = REPO / "redfish-gather" / "library" / "redfish_gather.py"
+    spec = importlib.util.spec_from_file_location("redfish_gather_vnorm_guard", str(src))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return filter_norm, mod._VENDOR_NAME_NORMALIZATION
 
 
 def _norm_byte(key: str) -> str:
@@ -133,4 +157,34 @@ def test_redfish_keys_subset_of_filter(table_a, table_b):
     assert not only_in_b, (
         f"_JEDEC_VENDORS 에만 있는 byte: {sorted(only_in_b)} — "
         f"filter_plugins/jedec_mapper.py JEDEC_MAP 에 미러링하라 (OS-gather 채널 누락 방지)."
+    )
+
+
+@pytest.fixture(scope="module")
+def vendor_name_norms():
+    return _load_vendor_name_norms()
+
+
+def test_vendor_name_normalization_mirrors(vendor_name_norms):
+    """AR-2 두 번째 중복 테이블: vendor 이름 canonical 정규화가 두 채널에서 동일.
+
+    `jedec_mapper.VENDOR_NAME_NORMALIZATION` (OS dmidecode 경로, _canonicalize_vendor_name)
+    ↔ `redfish_gather._VENDOR_NAME_NORMALIZATION` (Redfish 경로, _canonical_vendor_name).
+    JEDEC_MAP 과 달리 이 둘은 alias-row 같은 scope 차이가 없어 **정확히 mirror** 여야 한다.
+    한쪽만 vendor 변형을 추가하면 같은 메모리가 채널별로 다른 manufacturer 로 정규화된다
+    (cross-channel divergence, rule 13).
+    """
+    filter_norm, redfish_norm = vendor_name_norms
+    only_filter = set(filter_norm) - set(redfish_norm)
+    only_redfish = set(redfish_norm) - set(filter_norm)
+    value_diff = {
+        k: (filter_norm[k], redfish_norm[k])
+        for k in set(filter_norm) & set(redfish_norm)
+        if filter_norm[k] != redfish_norm[k]
+    }
+    assert not (only_filter or only_redfish or value_diff), (
+        "VENDOR_NAME_NORMALIZATION 두 채널 drift — "
+        f"filter-only={sorted(only_filter)} / redfish-only={sorted(only_redfish)} / "
+        f"값충돌={value_diff}. jedec_mapper.py 와 redfish_gather._VENDOR_NAME_NORMALIZATION 을 "
+        "동기화하라 (rule 13 cross-channel memory.manufacturer)."
     )
