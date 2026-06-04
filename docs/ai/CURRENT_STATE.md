@@ -7,8 +7,9 @@
 - **B (AR-2)**: `tests/unit/test_jedec_drift_guard.py` 신규 5 — 두 JEDEC 테이블(`jedec_mapper.JEDEC_MAP` ↔ `redfish_gather._JEDEC_VENDORS`) 정규화 후 공유키 값 동일 + 내부 self-consistency + B⊆A 방향성 (4) + `VENDOR_NAME_NORMALIZATION` 두 채널 mirror 가드 (1 — AR-2 두 번째 중복 테이블 완결). cross-channel memory.manufacturer drift 차단.
 - **C**: stale "ansible 미설치" 정정 — 살아있는 근거(NEXT_ACTIONS §0)만 수정, 날짜 박힌 기록물(ADR/AUDIT/과거 cycle 로그)은 append-only 보존 (rule 70).
 - **D**: repo-hygiene 스캔 (읽기전용, 미적용) → NEXT_ACTIONS §6 (verify_all_tickets.py dead 0-ref / esxi normalize_sections.yml 쉼 / HTTP 유틸 3중).
-- **회귀**: pytest **705 pass / 1 skip** (e2e_browser 2 fail = 내부망 `10.100.64.152` Playwright — 환경 제약, A/B 무관). A 영향 영역 집중 112 pass. 적대적 검증 3 스켑틱 모두 `behavior_preserved`.
-- **stat 리프레시**: redfish_gather.py 3812→3830줄 / test_*.py 42·375→44·384 정정 (live 참조 + CLAUDE.md). fixtures 353 json·adapter 42·31·9 vendor 정확 유지.
+- **회귀**: pytest **742 pass / 1 skip** (e2e_browser 2 fail = 내부망 `10.100.64.152` Playwright — 환경 제약, A/B 무관). A 영향 영역 집중 112 pass. 적대적 검증 3 스켑틱 모두 `behavior_preserved`.
+- **안전 커버리지 보강** (결정·lab 불요, pytest 완결): `test_redfish_pure_helpers.py` 신규 21 (`_safe`/`_safe_int`/`_normalize_jedec` 등 rule 96 robustness) + `test_adapter_scoring.py` 신규 16 (adapter_score 공식 우세관계 + disqualify, rule 12 R2 / 50 R3). 둘 다 현재 동작 일치·버그 0.
+- **stat 리프레시**: redfish_gather.py 3812→3830줄 / test_*.py 42·375→46·421 정정 (live 참조 + CLAUDE.md). fixtures 353 json·adapter 42·31·9 vendor 정확 유지.
 - **branch**: `refactor/audit-cleanup-20260529`. commit ABCD `6cf40e3b` / stat `43099d96` / vendor-name `02a014a9`.
 
 ---
