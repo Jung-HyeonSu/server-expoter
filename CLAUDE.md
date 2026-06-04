@@ -125,7 +125,7 @@ server-exporter/ (프로젝트 루트)
    │   └── tasks/ → collect_facts/config/datastores + normalize_*
    └── redfish-gather/
        ├── site.yml (1-Play: precheck→detect→adapter→collect→normalize)
-       ├── library/redfish_gather.py (약 3,812줄, Redfish API 엔진 — Storage+Volumes 수집, 2026-05-29 재실측)
+       ├── library/redfish_gather.py (약 3,830줄, Redfish API 엔진 — Storage+Volumes 수집, 2026-06-04 재실측)
        └── tasks/ + vendors/{dell,hpe,lenovo,supermicro,cisco}/
 
 [2] 공통 로직 (Fragment 정규화)
@@ -167,7 +167,7 @@ server-exporter/ (프로젝트 루트)
    ├── filter_plugins/diagnosis_mapper.py, field_mapper.py
    └── module_utils/adapter_common.py (점수 계산, 벤더 정규화)
 
-[6] 테스트 (tests/fixtures 353개 + 9 baseline + test_*.py 42파일/375 함수 — 2026-05-29 재실측)
+[6] 테스트 (tests/fixtures 353개 + 9 baseline + test_*.py 44파일/383 함수 [e2e_browser 2 포함] — 2026-06-04 재실측)
    ├── tests/redfish-probe/ (probe_redfish.py, deep_probe_redfish.py)
    ├── tests/fixtures/ (실장비 JSON 응답)
    ├── tests/evidence/ (Round 7-10 조건부 검토)
