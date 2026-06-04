@@ -18,6 +18,8 @@
 - **신규 회귀**: `tests/unit/test_csus_adapter_priority.py` 13 (A1/B1/B2 lock-in).
 - **web hunt (사용자 "raw JSON 찾아봐")**: HPE `sdflexutils` 실 캡처 JSON 확보·AI 직접 fetch 검증 (root.json/system.json). → partition System 은 Manufacturer/Model 부재 + Processors/Memory/Storage/EthernetInterfaces drill-in **부재**, ProcessorSummary/MemorySummary 만 존재 = **Bug A/C 근본 원인 확정**.
 - **Bug C 재해석**: 대부분 **이미 처리됨** — sockets/cores/threads/memory-total 은 기존 BUG-13/14 summary fallback 커버. 유일 누락 `cpu.model` → **fallback 추가** (normalize_standard.yml L483, jinja2 검증). B2 가 multi_node 수집 활성(구 ilo6 오선택 시 null). **잔여**: memory.slots/storage/network top-level 상세는 drill-in 부재라 실 envelope 필요 (NEXT_ACTIONS §0.5).
+- **CSUS-3200 전용 web hunt (사용자 "그 모델 raw JSON 정말 없나")**: verbatim 장비 JSON 덤프는 공개 웹에 **없음**(rare 2023+ 머신). 단 CSUS-3200 *전용* CODE/DOC 확보 — `check_redfish` #168 소스(`system_chassis.py`: model←ServiceRoot.Product fallback / `proc.py`: /Processors drill-in 전제) + OpsRamp SUS3200(Processor/Memory/Drives 개별 리소스). → **신형 CSUS 펌웨어는 drill-in 노출 가능성** (전신과 다름). ADR §9.
+- **A1b (web-evidenced)**: `gather_system` product_hint=ServiceRoot.Product → System.Model 부재 시 우선 fallback (check_redfish 동일). 사용자 CSUS 는 깨끗한 `hardware.model="Compute Scale-up Server 3200"` (Chassis "Base" 접미사 회피). pytest 766.
 - **governance**: `docs/ai/decisions/ADR-2026-06-04-csus-adapter-priority.md` (§8 web findings 포함). `vendor-boundary-map.yaml` csus_3200 sub_line 보강.
 - **branch**: `refactor/audit-cleanup-20260529`.
 

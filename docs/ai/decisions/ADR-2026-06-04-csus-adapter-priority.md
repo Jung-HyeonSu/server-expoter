@@ -98,3 +98,24 @@ top-level `normalize_standard.yml` 이 **이미** summary fallback 보유:
 - ✅ `cpu.model` fallback jinja2 3.1.6 render: CSUS→summary.Model / 정상→per-proc 우선 / 둘다없음→None.
 - ✅ pytest `test_csus_adapter_priority.py` 15 (cpu.model 2 guard 포함).
 - ❌ 실 CSUS 장비 end-to-end (cpu.model + multi_node 채워지는지): 장비 부재 — 사용자 확인 필요.
+
+## 9. Amendment 2026-06-04 (2) — CSUS-3200 전용 web 증거 (check_redfish 소스) + A1b model fallback
+
+### 컨텍스트
+사용자 "CSUS 3200 (전신 아니라 그 모델) raw JSON 웹에 정말 없나?" → AI 직접 검색 (워크플로는 동시-에이전트 rate-limit 으로 0 토큰 실패 → 수동 fetch 로 전환).
+
+### 결과 (CSUS-3200 *전용* 소스 — [CODE]/[DOC-PROSE])
+- **verbatim CSUS-3200 *장비* JSON 덤프는 공개 웹에 없음** (rare 2023+ 머신). 단 CSUS-3200 *전용* 도구/문서 다수:
+  - `check_redfish` (github.com/bb-Ricardo/check_redfish) issue #168 → CSUS 3200 / Superdome Flex / BullSequana SH120 지원. 소스 `cr_module/system_chassis.py` [CODE]:
+    `manufacturer = system.Manufacturer or rf.vendor` / `if model is None: model = connection.root.get("Product")` (ServiceRoot.Product fallback).
+    `cr_module/proc.py` [CODE]: `/Processors` 컬렉션 GET → 부재 시 issue 후 **종료** (ProcessorSummary 는 health/count 만). 즉 도구가 CSUS 3200 에 **/Processors drill-in 존재를 전제**.
+  - OpsRamp(HPE GreenLake) SUS 3200 통합 [DOC-PROSE]: Processor/Memory/Drives/NetworkAdapter 를 개별 리소스로 모니터링.
+- **Q3 추정 (드릴인 존재 여부)**: 신형 CSUS 3200 펌웨어는 **/Processors·/Memory·/Storage drill-in 컬렉션을 노출할 가능성 높음** (전신 Superdome Flex 280 [REAL-JSON] 은 미노출이었으나, OpsRamp + check_redfish 가 drill-in 전제). → 사용자의 cpu/memory null 원인이 "drill-in 부재"가 **아닐 수도** 있음 (partition 선택 / adapter 전략 / 섹션 실패 등). **실 envelope 으로만 확정** (rule 25 R7-A-1).
+
+### A1b 결정 (web-evidenced)
+`gather_system` 에 `product_hint=ServiceRoot.Product` 전달 → `System.Model` 부재 시 **ServiceRoot.Product 우선 fallback** (Chassis.Model 보다 우선 — check_redfish 동일 패턴). 사용자 CSUS 는 ServiceRoot.Product="Compute Scale-up Server 3200" 노출 → 깨끗한 `hardware.model` (Chassis 의 "... Base" 접미사 회피). Additive — 정상 vendor 는 System.Model 보유 → 미발동.
+
+### 검증
+- ✅ pytest 766 / test_csus_adapter_priority.py 17 (A1b 2 추가) / vendor-boundary PASS / py_compile PASS.
+- ✅ A1b: System.Model None + product_hint → model=product_hint (Chassis 보다 우선) / 정상 Dell System.Model 존재 → product_hint(BMC명) 무시.
+- ❌ 실 CSUS 장비: drill-in 실제 노출 여부 + cpu/memory/storage 채워짐 — 사용자 envelope 필요.

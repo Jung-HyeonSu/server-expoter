@@ -1322,7 +1322,7 @@ def _extract_oem_unified(data, expected_vendor=None):                         # 
 
 
 def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verify_ssl,
-                  chassis_uri=None):
+                  chassis_uri=None, product_hint=None):
     """system 섹션 수집 (Redfish endpoints).
 
     호출 endpoint:
@@ -1435,6 +1435,17 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
     #   - chassis 값이 strip 후 truthy 일 때만 대입 (None→None / ''→None 무의미 대입 방지).
     # 근거: HPE Scale-up (CSUS 3200 / Superdome Flex) RMC 는 Partition0 System.Manufacturer/
     # Model 이 비고 Chassis 에만 존재 (DMTF ComputerSystem Manufacturer/Model optional+nullable).
+    #
+    # A1b (2026-06-04): System.Model 부재 시 ServiceRoot.Product(product_hint) 우선 fallback.
+    # 근거: check_redfish (실 CSUS 3200 지원 도구) cr_module/system_chassis.py 가 동일 —
+    #   `if model is None: model = connection.root.get("Product")` (rule 96 R1-A web 검증).
+    # 사용자 CSUS 실측: ServiceRoot.Product="Compute Scale-up Server 3200" (깨끗한 모델명 —
+    # Chassis.Model 의 "... Base" 접미사보다 정확). 정상 vendor 는 System.Model 보유 → 미발동
+    # (ServiceRoot.Product 가 BMC 명인 Dell/Lenovo 도 System.Model 있어 fallback 안 탐).
+    if result['model'] is None and product_hint:
+        _ph = _strip_or_none(product_hint)
+        if _ph is not None:
+            result['model'] = _ph
     if isinstance(chassis_data, dict):
         if result['manufacturer'] is None:
             _cm = _strip_or_none(_safe(chassis_data, 'Manufacturer'))
@@ -3179,7 +3190,7 @@ def _collect_multi_node_topology(bmc_ip, vendor, service_root,
 def _collect_all_sections(bmc_ip, vendor, system_uri, manager_uri, chassis_uri,
                           username, password, timeout, verify_ssl,
                           all_errors, collected, failed, unsupported=None,
-                          manager_layout=None):
+                          manager_layout=None, product_hint=None):
     """9개 섹션 dispatch (system / bmc / processors / memory / storage / network /
     firmware / power / network_adapters[P4]).
 
@@ -3192,7 +3203,7 @@ def _collect_all_sections(bmc_ip, vendor, system_uri, manager_uri, chassis_uri,
     _run = _make_section_runner(all_errors, collected, failed, unsupported)
     creds = (username, password, timeout, verify_ssl)
     return {
-        'system':            _run('system',     gather_system,     bmc_ip, system_uri, vendor, *creds, chassis_uri),
+        'system':            _run('system',     gather_system,     bmc_ip, system_uri, vendor, *creds, chassis_uri, product_hint),
         'bmc':               _run('bmc',        gather_bmc,        bmc_ip, manager_uri, vendor, *creds, manager_layout),
         'processors':        _run('processors', gather_processors, bmc_ip, system_uri,          *creds),
         'memory':            _run('memory',     gather_memory,     bmc_ip, system_uri,          *creds),
@@ -3829,6 +3840,8 @@ def main():
         username, password, timeout, verify_ssl,
         all_errors, collected, failed, unsupported,
         manager_layout=manager_layout,
+        # A1b (2026-06-04): ServiceRoot.Product 를 hardware.model fallback 로 전달 (check_redfish 동일).
+        product_hint=_safe(service_root, 'Product'),
     )
 
     # cycle 2026-05-12 (ADR-2026-05-12): manager_layout 정의 vendor 만 multi_node 수집.

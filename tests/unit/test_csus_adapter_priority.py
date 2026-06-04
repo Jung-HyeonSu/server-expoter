@@ -230,6 +230,37 @@ def test_a1_blank_chassis_normalizes_to_none(monkeypatch):
     assert res["model"] is None
 
 
+# ── A1b: ServiceRoot.Product → hardware.model fallback (check_redfish 동일 패턴) ──
+
+
+def test_a1b_serviceroot_product_model_fallback(monkeypatch):
+    """System.Model 부재 시 product_hint(ServiceRoot.Product) 가 Chassis.Model 보다 우선."""
+    _patch_get(
+        monkeypatch,
+        {"Manufacturer": None, "Model": None, "SerialNumber": "MOCK-P0", "UUID": "u1"},
+        {"Manufacturer": "HPE", "Model": "Compute Scale-up Server 3200 Base"},  # Chassis 는 'Base' 접미사
+    )
+    res, _ = rg.gather_system("1.2.3.4", "/redfish/v1/Systems/Partition0", "hpe",
+                              "u", "p", 5, False, chassis_uri="/redfish/v1/Chassis/Base",
+                              product_hint="Compute Scale-up Server 3200")
+    assert res["manufacturer"] == "HPE"
+    # 깨끗한 ServiceRoot.Product 가 'Base' 접미사 Chassis.Model 보다 우선
+    assert res["model"] == "Compute Scale-up Server 3200"
+
+
+def test_a1b_product_ignored_when_system_model_present(monkeypatch):
+    """정상 vendor: System.Model 존재 → product_hint 무시 (무회귀)."""
+    _patch_get(
+        monkeypatch,
+        {"Manufacturer": "Dell Inc.", "Model": "PowerEdge R760", "SerialNumber": "S", "UUID": "u2"},
+        {"Manufacturer": "HPE", "Model": "X"},
+    )
+    res, _ = rg.gather_system("1.2.3.4", "/redfish/v1/Systems/1", "dell",
+                              "u", "p", 5, False, chassis_uri="/redfish/v1/Chassis/1",
+                              product_hint="Integrated Dell Remote Access Controller")  # BMC명 — 절대 model 로 안 들어가야
+    assert res["model"] == "PowerEdge R760"
+
+
 # ── Bug C: cpu.model ProcessorSummary fallback (web 실측 — sdflexutils system.json) ──
 # Superdome/CSUS partition System 은 /Processors drill-in 부재, ProcessorSummary 만 존재.
 # sockets/cores/threads/memory-total 은 기존 BUG-13/14 fallback 으로 이미 커버,
