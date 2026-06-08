@@ -2,6 +2,25 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-08 (DMTF DSP8010 2026.1 공식 스키마 대조 audit — DRIFT-017)
+
+### 신규 테스트 (+6)
+- `tests/unit/test_redfish_pure_helpers.py` `_normalize_link_status` 6건:
+  - up 변형(LinkUp/Up/Connected/Enabled/Active) / down 변형(LinkDown/Down/NoLink/Disconnected/Disabled/Inactive/Offline)
+  - **DMTF 전이 상태 → down** (Starting/Training — DSP8010 2026.1 대조 gap fix)
+  - unknown(None/""/none/unknown/null) / 미지 vendor 값 raw 보존
+- RED 확인: 보정 전 transitional 테스트는 'starting'/'training' raw 반환으로 FAIL → 보정 후 PASS.
+
+### 변경 (Additive only — rule 96 R1-B)
+- `redfish-gather/library/redfish_gather.py:1192` `_normalize_link_status` down 버킷에 `starting`/`training` 추가.
+- `schema/redfish_dmtf_2026.1/` 신설 (DMTF subset 28 리소스 56 json-schema + README + dmtf_info).
+- `EXTERNAL_CONTRACTS.md` 대조 스냅샷 + `CONVENTION_DRIFT.md` DRIFT-017.
+
+### 회귀 결과
+- pytest **771 PASS / 1 skip / 2 fail**. 2 fail = `tests/e2e_browser/test_jenkins_master.py` (내부망 `10.100.64.152:8080` Playwright — 환경 제약, 본 변경 무관).
+- fixture/baseline grep: Starting/Training link_status 0건 → 기존 회귀 출력 불변(검증).
+- output_schema_drift(sections=10/fd_paths=83 불변) / verify_vendor_boundary / verify_harness_consistency / project_map fingerprint 일치 / py_compile — 전부 PASS.
+
 ## 2026-06-04 (vendor 출력 표시값 hpe→hp / CSUS 3200→hpCsus — ADR-2026-06-04)
 
 ### 신규 테스트 (+6, TDD RED→GREEN)

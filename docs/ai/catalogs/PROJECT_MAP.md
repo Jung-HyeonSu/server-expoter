@@ -35,7 +35,8 @@ server-exporter/
 │   ├── field_dictionary.yml # 39 Must + 38 Nice + 6 Skip = 83 entries (2026-05-29 재실측, 16 section prefixes)
 │   ├── fields/              # 섹션별 상세
 │   ├── baseline_v1/         # 9 baseline JSON (redfish 5 + esxi/ubuntu/windows + rhel810_raw_fallback)
-│   └── examples/            # success/partial/failed
+│   ├── examples/            # success/partial/failed
+│   └── redfish_dmtf_2026.1/ # DMTF DSP8010 2026.1 subset (28 리소스 json-schema reference, rule 96 대조용)
 ├── tests/
 │   ├── redfish-probe/       # probe_redfish.py + deep_probe_redfish.py
 │   ├── fixtures/            # 380 실장비 JSON (회귀 input)

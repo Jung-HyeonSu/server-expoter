@@ -1198,9 +1198,14 @@ def _normalize_link_status(value):
       - Cisco CIMC: 'Connected' / 'Disconnected' / null
       - Lenovo XCC: 'LinkUp' / 'LinkDown'
 
+    DMTF DSP8010 2026.1 대조 2026-06-08: Port.LinkStatus enum 정본은
+      ['LinkUp', 'Starting', 'Training', 'LinkDown', 'NoLink'] (Port.v1_19_0).
+      'Starting'/'Training' = 링크 협상 중(비작동) 전이 상태 → 기존 비작동
+      매핑(disabled/inactive/offline)과 동일하게 'down' 으로 정규화.
+
     Standard enum:
       'up'      — link active
-      'down'    — link inactive (NoLink, LinkDown, Disconnected)
+      'down'    — link inactive (NoLink, LinkDown, Disconnected, Starting, Training)
       'unknown' — null/unknown response
     """
     if value is None:
@@ -1210,7 +1215,8 @@ def _normalize_link_status(value):
         return 'unknown'
     if s in ('linkup', 'up', 'connected', 'enabled', 'active'):
         return 'up'
-    if s in ('linkdown', 'down', 'nolink', 'disconnected', 'disabled', 'inactive', 'offline'):
+    if s in ('linkdown', 'down', 'nolink', 'disconnected', 'disabled',
+             'inactive', 'offline', 'starting', 'training'):
         return 'down'
     return s  # unknown vendor-specific value — preserve raw
 

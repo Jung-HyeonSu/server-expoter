@@ -1,5 +1,25 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-08 (DMTF DSP8010 2026.1 공식 스키마 대조 audit + subset vendoring [DONE])
+
+- **요청 (사용자)**: DMTF 공식 Redfish 스키마 번들 DSP8010 2026.1(최신) 다운로드 → 사용 가능한지 확인 + 우리 프로젝트와 대조하며 리팩토링. 범위=검증 우선(audit-first), 번들=쓰는 스키마만 subset commit (사용자 결정).
+- **Phase 1 — subset vendoring**: `schema/redfish_dmtf_2026.1/` 신설. 우리가 실제 참조하는 28 리소스의 무버전 + 최신버전 json-schema 56개 + `dmtf_info.json` + `README.md`. 전체 14k 파일 아님 / 런타임 import 안 함(순수 reference). 출처·갱신 trigger README 명시.
+- **Phase 2 — enum/필드/path 전수 대조 (10 항목)**: **9 MATCH + 1 GAP**. 상세표 `EXTERNAL_CONTRACTS.md`.
+  - MATCH 핵심: VolumeType→RAID 맵(RawDevice 의도적 제외 정확), Processor/Memory/Drive raw passthrough(신 enum 자동 수용), State Absent/Disabled 필터, Power/PowerSubsystem/EnvironmentMetrics 필드명, NetDevFuncType FC/IB 분류.
+  - **GAP (#2)**: `_normalize_link_status` 가 DMTF Port.LinkStatus 표준 전이 상태 `Starting`/`Training` 미처리(raw 통과).
+- **Phase 3 — 보정 (Additive only)**: `_normalize_link_status` down 버킷에 `starting`/`training` 추가(기존 disabled/inactive/offline 매핑과 일관). envelope shape / 기존 매핑 불변. DRIFT-017.
+- **검증 (✅ 확인층)**:
+  - ✅ pytest **771 pass / 1 skip / 2 fail**. 2 fail = `tests/e2e_browser` (내부망 Jenkins `10.100.64.152:8080` Playwright timeout — 환경 제약, 본 변경 무관).
+  - ✅ 신규 회귀 6건 (`test_redfish_pure_helpers.py` link_status up/down/transitional/unknown).
+  - ✅ fixture/baseline 에 Starting/Training 0건 grep 확인 → 기존 회귀 출력 불변.
+  - ✅ output_schema_drift(sections=10/fd=83 불변) / vendor_boundary / harness_consistency / project_map fingerprint PASS. py_compile PASS.
+  - ⚠️ ansible --syntax-check: Windows 환경 ansible 미설치 → SKIP (Python 모듈 변경, py_compile 로 대체 검증).
+- **governance**: `EXTERNAL_CONTRACTS.md`(DMTF 대조 스냅샷, TTL 90일) + `CONVENTION_DRIFT.md` DRIFT-017 + `TEST_HISTORY.md`. ADR 미작성(rule 본문/표면카운트/보호경로 변경 0 — rule 70 R8 trigger 비해당).
+- **범위 밖(별도 cycle)**: endpoint path 상수화 / enum 맵 중앙화 / ThermalSubsystem 구현 / 전체 번들 commit.
+- **branch**: `refactor/audit-cleanup-20260529`.
+
+---
+
 ## 일자: 2026-06-04 (HP CSUS 3200 사이트 사고: vendor=hp 오선택 + hardware null fix [A1/B1/B2 DONE, Bug C PENDING])
 
 - **요청 (사용자)**: 실 CSUS 3200 수집 시 `vendor=hp`(→`hpCsus` 여야), `data.hardware.vendor/model=null`, 그 외 null/0/empty 다수. "웹검색·멀티에이전트·모든 도구로 fix".

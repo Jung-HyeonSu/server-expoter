@@ -2,6 +2,42 @@
 
 > 외부 시스템 (Redfish / IPMI / SSH / WinRM / vSphere) 계약 카탈로그. rule 28 #11 측정 대상 (TTL 90일). rule 96 origin 주석 정본.
 
+## 일자: 2026-06-08 (cycle audit-cleanup — DMTF DSP8010 2026.1 공식 스키마 대조)
+
+> 사용자가 DMTF 공식 Redfish 스키마 번들 **DSP8010 2026.1** (release 2026-04-02, 최신) 다운로드.
+> 이를 정본 reference 로 `redfish_gather.py` 의 enum / 필드명 / path 를 전수 대조(audit-first).
+> 우리가 실제 참조하는 28 리소스 json-schema 만 `schema/redfish_dmtf_2026.1/` 에 subset vendoring
+> (전체 14k 파일 아님 — 런타임 import 안 함, 순수 reference). 출처: `schema/redfish_dmtf_2026.1/README.md`.
+
+### DMTF DSP8010 2026.1 대조 결과 — 10 항목 (9 MATCH + 1 GAP 보정)
+
+| # | 대상 (redfish_gather.py) | DMTF 정본 (vendored) | 결과 |
+|---|---|---|---|
+| 1 | `_VOLUMETYPE_RAID_MAP` (:1850) | `Volume.json` VolumeType(deprecated) + RAIDType enum | MATCH — 5값 매핑 정확, RawDevice 의도적 제외(raid_level=None) 정확, RAIDType 17값 raw passthrough |
+| 2 | `_normalize_link_status` (:1192) | `Port.v1_19_0` LinkStatus = [LinkUp,Starting,Training,LinkDown,NoLink] | **GAP→FIX** — 표준 전이상태 Starting/Training 미처리(raw 통과) → 기존 비작동 매핑과 일관되게 'down' 추가 |
+| 3 | `_classify_port_protocol` (:2206) | `NetworkDeviceFunction.v1_11_1` NetDevFuncType = [Disabled,Ethernet,FibreChannel,iSCSI,FibreChannelOverEthernet,InfiniBand] | MATCH — FC/FCoE/IB/Ethernet 분류 정확. iSCSI/Disabled 는 FC/IB 아니므로 미분류(None) 의도적 |
+| 4 | `_normalize_role_id` (:1121) | `Role.json` 표준 RoleId(Administrator/Operator/ReadOnly) + vendor 변형 | MATCH — 표준 3 + 9 vendor 변형 매핑, 미지값 raw 보존(Additive) |
+| 5 | Processor 필드 (:1646) | `Processor.v1_23_0` ProcessorType/Architecture/InstructionSet | MATCH — raw passthrough (정규화 없음). 신값(Partition/OEM/RISC-V) 자동 수용 |
+| 6 | Memory 필드 (:1700) | `Memory.v1_24_0` MemoryDeviceType/BaseModuleType/ErrorCorrection | MATCH — raw passthrough. DDR5/HBM3E 등 신값 자동 수용 |
+| 7 | Drive 필드 (:1824) | `Drive.v1_22_0` MediaType=[HDD,SSD,SMR]/Protocol | MATCH — raw passthrough. SMR 신값 자동 수용 |
+| 8 | Status.State 필터 (:1636,1689) | `Resource.json` State enum (Absent/Disabled 포함 13값) | MATCH — Absent/Disabled skip 가 표준 enum 과 일치 |
+| 9 | `_chassis_kind` ChassisType (:834) | `Chassis.v1_28_0` ChassisType (24값) | MATCH — multi-chassis kind 판정 목적의 부분집합 사용(의도적), 그 외 None |
+| 10 | Power/PowerSubsystem (:2557) | `Power.json`/`PowerSubsystem.json`/`EnvironmentMetrics.json` props | MATCH — PowerControl/PowerSupplies/Voltages/PowerWatts 필드명 정확 |
+
+> 범위 외: `_normalize_jedec`(:303)는 JEDEC JEP106 출처(DMTF 아님) — 대조 대상 아님.
+
+### 보정 (Additive only — rule 96 R1-B / rule 92 R2)
+
+- `_normalize_link_status`: down 버킷에 `'starting'`, `'training'` 추가 (DMTF Port.LinkStatus 표준 전이 상태).
+  envelope shape / 기존 매핑 변경 0. fixture/baseline 에 해당 값 0건 → 회귀 출력 불변(검증됨).
+  회귀 테스트 `tests/unit/test_redfish_pure_helpers.py` 6건 추가. → `CONVENTION_DRIFT.md` DRIFT 참조.
+
+### 갱신 trigger (TTL 90일)
+
+DMTF DSP8010 2026.2+ release / 사이트 펌웨어 schema 변경 관측 / 신규 vendor·세대 추가.
+
+---
+
 ## 일자: 2026-05-12 (cycle hpe-csus-rmc-multi-node — RMC 멀티-노드 토폴로지 web sources 보강)
 
 > 사용자 명시 (2026-05-12): "HPE Compute Scale-up Server(CSUS) 3200 ... RMC(Rack Management Controller)를 통해 수행된다 ... CSUS 지원하는 방식을 모두 의심해야해. 다만문제는 테스트해볼 장비가 없어서 web을 통해서 확인할 수 밖에 없다는거야."

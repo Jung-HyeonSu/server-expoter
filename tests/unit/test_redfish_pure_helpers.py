@@ -164,3 +164,36 @@ def test_normalize_jedec_unknown_hex_kept_raw(rfg):
 def test_normalize_jedec_sentinels_to_none(rfg):
     for v in (None, "", "Unknown", "Not Specified", "none"):
         assert rfg._normalize_jedec(v) is None
+
+
+# ── _normalize_link_status (DMTF Port.LinkStatus enum 정규화) ──────────────────
+# DMTF DSP8010 2026.1 대조 2026-06-08: Port.LinkStatus enum 정본 =
+#   ['LinkUp', 'Starting', 'Training', 'LinkDown', 'NoLink'] (Port.v1_19_0).
+# vendor 변형 + 표준 전이 상태를 up/down/unknown 3-값으로 정규화.
+
+def test_normalize_link_status_up_variants(rfg):
+    for v in ("LinkUp", "Up", "Connected", "Enabled", "Active"):
+        assert rfg._normalize_link_status(v) == "up"
+
+
+def test_normalize_link_status_down_variants(rfg):
+    for v in ("LinkDown", "Down", "NoLink", "Disconnected", "Disabled",
+              "Inactive", "Offline"):
+        assert rfg._normalize_link_status(v) == "down"
+
+
+def test_normalize_link_status_dmtf_transitional_to_down(rfg):
+    # DSP8010 2026.1 대조: 표준 전이 상태(Starting/Training)는 비작동 → 'down'.
+    # 기존 disabled/inactive/offline 매핑과 일관. (cycle 2026-06-08 audit gap fix)
+    assert rfg._normalize_link_status("Starting") == "down"
+    assert rfg._normalize_link_status("Training") == "down"
+
+
+def test_normalize_link_status_unknown(rfg):
+    for v in (None, "", "none", "unknown", "null"):
+        assert rfg._normalize_link_status(v) == "unknown"
+
+
+def test_normalize_link_status_unknown_vendor_value_preserved(rfg):
+    # 매트릭스에 없는 vendor-specific 값은 추적성 위해 raw(lowercase) 보존
+    assert rfg._normalize_link_status("WeirdState") == "weirdstate"
