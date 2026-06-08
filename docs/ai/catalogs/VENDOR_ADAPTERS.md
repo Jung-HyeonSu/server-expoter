@@ -115,7 +115,7 @@
 |---|---|---|---|
 | `redfish_generic.yml` | redfish_generic | 0 | 매치 안 되는 vendor — DMTF Redfish 표준 fallback |
 
-총 30 adapter (9 vendor + generic fallback).
+총 31 adapter (9 vendor + generic fallback).
 
 ## priority 일관성 검증 (rule 12 R2)
 

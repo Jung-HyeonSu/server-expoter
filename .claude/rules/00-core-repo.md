@@ -14,10 +14,10 @@
 - 멀티벤더 9종 (Dell / HPE / Lenovo / Supermicro / Cisco + Huawei / Inspur / Fujitsu / Quanta — 후 4종 lab 부재)
 - Adapter 42개 (Redfish 31 + OS 7 + ESXi 4) + adapters/registry.yml — cycle 2026-05-11 실측 (hpe-csus-add)
 - Schema 10 sections + Field Dictionary 39 Must + 38 Nice + 6 Skip = 83 entries (cycle-018 실측, 16 section prefixes — 2026-05-29 재실측)
-- tests/fixtures 353개 + 9 baseline JSON (redfish 5: cisco/dell/hpe/hpe_csus_3200/lenovo + esxi/ubuntu/windows + rhel810_raw_fallback) — 2026-05-29 재실측
+- tests/fixtures 380개 + 9 baseline JSON (redfish 5: cisco/dell/hpe/hpe_csus_3200/lenovo + esxi/ubuntu/windows + rhel810_raw_fallback) — 2026-06-08 재실측
 - Jenkins multi-pipeline 2종 (Jenkinsfile / _portal) — Bitbucket 미사용 (cycle-015에서 _grafana 제거)
 - 운영: 단일 main + feature/* 브랜치
-- 정본: REQUIREMENTS.md / GUIDE_FOR_AI.md / README.md / docs/01~19
+- 정본: REQUIREMENTS.md / GUIDE_FOR_AI.md / README.md / docs/01~23
 
 ## 목표 규칙
 
@@ -108,7 +108,7 @@ callback_plugins/json_only.py → JSON envelope
 - **권장 신중**: `.git/, vault/**, *.log, *.env, *.pem, *.key`
 - **권장 사용자 승인**: `ansible.cfg, Jenkinsfile*, schema/sections.yml, schema/field_dictionary.yml, schema/baseline_v1/**`
 - **벤더 경계**: `adapters/**, redfish-gather/library/**, redfish-gather/tasks/vendors/**, common/library/**, common/vars/vendor_aliases.yml`
-- **문서 기준선**: `CLAUDE.md, GUIDE_FOR_AI.md, REQUIREMENTS.md, README.md, docs/01~19, .claude/{rules,policy,skills,agents,ai-context,templates}/`
+- **문서 기준선**: `CLAUDE.md, GUIDE_FOR_AI.md, REQUIREMENTS.md, README.md, docs/01~23, .claude/{rules,policy,skills,agents,ai-context,templates}/`
 
 세부 정책 강제는 **삭제됨** (`ADR-2026-04-28-security-policy-removal.md` 참조).
 

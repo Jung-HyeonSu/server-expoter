@@ -46,7 +46,7 @@
     ▼
 [ Step 3 ] adapter_loader (Ansible lookup plugin) 실행
     │
-    ├─ adapters/redfish/*.yml 14개 파일 모두 읽기
+    ├─ adapters/redfish/*.yml 31개 파일 모두 읽기
     │
     ├─ 각 파일의 match 조건 평가 (vendor / firmware / model 패턴)
     │   - redfish_generic.yml      → 매칭 (모든 vendor 대상, 점수 낮음)
@@ -106,7 +106,7 @@ score = priority × 1000  +  specificity × 10  +  match_score  -  generic 감�
 
 ---
 
-## 3.5. Priority 정책표 — 28 redfish + 7 OS + 4 ESXi (cycle 2026-05-07 추가)
+## 3.5. Priority 정책표 — 31 redfish + 7 OS + 4 ESXi (cycle 2026-05-07 추가)
 
 새 adapter 의 priority 결정 시 다음 정책 따른다 (rule 50 R3):
 
@@ -125,16 +125,18 @@ score = priority × 1000  +  specificity × 10  +  match_score  -  generic 감�
 - 최신 (esxi_8x): `100`
 - 구형 (esxi_6x): `30`
 
-### 28 redfish adapter priority 매트릭스 (cycle 2026-05-06 기준)
+### 31 redfish adapter priority 매트릭스 (2026-06-08 기준)
 
 | priority | adapter |
 |---:|---|
 | `120` | dell_idrac10, hpe_ilo7, lenovo_xcc3 |
 | `110` | cisco_ucs_xseries, supermicro_x14 |
+| `102` | hpe_csus_3200 (lab 부재 — Compute Scale-up Server) |
 | `100` | cisco_cimc, dell_idrac9, hpe_ilo6, lenovo_xcc, supermicro_x11, supermicro_x13 |
 | `95` | hpe_superdome_flex (lab 부재) |
 | `90` | hpe_ilo5, supermicro_x12 |
-| `80` | fujitsu_irmc, huawei_ibmc, inspur_isbmc, quanta_qct_bmc (lab 부재 신 vendor) |
+| `80` | fujitsu_irmc, huawei_ibmc, inspur_isbmc, quanta_qct_bmc (lab 부재 신 vendor), supermicro_ars |
+| `75` | supermicro_x10 |
 | `50` | dell_idrac8, hpe_ilo4, lenovo_imm2, supermicro_x9 (구형) |
 | `10` | cisco_bmc, dell_idrac, hpe_ilo, lenovo_bmc, supermicro_bmc (vendor 기본) |
 | `0` | redfish_generic (`generic: true`) |

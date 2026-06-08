@@ -88,7 +88,7 @@ server-exporter/
 │
 ├── schema/                  표준 JSON 스키마
 │   ├── sections.yml         10 섹션 정의
-│   ├── field_dictionary.yml 65 필드 사전 (호출자 reference)
+│   ├── field_dictionary.yml 83 필드 사전 (호출자 reference)
 │   ├── fields/              채널별 필드 정의
 │   ├── examples/            success / partial / failed 예시
 │   └── baseline_v1/         실장비 회귀 기준선 JSON
@@ -98,7 +98,7 @@ server-exporter/
 │   ├── e2e/, e2e_browser/   백엔드·브라우저 E2E
 │   └── reference/           실장비 종합 자료
 │
-└── docs/                    설치 / 운영 / 개발 문서 (01~22)
+└── docs/                    설치 / 운영 / 개발 문서 (01~23)
 ```
 
 이렇게 나눈 이유:

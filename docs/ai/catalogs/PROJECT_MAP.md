@@ -12,8 +12,8 @@ server-exporter/
 ├── CLAUDE.md, README.md, GUIDE_FOR_AI.md, REQUIREMENTS.md  (정본)
 ├── ansible.cfg                                              (Ansible 설정)
 ├── Jenkinsfile, Jenkinsfile_portal                          (2종 4-Stage 파이프라인 — cycle-015 _grafana 제거)
-├── adapters/                # 39 vendor adapter YAML + registry.yml — cycle 2026-05-07 실측
-│   ├── redfish/             # 28 (generic + dell×4 + hpe×5 + lenovo×4 + supermicro×8 + cisco×3 + ucs_xseries×1
+├── adapters/                # 42 vendor adapter YAML + registry.yml — cycle 2026-05-07 실측
+│   ├── redfish/             # 31 (generic + dell×4 + hpe×5 + lenovo×4 + supermicro×8 + cisco×3 + ucs_xseries×1
 │   │                          + huawei×1 + inspur×1 + fujitsu×1 + quanta×1 + superdome_flex×1)
 │   ├── os/                  # 7 (linux_*/windows_*)
 │   └── esxi/                # 4 (generic + 6x/7x/8x)
@@ -38,7 +38,7 @@ server-exporter/
 │   └── examples/            # success/partial/failed
 ├── tests/
 │   ├── redfish-probe/       # probe_redfish.py + deep_probe_redfish.py
-│   ├── fixtures/            # 145+ 실장비 JSON (회귀 input)
+│   ├── fixtures/            # 380 실장비 JSON (회귀 input)
 │   ├── baseline_v1/         # 회귀 기준선
 │   ├── evidence/            # Round 검증 결과
 │   ├── scripts/             # conditional_review.py + os_esxi_verify.sh
@@ -55,7 +55,7 @@ server-exporter/
 │   ├── linux.yml, windows.yml, esxi.yml
 │   └── redfish/{vendor}.yml
 ├── docs/
-│   ├── 01_jenkins-setup ~ 19_decision-log    (19 운영 문서)
+│   ├── 01_jenkins-setup ~ 23_debugging-entrypoints    (23 운영 문서)
 │   ├── superpowers/specs/                    (설계서)
 │   ├── superpowers/plans/                    (실행 계획)
 │   └── ai/                                   (AI 협업 메타 — 본 디렉터리)
@@ -71,8 +71,8 @@ server-exporter/
     ├── settings.json                         (hooks 등록 — cycle-011에서 보안 deny 38건 제거)
     ├── settings.local.json                   (개인)
     ├── rules/         (28 .md)
-    ├── skills/        (48 SKILL.md, 폴더당 1)
-    ├── agents/        (59 .md)
+    ├── skills/        (51 SKILL.md, 폴더당 1)
+    ├── agents/        (60 .md)
     ├── policy/        (10 YAML)
     ├── role/          (6 README: gather/output-schema/infra/qa/po/tpm)
     ├── ai-context/    (18: common + gather/output-schema/infra/external + vendors×9)

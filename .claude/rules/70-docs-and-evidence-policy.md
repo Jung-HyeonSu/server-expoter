@@ -9,7 +9,7 @@
 - `docs/ai/**`
 - `.claude/**` (규칙/정책 문서)
 - `tests/evidence/**`
-- 정본 문서: `CLAUDE.md`, `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`, `README.md`, `docs/01~19`
+- 정본 문서: `CLAUDE.md`, `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`, `README.md`, `docs/01~23`
 
 ## 현재 관찰된 현실
 
@@ -67,7 +67,7 @@
 
 - **Default**: 정본은 실제 변경이 있을 때만 수정
   - `CLAUDE.md`, `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`, `README.md`
-  - `docs/01~19`
+  - `docs/01~23`
   - `.claude/{rules,policy,skills,agents,ai-context,templates}/`
 - **Allowed**: 사용자 명시 승인 후 정본 수정
 - **Forbidden**:

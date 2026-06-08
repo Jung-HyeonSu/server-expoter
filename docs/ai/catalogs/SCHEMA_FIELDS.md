@@ -24,15 +24,15 @@
 $ python3 -c "import yaml; from collections import Counter; \
     d=yaml.safe_load(open('schema/field_dictionary.yml')); \
     print(Counter(e.get('priority') for e in d['fields'].values()))"
-Counter({'must': 31, 'nice': 20, 'skip': 6})
+Counter({'must': 39, 'nice': 38, 'skip': 6})
 ```
 
 | 분류 | 카운트 | 의미 |
 |---|---|---|
-| Must | **31** | 모든 vendor baseline에 존재 필수 |
-| Nice | **20** | vendor-specific 허용 |
+| Must | **39** | 모든 vendor baseline에 존재 필수 |
+| Nice | **38** | vendor-specific 허용 |
 | Skip | **6** | 의도적 미수집 |
-| **합계** | **57 entries** | YAML key 기준 (validate_field_dictionary.py) |
+| **합계** | **83 entries** | YAML key 기준 (validate_field_dictionary.py) |
 
 **[INFO]** cycle-012에서 P3/P4/P5 신 필드 11개 Nice 추가:
 - **P3 group summary (4)**: cpu/memory/storage/network.summary
