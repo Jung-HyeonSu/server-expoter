@@ -60,6 +60,19 @@
 | C7 | `Oem.Hpe.PartitionInfo` / `FlexNodeInfo` / `GlobalConfiguration` schema 실측 | C1 | `redfish-gather/tasks/vendors/hpe/normalize_oem.yml` `default({})` 정정 |
 | C8 | RMC 활성화 / Subscription License / 펌웨어 요구 실측 | C1 + C4 | `docs/22_rmc-activation-guide.md` 4 절 정정 |
 
+#### HPE 에뮬레이터 mock-tier 커버리지 (2026-06-08 — 실장비 PENDING 과 별개)
+
+> **출처**: HPE 공식 iLO Redfish Emulator (BSD-3 v1.7.0) Docker 캡처. **에뮬레이터 != 실장비** (rule 21 R1 / 25 R7-B) — 아래는 위 [PENDING] 실장비 상태를 **변경하지 않음**. 오프라인 파싱 회귀 안전망 (`tests/integration/test_hpe_emulator_replay.py`) 용도. 정본: `tests/evidence/2026-06-08-hpe-emulator-harness.md`.
+
+| 세대 | mock-tier (에뮬레이터) | 실장비 (위 표) |
+|---|---|---|
+| iLO5 | [EMU] dl360 v3.11 / dl365_gen10plus v3.14 (HBA) / dl325_gen10plus_fc v2.46 (FC) | [PENDING] |
+| iLO6 (Gen11) | [EMU] dl380a v1.66 | [PARTIAL] (실장비 DL380 Gen11) |
+| Gen12 (iLO7) | [EMU] dl380a_gen12 1.13.01 | [DONE] (실장비) |
+| CSUS 3200 / Superdome Flex | [없음] — 에뮬레이터 mockup 부재 | [PENDING] (C1~C8) |
+
+> `[EMU]` = 에뮬레이터 캡처 fixture(`hpe_emulator_*`) + golden 회귀 보유. 실장비 캡처 시 본 행과 무관하게 위 generation 표를 [PENDING]→[DONE] 갱신.
+
 ### Lenovo (XCC3 외 — 3 generation lab 미도입 + 2 SKIP)
 
 | generation | fixture | baseline | lab cycle | vault |

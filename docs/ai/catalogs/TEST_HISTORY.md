@@ -2,6 +2,25 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-08 (HPE iLO 에뮬레이터 오프라인 회귀 하네스)
+
+### 신규 테스트 (+26 / +1 skip)
+- `tests/integration/test_hpe_emulator_replay.py` — 5 BMC type × 5 케이스 + 1 fixture-존재 + 1 live(skip):
+  - `test_golden_match` (핵심 게이트): 모듈 gather 산출이 `expected_output.json` golden 과 strict 일치.
+  - `test_vendor_is_hpe` / `test_collection_succeeded` / `test_processors_parsed` / `test_storage_parsed` (HBA/FC 경로).
+  - `test_live_emulator_smoke` — `@pytest.mark.live`, `SE_EMULATOR_LIVE=1` 시만 (기본 skip).
+- 캡처 fixture (emulator-derived): `tests/fixtures/redfish/hpe_emulator_{dl360,dl365_gen10plus,dl325_gen10plus_fc,dl380a,dl380a_gen12}/` (recording+golden+README).
+
+### 변경 (Additive only — 프로덕션 코드 변경 0)
+- `tests/integration/` 신설 (emulator_harness.py record/replay + capture_emulator.py + conftest.py 마커 등록).
+- HPE 공식 iLO Redfish Emulator (BSD-3 v1.7.0) Docker 로 캡처. **에뮬레이터 != 실장비** (rule 21 R1 / 25 R7-B) — baseline_v1 미접촉.
+
+### 회귀 결과
+- **오프라인 보장**: 에뮬레이터 컨테이너 중지 후 `pytest tests/integration/` → **26 PASS / 1 skip(live)**. 네트워크 호출 0.
+- 전체 `pytest tests/ --ignore=tests/e2e_browser` → **797 PASS / 1 skip** (10.3s). 기존 771 → +26.
+- py_compile 4 신규 파일 PASS. project_map fingerprint 갱신 (tests/integration 신설).
+- DL360_Gen12 제외 — 에뮬레이터 자체 버그 (`loader.py:740` WWN KeyError). 우리 코드 무관.
+
 ## 2026-06-08 (DMTF DSP8010 2026.1 공식 스키마 대조 audit — DRIFT-017)
 
 ### 신규 테스트 (+6)

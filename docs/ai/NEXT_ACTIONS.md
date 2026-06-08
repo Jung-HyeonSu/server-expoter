@@ -77,6 +77,7 @@
 - **handoff 후보 A**: `docs/ai/handoff/2026-05-11-next-cycles.md` "후보 A — HPE CSUS 3200 lab 검증"
 - **ADR**: `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md`, `ADR-2026-05-29-hba-ib-csus.md`
 - **cycle 2026-05-29 (hba-ib-csus)**: baseline 을 전 공통 섹션 realistic mock 으로 채움 (FC HBA + RAID1 SATA + DDR5 + 3 partition canonical). 여전히 **mock** — C1 사이트 fixture 캡처 후 실 baseline 으로 교체 의무 ("검증됨" 주장 금지 — rule 25 R7-B).
+- **2026-06-08 에뮬레이터 범위 명시**: HPE 공식 iLO 에뮬레이터는 **CSUS/Superdome mockup 부재** → 본 항목(CSUS/Superdome)은 에뮬레이터로 못 메움. 실장비/사이트 fixture 가 유일 경로. (에뮬레이터는 iLO5/iLO6/Gen12 ProLiant 만 — `tests/integration/test_hpe_emulator_replay.py` 오프라인 회귀로 별도 커버.)
 
 ### 2.4 HBA / InfiniBand 사이트 fixture (lab 부재 — cycle 2026-05-29)
 

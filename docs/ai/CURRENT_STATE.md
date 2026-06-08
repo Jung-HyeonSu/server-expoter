@@ -1,5 +1,25 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-08 (HPE iLO 에뮬레이터 오프라인 회귀 하네스 도입 [DONE])
+
+- **요청 (사용자)**: HPE 공식 iLO Redfish 에뮬레이터를 "웹 소스 MOCK 보다 한 단계 위인 고품질 테스트 타깃"으로 도입해 프로젝트를 더 견고하게. 환경=이 PC 의 Docker.
+- **무엇**: HPE 공식 iLO Redfish Interface Emulator (BSD-3, v1.7.0) 를 Docker 로 띄워 `redfish_gather.py` gather 흐름을 1 회 구동 → 모든 GET (path→응답) record + 모듈 산출 golden snapshot. 이후 **에뮬레이터 없이 오프라인**으로 record 재생해 파싱/정규화 엔진 결정적 회귀 검증.
+- **정직한 경계 (rule 21 R1 / rule 25 R7-B)**: 에뮬레이터 != 실장비. 산출물은 `schema/baseline_v1/` 실측 baseline 으로 **승격 안 함** — 전부 `tests/fixtures/redfish/hpe_emulator_*` "emulator-derived" 라벨. CSUS/Superdome mockup 부재라 그 갭은 못 메움 (LAB_PENDING 유지).
+- **캡처 (5 BMC type — 모두 vendor=hpe / success / 9 섹션)**: dl360(iLO5 v3.11) / dl365_gen10plus(iLO5 v3.14 HBA) / dl325_gen10plus_fc(iLO5 v2.46 FC HBA) / dl380a(iLO6 v1.66) / dl380a_gen12(Gen12 1.13.01). → 미검증이던 **iLO5/Gen12 + HBA/FC 파싱 경로** 견고화.
+  - DL360_Gen12 제외 — 에뮬레이터 자체 버그 (`loader.py:740` WWN KeyError startup crash). 우리 코드 무관.
+- **산출물 (Additive only — 프로덕션 코드 변경 0)**: `tests/integration/` (emulator_harness.py / capture_emulator.py / test_hpe_emulator_replay.py / conftest.py) + `tests/fixtures/redfish/hpe_emulator_*/` (recording+golden+README) + `tests/evidence/2026-06-08-hpe-emulator-harness.md`.
+- **검증 (✅ 확인층)**:
+  - ✅ 에뮬레이터 기동: `curl -k https://127.0.0.1/redfish/v1/` → Vendor HPE, Oem.Hpe.
+  - ✅ **오프라인 보장**: 컨테이너 중지 후 `pytest tests/integration/` → **26 pass / 1 skip(live)**. 네트워크 0.
+  - ✅ **무회귀**: `pytest tests/ --ignore=tests/e2e_browser` → **797 pass / 1 skip** (10.3s, 기존 771 +26).
+  - ✅ py_compile 4 파일 PASS / project_map fingerprint 갱신 (tests/integration 신설).
+- **회귀 메커니즘**: 파싱 변경 시 `test_golden_match` 가 필드 diff 노출. 의도된 변경 시 `capture_emulator.py` 로 golden 재생성.
+- **후속 (실장비 — PENDING 유지)**: 에뮬레이터는 실장비 대체 못함. iLO5/iLO6/Gen12 실장비 캡처+baseline 은 LAB_PENDING_MATRIX 계속 PENDING.
+- **(선택) Phase 2 미착수**: 다중 인스턴스 병렬 CI 매트릭스용 `port` Additive 파라미터 — 순차 캡처로 충분해 보류 (운영 코드 변경 → 별도 사용자 승인 시).
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-08 (DMTF DSP8010 2026.1 공식 스키마 대조 audit + subset vendoring [DONE])
 
 - **요청 (사용자)**: DMTF 공식 Redfish 스키마 번들 DSP8010 2026.1(최신) 다운로드 → 사용 가능한지 확인 + 우리 프로젝트와 대조하며 리팩토링. 범위=검증 우선(audit-first), 번들=쓰는 스키마만 subset commit (사용자 결정).
