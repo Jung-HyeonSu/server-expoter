@@ -2,6 +2,24 @@
 
 > 외부 시스템 (Redfish / IPMI / SSH / WinRM / vSphere) 계약 카탈로그. rule 28 #11 측정 대상 (TTL 90일). rule 96 origin 주석 정본.
 
+## 일자: 2026-06-08 (DMTF Published Mockups — DSP2043 오프라인 회귀 reference)
+
+> DMTF 공식 Redfish **Mockup Bundle (DSP2043, BSD-3-Clause)** — `@odata.id` 경로별 index.json 트리.
+> DSP8010(스키마, 위 항목)과 별개로 **표준 준수 GET 응답 예시**. `redfish_gather.py` 의 표준(OEM 미사용)
+> 추출 경로를 오프라인 회귀로 보호하는 fixture 출처. **dmtf.org 직접 다운로드는 차단(403)** — GitHub
+> 미러 `DMTF/Redfish-Mockup-Server`(public-rackmount1 번들) 사용.
+
+| mockup | DMTF dev hub | 우리 fixture | exercise 하는 코드 경로 |
+|---|---|---|---|
+| `public-rackmount1` | https://redfish.dmtf.org/redfish/mockups/v1/1819 | `tests/fixtures/redfish/dmtf_rackmount1/` | vendor=unknown 표준 경로 / OEM 미추출 / legacy Power / **SimpleStorage fallback** / absent NetworkAdapters→unsupported(graceful) |
+| `public-bladed` | .../1820 | (미편입 — 번들 차단 + 본 하네스 multi_node 미활성) | (NEXT_ACTIONS 후보) |
+| `public-rackmount1+localstorage` | .../1821 | (미편입 — 번들 차단) | modern Storage/Drives/Volumes(현 fixture 미커버) — NEXT_ACTIONS 후보 |
+
+- 출처/라이선스: DSP2043 (v2021.4 기준) — BSD-3-Clause. mirror: https://github.com/DMTF/Redfish-Mockup-Server
+- 변환: `tests/integration/convert_dmtf_mockup.py` (index.json 트리 → recording.json). 재생: `tests/integration/test_dmtf_mockup_replay.py`.
+- 경계 (rule 21 R1 / rule 25 R7-B): mockup != 실장비. baseline 승격 금지 — fixture only("DMTF-mockup-derived").
+- DMTF 미수집 리소스(Thermal/ThermalSubsystem/Cables/CXL/Fabrics/Telemetry — 1828/1835/1839/1840)는 신규 섹션 = schema 버전 변경(rule 13 R3) → NEXT_ACTIONS Tier B 후보.
+
 ## 일자: 2026-06-08 (cycle audit-cleanup — DMTF DSP8010 2026.1 공식 스키마 대조)
 
 > 사용자가 DMTF 공식 Redfish 스키마 번들 **DSP8010 2026.1** (release 2026-04-02, 최신) 다운로드.

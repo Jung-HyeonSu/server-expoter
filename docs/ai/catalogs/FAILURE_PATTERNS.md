@@ -20,6 +20,28 @@
 
 ---
 
+## 2026-06-08 — replay 하네스 _REPLAY_MISS 가 absent endpoint 를 failed 로 오분류 (fidelity)
+
+- 카테고리: test-harness-fidelity
+- 발견 위치: `tests/integration/emulator_harness.py:_REPLAY_MISS` (DMTF mockup fixture 편입 중 rule 95 R3 비판적 리뷰)
+- 증상: DMTF `public-rackmount1`(Chassis 에 NetworkAdapters 없음) 재생 시 `network_adapters` 가 `failed` 로 분류 + error_count 증가. 실 BMC 라면 `unsupported`(capability 미지원).
+- 원인: replayer 의 `_REPLAY_MISS = (404, {}, "replay-miss: path not in recording")` — err 문자열에 'HTTP 404' 토큰이 없어 `redfish_gather._is_404_only_error` 가 404 로 인식 못함. 실 `_get` 은 404 시 err="HTTP 404: Not Found" 를 줘 unsupported 로 분류됨. 즉 replay 가 실 BMC 의 404 를 충실히 모사하지 못한 인공물.
+- 영향: recording 에 없는(=실 BMC 의 404) 모든 path. HPE fixture 는 make_recorder 가 모든 fetch(404 포함)를 기록해 _REPLAY_MISS 미도달 → 무영향. lean(404 미기록) DMTF fixture 만 표면화.
+- 수정: `_REPLAY_MISS` → `(404, {}, "HTTP 404: Not Found (replay-miss: ...)")` 로 실 404 모사. test `test_absent_resource_graceful` 가 absent endpoint 의 unsupported 분류를 회귀 고정.
+- 재발 방지: 신규 회귀 테스트 + 본 entry. (엔진 redfish_gather.py 무변경 — 순수 harness fidelity)
+- 관련 rule: rule 95 R3, rule 40
+
+## 2026-06-08 — storage: SimpleStorage fallback 성공인데 failed 로 분류 (기존 엔진 동작 관찰)
+
+- 카테고리: external-contract-observation (engine status 분류 — 후속 검토 후보)
+- 발견 위치: `redfish-gather/library/redfish_gather.py` gather_storage(:2069) + `_make_section_runner`(:2796) (DMTF rackmount1 재생 — modern Storage 부재 → SimpleStorage fallback)
+- 증상: modern `/Storage` 404 → `/SimpleStorage` 200 파싱 성공(data.storage 정상: 1 controller / 4 drive). 그러나 엔진이 `_err('storage','Storage 미지원, SimpleStorage fallback 사용')` notice 를 남겨 storage 를 `failed` 로 분류 + status=partial.
+- 원인: `_make_section_runner` 가 "errs 非空(404-only 아님) → collected+failed". fallback notice 는 404-only 가 아니므로 데이터가 있어도 failed.
+- 영향: SimpleStorage fallback(legacy BMC / 표준 mockup) + HPE iLO4 SmartStorage fallback(:2077) — **동일·일관·기존 동작**. 파싱 버그 아님.
+- 수정: **하지 않음**(본 cycle 범위 외). fallback 성공 시 failed→degraded/collected 재분류는 status 의미론 변경(rule 13 R8, 4-시나리오 매트릭스 + docs/19/20 + fixture 동반) + 호출자 계약 영향이라 사용자 승인 + 별도 cycle 필요. golden 은 현 동작을 충실 캡처(회귀 baseline), test 는 분류와 무관히 **파싱 정확성** 만 positive assert(현 동작 freeze 아님).
+- 재발 방지: NEXT_ACTIONS 후속 후보 등재 + test docstring 명시.
+- 관련 rule: rule 95 R3, rule 13 R8, rule 92 R2
+
 ## 2026-05-07 — netmask CIDR Jinja2 loop-scoping 사고 (4번째 동일 패턴)
 
 - 카테고리: jinja2-loop-scoping (반복 패턴 — cycle-015 + cycle-016 + M-D2 다음 4번째)

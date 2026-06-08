@@ -64,8 +64,8 @@ def replay_case(request):
     recording = _load(case_dir / "recording.json")
     golden = _load(case_dir / "expected_output.json")
 
-    get_impl, noauth_impl = H.make_replayer(recording)
-    result = H.run_gather(get_impl, noauth_impl)
+    get_impl, noauth_impl, realm_impl = H.make_replayer(recording)
+    result = H.run_gather(get_impl, noauth_impl, realm_impl=realm_impl)
     return result, golden, case_dir
 
 

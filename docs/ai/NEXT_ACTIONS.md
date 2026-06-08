@@ -47,6 +47,21 @@
 
 ---
 
+## 0.7 DMTF 표준 mockup 오프라인 회귀 후속 (2026-06-08 — rackmount1 편입 후)
+
+> 2026-06-08 DMTF `public-rackmount1`(DSP2043, BSD-3)을 표준 경로 오프라인 fixture 로 편입 완료(`tests/fixtures/redfish/dmtf_rackmount1/`). 아래는 그 후속 후보.
+
+| # | 항목 | 분류 | trigger / 차단 | 결정 주체 |
+|---|---|---|---|---|
+| D1 | 2nd mockup **local-storage(1821)** 편입 — modern Storage/Drives/Volumes 표준 순수 데이터 회귀(현 fixture 는 SimpleStorage 만 커버) | `[FIXTURE]` | **DSP2043 번들 다운로드 차단**(dmtf.org 403 / Wayback 503/404). 사용자 망/수동 zip 또는 번들 미러 확보 시 `convert_dmtf_mockup.py` 로 즉시 편입 | 사용자(번들 확보) |
+| D2 | 2nd mockup **bladed(1820)** 편입 | `[FIXTURE]` | 동일 번들 차단 + **본 라이브러리 하네스에서 multi_node 미활성**(manager_layout=None → `_collect_multi_node_topology`=None). 가치 재평가 필요 — 편입해도 first-member 단일 수집(rackmount 대비 한계 marginal) | 사용자 |
+| D3 | **storage fallback 분류 재검토** — SimpleStorage/SmartStorage fallback 성공 시 storage 를 `failed` 대신 degraded/collected 로 분류 (FAILURE_PATTERNS 2026-06-08) | `[CONTRACT]` | status 의미론 변경(rule 13 R8 — 4-시나리오 매트릭스 + docs/19/20 + 영향 vendor fixture 동반) + 호출자 계약 영향. HPE iLO4 SmartStorage 포함 전 fallback 영향 | **사용자** — rule 13 R8 승인 필요 |
+| D4 | **신규 섹션** Thermal/ThermalSubsystem(1828) / Cables(1835) / CXL(1839) / CDU(1840) — DMTF 미수집 리소스 | `[SCHEMA]` | schema 버전 변경(rule 13 R3) + 실장비 baseline + 사용자 명시 승인. mockup URL = web sources(rule 96 R1-A) | **사용자** — rule 13 R3 |
+
+> D1/D2 진입 절차: DSP2043 zip 확보 → `public-<name>/` 추출 → `python tests/integration/convert_dmtf_mockup.py --mockup-dir <경로> --name dmtf_<name> ...` → golden 비판적 리뷰(rule 95 R3) → pytest.
+
+---
+
 ## 1. AI 환경에서 즉시 가능 — F6 OS baseline expansion (사용자 access 제공 완료)
 
 | 항목 | 상태 | 진입 |

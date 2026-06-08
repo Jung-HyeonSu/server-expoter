@@ -50,22 +50,37 @@ import redfish_gather as rg  # noqa: E402
 _REAL_GET = rg._get
 _REAL_GET_NOAUTH = rg._get_noauth
 
-# replay 시 기록에 없는 path 응답 (graceful — 코드의 404 처리 경로 그대로 탐).
-_REPLAY_MISS = (404, {}, "replay-miss: path not in recording")
+# replay 시 기록에 없는 path 응답 = 실 BMC 의 404 와 동일 형태로 반환.
+# err 문자열에 'HTTP 404' 포함이 중요: redfish_gather._get 은 실 404 시 err=
+# "HTTP 404: Not Found" 를 주고, _is_404_only_error 가 그 시그널로 absent endpoint 를
+# 'unsupported'(capability 미지원, 노이즈 아님)로 분류한다. 'replay-miss' 만 남기면
+# 같은 absent endpoint 가 'failed' 로 오분류되는 replay 인공물이 생긴다(실 BMC 와 불일치).
+# 'replay-miss' 표식은 디버깅용으로 괄호 안에 보존.
+_REPLAY_MISS = (404, {}, "HTTP 404: Not Found (replay-miss: path not in recording)")
 
 
-def run_gather(get_impl, noauth_impl, ip="127.0.0.1",
+def run_gather(get_impl, noauth_impl, realm_impl=None, ip="127.0.0.1",
                user="root", pw="root_password", timeout=30, verify_ssl=False):
     """main() gather mode 흐름을 1:1 미러링해 모듈 산출 snapshot 을 반환.
 
     get_impl / noauth_impl: rg._get / rg._get_noauth 를 대체할 transport.
         (record 시 passthrough+기록, replay 시 lookup)
+    realm_impl: rg._probe_realm_hint 를 대체할 transport (선택, 기본 None).
+        vendor=unknown fixture(예: DMTF 표준 mockup, Manufacturer 가 alias 미매치)는
+        detect_vendor 의 G6 realm probe(_probe_realm_hint)에 도달한다. 이 함수는
+        seam(_get/_get_noauth)을 우회해 urlreq.urlopen 을 직접 호출하므로, replay 시
+        None 으로 두면 conftest hermetic 가드가 실 네트워크 시도를 차단(RuntimeError)
+        한다. realm 도 seam 으로 주입해 오프라인 불변식을 유지한다. None 이면 실 함수
+        유지 → live(capture/smoke) 동작 불변 (기존 호출자 backward-compat).
 
     Returns: dict — main() exit_json 의 gather 산출 필드 부분집합.
         list 필드는 정렬해 결정적(deterministic) 비교 가능.
     """
     saved_get, saved_noauth = rg._get, rg._get_noauth
+    saved_realm = rg._probe_realm_hint
     rg._get, rg._get_noauth = get_impl, noauth_impl
+    if realm_impl is not None:
+        rg._probe_realm_hint = realm_impl
     try:
         vendor, system_uri, manager_uri, chassis_uri, det_errors, service_root = \
             rg.detect_vendor(ip, user, pw, timeout, verify_ssl)
@@ -118,6 +133,7 @@ def run_gather(get_impl, noauth_impl, ip="127.0.0.1",
         }
     finally:
         rg._get, rg._get_noauth = saved_get, saved_noauth
+        rg._probe_realm_hint = saved_realm
 
 
 def make_recorder():
@@ -149,7 +165,11 @@ def make_replayer(recording):
     달라지는 stateful sequence(ETag 조건부 / mutable 중간 상태)는 미지원 —
     redfish_gather 수집 범위(read-only inventory)에서는 불필요.
 
-    Returns: (get_impl, noauth_impl)
+    Returns: (get_impl, noauth_impl, realm_impl)
+        realm_impl: _probe_realm_hint 대체. recording 의 'realm::' 키가 있으면 그 값을,
+        없으면 None 반환. 정적 mockup/HPE 캡처에는 realm 키가 없으므로(401 헤더는
+        seam 으로 안 잡힘) None — vendor 가 ServiceRoot/Manufacturer 로 식별되거나
+        unknown 으로 남는다. seam 우회 urlopen 을 막아 오프라인 불변식 유지.
     """
     def get_impl(bmc_ip, path, username, password, timeout, verify_ssl):
         rec = recording.get(f"get::{path}")
@@ -163,7 +183,10 @@ def make_replayer(recording):
             return _REPLAY_MISS
         return rec[0], rec[1], rec[2]
 
-    return get_impl, noauth_impl
+    def realm_impl(bmc_ip, timeout, verify_ssl):
+        return recording.get("realm::") or None
+
+    return get_impl, noauth_impl, realm_impl
 
 
 # golden 비교에서 strict equality 대상.

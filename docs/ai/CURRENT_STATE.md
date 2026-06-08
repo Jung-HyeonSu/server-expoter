@@ -1,5 +1,23 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-08 (DMTF 표준 mockup 오프라인 회귀 fixture 편입 [DONE])
+
+- **요청 (사용자, ultracode)**: DMTF Redfish 공개 mockup 카탈로그(redfish.dmtf.org/redfish/mockups/v1, "Simple Rack-mounted Server" 등)가 프로젝트에 도움 되는지 판단 + 도움 되면 반영.
+- **판단**: 도움 됨 (구체적 갭). `redfish_gather.py` 의 **표준(vendor-agnostic, OEM 미사용) 추출 경로** 는 오프라인 회귀 0건이었다 — hpe_emulator_* 5종은 전부 vendor=hpe(Oem.Hpe), baseline redfish 5종도 벤더 특화. 순수 표준 서버(OEM 無)는 한 번도 오프라인 검증 안 됨.
+- **무엇 (Tier A — 사용자 승인 / Additive only, schema·envelope 변경 0)**:
+  - `tests/integration/convert_dmtf_mockup.py` (신규): DMTF mockup index.json 트리 → recording.json 변환 (`_p(@odata.id)` 키 = 엔진 요청 path 와 동일, lean 기록).
+  - `tests/fixtures/redfish/dmtf_rackmount1/` (신규): DSP2043 `public-rackmount1` (mockup 1819, **BSD-3**). vendor=unknown / status=partial / 7 섹션 collected. recording 31 path + golden + README.
+  - `tests/integration/test_dmtf_mockup_replay.py` (신규): 표준 경로 전용 회귀 클래스(8 test). vendor 중립(golden 기반) + no-OEM 검증 + SimpleStorage fallback 파싱 + graceful degradation.
+  - 하네스 일반화(Additive): `emulator_harness.run_gather` realm seam(`realm_impl`) — vendor=unknown fixture 가 G6 `_probe_realm_hint`(seam 우회 urlopen)에 도달해도 오프라인 유지. `make_replayer` 3-tuple 반환.
+- **발견·수정 (rule 95 R3 비판적 리뷰)**:
+  - **harness fidelity 버그 수정**: replayer 의 `_REPLAY_MISS` err 가 'replay-miss'(404 토큰 無)라 absent endpoint 가 `_is_404_only_error` 미매치 → **failed 오분류**(실 BMC 는 "HTTP 404: Not Found" → unsupported). `_REPLAY_MISS` 를 실 404 모사로 수정 → network_adapters 가 올바르게 unsupported. **HPE 5 golden 무영향(전수 PASS 실측)**.
+  - **storage failed-with-data (기존 엔진 동작, 미변경)**: modern Storage 404 → SimpleStorage fallback 성공 시 엔진이 'fallback 사용' notice(`_err`)를 남겨 storage 를 failed 로 분류(데이터는 정상). HPE iLO4 SmartStorage 와 동일한 기존 패턴 → 파싱 버그 아님. status 의미론 변경(rule 13 R8)이라 별도 cycle 후보(NEXT_ACTIONS/FAILURE_PATTERNS 등재).
+- **검증 (✅ 확인층)**: ✅ `pytest tests/integration/ -m "not live"` **52 pass / 3 skip**(DMTF 8 + HPE 무회귀). ✅ 전체 `pytest tests/` **823 pass / 5 skip / 2 fail**(2 fail = e2e_browser 라이브 Jenkins 10.100.64.152 미도달 — 본 변경 무관, Stage 4 게이트 아님). ✅ 표준 경로 vendor=unknown + OEM 미추출 실측.
+- **보류 (사용자 결정)**: bladed(1820)/local-storage(1821) 2nd mockup — DSP2043 번들 다운로드 차단(dmtf.org 403 / Wayback 503). 또한 bladed 는 본 하네스에서 multi_node 미활성(manager_layout=None) → 가치 재평가. → NEXT_ACTIONS 등재.
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-08 (에뮬레이터 하네스 Jenkins CI 편입 [DONE — agent 검증 대기])
 
 - **요청 (사용자)**: 견고화 후속 — 에뮬레이터 하네스를 CI 에 편입(승인). "안전망을 실제로 작동시키는 마지막 퍼즐".

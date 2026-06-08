@@ -2,6 +2,28 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-08 (DMTF 표준 mockup 오프라인 회귀 fixture)
+
+DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` 표준(OEM 미사용) 추출 경로의 오프라인 회귀 fixture 로 편입. Additive only(프로덕션 코드 0, schema·envelope 변경 0).
+
+### 신규/변경 테스트
+- `tests/integration/test_dmtf_mockup_replay.py` (신규, +8): `TestDmtfMockupReplay` 7 메서드(golden_match / vendor_matches_golden / standard_path_no_oem / core_sections_collected / system_identity_parsed / simplestorage_fallback_parsed / absent_resource_graceful) + 1 모듈 함수. HPE 클래스와 분리(generic 데이터에 HPE-shaped assertion 미적용).
+- `tests/integration/convert_dmtf_mockup.py` (신규): mockup index.json 트리 → recording.json 변환기(`_p(@odata.id)` 키).
+- `tests/integration/emulator_harness.py` (변경, Additive): `run_gather(realm_impl=None)` realm seam + `make_replayer` 3-tuple. `_REPLAY_MISS` → 실 BMC 404 모사(fidelity 수정).
+- `tests/integration/test_hpe_emulator_replay.py` (변경): make_replayer 3-tuple unpack 2줄(assertion 무변경).
+
+### 회귀 결과
+- `pytest tests/integration/ -m "not live"` → **52 passed / 3 skipped**(DMTF 8 신규 + HPE 44 무회귀 + 가드 self-test). 0.48s.
+- `pytest tests/` → **823 passed / 5 skipped / 2 failed**. 2 fail = `tests/e2e_browser/test_jenkins_master.py`(Playwright 라이브 Jenkins `10.100.64.152:8080` Timeout — 환경 의존, 본 변경 무관, Stage 4 offline 게이트 비포함).
+- **HPE 5 golden byte-identical 유지** — `_REPLAY_MISS`/`make_replayer` 변경이 HPE 무영향 실측.
+
+### 핵심 발견 (rule 95 R3)
+- replayer `_REPLAY_MISS` err='replay-miss'(404 토큰 無) → absent endpoint 가 `_is_404_only_error` 미매치로 **failed 오분류**(실 BMC 404 는 unsupported). → `_REPLAY_MISS`=실 404 모사로 수정. (harness fidelity, 엔진 무변경)
+- storage: SimpleStorage fallback 성공 시 'fallback 사용' notice 로 failed 분류(데이터 정상) — 기존 엔진 동작(HPE iLO4 SmartStorage 동일), 미변경. NEXT_ACTIONS 등재.
+
+### stale 수치 정정 (rule 28/70 R2)
+- CLAUDE.md / rule 00-core-repo: fixtures 395→398(+DMTF 3), test_*.py 49→50파일/462→470함수. PROJECT_MAP fingerprint 갱신.
+
 ## 2026-06-08 (에뮬레이터 하네스 Jenkins CI 편입)
 
 - `Jenkinsfile` Stage 4: `pytest tests/e2e/` + `pytest tests/integration/ -m "not live"` 별도 호출 + RC 합산 (둘 중 FAIL 시 stage 실패).
