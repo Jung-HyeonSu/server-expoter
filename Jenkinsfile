@@ -161,9 +161,13 @@ pipeline {
                             def vaultPassFile = "${env.WORKSPACE}/.vault_pass_tmp"
                             try {
                                 // sh printf 로 password 파일 작성 — writeFile 의 자동 newline 추가 회피.
+                                // inventory.sh 실행권한 보장 — agent 체크아웃이 exec bit 미보존 시
+                                // ansible script 인벤토리 플러그인이 "Unable to parse as inventory source" 로 거부됨.
+                                // (git mode 100755 이나 일부 체크아웃 환경에서 644 로 풀림 — 2026-06-04 진단)
                                 sh """
                                     printf '%s' "\${VAULT_PASSWORD}" > "${vaultPassFile}"
                                     chmod 600 "${vaultPassFile}"
+                                    chmod +x "${inventory}"
                                 """
                                 ansiblePlaybook(
                                     playbook    : playbook,
