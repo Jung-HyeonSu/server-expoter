@@ -2,6 +2,26 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-08 (CS-3 CSUS per-partition normalize grouping drift 가드)
+
+AUDIT CS-3 — `_summarize_partition_disks`/`_normalize_{storage,cpu,memory,network}_raw`(~210줄 평행 경로)의 grouping 로직에 drift 가드 부재를 보강. additive only(프로덕션 코드 0).
+
+### 신규 테스트
+- `tests/unit/test_partition_normalize_grouping.py` (신규, 17 함수 → **29 케이스**): 기존 `test_hpe_csus_multi_node.py` 의 **동질 happy-path** 가 못 잡던 grouping 키 판별을 **이질 입력**으로 고정.
+  - storage 키(cap|media|protocol|model) 각 필드 판별(parametrize) + zero-skip + dedup-collapse(name+model+serial) + 이질 multi-group.
+  - memory 키(cap|type|speed|mfr|part) 각 필드 판별 + zero-skip.
+  - cpu: 다중 model 그룹 + processor_type 필터(CPU/CORE/'' 포함, GPU/FPGA/Accelerator 제외).
+  - network: gateway 중복 제거(다중 NIC) + 0.0.0.0/빈 주소 필터.
+
+### 회귀 결과
+- `pytest tests/unit/test_partition_normalize_grouping.py` → **29 passed**.
+- `pytest tests/unit/` → **485 passed**(기존 무회귀). py_compile PASS.
+- 의미: 누군가 grouping 키에서 한 필드(예: storage protocol)를 빼면 이질 케이스가 즉시 실패 — 기존 동질 테스트는 통과하던 drift 를 차단.
+
+### 정정
+- `docs/ai/AUDIT-2026-05-29.md` CS-3 → [PARTIAL] (Python 측 drift 가드 완료, ansible↔python full parity 는 Jenkins Agent 후속).
+- CLAUDE.md test_*.py 50→51파일 / 470→487함수.
+
 ## 2026-06-08 (AUDIT-2026-05-29 backlog 재확인 — stale 정정)
 
 DMTF 작업 후속으로 audit backlog 의 "Python-only 저위험" 항목 실 상태 재확인(rule 28 — 추정 아닌 실측). 2종 모두 **이후 cycle 에서 이미 완료**됨이 확인되어 backlog table 정정.

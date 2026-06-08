@@ -1,5 +1,16 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-08 (CS-3 per-partition normalize grouping drift 가드 [DONE])
+
+- **요청 (사용자)**: DMTF 작업 후 "다음 작업 이어나가라" → 자율 진행(승인). audit backlog 중 환경 내 가능 + 고가치 항목 선택.
+- **선택 근거**: 자율 후보 검토 중 AR-2(JEDEC drift)·R-4(상수화)는 이미 완료됨 실측(backlog stale 정정함). CS-3 는 미완 — `_summarize_partition_disks`/`_normalize_{storage,cpu,memory,network}_raw`(~210줄 Python 평행 경로)에 "drift 가드 테스트 없음"이 실재.
+- **무엇 (Additive only, 프로덕션 코드 0)**: `tests/unit/test_partition_normalize_grouping.py`(17 함수/29 케이스) — 기존 동질 happy-path 가 못 잡던 **grouping 키 판별**(이질 입력)을 고정. storage/memory 키 각 필드 parametrize + zero-skip + dedup-collapse + cpu type 필터 + network gateway dedup/0.0.0.0 필터.
+- **검증 (✅)**: ✅ 신규 29 pass / `pytest tests/unit/` 485 pass(무회귀) / py_compile PASS. 의미 — grouping 키 1 필드 누락 시 이질 케이스 즉시 실패.
+- **한계 (⚠️ 미해결)**: ansible↔python **full parity**(같은 raw fixture 두 경로 통과 비교)는 `ansible-playbook` CLI 부재로 미수행 — Jenkins Agent 후속(AUDIT CS-3 [PARTIAL]). Python 경로 drift 의 절반만 차단.
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-08 (DMTF 표준 mockup 오프라인 회귀 fixture 편입 [DONE])
 
 - **요청 (사용자, ultracode)**: DMTF Redfish 공개 mockup 카탈로그(redfish.dmtf.org/redfish/mockups/v1, "Simple Rack-mounted Server" 등)가 프로젝트에 도움 되는지 판단 + 도움 되면 반영.
