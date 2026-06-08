@@ -90,14 +90,11 @@
 - **ESXi esxcli-over-SSH fallback (D1-B 재평가)**: SSH 활성 운영·보안 결정 시 `esxcli storage san fc list` / `rdma device list` 보강
 - **절차**: `capture-site-fixture` skill + rule 13 R4 (실측 baseline) + EXTERNAL-CONTRACTS 갱신
 
-### 2.5 에뮬레이터 하네스 CI 편입 (사용자 승인 필요 — Jenkinsfile 보호 경로)
+### 2.5 에뮬레이터 하네스 CI 편입 [DONE 2026-06-08 — agent 검증만 대기]
 
-- **무엇**: `tests/integration/` (HPE 에뮬레이터 오프라인 회귀 44 pass)를 Jenkins Stage 4(E2E Regression)에 편입. 제안: `Jenkinsfile:217` `pytest tests/e2e/` → `pytest tests/e2e/ tests/integration/ -m "not live"` (+ `[ -d tests/integration ]` 가드).
-- **왜**: 현재 이 하네스는 CI 에서 실행되지 않아(2026-06-08 멀티에이전트 검토 확인) redfish_gather.py 파싱 자동 회귀 보호가 실현 안 됨 — 거짓 안전감.
-- **영향**: 에뮬레이터 불필요(fixture 커밋됨, 완전 오프라인). 빌드 시간 +0.4s. 단 **Jenkinsfile 은 보호 경로(rule 80, CLAUDE.md 절대금지 #2) → 자율 편집 금지**.
-- **선행 확인**: CI agent `/opt/ansible-env` venv 가 redfish_gather(stdlib + ansible stub) import 가능한지 1회 스모크.
-- **동반 갱신**: docs/17 / rule 80 R1-A Stage 4 표 / JENKINS_PIPELINES.md.
-- **결정 필요**: 사용자 승인 시 진행.
+- **상태**: 사용자 승인(2026-06-08) 후 구현 완료. Jenkins Stage 4(E2E Regression)가 e2e 회귀 + `tests/integration/ -m "not live"`(HPE 에뮬레이터 오프라인 회귀)를 별도 invocation 으로 실행, 둘 중 하나라도 FAIL 시 stage 실패. 동반 갱신(docs/17 / rule 80 R1-A / JENKINS_PIPELINES) 완료.
+- **구현 노트**: tests/e2e 와 tests/integration 이 둘 다 top-level `conftest` module 을 써서 단일 멀티-디렉터리 호출 시 ImportError → **별도 pytest 호출 + RC 합산**으로 해결 (Jenkinsfile L217-231). integration conftest 의 전역 `sys.path.insert` 도 제거(e2e conftest shadow 방지).
+- **잔여 (⚠️ AI 환경 밖)**: 실제 Jenkins agent 에서 1회 green 확인 — `/opt/ansible-env` venv 가 redfish_gather(stdlib + ansible stub) import 가능한지. 로컬에선 동일 셸 로직 시뮬레이션 PASS(e2e 157 + integration 44, FINAL_RC=0) 확인했으나 **실 agent 실행은 미확인**. 첫 빌드 모니터링 필요.
 
 ### 2.3 8 vendor × generation 후속 매트릭스
 

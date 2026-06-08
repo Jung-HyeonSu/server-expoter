@@ -1,16 +1,16 @@
 """tests/integration 공용 pytest 설정.
 
-- emulator_harness 가 import 되도록 본 디렉터리를 sys.path 에 보장.
 - integration / live 마커 등록 (PytestUnknownMarkWarning 제거).
 - hermetic 가드: 비-live 테스트 중 실 네트워크 호출을 차단해 "오프라인 / 네트워크
   호출 0" 불변식을 convention → enforced assertion 으로 격상.
+
+주의: 본 디렉터리를 sys.path 에 직접 insert 하지 않는다. pytest 의 기본 prepend
+import mode 가 test 모듈 수집 시 본 디렉터리(tests/integration, __init__.py 없음)를
+sys.path 에 자동 추가하므로 `import emulator_harness` 는 그대로 해결된다. 전역
+sys.path.insert 는 tests/e2e/conftest.py(같은 module 이름 'conftest')를 shadow 해
+멀티-디렉터리 수집(`pytest tests/e2e tests/integration`) 시 e2e ImportError 를 유발한다.
 """
-import sys
-from pathlib import Path
-
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
 def pytest_configure(config):

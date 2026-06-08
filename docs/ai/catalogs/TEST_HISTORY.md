@@ -2,6 +2,13 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-08 (에뮬레이터 하네스 Jenkins CI 편입)
+
+- `Jenkinsfile` Stage 4: `pytest tests/e2e/` + `pytest tests/integration/ -m "not live"` 별도 호출 + RC 합산 (둘 중 FAIL 시 stage 실패).
+- **발견·수정**: 단일 `pytest tests/e2e/ tests/integration/` → ImportError(공통 `conftest` module shadow). 별도 호출 + integration conftest 전역 `sys.path.insert` 제거로 해결.
+- 검증: Stage 4 셸 로직 로컬 시뮬레이션 e2e 157 + integration 44, **FINAL_RC=0**. `pytest tests/ --ignore=e2e_browser` 815 pass(무회귀). ⚠️ 실 Jenkins agent 실행은 미확인(NEXT_ACTIONS §2.5).
+- 동반 갱신: docs/17 / rule 80 R1-A / JENKINS_PIPELINES.
+
 ## 2026-06-08 (에뮬레이터 하네스 견고화 — 멀티에이전트 재검토 후)
 
 37-에이전트 5차원 적대적 재검증 후 확정 갭 보강 (전부 tests/ + 문서, 프로덕션 코드 0).

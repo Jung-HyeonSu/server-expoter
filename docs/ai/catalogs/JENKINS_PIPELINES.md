@@ -21,7 +21,7 @@
 | 1. Validate | 입력 형식 (target_type / loc / inventory_json) | — |
 | 2. Gather | ansible-playbook 실행 (해당 채널) | — |
 | 3. Validate Schema | field_dictionary 정합 | — |
-| 4. (pipeline별) | — | Jenkinsfile: pytest baseline 회귀 |
+| 4. (pipeline별) | — | Jenkinsfile: pytest baseline 회귀(tests/e2e) + HPE 에뮬레이터 오프라인 회귀(tests/integration -m "not live", 2026-06-08) — 별도 호출 |
 | | — | Jenkinsfile_portal: 호출자 callback (Callback) |
 
 ## agent-master 망 분리 (이전 commit 8bd80c1 / 8b2f128 참조)

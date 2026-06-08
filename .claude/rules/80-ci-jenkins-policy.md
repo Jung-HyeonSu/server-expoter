@@ -31,7 +31,7 @@
 
 | Pipeline | Stage 4 | 책임 |
 |---|---|---|
-| `Jenkinsfile` | E2E Regression | pytest baseline 회귀 (영향 vendor) |
+| `Jenkinsfile` | E2E Regression | pytest baseline 회귀 (영향 vendor) + HPE 에뮬레이터 오프라인 회귀 하네스 (`tests/integration/ -m "not live"`, 2026-06-08 추가 — 별도 invocation) |
 | `Jenkinsfile_portal` | Callback | 호출자 통보 (master 실행, rule 31 무결성) |
 
 > **cycle-015**: `Jenkinsfile_grafana` 제거됨 (사용자 명시 결정).

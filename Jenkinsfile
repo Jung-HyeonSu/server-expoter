@@ -214,7 +214,21 @@ pipeline {
                         exit 1
                     fi
                     . /opt/ansible-env/bin/activate
+                    # E2E baseline 회귀 (필수)
                     python3 -m pytest tests/e2e/ -v --tb=short
+                    RC_E2E=$?
+                    # HPE 에뮬레이터 오프라인 회귀 하네스 (별도 invocation).
+                    #   - 에뮬레이터 불필요 (fixture 커밋됨, 완전 오프라인). live 스모크는
+                    #     -m "not live" 로 제외 (SE_EMULATOR_LIVE 미설정 시 어차피 self-skip).
+                    #   - tests/e2e 와 tests/integration 둘 다 top-level 'conftest' module 을
+                    #     써서 멀티-디렉터리 단일 pytest 호출 시 ImportError → 별도 호출 필수.
+                    RC_INT=0
+                    if [ -d tests/integration ]; then
+                        python3 -m pytest tests/integration/ -m "not live" -v --tb=short
+                        RC_INT=$?
+                    fi
+                    # 둘 다 실행 후(전체 진단 확보) 하나라도 실패하면 stage 실패.
+                    [ $RC_E2E -eq 0 ] && [ $RC_INT -eq 0 ]
                 '''
             }
         }

@@ -1,5 +1,18 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-08 (에뮬레이터 하네스 Jenkins CI 편입 [DONE — agent 검증 대기])
+
+- **요청 (사용자)**: 견고화 후속 — 에뮬레이터 하네스를 CI 에 편입(승인). "안전망을 실제로 작동시키는 마지막 퍼즐".
+- **무엇**: Jenkins `Jenkinsfile` Stage 4(E2E Regression)가 e2e baseline 회귀 + `tests/integration/ -m "not live"`(HPE 에뮬레이터 오프라인 회귀)를 **별도 invocation** 으로 실행, RC 합산으로 하나라도 FAIL 시 stage 실패. 동반 갱신: docs/17 / rule 80 R1-A / JENKINS_PIPELINES.
+- **발견·수정 (로컬 검증 중)**: 단일 `pytest tests/e2e/ tests/integration/` 는 **ImportError** — 두 디렉터리가 같은 top-level `conftest` module 을 쓰고 e2e 가 `from conftest import` 하기 때문(integration conftest 가 shadow). → (1) Jenkinsfile 을 **별도 호출 + RC 합산**으로, (2) integration conftest 의 전역 `sys.path.insert` 제거(불필요 + shadow 유발)로 해결. (rule 24 R1 로컬 실측이 막은 사고 — 검증자 "빌드 안 깸" 판정이 놓친 멀티타깃 상호작용.)
+- **검증 (✅ 확인층 / ⚠️ 미확인층)**:
+  - ✅ Jenkinsfile Stage 4 셸 로직 로컬 시뮬레이션 (venv activate 제외): e2e 157 pass + integration 44 pass/3 skip/1 deselected, **FINAL_RC=0**. 실패 시 stage 실패 semantics 확인(RC 합산).
+  - ✅ `pytest tests/integration/` 44 pass / `pytest tests/ --ignore=e2e_browser` 815 pass (conftest 변경 후 무회귀). py_compile PASS.
+  - ⚠️ **실 Jenkins agent 실행 미확인** — `/opt/ansible-env` venv import + 첫 빌드 green 은 agent 에서만 확인 가능 (NEXT_ACTIONS §2.5 잔여).
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-08 (에뮬레이터 하네스 멀티에이전트 재검증 + 견고화 [DONE])
 
 - **요청 (사용자, ultracode)**: 직전 에뮬레이터 하네스 작업 전체를 재검증·재검토 — 잘못한 것 없는지 + 프로젝트를 더 견고하게.
