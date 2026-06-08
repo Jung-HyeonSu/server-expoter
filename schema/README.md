@@ -10,8 +10,9 @@
 | `field_dictionary.yml` | 83 entries (39 Must + 38 Nice + 6 Skip) — 16 section prefixes | rule 13 R1 / R5 |
 | `fields/` | 섹션별 필드 상세 (선택 — sections.yml 보조) | rule 13 R1 |
 | `baseline_v1/` | vendor 별 회귀 기준선 JSON (9 baseline) | rule 13 R4 / rule 21 |
-| `examples/` | success/partial/failed/not_supported 케이스 예시 JSON | docs/09 |
+| `examples/` | success/partial/failed/not_supported 케이스 예시 JSON (4) | docs/09 |
 | `output_examples/` | 실 장비 개더링 한글 주석본 (11 entries — cycle 2026-05-07) | docs/09 |
+| `redfish_dmtf_2026.1/` | DMTF DSP8010 2026.1 subset (28 리소스 json-schema 대조 reference) | rule 96 |
 
 ## 갱신 의무 (rule 13 R1 — 3종 동반)
 

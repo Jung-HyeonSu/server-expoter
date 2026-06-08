@@ -20,7 +20,7 @@
   "collection_method": "redfish_api",                   // 수집 방식 — agent / vsphere_api / redfish_api (stdlib HTTP)
   "ip": "10.50.11.999",                                 // 대상 BMC IP (mock — site 실측 시 정정)
   "hostname": "csus-3200-mock",                         // RMC ServiceRoot / Manager.HostName 반환값 (mock)
-  "vendor": "hpe",                                      // 정규화 (HPE / Hewlett Packard Enterprise → hpe)
+  "vendor": "hpCsus",                                   // 출력 표시값 — 내부 canonical 'hpe' → CSUS 3200 adapter → hpCsus (2026-06-04)
   "status": "success",                                  // 전체 수집 결과 — success / partial / failed
   "sections": {                                         // 섹션별 수집 상태 — success / failed / not_supported
     "system": "not_supported",                          // OS 정보. Redfish 채널은 not_supported

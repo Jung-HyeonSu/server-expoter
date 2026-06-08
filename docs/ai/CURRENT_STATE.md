@@ -1,5 +1,118 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-08 (DMTF DSP8010 2026.1 공식 스키마 대조 audit + subset vendoring [DONE])
+
+- **요청 (사용자)**: DMTF 공식 Redfish 스키마 번들 DSP8010 2026.1(최신) 다운로드 → 사용 가능한지 확인 + 우리 프로젝트와 대조하며 리팩토링. 범위=검증 우선(audit-first), 번들=쓰는 스키마만 subset commit (사용자 결정).
+- **Phase 1 — subset vendoring**: `schema/redfish_dmtf_2026.1/` 신설. 우리가 실제 참조하는 28 리소스의 무버전 + 최신버전 json-schema 56개 + `dmtf_info.json` + `README.md`. 전체 14k 파일 아님 / 런타임 import 안 함(순수 reference). 출처·갱신 trigger README 명시.
+- **Phase 2 — enum/필드/path 전수 대조 (10 항목)**: **9 MATCH + 1 GAP**. 상세표 `EXTERNAL_CONTRACTS.md`.
+  - MATCH 핵심: VolumeType→RAID 맵(RawDevice 의도적 제외 정확), Processor/Memory/Drive raw passthrough(신 enum 자동 수용), State Absent/Disabled 필터, Power/PowerSubsystem/EnvironmentMetrics 필드명, NetDevFuncType FC/IB 분류.
+  - **GAP (#2)**: `_normalize_link_status` 가 DMTF Port.LinkStatus 표준 전이 상태 `Starting`/`Training` 미처리(raw 통과).
+- **Phase 3 — 보정 (Additive only)**: `_normalize_link_status` down 버킷에 `starting`/`training` 추가(기존 disabled/inactive/offline 매핑과 일관). envelope shape / 기존 매핑 불변. DRIFT-017.
+- **검증 (✅ 확인층)**:
+  - ✅ pytest **771 pass / 1 skip / 2 fail**. 2 fail = `tests/e2e_browser` (내부망 Jenkins `10.100.64.152:8080` Playwright timeout — 환경 제약, 본 변경 무관).
+  - ✅ 신규 회귀 6건 (`test_redfish_pure_helpers.py` link_status up/down/transitional/unknown).
+  - ✅ fixture/baseline 에 Starting/Training 0건 grep 확인 → 기존 회귀 출력 불변.
+  - ✅ output_schema_drift(sections=10/fd=83 불변) / vendor_boundary / harness_consistency / project_map fingerprint PASS. py_compile PASS.
+  - ⚠️ ansible --syntax-check: Windows 환경 ansible 미설치 → SKIP (Python 모듈 변경, py_compile 로 대체 검증).
+- **governance**: `EXTERNAL_CONTRACTS.md`(DMTF 대조 스냅샷, TTL 90일) + `CONVENTION_DRIFT.md` DRIFT-017 + `TEST_HISTORY.md`. ADR 미작성(rule 본문/표면카운트/보호경로 변경 0 — rule 70 R8 trigger 비해당).
+- **범위 밖(별도 cycle)**: endpoint path 상수화 / enum 맵 중앙화 / ThermalSubsystem 구현 / 전체 번들 commit.
+- **branch**: `refactor/audit-cleanup-20260529`.
+
+---
+
+## 일자: 2026-06-04 (HP CSUS 3200 사이트 사고: vendor=hp 오선택 + hardware null fix [A1/B1/B2 DONE, Bug C PENDING])
+
+- **요청 (사용자)**: 실 CSUS 3200 수집 시 `vendor=hp`(→`hpCsus` 여야), `data.hardware.vendor/model=null`, 그 외 null/0/empty 다수. "웹검색·멀티에이전트·모든 도구로 fix".
+- **진단 (8-agent 워크플로 — web 3 + code 2 + synth + adversarial)**: 근본 원인 2 단.
+  - **B2 (핵심)**: `hpe_ilo6` 은 `model_patterns` 부재 firmware-only catch-all → 절대 실격 안 됨. 점수 공식상 priority 지배 → 구 CSUS(96)/Superdome(95) 가 모델 매치해도 iLO6(100) 에 패배 → `_out_vendor`=`vendor_output_display[hpe]`=`hp`. (실 adapter 시뮬레이션 확정)
+  - **A1**: `gather_system` 이 `System.Manufacturer/Model` 폴백 없음. CSUS Partition0 는 비고 Chassis 에만 존재.
+- **Fix (Additive only — rule 92 R2)**:
+  - **A1**: `gather_system` Chassis 폴백 (result None 일 때만 + `_strip_or_none`). hardware.vendor/model 채움.
+  - **B1**: `_BMC_PRODUCT_HINTS` 복합 키 `'compute scale-up server'`/`'csus 3200'`→`hpe` (단독 키 충돌 회피).
+  - **B2 (사용자 승인 2026-06-04)**: `hpe_csus_3200` 96→**102**, `hpe_superdome_flex` 95→**101** (iLO6 catch-all 위). firmware 무관 `hpCsus` 보장.
+- **검증 (✅ 확인층 / ❌ 미확인층)**:
+  - ✅ pytest **762 pass** (e2e_browser 2 = 내부망 Jenkins 환경 제약 제외) / vendor-boundary PASS / harness-consistency PASS.
+  - ✅ 실 adapter_common + 실 adapter YAML 시뮬레이션: model=CSUS/fw="" → `hpCsus`(post-B2). 무회귀(Gen11→iLO6/hp, Gen12→iLO7/hp, Dell→idrac9/dell, empty→iLO7 불변).
+  - ✅ 실 `gather_system`(monkeypatch _get): System null → Chassis 폴백 채움 / 정상 Dell 무회귀 / 빈문자열→None.
+  - ❌ **실 CSUS 장비 end-to-end**: 장비·raw JSON 부재 → 이 환경 확인 불가. 사용자 사이트 재실행 필요.
+- **신규 회귀**: `tests/unit/test_csus_adapter_priority.py` 13 (A1/B1/B2 lock-in).
+- **web hunt (사용자 "raw JSON 찾아봐")**: HPE `sdflexutils` 실 캡처 JSON 확보·AI 직접 fetch 검증 (root.json/system.json). → partition System 은 Manufacturer/Model 부재 + Processors/Memory/Storage/EthernetInterfaces drill-in **부재**, ProcessorSummary/MemorySummary 만 존재 = **Bug A/C 근본 원인 확정**.
+- **Bug C 재해석**: 대부분 **이미 처리됨** — sockets/cores/threads/memory-total 은 기존 BUG-13/14 summary fallback 커버. 유일 누락 `cpu.model` → **fallback 추가** (normalize_standard.yml L483, jinja2 검증). B2 가 multi_node 수집 활성(구 ilo6 오선택 시 null). **잔여**: memory.slots/storage/network top-level 상세는 drill-in 부재라 실 envelope 필요 (NEXT_ACTIONS §0.5).
+- **CSUS-3200 전용 web hunt (사용자 "그 모델 raw JSON 정말 없나")**: verbatim 장비 JSON 덤프는 공개 웹에 **없음**(rare 2023+ 머신). 단 CSUS-3200 *전용* CODE/DOC 확보 — `check_redfish` #168 소스(`system_chassis.py`: model←ServiceRoot.Product fallback / `proc.py`: /Processors drill-in 전제) + OpsRamp SUS3200(Processor/Memory/Drives 개별 리소스). → **신형 CSUS 펌웨어는 drill-in 노출 가능성** (전신과 다름). ADR §9.
+- **A1b (web-evidenced)**: `gather_system` product_hint=ServiceRoot.Product → System.Model 부재 시 우선 fallback (check_redfish 동일). 사용자 CSUS 는 깨끗한 `hardware.model="Compute Scale-up Server 3200"` (Chassis "Base" 접미사 회피). pytest 766.
+- **governance**: `docs/ai/decisions/ADR-2026-06-04-csus-adapter-priority.md` (§8 web findings 포함). `vendor-boundary-map.yaml` csus_3200 sub_line 보강.
+- **branch**: `refactor/audit-cleanup-20260529`.
+
+---
+
+## 일자: 2026-06-04 (vendor 출력 표시값 hpe→hp / CSUS 3200→hpCsus [DONE])
+
+- **요청 (사용자)**: 결과 출력 JSON envelope 의 `vendor` 값을 HPE 계열 `hp`, HPE CSUS 3200 `hpCsus` 로 변경.
+- **방식**: **Design A — 출력 라벨만 변경** (내부 canonical `hpe` 유지 → adapter 선택 / vault 경로 / OEM 추출 / account 복구 분기 / `Oem.Hpe` namespace 전부 무손상). 출력만 data-driven 표시 맵으로 치환.
+- **표시 맵 정본**: `common/vars/vendor_aliases.yml` 신규 `vendor_output_display: {hpe: hp}` + `adapter_output_display: {redfish_hpe_csus_3200: hpCsus, redfish_hpe_superdome_flex: hpCsus}` (rule 12 R1 Allowed 위치 — vendor 하드코딩 회피).
+- **hpCsus 범위 (2026-06-04 amendment)**: HPE Compute Scale-up Servers 패밀리 = **CSUS 3200 + Superdome Flex** (둘 다 RMC 관리 scale-up). HPE 공식 분류 web 검증 (hpe.com superdome 페이지 제목 = "Compute Scale-up Servers" / support.hpe.com sd00001798en_us). 초기 "CSUS 3200 한정" → 사용자 조건부 지시로 확대. (ADR §6 / rule 96 R1-A)
+- **적용 3 채널**: redfish(`site.yml` `_out_vendor` 성공/rescue/always 3 경로, hpCsus=adapter_id set 매칭) / esxi(`site.yml` `_out_vendor`) / os(`site.yml` Linux+Windows emit literal `hpe→hp`, 기존 nosec inline).
+- **schema**: `field_dictionary.yml` vendor enum `hpe`→`hp` + `hpCsus` + help (camelCase 예외 명시). **`schema_version` 정수 `"1"` 유지** (envelope 13필드 shape 불변 — enum 값만 변경. `"2"` bump 필요 시 사용자 결정).
+- **baseline/example**: `hpe_baseline.json`→`hp` / `hpe_csus_3200_baseline.json`→`hpCsus` / 2 jsonc 예시 갱신.
+- **테스트**: `tests/regression/test_vendor_output_display.py` 신규 (D1~D6, TDD RED→GREEN) + `CANONICAL_VENDORS` 에 hp/hpCsus.
+- **검증**: pytest **748 pass / 1 skip** (e2e_browser 2 fail = 내부망 Playwright 환경 제약, 무관) / vendor-boundary PASS / harness-consistency PASS / validate_field_dictionary PASS / output_schema_drift PASS / Jinja 표시식 단위 검증 7+4 케이스 PASS.
+- **governance**: `docs/ai/decisions/ADR-2026-06-04-vendor-output-display.md` 신규 + `docs/19` 2026-06-04 entry (2026-05-12 "CSUS sub-vendor 거절" refine — canonical 차원 유효).
+- **호환성 주의 (rule 96 R1-B)**: envelope `vendor` 는 외부 계약. `hpe` 필터링 다운스트림은 `hp`/`hpCsus` 로 갱신 필요.
+- **branch**: `refactor/audit-cleanup-20260529`.
+
+---
+
+## 일자: 2026-06-04 (R-4 상수화 + JEDEC drift 가드 + repo-hygiene + stale 정정 [DONE])
+
+- **환경 정정**: ansible **라이브러리 2.19.9 설치** (`import ansible` OK) → Python 모듈/필터/플러그인 **pytest 로컬 검증 가능** (705 pass). 단 `ansible-playbook` **CLI 는 PATH 부재**(rc=127) — playbook syntax/런타임은 Jenkins Agent 위임. (직전까지 docs 가 "ansible 미설치" 로 stale — NEXT_ACTIONS §0 정정)
+- **A (R-4)**: `redfish_gather.py` 매직넘버 → 명명 상수 4개 (`BYTES_PER_GB_DECIMAL`=10^9 / `BYTES_PER_MIB`=2^20 / `MIB_PER_GIB`=2^10 / `MBPS_PER_GBPS`=10^3) + `_VOLUMETYPE_RAID_MAP` module-level hoist. 9 사이트 동작보존. **GB(decimal)/GiB(binary) 분리 명시** (혼동 함정 방지). 인증/HTTP-status 경로 의도적 미변경 ("특히 인증" — R-3 [CONTRACT] 와 결합되어 별도).
+- **B (AR-2)**: `tests/unit/test_jedec_drift_guard.py` 신규 5 — 두 JEDEC 테이블(`jedec_mapper.JEDEC_MAP` ↔ `redfish_gather._JEDEC_VENDORS`) 정규화 후 공유키 값 동일 + 내부 self-consistency + B⊆A 방향성 (4) + `VENDOR_NAME_NORMALIZATION` 두 채널 mirror 가드 (1 — AR-2 두 번째 중복 테이블 완결). cross-channel memory.manufacturer drift 차단.
+- **C**: stale "ansible 미설치" 정정 — 살아있는 근거(NEXT_ACTIONS §0)만 수정, 날짜 박힌 기록물(ADR/AUDIT/과거 cycle 로그)은 append-only 보존 (rule 70).
+- **D**: repo-hygiene 스캔 (읽기전용, 미적용) → NEXT_ACTIONS §6 (verify_all_tickets.py dead 0-ref / esxi normalize_sections.yml 쉼 / HTTP 유틸 3중).
+- **회귀**: pytest **742 pass / 1 skip** (e2e_browser 2 fail = 내부망 `10.100.64.152` Playwright — 환경 제약, A/B 무관). A 영향 영역 집중 112 pass. 적대적 검증 3 스켑틱 모두 `behavior_preserved`.
+- **안전 커버리지 보강** (결정·lab 불요, pytest 완결): `test_redfish_pure_helpers.py` 신규 21 (`_safe`/`_safe_int`/`_normalize_jedec` 등 rule 96 robustness) + `test_adapter_scoring.py` 신규 16 (adapter_score 공식 우세관계 + disqualify, rule 12 R2 / 50 R3). 둘 다 현재 동작 일치·버그 0.
+- **stat 리프레시**: redfish_gather.py 3812→3830줄 / test_*.py 42·375→46·421 정정 (live 참조 + CLAUDE.md). fixtures 353 json·adapter 42·31·9 vendor 정확 유지.
+- **branch**: `refactor/audit-cleanup-20260529`. commit ABCD `6cf40e3b` / stat `43099d96` / vendor-name `02a014a9`.
+
+---
+
+## 일자: 2026-06-04 (PROJECT_MAP fingerprint 결정론화 [DONE])
+
+- **증상**: 작업 트리 clean인데도 session_start hook이 PROJECT_MAP drift 상시 경고 (redfish-gather/filter_plugins/module_utils/tests). git log에 `PROJECT_MAP drift 갱신` 커밋 반복 churn.
+- **진단**: 실제 구조 변경 0건. 원인 = `check_project_map_drift.py`가 디스크 `st_size`+`rglob` 기반 → ① Windows autocrlf 줄바꿈 크기 차이 ② untracked `__pycache__/*.pyc`·local 파일 포함. (상세 `docs/ai/catalogs/FAILURE_PATTERNS.md` 2026-06-04)
+- **수정**: `fingerprint_dir`을 `git ls-files -s`의 **경로 집합** 해싱으로 변경 (CRLF/pyc/untracked + **내용 편집** 면역 — 파일 추가·삭제·이름변경 등 구조 변경만). baseline 재측정. git 불가 시 disk 경로 fallback. harness 정합성 PASS. (초기안 blob OID → 내용편집마다 drift → 경로집합 정밀화로 content-only churn 제거.)
+- **branch**: `refactor/audit-cleanup-20260529` (전 cycle 연속).
+
+---
+
+## 일자: 2026-05-29 (cycle audit-cleanup — 전수 audit + 안전 정리 [DONE])
+
+### 컨텍스트
+- 사용자 명시: dead code/중복/리팩토링/성능/예외/아키텍처/기술부채 전수 점검 + "개더링 안 되는데 스키마에 잡아넣은 것" + 쓰레기 문서 삭제 + CSUS 3200 출력 재검토. "운영 깨지면 안됨, 특히 인증". branch `refactor/audit-cleanup-20260529`.
+- 8-auditor 병렬 전수조사 + web 검증 (BMC lockout / Superdome RMC 모델).
+
+### 적용 (검증됨 — pytest 699→703 PASS / harness·vendor-boundary PASS)
+- **stale 26곳 정정**: redfish_gather.py 3430→**3812**, field_dict 74·65→**83**(39 Must/38 Nice/6 Skip), pytest 148→**699**, adapter 41·30→**42·31**, README 28→**31**, test 41·365→**42·375**.
+- **dead code 제거**: `pre_edit_guard.py`(broken+unwired), `collect.yml`/`normalize_sections.yml`(deprecated shim), `build_errors_from_diagnosis` 필터, `adapter_common` 미사용 `import os`. (`registry.yml` 은 test 소비 — 보존.)
+- **redfish dedup**: `_ne`/`_ne_p` 중복 stripping 3→1 (`_strip_or_none` 위임).
+- **redfish perf (CQ-02)**: SSL context `verify_ssl` 별 캐시 (`_CTX_CACHE`) — host당 30~150 재생성 제거 (동작 동일).
+- **EX-01 오탐 확인**: `gather_cpu.yml` `\| float` raise 주장 → WSL ansible 실측 `'abc'\|float`=0.0 (raise 안 함) → 변경 불필요 (empirical 반증).
+- **docs 정리**: 완료-cycle 덤프 164 삭제 + 26 archive(harness 006-015/handoff/ticket summary) + dangling ref 26 수정.
+- **CSUS 정직성**: mock baseline registry 라벨 `_MOCK` + "정식 지원"→"lab 부재 미검증" + self-consistency 가드 테스트 4 신설 (`tests/regression/test_csus_mock_consistency.py`).
+- **신규 문서**: `docs/ai/AUDIT-2026-05-29.md`(권고 backlog), `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md`(보안 — 문서화만), `ADR-2026-05-29-audit-cleanup.md`.
+
+### 스키마 "bloat" 판정 (사용자 핵심 질문)
+- 대부분 **fake gathering 아님** — (a) stale baseline (코드는 채우는데 baseline 이 코드보다 오래됨) 또는 (b) lab 에 FC HBA/InfiniBand 하드웨어 부재. envelope 은 frozen 계약(ADR-2026-05-11). 유일한 "mock-only" 노출 = CSUS `multi_node` 9 필드 (gated null, 타 벤더 무영향).
+- 필드 삭제 0 (계약 안전). 권고 = stale baseline 재캡처 (lab).
+
+### 미적용 (사용자 결정 / lab / ansible 미설치) → `docs/ai/AUDIT-2026-05-29.md` + NEXT_ACTIONS §0
+- 보안 회전(사용자), AUTH lockout/dryrun(lab), esxi vendor 정규화 버그·perf·refactor(ansible 검증 필요).
+
+### 관련
+- ADR: `docs/ai/decisions/ADR-2026-05-29-audit-cleanup.md`
+
+---
+
 ## 일자: 2026-05-29 (cycle hba-ib-csus — CSUS 3200 전 공통 섹션 + HBA/InfiniBand 전 채널 [DONE])
 
 ### 컨텍스트
@@ -1312,7 +1425,7 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 ### 보고서
 - `docs/ai/harness/cycle-017.md` (cycle 보고서)
 - `docs/ai/decisions/ADR-2026-05-01-harness-reinforcement.md` (governance)
-- `docs/ai/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md` (G절 적용 결과)
+- `docs/ai/archive/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md` (G절 적용 결과)
 
 ### 후속 (다음 세션)
 - harness-evolution-coordinator 6단계 정기 cycle 진입
@@ -1987,7 +2100,7 @@ pytest tests/                         : PASS — 95/95
 
 ## 다음 작업 (cycle-007 후보)
 
-> `docs/ai/NEXT_ACTIONS.md` 참조. 2026-04-28 full-sweep 보고서: `docs/ai/harness/full-sweep-2026-04-28.md`
+> `docs/ai/NEXT_ACTIONS.md` 참조. 2026-04-28 full-sweep 보고서: `docs/ai/archive/harness/full-sweep-2026-04-28.md`
 
 ### 사용자 결정 / 외부 의존
 - T2-D2: `schema/baseline_v1/cisco_baseline.json` `data.users: null` → `[]` (rule 13 R4 — 실측 evidence 필요)
@@ -2008,7 +2121,7 @@ pytest tests/                         : PASS — 95/95
 - `CLAUDE.md` (Tier 0 정본, 보강됨)
 - `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`, `README.md`
 - `docs/01_jenkins-setup` ~ `docs/19_decision-log`
-- 직전 cycle: `docs/ai/harness/cycle-004.md`
+- 직전 cycle: `docs/ai/archive/harness/cycle-004.md`
 - vendor 경계 분석: `docs/ai/impact/2026-04-27-vendor-boundary-57.md`
 - DRIFT 카탈로그: `docs/ai/catalogs/CONVENTION_DRIFT.md`
 - plan: `C:/Users/hshwa/.claude/plans/rosy-wishing-crescent.md`

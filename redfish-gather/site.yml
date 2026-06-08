@@ -154,7 +154,13 @@
             _out_target_type:       "redfish"
             _out_collection_method: "redfish_api"
             _out_ip:                "{{ _rf_ip }}"
-            _out_vendor:            "{{ _rf_vendor | default(none) }}"
+            # cycle 2026-06-04 (사용자 결정): 출력 envelope vendor 표시값 매핑 (내부 canonical 유지).
+            # adapter_output_display(예: redfish_hpe_csus_3200 → hpCsus) 우선, 없으면
+            # vendor_output_display(hpe → hp), 둘 다 없으면 canonical 그대로.
+            # _va = common/vars/vendor_aliases.yml (detect_vendor.yml 에서 로드). data-driven — rule 12 R1.
+            _out_vendor: >-
+              {{ ((_va | default({})).adapter_output_display | default({})).get((_selected_adapter | default({})).adapter_id | default(''))
+                 or ((_va | default({})).vendor_output_display | default({})).get(_rf_vendor | default(''), _rf_vendor | default(none)) }}
             # P1: meta.auth — 사용자 결정 #3 (fallback_used 노출)
             # P2: meta.account_service — recovery 자격으로 공통계정 자동 복구 시 노출
             _diagnosis: >-
@@ -198,7 +204,13 @@
             _out_target_type:       "redfish"
             _out_collection_method: "redfish_api"
             _out_ip:                "{{ _rf_ip }}"
-            _out_vendor:            "{{ _rf_vendor | default(none) }}"
+            # cycle 2026-06-04 (사용자 결정): 출력 envelope vendor 표시값 매핑 (내부 canonical 유지).
+            # adapter_output_display(예: redfish_hpe_csus_3200 → hpCsus) 우선, 없으면
+            # vendor_output_display(hpe → hp), 둘 다 없으면 canonical 그대로.
+            # _va = common/vars/vendor_aliases.yml (detect_vendor.yml 에서 로드). data-driven — rule 12 R1.
+            _out_vendor: >-
+              {{ ((_va | default({})).adapter_output_display | default({})).get((_selected_adapter | default({})).adapter_id | default(''))
+                 or ((_va | default({})).vendor_output_display | default({})).get(_rf_vendor | default(''), _rf_vendor | default(none)) }}
             _fail_sec_supported:    "{{ ((_selected_adapter | default({})).capabilities | default({})).sections_supported
                                         | default(['system','hardware','bmc','cpu','memory',
                                                    'storage','network','firmware']) }}"
@@ -224,7 +236,7 @@
                        'collection_method': 'redfish_api',
                        'ip': _rf_ip | default(inventory_hostname),
                        'hostname': _rf_ip | default(inventory_hostname),
-                       'vendor': _rf_detected_vendor | default(none),
+                       'vendor': (((_va | default({})).adapter_output_display | default({})).get((_selected_adapter | default({})).adapter_id | default('')) or ((_va | default({})).vendor_output_display | default({})).get(_rf_detected_vendor | default(''), _rf_detected_vendor | default(none))),
                        'status': 'failed',
                        'sections': {},
                        'diagnosis': {'reachable': none, 'port_open': none, 'protocol_supported': none, 'auth_success': none, 'failure_stage': 'fallback', 'failure_reason': '_output 미생성 — block/rescue 모두 실패', 'details': {'gather_mode': 'fallback', 'reason': '_output 미생성 — block/rescue 모두 실패'}},

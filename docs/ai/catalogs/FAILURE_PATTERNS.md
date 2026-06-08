@@ -42,7 +42,7 @@
 ## 2026-05-01 — 외부 계약 advisory 다수 등재 (F91/F97/F104/F125/F126 — 10R extended audit)
 
 - 카테고리: external-contract-drift (advisory)
-- 발견 위치: 10-Round Extended Web Audit (`docs/ai/tickets/2026-05-01-gather-coverage/WEB-EXTENDED-AUDIT-10R-2026-05-01.md`)
+- 발견 위치: 10-Round Extended Web Audit (`docs/ai/archive/tickets/2026-05-01-gather-coverage/WEB-EXTENDED-AUDIT-10R-2026-05-01.md`)
 - 증상: 외부 계약 변종 / 보안 advisory / vendor 차이 — 사고 재현 전 사전 등재
 - 등재 항목:
   - **F91 CVE-2024-54085** — AMI MegaRAC SPx Authentication Bypass (Critical 10.0). server-exporter read-only → 영향 0. 운영팀 BMC 펌웨어 업그레이드 권장.
@@ -355,3 +355,14 @@
 - 영향: BMC lockout 환경 + 디버깅 시간 증가.
 - 수정 (부분): cycle 2026-04-30 — 실패 시 1초 backoff + status/vendor/first_error 로그 보강.
 - 미적용 (사용자 결정 대기): primary `partial` 결과를 fallback 시도 차단으로 처리하는 정책 변경 (`_rf_attempt_ok = status == 'success'` 강화).
+
+## 2026-06-04 — PROJECT_MAP fingerprint Windows autocrlf/pyc noise (반복 churn 근절)
+
+- 카테고리: tooling-noise (drift 오탐 — 반복 패턴)
+- 발견 위치: `scripts/ai/check_project_map_drift.py::fingerprint_dir`
+- 증상: 작업 트리 clean + 직전 fingerprint 갱신 커밋(ea71f04c) 직후에도 4개 디렉터리(redfish-gather/filter_plugins/module_utils/tests) drift 상시 감지. git log에 `PROJECT_MAP drift 갱신` 커밋 반복(434d0ada/18845699/61a1dba0/41056341/ea71f04c).
+- 원인: fingerprint가 디스크 `f.stat().st_size` + `rglob("*")` 기반. (a) `core.autocrlf=true` + `.gitattributes` 부재 → 에이전트 Write(LF) ↔ git 체크아웃(CRLF) 크기 차이 (예: `module_utils/adapter_common.py` git 9307B / disk 9593B, Δ286=CRLF \r 개수). (b) `rglob`가 gitignore 무시 → `__pycache__/*.pyc` 62개 + `tests/reference/local/*` untracked 포함 → pytest 실행만으로 fingerprint 변동. **실제 구조 변경(추적 소스 add/remove)은 0건.**
+- 영향: 매 세션 session_start hook이 false drift 경고 noise → 진짜 구조 변경 식별 곤란 + 불필요한 fingerprint 갱신 커밋 churn.
+- 수정: cycle 2026-06-04 — `fingerprint_dir`을 `git ls-files -s -- <dir>`의 **경로 집합(정렬된 파일 목록)** 해싱으로 변경. 추적 파일 경로만 보므로 CRLF/pyc/local untracked + **파일 내용 편집**까지 전부 무관 — 파일/디렉터리 추가·삭제·이름변경(= 진짜 구조 변경)에만 반응 (rule 28 R1 #2 목적 정합). baseline 재측정. git 불가 환경 disk rglob 경로 fallback. 검증: ① .pyc 추가 ② 디스크 줄바꿈 토글 → fingerprint 불변(exit 0) 실증. (초기안은 blob OID 해싱이었으나 내용 편집마다 drift → 경로 집합으로 정밀화해 content-only commit churn 까지 제거.)
+- 재발 방지: 이 사례 기록 + 스크립트 결정론화 (구조 변경만 추적). (`.gitattributes` 줄바꿈 정규화는 저장소 전반 영향이라 별도 검토 — 본 수정으로 fingerprint는 무관해짐.)
+- 관련 rule: rule 28 R1 #2 (PROJECT_MAP 측정 대상), rule 70 R2

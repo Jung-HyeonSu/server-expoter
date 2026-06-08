@@ -179,7 +179,10 @@
             _out_target_type:       "esxi"
             _out_collection_method: "vsphere_api"
             _out_ip:                "{{ _e_ip }}"
-            _out_vendor:            "{{ _e_vendor_normalized | default(none) }}"
+            # cycle 2026-06-04 (사용자 결정): 출력 표시값 매핑 (hpe → hp). 내부 canonical 유지.
+            # data-driven (vendor_aliases.vendor_output_display) — vendor 하드코딩 회피 (rule 12 R1).
+            _out_vendor: >-
+              {{ (_e_vendor_aliases_map.vendor_output_display | default({})).get(_e_vendor_normalized | default(''), _e_vendor_normalized | default(none)) }}
 
         - name: "esxi | enrich diagnosis with adapter"
           ansible.builtin.set_fact:

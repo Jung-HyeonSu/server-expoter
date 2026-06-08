@@ -24,7 +24,8 @@ vendors:
       - "adapters/redfish/hpe_ilo.yml"   # generic hpe (priority=10)
       - "adapters/redfish/hpe_ilo4.yml"  # iLO4 (priority=50)
       - "adapters/redfish/hpe_ilo5.yml"  # iLO5 (priority=90)
-      - "adapters/redfish/hpe_superdome_flex.yml"  # Superdome Flex / Flex 280 (priority=95, M-E2 cycle 2026-05-06, lab 부재)
+      - "adapters/redfish/hpe_superdome_flex.yml"  # Superdome Flex / Flex 280 (priority=101, cycle 2026-06-04 95→101 — iLO6 catch-all 위로 상향)
+      - "adapters/redfish/hpe_csus_3200.yml"  # Compute Scale-up Server 3200 (priority=102, cycle 2026-06-04 96→102, lab 부재)
       - "adapters/redfish/hpe_ilo6.yml"  # iLO6 (priority=100)
       - "adapters/redfish/hpe_ilo7.yml"  # iLO7 Gen12 (priority=120, F47 cycle 2026-05-01)
     oem_tasks: "redfish-gather/tasks/vendors/hpe/"  # Superdome Flex 도 동일 OEM 재사용 (Oem.Hpe namespace)
@@ -35,7 +36,7 @@ vendors:
       superdome_flex:
         description: "HPE Superdome Flex / Flex 280 (2017+ x86 Xeon SP)"
         adapter: "adapters/redfish/hpe_superdome_flex.yml"
-        priority: 95
+        priority: 101  # cycle 2026-06-04 95→101 — iLO6(100) catch-all 위. ADR-2026-06-04-csus-adapter-priority
         models: ["Superdome Flex 280", "Superdome Flex"]
         legacy_models_fallback:
           superdome_2: "redfish_generic.yml"  # Itanium / OA — Redfish 미지원
@@ -48,6 +49,18 @@ vendors:
         lab_status: "부재 — web sources 14건 (rule 96 R1-A)"
         sources_count: 14
         added_cycle: "2026-05-06 (M-E1/M-E2)"
+      csus_3200:
+        description: "HPE Compute Scale-up Server 3200 (2023+ x86 Xeon SP, Superdome Flex 후속)"
+        adapter: "adapters/redfish/hpe_csus_3200.yml"
+        priority: 102  # cycle 2026-06-04 96→102 — iLO6(100) catch-all 위. ADR-2026-06-04-csus-adapter-priority
+        models: ["Compute Scale-up Server 3200", "CSUS 3200"]
+        special_handling:
+          multi_partition: "nPAR — Systems ID = Partition<N>. 전 partition 수집 (ADR-2026-05-12)"
+          manager_layout: "rmc_primary (RMC + per-chassis PDHC 보조)"
+          oem_namespace: "Oem.Hpe (기존 HPE OEM 재사용)"
+          output_display: "hpCsus (adapter_output_display — ADR-2026-06-04-vendor-output-display)"
+        lab_status: "부재 — web sources (rule 96 R1-A). 사이트 사고 2026-06-04 → A1/B1/B2 fix"
+        added_cycle: "2026-05-11 (hpe-csus-add) / 2026-06-04 (vendor=hp 오선택 fix)"
 
   lenovo:
     description: "Lenovo ThinkSystem / XCC1-XCC2 / XCC3 (V4 OpenBMC) / IMM2"

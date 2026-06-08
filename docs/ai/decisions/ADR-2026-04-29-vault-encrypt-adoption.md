@@ -122,7 +122,7 @@ credential 등록 절차 (Manage Jenkins → Credentials → Add Secret File) �
 ## 관련
 
 - cycle-011 ADR: `ADR-2026-04-28-security-policy-removal.md` (보안 정책 해제 — 본 ADR의 전제)
-- cycle-012 보고서: `docs/ai/harness/cycle-012.md`
-- handoff: `docs/ai/handoff/2026-04-29-cycle-012.md`
+- cycle-012 보고서: `docs/ai/archive/harness/cycle-012.md`
+- handoff: `docs/ai/archive/handoff/2026-04-29-cycle-012.md`
 - plan: `C:\Users\hshwa\.claude\plans\1-snazzy-haven.md` (P0 Foundation에서 vault binding 명시)
 - rule: `93-branch-merge-gate` R1 (force push 금지 — 옵션 A2 거절 근거)

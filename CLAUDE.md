@@ -125,7 +125,7 @@ server-exporter/ (프로젝트 루트)
    │   └── tasks/ → collect_facts/config/datastores + normalize_*
    └── redfish-gather/
        ├── site.yml (1-Play: precheck→detect→adapter→collect→normalize)
-       ├── library/redfish_gather.py (약 3,430줄, Redfish API 엔진 — Storage+Volumes 수집, 2026-05-29 재실측)
+       ├── library/redfish_gather.py (약 3,867줄, Redfish API 엔진 — Storage+Volumes 수집, 2026-06-08 재실측)
        └── tasks/ + vendors/{dell,hpe,lenovo,supermicro,cisco}/
 
 [2] 공통 로직 (Fragment 정규화)
@@ -146,8 +146,8 @@ server-exporter/ (프로젝트 루트)
    │   - cycle 2026-05-06 M-E2: hpe_superdome_flex (priority=95, lab 부재 web sources 14건)
    │   - cycle 2026-05-07 M-B1~B4: supermicro x9 + x10 + ars + bmc 보강 (4 adapter — 6 generation)
    │   - cycle 2026-05-11 hpe-csus-add: hpe_csus_3200 (priority=96, Compute Scale-up Server 3200, lab 부재 web sources 7건)
-   │   - cycle 2026-05-12 csus-rmc-multi-node: CSUS/Superdome RMC 멀티노드 정식 지원 (전 Partition/Manager/Chassis 수집,
-   │     data.multi_node Additive 컨테이너, redfish_gather.py +384줄, lab 부재 web sources, ADR-2026-05-12)
+   │   - cycle 2026-05-12 csus-rmc-multi-node: CSUS/Superdome RMC 멀티노드 수집 구현 — **lab 부재 (mock/web sources, 실장비 미검증)**
+   │     (전 Partition/Manager/Chassis 수집, data.multi_node Additive 컨테이너, lab 도입 후 실 baseline 교체 의무, ADR-2026-05-12)
    │   - cycle 2026-05-01 신규 vendor 4개 (vault SKIP, 사용자 명시 승인): F44 huawei_ibmc /
    │     F45 inspur_isbmc / F46 fujitsu_irmc / F47 quanta_qct_bmc
    ├── adapters/os/ (7개: linux_*/windows_*)
@@ -156,8 +156,8 @@ server-exporter/ (프로젝트 루트)
 [4] Schema & 데이터
    ├── schema/
    │   ├── sections.yml (10개: system, hardware, bmc, cpu, memory, storage, network, firmware, users, power)
-   │   ├── field_dictionary.yml (39 Must + 29 Nice + 6 Skip = 74 entries — 2026-05-29 재실측, 16 section prefixes)
-   │   ├── baseline_v1/ (9 baseline JSON: redfish 5 [cisco/dell/hpe/hpe_csus_3200/lenovo] + esxi/ubuntu/windows + rhel810_raw_fallback)
+   │   ├── field_dictionary.yml (39 Must + 38 Nice + 6 Skip = 83 entries — 2026-05-29 재실측, 16 section prefixes)
+   │   ├── baseline_v1/ (9 baseline JSON: redfish 5 [cisco/dell/hpe/lenovo 실측 4 + hpe_csus_3200 **MOCK**] + esxi/ubuntu/windows + rhel810_raw_fallback)
    │   └── examples/ (success/partial/failed 예시)
    └── vault/ (linux.yml, windows.yml, esxi.yml, redfish/{vendor}.yml)
 
@@ -167,13 +167,13 @@ server-exporter/ (프로젝트 루트)
    ├── filter_plugins/diagnosis_mapper.py, field_mapper.py
    └── module_utils/adapter_common.py (점수 계산, 벤더 정규화)
 
-[6] 테스트 (tests/fixtures 353개 + 9 baseline + test_*.py 41파일/365 함수 — 2026-05-29 재실측)
+[6] 테스트 (tests/fixtures 380개 + 9 baseline + test_*.py 48파일/445 함수 [e2e_browser 2 포함] — 2026-06-08 재실측)
    ├── tests/redfish-probe/ (probe_redfish.py, deep_probe_redfish.py)
    ├── tests/fixtures/ (실장비 JSON 응답)
    ├── tests/evidence/ (Round 7-10 조건부 검토)
    └── tests/scripts/ (conditional_review.py, os_esxi_verify.sh)
 
-[7] 문서 (23개: 루트 4 + docs/ 19)
+[7] 문서 (27개: 루트 4 + docs/ 23)
    ├── README.md, GUIDE_FOR_AI.md, REQUIREMENTS.md
    └── docs/
        ├── 01_jenkins-setup        — Jenkins 설치·플러그인·자격증명·RBAC
@@ -193,7 +193,12 @@ server-exporter/ (프로젝트 루트)
        ├── 16_os-esxi-mapping       — OS/ESXi 필드 매핑
        ├── 17_jenkins-pipeline      — Jenkins 파이프라인 런타임
        ├── 18_ansible-project-config — Ansible 프로젝트 설정
-       └── 19_decision-log          — 의사결정 로그
+       ├── 19_decision-log          — 의사결정 로그
+       ├── 20_json-schema-fields    — JSON envelope 13 필드 + 필드 사전
+       ├── 21_vault-operations      — Vault 운영 (회전·2단계 로딩)
+       ├── 22_compatibility-matrix  — vendor × generation × section 호환성
+       ├── 22_rmc-activation-guide  — CSUS/Superdome RMC 활성화
+       └── 23_debugging-entrypoints — 디버깅 진입점
 ```
 
 ---
@@ -460,7 +465,7 @@ server-exporter — 기능 작업 (huawei-vendor) (브랜치: feature/huawei-ven
 
 - `.claude/role/{역할}/README.md`
 - 거기 명시된 ai-context 문서들
-- 정본: `GUIDE_FOR_AI.md` / `REQUIREMENTS.md` / `docs/01~19`
+- 정본: `GUIDE_FOR_AI.md` / `REQUIREMENTS.md` / `docs/01~23`
 
 #### Step 4: 코드 변경 요청 → task-impact-preview 먼저
 
@@ -547,15 +552,15 @@ adapters/{vendor}_*.yml, redfish-gather/tasks/vendors/{v}/   → ai-context/vend
 
 ```
 .claude/
-├── rules/        # 29 상시 규칙
+├── rules/        # 28 상시 규칙
 ├── skills/       # 호출형 작업 플레이북 (Plan 2 예정)
 ├── agents/       # 서브에이전트 정의 (Plan 2 예정)
 ├── role/         # 6 역할 README (gather / output-schema / infra / qa / po / tpm)
 ├── ai-context/   # 도메인별 컨벤션
 ├── policy/       # 10 YAML
-├── templates/    # 10 문서 템플릿
+├── templates/    # 8 문서 템플릿
 ├── commands/     # 5 사용 가이드
-└── settings.json # 16 hooks 등록 + 보호 경로 deny
+└── settings.json # 9 hooks 등록 (cycle-011 보호 경로 deny 제거)
 
 docs/ai/          # AI 협업 메타 (Plan 3 예정)
 scripts/ai/       # 자동화 스크립트 (Python 27, OS 중립)
@@ -598,7 +603,7 @@ production-audit 결과 (2026-04-29):
 - **Common 보강**: precheck IPv6 듀얼스택 / diagnosis_mapper None 가드
 - **Jenkins 보강**: per-stage timeout / E2E mandatory / archive / Jenkinsfile_portal Stage 3 hard gate / Callback unstable not error (rule 31 R2)
 - **Secrets 정리**: tests/scripts + scripts/ai 13곳 'Goodmit0802!' 환경변수화
-- 검증: **pytest 148/148 PASS** + harness consistency + vendor boundary + field_dictionary (65 entries) + PROJECT_MAP fingerprint 갱신
+- 검증: **pytest 699/699 PASS** + harness consistency + vendor boundary + field_dictionary (83 entries) + PROJECT_MAP fingerprint 갱신
 
 이전 cycle-016 (2026-04-29):
 - 사용자 요구사항 11/11 검증 + 실 Jenkins 빌드 5회 (#39 ~ #45) + summary grouping 완성

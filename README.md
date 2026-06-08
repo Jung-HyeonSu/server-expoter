@@ -82,13 +82,13 @@ server-exporter/
 ├── redfish-gather/          서버 BMC 수집 (Redfish API)
 │
 ├── adapters/                벤더 / 세대별 어댑터 YAML
-│   ├── redfish/             28개 (Dell / HPE / Lenovo / Supermicro / Cisco / Huawei / Inspur / Fujitsu / Quanta + HPE Superdome)
+│   ├── redfish/             31개 (Dell / HPE / Lenovo / Supermicro / Cisco / Huawei / Inspur / Fujitsu / Quanta + HPE Superdome)
 │   ├── os/                  7개 (Linux / Windows 변형)
 │   └── esxi/                4개 (ESXi 6.x / 7.x / 8.x)
 │
 ├── schema/                  표준 JSON 스키마
 │   ├── sections.yml         10 섹션 정의
-│   ├── field_dictionary.yml 65 필드 사전 (호출자 reference)
+│   ├── field_dictionary.yml 83 필드 사전 (호출자 reference)
 │   ├── fields/              채널별 필드 정의
 │   ├── examples/            success / partial / failed 예시
 │   └── baseline_v1/         실장비 회귀 기준선 JSON
@@ -98,7 +98,7 @@ server-exporter/
 │   ├── e2e/, e2e_browser/   백엔드·브라우저 E2E
 │   └── reference/           실장비 종합 자료
 │
-└── docs/                    설치 / 운영 / 개발 문서 (01~22)
+└── docs/                    설치 / 운영 / 개발 문서 (01~23)
 ```
 
 이렇게 나눈 이유:
@@ -141,7 +141,7 @@ server-exporter/
   "collection_method": "agent | vsphere_api | redfish_api",
   "ip":                "10.x.x.1",
   "hostname":          "10.x.x.1",
-  "vendor":            "dell | hpe | lenovo | supermicro | cisco | huawei | inspur | fujitsu | quanta | null",
+  "vendor":            "dell | hp | hpCsus | lenovo | supermicro | cisco | huawei | inspur | fujitsu | quanta | null",
   "status":            "success | partial | failed",
   "sections":          { "system": "success", "cpu": "success", ... },
   "diagnosis":         { "precheck": {...}, "details": [...] },

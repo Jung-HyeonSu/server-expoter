@@ -46,6 +46,15 @@ options:
 
 import json, socket, sys, traceback
 
+# ── 단위 변환 상수 (cycle 2026-06-04 R-4 — 매직넘버 명명) ──────────────────────
+# 주의: decimal(10^n) 과 binary(2^n) 는 의미가 다르므로 절대 통합 금지.
+#   capacity_gb = DECIMAL GB (÷1e9) / total_mb·capacity_mb = BINARY MiB (÷2^20).
+BYTES_PER_GB_DECIMAL = 1_000_000_000   # 10^9 — CapacityBytes ↔ capacity_gb (decimal GB)
+BYTES_PER_MIB = 1048576                # 2^20 — CapacityBytes → total_mb (binary MiB)
+MIB_PER_GIB = 1024                     # 2^10 — MiB → GiB (binary, grouping key)
+MBPS_PER_GBPS = 1000.0                 # 10^3 — 네트워크 Mbps → Gbps (decimal bitrate, byte 아님)
+
+
 def _removeprefix(s, prefix):
     """str.removeprefix() 호환 (Python 3.8 이하 지원)"""
     if s.startswith(prefix):
@@ -79,6 +88,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 # ── HTTP 유틸 ────────────────────────────────────────────────────────────────
 
+# verify_ssl(bool) 별 SSLContext 캐시 (cycle 2026-05-29 audit — host 당 재생성 제거)
+_CTX_CACHE = {}
+
+
 def _ctx(verify_ssl):
     """HTTPS context — verify_ssl=False 시 self-signed BMC 인증서 허용.
 
@@ -93,7 +106,16 @@ def _ctx(verify_ssl):
     구 BMC TLS 1.0/1.1 만 지원하면 본 코드는 핸드셰이크 실패 → graceful
     degradation 으로 status=failed (precheck protocol 단계). 별 사고 신호
     없으면 minimum_version 유지. (rule 92 R2)
+
+    cycle 2026-05-29 (audit): verify_ssl(bool) 별 1회만 빌드 후 재사용 (_CTX_CACHE).
+    SSLContext 는 다중 연결 재사용이 표준 (Python 권장). host 당 30~150 회 재생성
+    제거 — 동작 동일 (controller-side CPU/alloc 절감). Ansible module 은 host 당
+    단일 subprocess → thread-safety 무관.
     """
+    _cache_key = bool(verify_ssl)
+    _cached = _CTX_CACHE.get(_cache_key)
+    if _cached is not None:
+        return _cached
     ctx = ssl.create_default_context()
     # TLS 1.2 minimum (DSP0266 §10.2). TLS 1.0/1.1 은 이미 DMTF/HPE/Cisco/Dell 모두 deprecated.
     if hasattr(ssl, 'TLSVersion'):
@@ -112,6 +134,7 @@ def _ctx(verify_ssl):
             ctx.set_ciphers('DEFAULT@SECLEVEL=0')
         except ssl.SSLError:
             pass
+    _CTX_CACHE[_cache_key] = ctx
     return ctx
 
 def _auth(username, password):
@@ -384,6 +407,13 @@ _BMC_PRODUCT_HINTS = {
     # 부재 펌웨어 환경에서 BMC 제품명으로 정규화 강건성 향상.
     # source: HPE Superdome Flex Server Admin Guide + sdflexutils GitHub
     'superdome': 'hpe', 'superdome flex': 'hpe',                            # nosec rule12-r1
+    # 2026-06-04 (HP CSUS 3200 사이트 사고): RMC 가 ServiceRoot.Product/Name 에
+    # "Compute Scale-up Server 3200" 으로 응답 — Manufacturer/alias 시그니처 부재
+    # 펌웨어에서 무인증 probe 벤더 감지 강건성 향상 (rule 96 R1-A web 검증).
+    # 복합 키만 사용 — 'csus'/'compute' 단독은 비-HPE Product/Name 와 substring 충돌
+    # 위험 (워크플로 adversarial 검증 — `if hint in p` plain substring, L614/L626).
+    # source: HPE Compute Scale-up Server 3200 FAQ + Superdome Flex Admin Guide (CSUS = Superdome Flex 후속).
+    'compute scale-up server': 'hpe', 'csus 3200': 'hpe',                   # nosec rule12-r1
 }
 
 
@@ -1168,9 +1198,14 @@ def _normalize_link_status(value):
       - Cisco CIMC: 'Connected' / 'Disconnected' / null
       - Lenovo XCC: 'LinkUp' / 'LinkDown'
 
+    DMTF DSP8010 2026.1 대조 2026-06-08: Port.LinkStatus enum 정본은
+      ['LinkUp', 'Starting', 'Training', 'LinkDown', 'NoLink'] (Port.v1_19_0).
+      'Starting'/'Training' = 링크 협상 중(비작동) 전이 상태 → 기존 비작동
+      매핑(disabled/inactive/offline)과 동일하게 'down' 으로 정규화.
+
     Standard enum:
       'up'      — link active
-      'down'    — link inactive (NoLink, LinkDown, Disconnected)
+      'down'    — link inactive (NoLink, LinkDown, Disconnected, Starting, Training)
       'unknown' — null/unknown response
     """
     if value is None:
@@ -1180,7 +1215,8 @@ def _normalize_link_status(value):
         return 'unknown'
     if s in ('linkup', 'up', 'connected', 'enabled', 'active'):
         return 'up'
-    if s in ('linkdown', 'down', 'nolink', 'disconnected', 'disabled', 'inactive', 'offline'):
+    if s in ('linkdown', 'down', 'nolink', 'disconnected', 'disabled',
+             'inactive', 'offline', 'starting', 'training'):
         return 'down'
     return s  # unknown vendor-specific value — preserve raw
 
@@ -1292,7 +1328,7 @@ def _extract_oem_unified(data, expected_vendor=None):                         # 
 
 
 def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verify_ssl,
-                  chassis_uri=None):
+                  chassis_uri=None, product_hint=None):
     """system 섹션 수집 (Redfish endpoints).
 
     호출 endpoint:
@@ -1348,12 +1384,8 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
     # 2026-04-30 추가: Cisco 등 일부 BMC가 trailing whitespace 포함하는 PartNumber 반환 →
     # cross-vendor consistency 위해 strip().
     def _ne(*keys):
-        v = _safe(data, *keys)
-        if isinstance(v, str):
-            v = v.strip()
-            if not v:
-                return None
-        return v
+        # _strip_or_none + _safe 조합 (중복 stripping 로직 3곳 → 1곳 dedup, cycle 2026-05-29)
+        return _strip_or_none(_safe(data, *keys))
 
     result = {
         'manufacturer':   _ne('Manufacturer'),
@@ -1401,6 +1433,34 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
         # `_*` prefix 키 (예: `_bios_date`) 를 result hardware-level 로 끌어올린 뒤
         # OEM dict 에서는 제거. 기존 envelope 키만 채움 — 새 키 추가 없음.
         result['oem'] = _hoist_oem_extras(raw_oem, result)
+
+    # A1 (2026-06-04, HP CSUS 3200 사이트 사고): Chassis 폴백 — System.Manufacturer/Model
+    # 부재(None) 시 이미 fetch 한 chassis_data(상단)에서 보충. Additive only (rule 92 R2):
+    #   - result 값이 None 일 때만 발동 (정상 13 vendor 는 System.Manufacturer/Model 보유 → 미발동).
+    #   - _strip_or_none 으로 '' → None 정규화 유지 (파이프라인 불변식: 빈 문자열 금지).
+    #   - chassis 값이 strip 후 truthy 일 때만 대입 (None→None / ''→None 무의미 대입 방지).
+    # 근거: HPE Scale-up (CSUS 3200 / Superdome Flex) RMC 는 Partition0 System.Manufacturer/
+    # Model 이 비고 Chassis 에만 존재 (DMTF ComputerSystem Manufacturer/Model optional+nullable).
+    #
+    # A1b (2026-06-04): System.Model 부재 시 ServiceRoot.Product(product_hint) 우선 fallback.
+    # 근거: check_redfish (실 CSUS 3200 지원 도구) cr_module/system_chassis.py 가 동일 —
+    #   `if model is None: model = connection.root.get("Product")` (rule 96 R1-A web 검증).
+    # 사용자 CSUS 실측: ServiceRoot.Product="Compute Scale-up Server 3200" (깨끗한 모델명 —
+    # Chassis.Model 의 "... Base" 접미사보다 정확). 정상 vendor 는 System.Model 보유 → 미발동
+    # (ServiceRoot.Product 가 BMC 명인 Dell/Lenovo 도 System.Model 있어 fallback 안 탐).
+    if result['model'] is None and product_hint:
+        _ph = _strip_or_none(product_hint)
+        if _ph is not None:
+            result['model'] = _ph
+    if isinstance(chassis_data, dict):
+        if result['manufacturer'] is None:
+            _cm = _strip_or_none(_safe(chassis_data, 'Manufacturer'))
+            if _cm is not None:
+                result['manufacturer'] = _cm
+        if result['model'] is None:
+            _cmod = _strip_or_none(_safe(chassis_data, 'Model'))
+            if _cmod is not None:
+                result['model'] = _cmod
 
     # 주요 필드 누락은 경고 수준 — 수집 자체는 성공으로 처리.
     # errors에 추가하지 않아 _run()에서 failed로 분류되지 않음.
@@ -1586,12 +1646,8 @@ def gather_processors(bmc_ip, system_uri, username, password, timeout, verify_ss
         # None 으로 정규화. cycle-016 Phase N 풍부 필드는 그대로 유지.
         # 2026-04-30: Cisco 등 trailing whitespace 정규화 추가.
         def _ne_p(*ks):
-            v = _safe(pdata, *ks)
-            if isinstance(v, str):
-                v = v.strip()
-                if not v:
-                    return None
-            return v
+            # _strip_or_none + _safe 조합 (중복 stripping 로직 3곳 → 1곳 dedup, cycle 2026-05-29)
+            return _strip_or_none(_safe(pdata, *ks))
 
         processors.append({
             'id':                _safe(pdata, 'Id'),
@@ -1694,7 +1750,7 @@ def _gather_simple_storage(bmc_ip, members, username, password, timeout, verify_
                 'media_type':     None,
                 'protocol':       None,
                 'capacity_bytes': cap_int,
-                'capacity_gb':    round(cap_int / 1e9, 2) if cap_int else None,
+                'capacity_gb':    round(cap_int / BYTES_PER_GB_DECIMAL, 2) if cap_int else None,
                 'health':         _safe(dev, 'Status', 'Health'),
             })
         controllers.append({
@@ -1788,12 +1844,20 @@ def _extract_storage_drives(sdata, bmc_ip, username, password, timeout, verify_s
             'media_type':     _safe(ddata, 'MediaType'),
             'protocol':       _safe(ddata, 'Protocol'),
             'capacity_bytes': cap_int,
-            'capacity_gb':    round(cap_int / 1e9, 2) if cap_int else None,
+            'capacity_gb':    round(cap_int / BYTES_PER_GB_DECIMAL, 2) if cap_int else None,
             'health':         _safe(ddata, 'Status', 'Health') or _safe(ddata, 'Status', 'HealthRollup'),
             'failure_predicted':      _safe(ddata, 'FailurePredicted'),
             'predicted_life_percent': life_pct,
         })
     return drives, errors
+
+
+# Redfish VolumeType enum → canonical RAID level (cycle 2026-06-04 R-4 — module-level hoist)
+_VOLUMETYPE_RAID_MAP = {
+    'NonRedundant': 'RAID0', 'Mirrored': 'RAID1',
+    'StripedWithParity': 'RAID5', 'SpannedMirrors': 'RAID10',
+    'SpannedStripesWithParity': 'RAID50',
+}
 
 
 def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, timeout, verify_ssl):
@@ -1807,11 +1871,6 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
     if verr or vst != 200:
         # Volumes 미지원(HBA 모드 등)은 정상 — 에러 추가하지 않음
         return volumes, errors
-    raid_map = {
-        'NonRedundant': 'RAID0', 'Mirrored': 'RAID1',
-        'StripedWithParity': 'RAID5', 'SpannedMirrors': 'RAID10',
-        'SpannedStripesWithParity': 'RAID50',
-    }
     for v_member in (_safe(vcoll, 'Members') or []):
         v_uri = _safe(v_member, '@odata.id')
         if not v_uri:
@@ -1821,7 +1880,7 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
             errors.append(_err('storage', f'Volume {v_uri} 실패: {verr2 or vst2}'))
             continue
         # RAIDType 표준 우선, Dell VolumeType fallback
-        raid_type = _safe(vdata, 'RAIDType') or raid_map.get(_safe(vdata, 'VolumeType'))
+        raid_type = _safe(vdata, 'RAIDType') or _VOLUMETYPE_RAID_MAP.get(_safe(vdata, 'VolumeType'))
         # member_drive_ids: Links.Drives[]의 @odata.id에서 마지막 path segment
         member_ids = [
             d_oid.rstrip('/').rsplit('/', 1)[-1]
@@ -1860,7 +1919,7 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
             'controller_id':    controller_id,
             'member_drive_ids': member_ids,
             'raid_level':       raid_type,
-            'total_mb':         (vcap_int // 1048576) if vcap_int else None,
+            'total_mb':         (vcap_int // BYTES_PER_MIB) if vcap_int else None,
             # BUG-19 fix: drive 와 동일하게 Status.Health 누락 시 HealthRollup fallback.
             'health':           _safe(vdata, 'Status', 'Health') or _safe(vdata, 'Status', 'HealthRollup'),
             'state':            _safe(vdata, 'Status', 'State'),
@@ -1957,7 +2016,7 @@ def _gather_smart_storage(bmc_ip, system_uri, username, password, timeout, verif
                             continue
                         cap_int = _safe_int(_safe(pddata, 'CapacityGB')) or _safe_int(_safe(pddata, 'CapacityMiB'))
                         # CapacityGB (iLO4) → bytes
-                        cap_bytes = (cap_int * 1_000_000_000) if cap_int and _safe(pddata, 'CapacityGB') else None
+                        cap_bytes = (cap_int * BYTES_PER_GB_DECIMAL) if cap_int and _safe(pddata, 'CapacityGB') else None
                         drives.append({
                             'id':             _safe(pddata, 'Id'),
                             'name':           _safe(pddata, 'Model') or _safe(pddata, 'Name'),
@@ -2377,7 +2436,7 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
                     if isinstance(cur_gbps, (int, float)):
                         speed_gbps = cur_gbps
                     elif isinstance(speed_mbps, (int, float)):
-                        speed_gbps = speed_mbps / 1000.0
+                        speed_gbps = speed_mbps / MBPS_PER_GBPS
                     else:
                         speed_gbps = None
                     assoc = _safe(pdata, 'AssociatedNetworkAddresses', default=[]) or []
@@ -2796,7 +2855,7 @@ def _summarize_partition_disks(physical_disks):
     groups, seen, total = [], {}, 0
     for d in (physical_disks or []):
         cap_mb = d.get('total_mb') or 0
-        cap_gb = int(cap_mb // 1024) if cap_mb else 0
+        cap_gb = int(cap_mb // MIB_PER_GIB) if cap_mb else 0
         if cap_gb <= 0:
             continue
         mt, pr, md = d.get('media_type'), d.get('protocol'), d.get('model')
@@ -2827,7 +2886,7 @@ def _normalize_storage_raw(raw):
         drives_out = []
         for drv in (ctrl.get('drives') or []):
             cap = drv.get('capacity_bytes')
-            tmb = int(cap // 1048576) if isinstance(cap, (int, float)) and cap else None
+            tmb = int(cap // BYTES_PER_MIB) if isinstance(cap, (int, float)) and cap else None
             drives_out.append({
                 'device': drv.get('name'), 'model': drv.get('model'),
                 'total_mb': tmb, 'media_type': drv.get('media_type'),
@@ -2961,7 +3020,7 @@ def _normalize_memory_raw(raw_mem):
         cap_mb = int(cap_mb) if cap_mb else 0
         if cap_mb <= 0:
             continue
-        cap_gb = cap_mb // 1024
+        cap_gb = cap_mb // MIB_PER_GIB
         t, sp = s.get('type'), s.get('speed_mhz')
         mfr, pn = s.get('manufacturer'), s.get('part_number')
         key = '%s|%s|%s|%s|%s' % (cap_gb, t, sp, mfr, pn)
@@ -3137,7 +3196,7 @@ def _collect_multi_node_topology(bmc_ip, vendor, service_root,
 def _collect_all_sections(bmc_ip, vendor, system_uri, manager_uri, chassis_uri,
                           username, password, timeout, verify_ssl,
                           all_errors, collected, failed, unsupported=None,
-                          manager_layout=None):
+                          manager_layout=None, product_hint=None):
     """9개 섹션 dispatch (system / bmc / processors / memory / storage / network /
     firmware / power / network_adapters[P4]).
 
@@ -3150,7 +3209,7 @@ def _collect_all_sections(bmc_ip, vendor, system_uri, manager_uri, chassis_uri,
     _run = _make_section_runner(all_errors, collected, failed, unsupported)
     creds = (username, password, timeout, verify_ssl)
     return {
-        'system':            _run('system',     gather_system,     bmc_ip, system_uri, vendor, *creds, chassis_uri),
+        'system':            _run('system',     gather_system,     bmc_ip, system_uri, vendor, *creds, chassis_uri, product_hint),
         'bmc':               _run('bmc',        gather_bmc,        bmc_ip, manager_uri, vendor, *creds, manager_layout),
         'processors':        _run('processors', gather_processors, bmc_ip, system_uri,          *creds),
         'memory':            _run('memory',     gather_memory,     bmc_ip, system_uri,          *creds),
@@ -3787,6 +3846,8 @@ def main():
         username, password, timeout, verify_ssl,
         all_errors, collected, failed, unsupported,
         manager_layout=manager_layout,
+        # A1b (2026-06-04): ServiceRoot.Product 를 hardware.model fallback 로 전달 (check_redfish 동일).
+        product_hint=_safe(service_root, 'Product'),
     )
 
     # cycle 2026-05-12 (ADR-2026-05-12): manager_layout 정의 vendor 만 multi_node 수집.

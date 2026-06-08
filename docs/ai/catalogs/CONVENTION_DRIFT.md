@@ -19,6 +19,22 @@
 
 ---
 
+## DRIFT-017 (2026-06-08, resolved cycle audit-cleanup)
+
+- **발견 위치**: `redfish-gather/library/redfish_gather.py:1192` `_normalize_link_status`
+- **분류**: external-contract-drift
+- **설명**: DMTF DSP8010 2026.1 공식 스키마 대조 결과, `Port.LinkStatus` enum 정본
+  `[LinkUp, Starting, Training, LinkDown, NoLink]` 중 표준 전이 상태 `Starting`/`Training` 을
+  정규화 함수가 미처리 → raw lowercase('starting'/'training') 통과. 함수 contract(up/down/unknown)
+  위반(이 두 값은 vendor-specific 이 아니라 DMTF 표준이므로 raw 보존 분기에 빠지면 안 됨).
+- **영향**: 네트워크 인터페이스 `link_status` 필드. BMC 가 협상 중 포트를 Starting/Training 으로
+  보고하는 드문 전이 케이스에서 호출자가 미인식값 수신. fixture/baseline 에는 0건(전이 상태라 비영속).
+- **제안/조치**: down 버킷에 `starting`/`training` 추가 (기존 disabled/inactive/offline 매핑과 일관 —
+  비작동 상태). Additive only(rule 96 R1-B): envelope shape / 기존 매핑 불변. 회귀 테스트 6건 추가.
+- **상태**: resolved (2026-06-08 — 보정 + 회귀 테스트 + EXTERNAL_CONTRACTS 등재)
+- **관련**: rule 96 R1/R1-B, rule 92 R2, `schema/redfish_dmtf_2026.1/`,
+  `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` (DMTF DSP8010 2026.1 대조), `tests/unit/test_redfish_pure_helpers.py`
+
 ## DRIFT-016 (2026-05-11, resolved cycle field-channel-refinement)
 
 - **발견 위치**: `schema/field_dictionary.yml` 의 다음 3 entries

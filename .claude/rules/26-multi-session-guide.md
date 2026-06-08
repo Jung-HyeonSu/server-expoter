@@ -156,4 +156,4 @@
 - skill: `write-cold-start-ticket`, `cycle-orchestrator`
 - agent: `ticket-decomposer`
 - hook: `pre_commit_ticket_consistency.py` (cold-start 6 절 advisory)
-- 정본: `docs/ai/handoff/`, `docs/ai/tickets/2026-05-06-multi-session-compatibility/` (24 ticket × 5 worker 라이브러리)
+- 정본: `docs/ai/handoff/`, 24 ticket × 5 worker cycle (2026-05-06 — git history)

@@ -5,7 +5,10 @@
 - **Manufacturer**: "HPE", "Hewlett Packard Enterprise", "Hewlett-Packard"
 - **Aliases**: HPE, HP, Hewlett Packard Enterprise, iLO
 - **BMC 이름**: iLO5 / iLO6
-- **vendor_aliases.yml** 정규화: `hpe`
+- **vendor_aliases.yml** 내부 canonical 정규화: `hpe` (adapter/vault/OEM 라우팅 키 — 불변)
+- **출력 envelope vendor 표시값** (2026-06-04 ADR): `hp`.
+  HPE Compute Scale-up Servers 패밀리(**CSUS 3200 + Superdome Flex**, 둘 다 RMC 관리)는 → `hpCsus`.
+  내부 canonical `hpe` 유지, `vendor_output_display`/`adapter_output_display` 로 출력만 매핑.
 
 ## Adapter 매핑
 
@@ -111,5 +114,5 @@ C1~C8: `docs/ai/NEXT_ACTIONS.md` 참조. 사이트 fixture 캡처 + baseline + l
 - `docs/13_redfish-live-validation.md`
 - HPE iLO Redfish API guide (외부)
 - `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` (M-E1 entry — Superdome Flex 14 sources)
-- `docs/ai/tickets/2026-05-06-multi-session-compatibility/fixes/M-E1.md` (web 검색 결과)
-- `docs/ai/tickets/2026-05-06-multi-session-compatibility/fixes/M-E2.md` (adapter spec)
+- ticket M-E1 (cycle 2026-05-06 — git history) (web 검색 결과)
+- ticket M-E2 (cycle 2026-05-06 — git history) (adapter spec)

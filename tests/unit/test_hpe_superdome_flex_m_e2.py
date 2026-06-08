@@ -4,7 +4,7 @@ cycle 2026-05-06 M-E1 web 검색 (14 sources) + M-E2 adapter 추가.
 사용자 명시 (2026-05-06): "superdome 하드웨어도 벤더 추가해줘. 추가하고 web 검색 다해서".
 
 검증 항목:
-1. adapter YAML 4 필수 키 (rule 12 R4) + priority=95 (iLO 5 90 < Superdome Flex 95 < iLO 6 100)
+1. adapter YAML 4 필수 키 (rule 12 R4) + priority=101 (cycle 2026-06-04 95→101 — iLO 6(100) catch-all 위, iLO 7(120) 아래)
 2. match.model_patterns 에 Superdome Flex 280 / Superdome Flex 패턴 포함
 3. match.vendor = HPE (sub-line — M-E1 결정 (a))
 4. capabilities.sections_supported 9 sections (system/hardware/bmc/cpu/memory/storage/network/firmware/power)
@@ -59,11 +59,18 @@ def test_m_e2_adapter_required_keys() -> None:
         assert key in d, f"hpe_superdome_flex: 필수 키 '{key}' 부재"
 
 
-def test_m_e2_priority_between_ilo5_and_ilo6() -> None:
-    """priority=95 — iLO 5 (90) < Superdome Flex (95) < iLO 6 (100). rule 12 R2 일관성."""
+def test_m_e2_priority_above_ilo6_below_ilo7() -> None:
+    """priority=101 — iLO 6 (100) < Superdome Flex (101) < iLO 7 (120). rule 12 R2 일관성.
+
+    cycle 2026-06-04 (ADR-2026-06-04-csus-adapter-priority): 구 95 → 101 상향.
+    이유: hpe_ilo6 (100) 은 model_patterns 부재라 절대 실격되지 않아, 구 95 Superdome 이
+    모델("Superdome Flex")을 매치해도 priority 로 패배 → 사이트에서 vendor=hp 오선택.
+    scale-up 2 종(CSUS 102 / Superdome 101)을 iLO 6(100) 위로 올려 모델 매치 우선권 부여.
+    정상 ProLiant 는 scale-up model_patterns 미매치 → 실격되어 iLO 5/6/7 자동 선택 (무회귀).
+    """
     d = yaml.safe_load(ADAPTER_PATH.read_text(encoding="utf-8"))
-    assert d.get("priority") == 95, (
-        "Superdome Flex priority=95 (M-E1 결정 — iLO 5/6 사이). 일반 ProLiant 와 모델로 분기."
+    assert d.get("priority") == 101, (
+        "Superdome Flex priority=101 (cycle 2026-06-04 — iLO 6(100) 위, iLO 7(120) 아래)."
     )
 
 
@@ -164,7 +171,7 @@ def test_m_e2_boundary_map_has_superdome_flex_sub_line() -> None:
         "vendor-boundary-map.yaml: hpe.sub_lines.superdome_flex 부재 (M-E4)"
     )
     sf = sub_lines["superdome_flex"]
-    assert sf["priority"] == 95, "superdome_flex priority=95"
+    assert sf["priority"] == 101, "superdome_flex priority=101 (cycle 2026-06-04 95→101)"
     assert "lab_status" in sf, "lab_status 명시 부재 (rule 96 R1-A)"
 
 

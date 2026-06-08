@@ -2,6 +2,96 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-08 (DMTF DSP8010 2026.1 공식 스키마 대조 audit — DRIFT-017)
+
+### 신규 테스트 (+6)
+- `tests/unit/test_redfish_pure_helpers.py` `_normalize_link_status` 6건:
+  - up 변형(LinkUp/Up/Connected/Enabled/Active) / down 변형(LinkDown/Down/NoLink/Disconnected/Disabled/Inactive/Offline)
+  - **DMTF 전이 상태 → down** (Starting/Training — DSP8010 2026.1 대조 gap fix)
+  - unknown(None/""/none/unknown/null) / 미지 vendor 값 raw 보존
+- RED 확인: 보정 전 transitional 테스트는 'starting'/'training' raw 반환으로 FAIL → 보정 후 PASS.
+
+### 변경 (Additive only — rule 96 R1-B)
+- `redfish-gather/library/redfish_gather.py:1192` `_normalize_link_status` down 버킷에 `starting`/`training` 추가.
+- `schema/redfish_dmtf_2026.1/` 신설 (DMTF subset 28 리소스 56 json-schema + README + dmtf_info).
+- `EXTERNAL_CONTRACTS.md` 대조 스냅샷 + `CONVENTION_DRIFT.md` DRIFT-017.
+
+### 회귀 결과
+- pytest **771 PASS / 1 skip / 2 fail**. 2 fail = `tests/e2e_browser/test_jenkins_master.py` (내부망 `10.100.64.152:8080` Playwright — 환경 제약, 본 변경 무관).
+- fixture/baseline grep: Starting/Training link_status 0건 → 기존 회귀 출력 불변(검증).
+- output_schema_drift(sections=10/fd_paths=83 불변) / verify_vendor_boundary / verify_harness_consistency / project_map fingerprint 일치 / py_compile — 전부 PASS.
+
+## 2026-06-04 (vendor 출력 표시값 hpe→hp / CSUS 3200→hpCsus — ADR-2026-06-04)
+
+### 신규 테스트 (+6, TDD RED→GREEN)
+- `tests/regression/test_vendor_output_display.py` 신규 D1~D6:
+  - D1 vendor_aliases 표시 맵 보유 (hpe→hp / csus adapter→hpCsus)
+  - D2 hpe_baseline envelope vendor == `hp`
+  - D3 hpe_csus_3200_baseline envelope vendor == `hpCsus`
+  - D4 field_dictionary vendor enum 이 hp + hpCsus 노출 + `hpe` 미노출
+  - D5 내부 canonical `hpe` 보존 (라우팅 무손상)
+  - D6 `CANONICAL_VENDORS` 게이트가 hp/hpCsus 허용
+  - D7 HPE Compute Scale-up Servers 패밀리 (CSUS 3200 + Superdome Flex) → hpCsus (2026-06-04 amendment, web 검증)
+- RED 확인: 구현 전 D2/D3/D4/D6 FAIL (baseline=hpe, enum=hpe, frozenset 미포함) → 구현 후 전부 PASS.
+- amendment RED: D7 추가 시 superdome_flex 미매핑 FAIL → `adapter_output_display` 에 추가 후 PASS. Jinja sim (superdome_flex→hpCsus, iLO6/7→hp) PASS.
+
+### 변경 (출력 표시값만 — 내부 canonical 불변)
+- `common/vars/vendor_aliases.yml`: `vendor_output_display`/`adapter_output_display` 신규
+- `redfish-gather/site.yml` / `esxi-gather/site.yml` / `os-gather/site.yml`: `_out_vendor` 표시 매핑
+- `schema/field_dictionary.yml` enum + baseline 2 + output_examples 2 + `CANONICAL_VENDORS`
+
+### 회귀 결과
+- pytest **748 PASS / 1 skip / 2 fail**. 2 fail = `tests/e2e_browser/test_jenkins_master.py` (내부망 `10.100.64.152:8080` Playwright — 환경 제약, 본 변경 무관).
+- vendor-boundary PASS (data-driven — common/3-channel 하드코딩 0) / harness-consistency PASS / validate_field_dictionary PASS (Stage 3 gate) / output_schema_drift PASS.
+- Jinja 표시식 단위 검증 (jinja2 직접 렌더): redfish 7 케이스 (hpe→hp, CSUS→hpCsus, Superdome Flex→hp, dell/cisco 무변, None 보존) + esxi 4 케이스 전부 OK.
+- `ansible-playbook --syntax-check`: Windows dev box ansible CLI 부재 → Jenkins Agent 위임 (YAML 구조는 pyyaml parse PASS).
+
+## 2026-06-04 (cycle ABCD — R-4 상수화 + JEDEC 가드 + fingerprint + stale 정정)
+
+### 환경 정정 (직전 cycle 의 "ansible 미설치" stale)
+- `import ansible` → **2.19.9 설치 확인**. pytest 로 Python 모듈/필터/플러그인 검증 가능.
+- `ansible-playbook` CLI 는 PATH 부재 (rc=127) → playbook syntax-check/런타임은 Jenkins Agent 위임 (변동 없음).
+
+### 신규 테스트 (+5)
+- `tests/unit/test_jedec_drift_guard.py` 신규 5 (AR-2): `jedec_mapper.JEDEC_MAP` ↔ `redfish_gather._JEDEC_VENDORS` 정규화 후 공유키 동일 + 내부 self-consistency + B⊆A 방향성 (4) + `VENDOR_NAME_NORMALIZATION` 두 채널 mirror 가드 (1, AR-2 완결). cross-channel memory.manufacturer drift 차단.
+
+### 변경 (동작보존)
+- `redfish-gather/library/redfish_gather.py` (R-4): 매직넘버 9 사이트 → 명명 상수 (`BYTES_PER_GB_DECIMAL`/`BYTES_PER_MIB`/`MIB_PER_GIB`/`MBPS_PER_GBPS`) + `_VOLUMETYPE_RAID_MAP` module-level hoist. HTTP-status/auth 경로 미변경.
+- `scripts/ai/check_project_map_drift.py`: fingerprint 를 git ls-files **경로 집합** 기반으로 결정론화 (CRLF/pyc/untracked + **내용 편집** 면역 — 파일 추가·삭제·이름변경 등 구조 변경만 추적).
+
+### 회귀 결과
+- pytest **705 PASS / 1 skip / 2 fail** (vendor-name mirror 가드 +1 포함). 2 fail = `tests/e2e_browser/test_jenkins_master.py` (내부망 `10.100.64.152:8080` Playwright — 외부망 환경 제약, 변경 무관). `--ignore=tests/e2e_browser` 시 **705 PASS / 0 fail**.
+- A 영향 영역 집중 (storage/volume/capacity/memory/jedec/network/csus/multi_node): **112 PASS**.
+- py_compile: `redfish_gather.py` / `test_jedec_drift_guard.py` / `check_project_map_drift.py` OK.
+- 잔여 매직넘버 grep: 0 (정의부 제외). 잔여 `raid_map`(lowercase): 0.
+
+### 적대적 검증 (workflow 3 스켑틱 — ultracode)
+- **단위 상수 (A)**: `behavior_preserved`, 이슈 0. 200만 값 empirical sweep 으로 `round(x/1e9,2)==round(x/1_000_000_000,2)` bit-identical 확인 (int 상수 ↔ float 리터럴 등가). decimal↔binary 무교환 / `/`·`//`·`*` 연산자 보존 / MBPS 미병합.
+- **raid_map hoist (A)**: `behavior_preserved`, 이슈 0. 키·값 정확 / 변이(.update/.pop/del) 0 / `.get()` RAIDType-first 단락 동일.
+- **JEDEC 가드 (B)**: `behavior_preserved` (가드 유효 — 단일 테이블 변조 시 FAIL 입증, vacuous-pass 경로 없음). LOW 1: docstring 과장 → byte-INDEX 도출 모델로 정밀화 (입력 수용 경계 A≥4자/B≥2자 차이는 value drift 아님 명시).
+
+### 연속 작업 (stat 리프레시 + fingerprint path-set + AR-2 완결)
+- 실측 정정: redfish_gather.py 3812→3830줄 (R-4 +18) / test_*.py 42·375→46·421 (jedec 4 + vendor-name 1 + redfish 순수헬퍼 21 + adapter 점수 16). fixtures 353 json · adapter 42·31 · 9 vendor · baseline 9 정확 유지. historical(AUDIT/CURRENT_STATE 2026-05-29) 보존.
+- fingerprint OID→경로집합 정밀화 (내용 편집에도 drift 0 — commit 후 drift clean 입증).
+- `tests/unit/test_redfish_pure_helpers.py` 신규 21: `_safe`/`_safe_int`/`_removeprefix`/`_strip_or_none`/`_canonical_vendor_name`/`_normalize_jedec` 특성화 (이전 0 커버 — rule 96 robustness 보호). 전부 현재 동작과 일치 (버그 0).
+- `tests/unit/test_adapter_scoring.py` 신규 16: `adapter_score` 공식(priority×1000+spec×10+match) 우세관계 + 불일치 -9999 disqualify + `normalize_vendor`(G7 trailing-dot) + `pattern_match_any`(invalid-regex fallback) + specificity 고정 (rule 12 R2 / 50 R3 계약). 버그 0.
+- commit: ABCD `6cf40e3b` / stat `43099d96` / vendor-name 가드 `02a014a9` / 순수헬퍼 `407d31ce` / adapter 점수 (본 commit).
+
+## 2026-05-29 (cycle audit-cleanup — 전수 audit + 안전 정리)
+
+### 신규 테스트 (+4)
+- `tests/regression/test_csus_mock_consistency.py` 신규 4: CSUS mock baseline 자기 일관성 가드 (summary 카운트 == list 길이 / representative == partitions[0] / multi_node enabled+layout / mock 표식 유지 — 실측 교체 시 skip).
+
+### 변경
+- `tests/regression/conftest.py`: CSUS registry 라벨 `hpe_csus_3200_redfish` → `hpe_csus_3200_redfish_MOCK` (실측 4 + mock 1 명시). `test_cross_channel_consistency.py:232` 주석 동기화.
+- dead code 제거 후 영향 영역 회귀 (diagnosis/adapter/filter/precheck 206 + full 699).
+
+### 회귀 결과
+- pytest **703 PASS / 0 FAIL** (699 + CSUS 가드 4).
+- `verify_harness_consistency` PASS (rules 28 / skills 51 / agents 60 / policies 10), `verify_vendor_boundary` PASS, `check_project_map_drift` (fingerprint 갱신).
+- py_compile: `redfish_gather.py` / `diagnosis_mapper.py` / `adapter_common.py` OK.
+- 환경 제약: ansible 미설치 → `ansible-playbook --syntax-check` 미실행 (rule 24 R1 환경 제약 명시). ansible YAML 동작 변경은 미적용 (AUDIT-2026-05-29.md 로 위임).
+
 ## 2026-05-29 (cycle hba-ib-csus — CSUS 3200 전 공통 섹션 + HBA/InfiniBand 전 채널)
 
 ### 신규 테스트 (+14)
@@ -564,7 +654,7 @@
 - 2차 (fix 후): 4 vendor 정상 envelope 13 필드. precheck OK / detect_vendor OK / adapter 자동 선택 OK / collect 401 → rescue → 13 필드 envelope.
 - curl 자격 검증 (자격 transcript 노출 0): ServiceRoot 4 vendor HTTP 200 / vault primary+recovery 모두 HTTP 401 → vault ↔ BMC sync 안 됨 (OPS-3 우선순위 격상).
 - redfish 공통계정 자동 생성 (P2 account_service): recovery 자격 fail로 진입 미발생 (의도된 동작) → cycle-015 이월.
-- Evidence: `tests/evidence/cycle-014/README.md` + 4 log + `docs/ai/harness/cycle-014.md`
+- Evidence: `tests/evidence/cycle-014/README.md` + 4 log + `docs/ai/archive/harness/cycle-014.md`
 - Git: main `bf247266` push 완료.
 
 ---
@@ -590,7 +680,7 @@
 - 결과: 정적 검증 4/4 PASS. 도메인 코드 변경 없음 (catalog/문서만), 회귀 영향 없음.
 - Baseline 갱신: 없음.
 - Git: feature/3channel-expansion 3 commit (`0150fa2e` / `57745bd1` / `b1d8014c`) push 완료. main 머지는 OPS-8 (rule 93 R2 사용자 명시 승인) 대기.
-- Evidence: `docs/ai/harness/cycle-012.md` (cycle-012 보존), `docs/ai/harness/cycle-013.md` (본 cycle 보고서), `docs/ai/decisions/ADR-2026-04-29-vault-encrypt-adoption.md`, `docs/ai/handoff/2026-04-29-cycle-013.md`, `docs/ai/archive/README.md`
+- Evidence: `docs/ai/archive/harness/cycle-012.md` (cycle-012 보존), `docs/ai/archive/harness/cycle-013.md` (본 cycle 보고서), `docs/ai/decisions/ADR-2026-04-29-vault-encrypt-adoption.md`, `docs/ai/archive/handoff/2026-04-29-cycle-013.md`, `docs/ai/archive/README.md`
 
 ### Phase 3 추가 작업 (본 응답 후반)
 
@@ -649,7 +739,7 @@
   - `ansible-playbook --syntax-check` → SKIP (Windows 메인 환경 제약)
 - 결과: 정적 검증 4/5 PASS + 1 SKIP (환경 제약)
 - Baseline 갱신: 없음 (T3-04는 schema 영향 없음)
-- Evidence: `docs/ai/harness/cycle-010.md`
+- Evidence: `docs/ai/archive/harness/cycle-010.md`
 
 ---
 
@@ -724,7 +814,7 @@
   - `verify_vendor_boundary.py` (sweep 전 PASS)
   - `check_project_map_drift.py` (sweep 전 PASS)
   - `scan_suspicious_patterns.py` (sweep 전 PASS)
-- 결과: full-sweep 보고서 `docs/ai/harness/full-sweep-2026-04-28.md` 참조
+- 결과: full-sweep 보고서 `docs/ai/archive/harness/full-sweep-2026-04-28.md` 참조
 - 회귀: docs/rule/policy/code 정합 변경 — 영향 vendor baseline 회귀 별도 결정 필요
 
 ## 2026-04-28 — full-sweep 잔여 (T2-B2 / T2-C2 / T2-C8) 적용

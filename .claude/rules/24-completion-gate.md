@@ -47,7 +47,7 @@
 - **Default**: 작업 영향에 따라 다음 갱신 (rule 70 R1 매핑)
   - `docs/ai/CURRENT_STATE.md` (코드/구조/규칙 변경 시)
   - `docs/ai/catalogs/TEST_HISTORY.md` (테스트 실행 시)
-  - 영향 `docs/01~19` (정본 변경 시)
+  - 영향 `docs/01~23` (정본 변경 시)
   - 영향 ADR (`docs/ai/decisions/ADR-*.md`, 결정 있을 시)
 - **Allowed**: 영향 없는 항목은 skip 가능. 단 "X 영향 없음" 명시
 - **Forbidden**: 코드 변경 + 문서 갱신 누락

@@ -8,7 +8,7 @@
 ## 현재 관찰된 현실
 
 - 10 sections (system / hardware / bmc / cpu / memory / storage / network / firmware / users / power)
-- field_dictionary.yml: **39 Must + 29 Nice + 6 Skip = 74 entries** (실측 2026-05-01 cycle-018, 16 section prefixes — cycle-006 base 46 + 19 진화 — 2026-05-29 재실측)
+- field_dictionary.yml: **39 Must + 38 Nice + 6 Skip = 83 entries** (실측 2026-05-01 cycle-018, 16 section prefixes — cycle-006 base 46 + 19 진화 — 2026-05-29 재실측)
 - baseline_v1: vendor별 회귀 기준선
 - Jenkins Stage 3 (Validate Schema) + Stage 4가 FAIL 게이트
   (Stage 4는 pipeline별 다름 — `Jenkinsfile`=E2E Regression / `Jenkinsfile_portal`=Callback, 정본은 rule 80 R1-A. cycle-015에서 `Jenkinsfile_grafana` 제거)
@@ -76,7 +76,7 @@
   - `schema/field_dictionary.yml` (Must/Nice/Skip 분류)
   - `common/tasks/normalize/build_status.yml` (status 판정 규칙 — M-A3 정본)
 - **Allowed**: 변경이 cosmetic (주석 / 들여쓰기) 시 docs/20 갱신 skip 가능. 단 commit 메시지 명시 ("docs/20 동기화 불필요 — cosmetic only")
-- **Forbidden**: envelope 13 필드 / sections 10 / field_dictionary 74 의 의미 변경 + docs/20 갱신 누락
+- **Forbidden**: envelope 13 필드 / sections 10 / field_dictionary 83 의 의미 변경 + docs/20 갱신 누락
 - **Why**: 호출자 시스템이 docs/20 을 정본 reference 로 사용. 정본 코드 변경 시 docs/20 stale → 호출자 파싱 오류 + 사용자 의심 (cycle 2026-05-06 M-A 사용자 질문 — "errors success 모순" 의심 발생)
 - **재검토**: docs/20 자동 동기화 hook (`pre_commit_docs20_sync_check.py`) 도입 시 advisory → blocking 격상
 

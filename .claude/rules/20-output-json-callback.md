@@ -24,7 +24,7 @@
   "collection_method": "ansible | redfish | vmware",
   "ip": "<service_ip | bmc_ip>",
   "hostname": "<resolved hostname or ip>",
-  "vendor": "dell | hpe | lenovo | supermicro | cisco | null",
+  "vendor": "dell | hp | hpCsus | lenovo | supermicro | cisco | null",
   "status": "success | partial | failed",
   "sections": { "system": "supported", "cpu": "not_supported", ... },
   "diagnosis": { "precheck": {...}, "gather_mode": "...", "details": [...] },
@@ -37,6 +37,7 @@
 
 - **Forbidden**: 13 필드 외 추가, envelope 형식 변경
 - **Why**: 호출자 시스템 계약 안정성. 분석 6 카테고리(status/sections/data/errors/meta/diagnosis) + 라우팅 5 메타(target_type/collection_method/ip/hostname/vendor) + 추적 2(correlation/schema_version).
+- **vendor 출력 표시값 (2026-06-04 ADR)**: `vendor` 값은 내부 canonical(`hpe` 등)을 `common/vars/vendor_aliases.yml` 의 `vendor_output_display`/`adapter_output_display` 로 매핑한 **호출자 노출 표시값**. HPE 계열→`hp`, HPE CSUS 3200(`adapter_id=redfish_hpe_csus_3200`)→`hpCsus`. 내부 라우팅(adapter/vault/OEM/account)은 canonical 유지. 정본: `docs/ai/decisions/ADR-2026-06-04-vendor-output-display.md`.
 
 ### R2. callback_plugins/json_only.py 보호
 

@@ -480,8 +480,14 @@
         logical_threads: >-
           {%- set s = (_rf_d_cpus | map(attribute='total_threads') | select | list | sum) if _rf_d_cpus else 0 -%}
           {{ s if s else (_rf_d_system.cpu_summary | default({})).logical_processor_count | default(none) }}
+        # BUG-C fix (2026-06-04, HP CSUS 3200): per-processor list 가 비면 (Superdome/CSUS
+        # partition System 은 /Processors drill-in 부재 — sdflexutils system.json 실측:
+        # Processors/Memory/Storage/EthernetInterfaces sub-collection 부재, ProcessorSummary 만 존재)
+        # System.ProcessorSummary.Model fallback. Additive — 정상 vendor 는 per-proc 우선.
+        # (sockets/cores/threads 는 이미 BUG-13 fallback 존재 — 위 473~482. model 만 누락이었음.)
         model: >-
-          {{ _rf_d_cpus | map(attribute='model') | select | list | first | default(none) }}
+          {%- set _m = _rf_d_cpus | map(attribute='model') | select | list | first | default(none) -%}
+          {{ _m if _m else (_rf_d_system.cpu_summary | default({})).model | default(none) }}
         max_speed_mhz: >-
           {{ _rf_d_cpus | map(attribute='speed_mhz') | select | list | first | default(none) }}
         architecture: >-

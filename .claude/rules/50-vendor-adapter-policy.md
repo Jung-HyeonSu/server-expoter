@@ -30,6 +30,7 @@
   | Supermicro | "Supermicro", "Super Micro Computer", "SMCI" | supermicro | AMI MegaRAC |
   | Cisco | "Cisco Systems", "Cisco" | cisco | CIMC |
 - **Allowed**: `_FALLBACK_VENDOR_MAP` (redfish_gather.py)는 vendor_aliases.yml 로드 실패 시 fallback. 두 위치 동기화 의무 (rule 22 R5와 같은 정신)
+- **Allowed (출력 표시값 — 2026-06-04 ADR)**: 위 `normalized` 는 **내부 canonical** (adapter/vault/OEM/account 라우팅 키). 호출자에게 노출되는 envelope `vendor` 값은 `vendor_aliases.yml` 의 `vendor_output_display`(예: `hpe→hp`) + `adapter_output_display`(예: `redfish_hpe_csus_3200→hpCsus`) 로 매핑한 **표시값**. 표시값과 canonical 분리 — 표시값 변경이 라우팅에 영향 없음. 정본: `docs/ai/decisions/ADR-2026-06-04-vendor-output-display.md`
 - **Forbidden**: vendor 분기 코드에서 alias 직접 비교 (`if manufacturer == "Dell Inc."`)
 - **Why**: alias 변형이 펌웨어/모델별로 다양 (mark dot 누락 등). 정규화 정본 1곳에서 관리해야 신뢰
 - **재검토**: BMC 표준 manufacturer 표기 합의 시

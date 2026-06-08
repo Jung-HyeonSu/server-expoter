@@ -53,6 +53,6 @@
 ## Reference
 
 - `docs/19_decision-log.md` — 2026-05-01 신규 vendor 4종 도입 결정
-- `docs/ai/tickets/2026-05-01-gather-coverage/fixes/F44.md` — 본 vendor cold-start ticket
+- ticket F44 (cycle 2026-05-01 — git history) — 본 vendor cold-start ticket
 - Huawei iBMC 공식 docs: support.huawei.com
 - Huawei-iBMC-Cmdlets (vendor 공식 GitHub): https://github.com/Huawei/Huawei-iBMC-Cmdlets

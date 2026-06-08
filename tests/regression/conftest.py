@@ -27,8 +27,11 @@ BASELINE_REGISTRY: list[tuple[str, str, str, str]] = [
     ("hpe_redfish", "redfish", "redfish_api", "hpe_baseline.json"),
     ("lenovo_redfish", "redfish", "redfish_api", "lenovo_baseline.json"),
     ("cisco_redfish", "redfish", "redfish_api", "cisco_baseline.json"),
-    # cycle 2026-05-29 (hba-ib-csus): CSUS 3200 현실 mock baseline 을 envelope 회귀에 포함.
-    ("hpe_csus_3200_redfish", "redfish", "redfish_api", "hpe_csus_3200_baseline.json"),
+    # cycle 2026-05-29 (hba-ib-csus): CSUS 3200 은 lab 부재 — 아래는 FABRICATED MOCK (실장비 미검증).
+    # envelope SHAPE 회귀에만 포함 (multi_node 구조 검증용). 실측 baseline 아님 (rule 25 R7-B).
+    # 내부 일관성 가드: tests/regression/test_csus_mock_consistency.py
+    # C1 사이트 fixture 캡처 후 실측 baseline 으로 교체 의무 (NEXT_ACTIONS / rule 96 R1-C).
+    ("hpe_csus_3200_redfish_MOCK", "redfish", "redfish_api", "hpe_csus_3200_baseline.json"),
     ("ubuntu_os", "os", "agent", "ubuntu_baseline.json"),
     ("windows_os", "os", "agent", "windows_baseline.json"),
     ("rhel810_raw_fallback_os", "os", "agent",

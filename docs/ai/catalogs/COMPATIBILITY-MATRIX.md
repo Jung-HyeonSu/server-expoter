@@ -2,7 +2,7 @@
 
 > rule 28 R1 #12 측정 대상 (TTL 14일). cycle 2026-05-07-all-vendor-coverage Phase 3 M-L3 갱신.
 >
-> 정본 위치 이동: `docs/ai/tickets/2026-05-07-all-vendor-coverage/COMPATIBILITY-MATRIX.md` (cycle 진입 baseline, 보존) → `docs/ai/catalogs/COMPATIBILITY-MATRIX.md` (cycle 종료 결과, 본 파일).
+> 정본 위치 이동: git history (cycle 2026-05-07 진입 baseline) (cycle 진입 baseline, 보존) → `docs/ai/catalogs/COMPATIBILITY-MATRIX.md` (cycle 종료 결과, 본 파일).
 
 ---
 
@@ -174,7 +174,7 @@ cycle 2026-05-07 Phase 2 신설 helper 7종 (`redfish_gather.py` +338 lines, std
 
 ## 관련
 
-- ticket: `docs/ai/tickets/2026-05-07-all-vendor-coverage/COMPATIBILITY-MATRIX.md` (cycle 진입 baseline 보존)
+- ticket: git history (cycle 2026-05-07 진입 baseline) (cycle 진입 baseline 보존)
 - rule 13 R4 (baseline 실측 기반)
 - rule 28 R1 #12 (COMPATIBILITY-MATRIX 측정 대상)
 - rule 50 R2 (vendor 추가 9단계 + 단계 10 lab 부재)

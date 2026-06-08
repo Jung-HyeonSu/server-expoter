@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
 """PROJECT_MAP fingerprint drift 체크.
 
-`.claude/policy/project-map-fingerprint.yaml`에 baseline 파일/디렉터리 SHA-1 카운트를 기록.
+`.claude/policy/project-map-fingerprint.yaml`에 baseline 디렉터리별 SHA-1을 기록.
 실제 저장소와 비교하여 drift 감지.
+
+fingerprint는 **git 추적 파일의 경로 집합(정렬된 파일 목록)** 을 해싱한다. 따라서:
+- 줄바꿈(LF/CRLF, autocrlf) 차이에 영향받지 않음 — 파일 내용을 보지 않음
+- `__pycache__/*.pyc`, untracked 로컬 파일에 영향받지 않음 — git 추적 파일만 대상
+- 파일 내용 편집에도 반응하지 않음 — PROJECT_MAP 은 구조 문서이므로 내용 변경 시 갱신 불요
+- **구조 변경만 추적** — 파일/디렉터리 추가·삭제·이름변경 (rule 28 R1 #2 목적과 정합)
+
+git 사용 불가 환경에서는 디스크 rglob 경로 fallback.
 
 Exit codes:
     0 = 일치 (drift 없음)
@@ -18,9 +26,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import subprocess
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional, Tuple
 
 
 WATCHED_DIRS = [
@@ -38,19 +47,65 @@ WATCHED_DIRS = [
 ]
 
 
-def fingerprint_dir(d: Path) -> str:
-    """디렉터리 안의 파일 경로/크기 list를 SHA-1로 해싱."""
+def _git_ls_files_staged(repo_root: Path, subdir: str) -> Optional[List[Tuple[str, str]]]:
+    """git index의 <subdir> 추적 파일을 (경로, blob OID) list로 반환.
+
+    git 사용 불가(미설치 / 비 git 디렉터리) 시 None.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(repo_root), "ls-files", "-s", "--", subdir],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+        return None
+    entries: List[Tuple[str, str]] = []
+    for line in proc.stdout.splitlines():
+        # 형식: "<mode> <oid> <stage>\t<path>"
+        if "\t" not in line:
+            continue
+        meta, path = line.split("\t", 1)
+        parts = meta.split()
+        if len(parts) >= 2:
+            entries.append((path, parts[1]))
+    return entries
+
+
+def _fingerprint_dir_disk(d: Path) -> str:
+    """fallback: 디스크 rglob 경로 집합 기반 (git 불가 환경).
+
+    내용/크기를 보지 않고 파일 경로만 해싱 (구조 변경만 추적). 단 git 부재라
+    __pycache__/untracked 도 포함될 수 있어 git 경로보다 noise 여지 있음 (degraded).
+    """
     if not d.is_dir():
         return "missing"
     h = hashlib.sha1()
     for f in sorted(d.rglob("*")):
         if f.is_file():
             try:
-                rel = f.relative_to(d).as_posix()
-                size = f.stat().st_size
-                h.update(f"{rel}:{size}\n".encode("utf-8"))
+                h.update(f"{f.relative_to(d).as_posix()}\n".encode("utf-8"))
             except Exception:
                 pass
+    return h.hexdigest()[:12]
+
+
+def fingerprint_dir(repo_root: Path, subdir: str) -> str:
+    """디렉터리의 git 추적 파일 경로 집합을 SHA-1로 해싱 (구조 변경만 추적).
+
+    경로 목록만 해싱하므로 줄바꿈(CRLF/LF) 차이, __pycache__/.pyc, untracked
+    로컬 파일, **파일 내용 편집** 에 영향받지 않는다 — 파일/디렉터리 추가·삭제·
+    이름변경에만 반응. git 사용 불가 시 디스크 rglob 경로 fallback.
+    """
+    entries = _git_ls_files_staged(repo_root, subdir)
+    if entries is None:
+        return _fingerprint_dir_disk(repo_root / subdir)
+    if not entries and not (repo_root / subdir).is_dir():
+        return "missing"
+    h = hashlib.sha1()
+    for path, _oid in sorted(entries):
+        h.update(f"{path}\n".encode("utf-8"))
     return h.hexdigest()[:12]
 
 
@@ -86,7 +141,7 @@ def main() -> int:
     repo_root = Path(args.repo_root).resolve()
     fp_path = repo_root / ".claude" / "policy" / "project-map-fingerprint.yaml"
 
-    current = {d: fingerprint_dir(repo_root / d) for d in WATCHED_DIRS}
+    current = {d: fingerprint_dir(repo_root, d) for d in WATCHED_DIRS}
 
     if args.update:
         fp_path.parent.mkdir(parents=True, exist_ok=True)

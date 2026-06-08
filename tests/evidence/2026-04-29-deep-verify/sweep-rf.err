@@ -1,8 +1,0 @@
-[ERROR]: Could not find or access '/common/tasks/normalize/init_fragments.yml' on the Ansible Controller: Unable to retrieve file contents.
-Could not find or access '/common/tasks/normalize/init_fragments.yml' on the Ansible Controller.
-If you are using a module and expect the file to exist on the remote, see the remote_src option: [Errno 2] No such file or directory: '/common/tasks/normalize/init_fragments.yml'
-
-[ERROR]: Could not find or access '/common/tasks/normalize/build_failed_output.yml' on the Ansible Controller: Unable to retrieve file contents.
-Could not find or access '/common/tasks/normalize/build_failed_output.yml' on the Ansible Controller.
-If you are using a module and expect the file to exist on the remote, see the remote_src option: [Errno 2] No such file or directory: '/common/tasks/normalize/build_failed_output.yml'
-

@@ -6,7 +6,7 @@
 
 ## 목적
 
-`schema/field_dictionary.yml` 74 entries (Must 39 + Nice 29 + Skip 6) 각 필드가 9 baseline (실장비 회귀 기준선) 에서 **실제로 어떻게 채워지는가** 를 자동 측정한 매트릭스. 호출자 시스템 / 운영자 / 개발자가 어느 필드가 의미 있게 수집되는지 한눈에 파악. (2026-05-29 measure_field_usage_matrix.py 재생성)
+`schema/field_dictionary.yml` 83 entries (Must 39 + Nice 38 + Skip 6) 각 필드가 9 baseline (실장비 회귀 기준선) 에서 **실제로 어떻게 채워지는가** 를 자동 측정한 매트릭스. 호출자 시스템 / 운영자 / 개발자가 어느 필드가 의미 있게 수집되는지 한눈에 파악. (2026-05-29 measure_field_usage_matrix.py 재생성)
 
 본 매트릭스는 다음 3 분류 cycle 의 input:
 1. **정말 수집 불가** (외부 시스템 spec 미제공) → `field_dictionary.yml` channel 배열 축소

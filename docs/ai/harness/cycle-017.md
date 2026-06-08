@@ -8,7 +8,7 @@
 
 ## 진입 컨텍스트
 
-cycle 2026-05-01 종료 ticket `docs/ai/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md` 의 B1~B8 부족 + D 신규 후보 + E 권한 완화. 사용자 명시 "남겨두지말고 모두" → 일괄 적용.
+cycle 2026-05-01 종료 ticket `docs/ai/archive/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md` 의 B1~B8 부족 + D 신규 후보 + E 권한 완화. 사용자 명시 "남겨두지말고 모두" → 일괄 적용.
 
 ## 적용 결과 매트릭스
 
@@ -97,7 +97,7 @@ docs/ai/harness/cycle-017.md                             (본 보고서)
 .claude/policy/surface-counts.yaml                       (57→59 / 43→48 / 18→21)
 .claude/policy/project-map-fingerprint.yaml              (8 모듈 재baseline)
 redfish-gather/library/redfish_gather.py                 (_endpoint_with_fallback 추가)
-docs/ai/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md  (G절 — 적용 결과)
+docs/ai/archive/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md  (G절 — 적용 결과)
 docs/ai/NEXT_ACTIONS.md                                  (상단 entry 추가)
 ```
 

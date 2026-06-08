@@ -8,7 +8,6 @@
 # 사용법 (Ansible task):
 #   - set_fact:
 #       _diagnosis: "{{ precheck_result | build_diagnosis('redfish', 'dell_idrac9') }}"
-#       _diagnosis_errors: "{{ precheck_result | build_errors_from_diagnosis }}"
 # ==============================================================================
 
 from __future__ import absolute_import, division, print_function
@@ -67,35 +66,10 @@ def build_diagnosis(precheck_result, channel, adapter_id=None):
     }
 
 
-def build_errors_from_diagnosis(precheck_result):
-    """
-    precheck_bundle 실패 결과를 errors 목록으로 변환합니다.
-
-    Args:
-        precheck_result: precheck_bundle 모듈의 반환값
-
-    Returns:
-        errors list — 실패 시 [{section, message, detail}], 성공 시 []
-    """
-    # production-audit: None / non-dict 입력 방어 (build_diagnosis와 동일 정책)
-    if not isinstance(precheck_result, dict):
-        return []
-    failure_reason = precheck_result.get("failure_reason")
-    if not failure_reason:
-        return []
-
-    return [{
-        "section": "diagnosis",
-        "message": failure_reason,
-        "detail": precheck_result.get("detail"),
-    }]
-
-
 class FilterModule(object):
     """Ansible filter plugin for diagnosis mapping"""
 
     def filters(self):
         return {
             "build_diagnosis": build_diagnosis,
-            "build_errors_from_diagnosis": build_errors_from_diagnosis,
         }

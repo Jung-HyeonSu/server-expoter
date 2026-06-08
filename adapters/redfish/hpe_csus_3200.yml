@@ -46,11 +46,15 @@
 # ──────────────────────────────────────────────────────────────────────────────
 adapter_id: redfish_hpe_csus_3200
 channel: redfish
-priority: 96
-# priority 차등 (rule 12 R2 일관성):
-#   iLO 7 (120) > iLO 6 (100) > CSUS 3200 (96) > Superdome Flex (95) > iLO 5 (90) > iLO 4 (50) > generic (10)
-#   model_patterns 우선 매치 — 일반 ProLiant 는 iLO 5/6/7 자동 선택, CSUS 3200 모델은 본 adapter 우선.
-#   Superdome Flex (95) ↔ CSUS 3200 (96): 모델 regex 분리 — Flex 는 "Superdome Flex", CSUS 는 "Compute Scale-up Server 3200".
+priority: 102
+# priority 차등 (rule 12 R2 일관성) — cycle 2026-06-04 (HP CSUS 3200 사이트 사고) 갱신:
+#   iLO 7 (120) > CSUS 3200 (102) = Superdome Flex (101) > iLO 6 (100) > iLO 5 (90) > iLO 4 (50) > generic (10)
+#   변경 이유: hpe_ilo6 (priority=100) 은 model_patterns 부재라 절대 실격되지 않음 → 구 CSUS(96) 가
+#     모델("Compute Scale-up Server 3200")을 매치해도 priority 로 패배 (사이트 실측: vendor=hp 로 오선택).
+#     scale-up 2 종을 iLO 6(100) 위로 올려 모델 매치가 firmware-only catch-all 을 이기게 함.
+#   정상 ProLiant 는 scale-up model_patterns 미매치 → 실격되어 iLO 5/6/7 자동 선택 (무회귀 — 검증 C1).
+#   Superdome Flex (101) ↔ CSUS 3200 (102): 모델 regex 분리 (Flex 는 "Superdome Flex", CSUS 는 "Compute Scale-up Server 3200").
+#   사용자 승인 2026-06-04. ADR-2026-06-04-csus-adapter-priority.
 
 match:
   vendor: ["HPE", "Hewlett Packard Enterprise"]
