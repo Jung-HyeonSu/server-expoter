@@ -76,4 +76,4 @@ mock-derived baseline 의 필수 marker (양쪽 모두):
 | `tests/evidence/` | Round 단위 검증 결과 |
 | [`../../docs/09_output-examples.md`](../../docs/09_output-examples.md) | 채널별 응답 실제 예시 |
 | [`../../docs/13_redfish-live-validation.md`](../../docs/13_redfish-live-validation.md) | 실장비 검증 라운드 |
-| [`../../docs/20_json-schema-fields.md`](../../docs/20_json-schema-fields.md) | envelope 13 필드 + 65 필드 의미 사전 |
+| [`../../docs/20_json-schema-fields.md`](../../docs/20_json-schema-fields.md) | envelope 13 필드 + 83 필드 의미 사전 |
