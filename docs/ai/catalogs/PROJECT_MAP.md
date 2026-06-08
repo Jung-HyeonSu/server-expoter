@@ -39,7 +39,8 @@ server-exporter/
 │   └── redfish_dmtf_2026.1/ # DMTF DSP8010 2026.1 subset (28 리소스 json-schema reference, rule 96 대조용)
 ├── tests/
 │   ├── redfish-probe/       # probe_redfish.py + deep_probe_redfish.py
-│   ├── fixtures/            # 380 실장비 JSON (회귀 input)
+│   ├── integration/         # HPE iLO 에뮬레이터 record/replay 오프라인 회귀 하네스
+│   ├── fixtures/            # 395 JSON (실장비 380 + HPE 에뮬레이터 15) (회귀 input)
 │   ├── baseline_v1/         # 회귀 기준선
 │   ├── evidence/            # Round 검증 결과
 │   ├── scripts/             # conditional_review.py + os_esxi_verify.sh

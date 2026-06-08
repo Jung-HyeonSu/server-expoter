@@ -2,6 +2,28 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-08 (에뮬레이터 하네스 견고화 — 멀티에이전트 재검토 후)
+
+37-에이전트 5차원 적대적 재검증 후 확정 갭 보강 (전부 tests/ + 문서, 프로덕션 코드 0).
+
+### 신규/변경 테스트
+- `tests/integration/test_hpe_emulator_replay.py` +5 메서드/함수:
+  test_memory_total_mib / test_firmware_non_empty / test_bmc_firmware_version /
+  test_fc_hbas_present(FC fixture keyed) / test_hermetic_guard_is_active(메타).
+- `tests/integration/conftest.py`: autouse `_hermetic_network_guard` — 비-live 중
+  `rg.urlreq.urlopen` raise 로 "네트워크 0" 불변식 강제.
+- `emulator_harness.py` GOLDEN_KEYS += error_count → 5 golden 에 error_count:0 편입.
+- `.gitattributes`(fixtures *.json eol=lf) + capture writer newline="\n".
+
+### 회귀 결과
+- `pytest tests/integration/` → **44 passed / 4 skipped** (live 1 + FC-skip 3). 가드 self-test PASS.
+- 전체 `pytest tests/ --ignore=tests/e2e_browser` → **815 passed / 4 skipped** (10.5s). 기존 797/1 → +18/+3.
+- py_compile 4 파일 / fingerprint --update 후 drift 0 / git add --renormalize.
+
+### stale 수치 정정 (rule 28/70 R2)
+- CLAUDE.md / rule 00-core-repo / PROJECT_MAP: fixtures 380→395 (실장비 380 + 에뮬레이터 15,
+  rule 25 R7-B 라벨), test_*.py 48파일/445함수 → 49파일/462함수. PROJECT_MAP fingerprint 갱신.
+
 ## 2026-06-08 (HPE iLO 에뮬레이터 오프라인 회귀 하네스)
 
 ### 신규 테스트 (+26 / +1 skip)

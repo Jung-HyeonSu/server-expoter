@@ -73,6 +73,41 @@ HBA/FC 스토리지 경로는 실장비 검증 0. 에뮬레이터로 이 코드 
 `python tests/integration/capture_emulator.py --mockup <X> --captured <YYYY-MM-DD>` 로
 golden 재생성.
 
+## 견고화 라운드 (2026-06-08, 멀티에이전트 재검토 후)
+
+사용자 요청으로 본 작업 전체를 37-에이전트 5차원 적대적 워크플로(하네스 충실도 / 테스트
+견고성 / 규칙·문서 정합 / 주장 실측 / 견고화)로 재검증. **모든 주장(797 pass, 오프라인,
+결정성, 프로덕션 코드 무변경, rule 21 준수)은 적대적 재현으로 전부 사실 확인.** 확정된
+견고화/정합 갭을 다음과 같이 보강 (전부 tests/ + 문서, 프로덕션 코드 무변경):
+
+- **hermetic 가드 (conftest autouse)**: 비-live 테스트 중 `rg.urlreq.urlopen` 을 raise 로
+  차단 → "오프라인 / 네트워크 0" 불변식을 convention → enforced assertion 으로 격상.
+  `_probe_realm_hint` 등 replay seam 우회 직접 urlopen 경로가 미래에 활성화되면 즉시 검출.
+  가드 자체 회귀 방지 메타테스트(`test_hermetic_guard_is_active`) 추가.
+- **error_count golden 편입**: `GOLDEN_KEYS` 에 `error_count` 추가 + 5 golden 에 실측값 0
+  기입 → "에러 0건이 silent 하게 늘어나는" 회귀 탐지.
+- **타깃 의미 assertion 보강**: memory.total_mib>0 / firmware 비어있지 않음 /
+  bmc.firmware_version 추출 / FC HBA(WWPN) — FC fixture(dl325_fc + dl365) 이름 keyed
+  (golden-laundering 방어). 검증자 교정 반영('iLO' 부분문자열 금지 — Gen12 미포함, FC 는 2 fixture).
+- **EOL 결정화**: `.gitattributes`(`tests/fixtures/**/*.json text eol=lf`) + capture writer
+  `newline="\n"` → 기여자 autocrlf 무관 golden 재생성 diff 노이즈 차단.
+- **stale 수치 정정 (rule 28/70)**: CLAUDE.md / rule 00 / PROJECT_MAP 의 fixtures 380→395
+  (실장비 380 + 에뮬레이터 15, rule 25 R7-B 라벨), test 48파일/445→49파일/462. PROJECT_MAP
+  fingerprint `--update`.
+
+### 견고화 후 검증 (✅ 확인층)
+- ✅ `pytest tests/integration/` → **44 passed / 4 skipped** (live 1 + FC-skip 3). 가드 self-test 통과.
+- ✅ 전체 `pytest tests/ --ignore=tests/e2e_browser` → **815 passed / 4 skipped** (10.5s). 무회귀.
+- ✅ py_compile 4 파일 / git add --renormalize / fingerprint drift 0.
+
+### 검토에서 의도적으로 보류한 항목 (검증자 판정)
+- **Jenkins CI 편입** (medium): Jenkinsfile 은 보호 경로(rule 80, CLAUDE.md 절대금지 #2) →
+  자율 편집 금지. 사용자 승인 후 진행 (NEXT_ACTIONS 등재).
+- **CURRENT_STATE/evidence ✅ 이모지** (uncertain): 전역 verification.md 가 ✅/⚠️/❌ 3상태를
+  강제하고 CURRENT_STATE 가 이미 ✅ 컨벤션 → 부분 치환은 파일 내부 일관성 악화. 거버넌스
+  결정(ADR) 전까지 현 상태 유지.
+- **main() list(set()) → sorted()** (info): 프로덕션 cosmetic 변경 + 게이트 유발 → 보류.
+
 ## 후속 (실장비 — 여전히 PENDING)
 
 에뮬레이터는 실장비 검증을 대체 못함. iLO5/iLO6/Gen12 실장비 캡처 + baseline 은

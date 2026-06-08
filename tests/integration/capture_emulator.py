@@ -78,14 +78,18 @@ def main() -> int:
     out_dir = FIXTURE_ROOT / f"hpe_emulator_{args.mockup.lower()}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # newline="\n": autocrlf / 플랫폼 무관하게 LF 로 기록 → golden 재생성 시 EOL
+    # diff 노이즈 차단 (.gitattributes 와 이중 안전).
     (out_dir / "recording.json").write_text(
         json.dumps(recording, indent=2, ensure_ascii=False, sort_keys=True),
         encoding="utf-8",
+        newline="\n",
     )
     (out_dir / "expected_output.json").write_text(
         json.dumps({k: output[k] for k in H.GOLDEN_KEYS}, indent=2,
                    ensure_ascii=False, sort_keys=True),
         encoding="utf-8",
+        newline="\n",
     )
 
     fw = _manager_fw(output)
@@ -120,7 +124,7 @@ python tests/integration/capture_emulator.py --mockup {args.mockup} --captured <
 
 redfish_gather.py 의 의도된 파싱 변경으로 golden 이 바뀌면 위 명령으로 재생성한다.
 """
-    (out_dir / "README.md").write_text(readme, encoding="utf-8")
+    (out_dir / "README.md").write_text(readme, encoding="utf-8", newline="\n")
 
     print(f"[OK] {out_dir.name}: vendor={output['vendor']} status={output['status']} "
           f"collected={output['collected']} fw={fw} "

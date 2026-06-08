@@ -100,6 +100,11 @@ def run_gather(get_impl, noauth_impl, ip="127.0.0.1",
         )
         final_status, clean = rg._compute_final_status(collected, failed, all_errors)
 
+        # sorted(): golden 의 결정적(deterministic) 비교용 정규화. 실제 main()
+        # exit_json 은 collected(미정렬) / list(set(...)) 로 emit 하지만, 그 순서는
+        # PYTHONHASHSEED 의존 비결정적이고 downstream(normalize_standard.yml)은
+        # sections dict 로 흡수해 순서 비의존이다 — 정렬은 fidelity 를 낮추지 않고
+        # cross-run golden flakiness 만 제거한다.
         return {
             "vendor": vendor,
             "status": final_status,
@@ -140,6 +145,10 @@ def make_recorder():
 def make_replayer(recording):
     """기록된 recording 을 (path -> 응답) lookup 으로 주입 (오프라인).
 
+    제약: path 당 단일 응답. 멱등 read-only GET 전용이라 호출 순서에 따라 응답이
+    달라지는 stateful sequence(ETag 조건부 / mutable 중간 상태)는 미지원 —
+    redfish_gather 수집 범위(read-only inventory)에서는 불필요.
+
     Returns: (get_impl, noauth_impl)
     """
     def get_impl(bmc_ip, path, username, password, timeout, verify_ssl):
@@ -157,8 +166,11 @@ def make_replayer(recording):
     return get_impl, noauth_impl
 
 
-# golden 비교에서 strict equality 대상 (errors 는 count 만 — 메시지 verbose 회피).
+# golden 비교에서 strict equality 대상.
+#   - errors[] 리스트 자체(메시지 verbose)는 제외하되, error_count 는 포함해
+#     "에러 0건이 silent 하게 N건으로 늘어나는" 회귀를 잡는다 (HF-4 보강).
 GOLDEN_KEYS = (
     "vendor", "status", "collected", "failed_sections",
     "unsupported_sections", "data", "multi_node", "probe_facts",
+    "error_count",
 )

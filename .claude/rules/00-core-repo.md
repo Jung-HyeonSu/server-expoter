@@ -14,7 +14,7 @@
 - 멀티벤더 9종 (Dell / HPE / Lenovo / Supermicro / Cisco + Huawei / Inspur / Fujitsu / Quanta — 후 4종 lab 부재)
 - Adapter 42개 (Redfish 31 + OS 7 + ESXi 4) + adapters/registry.yml — cycle 2026-05-11 실측 (hpe-csus-add)
 - Schema 10 sections + Field Dictionary 39 Must + 38 Nice + 6 Skip = 83 entries (cycle-018 실측, 16 section prefixes — 2026-05-29 재실측)
-- tests/fixtures 380개 + 9 baseline JSON (redfish 5: cisco/dell/hpe/hpe_csus_3200/lenovo + esxi/ubuntu/windows + rhel810_raw_fallback) — 2026-06-08 재실측
+- tests/fixtures 395개 (실장비 380 + HPE 에뮬레이터 15) + 9 baseline JSON (redfish 5: cisco/dell/hpe/hpe_csus_3200/lenovo + esxi/ubuntu/windows + rhel810_raw_fallback) — 2026-06-08 재실측
 - Jenkins multi-pipeline 2종 (Jenkinsfile / _portal) — Bitbucket 미사용 (cycle-015에서 _grafana 제거)
 - 운영: 단일 main + feature/* 브랜치
 - 정본: REQUIREMENTS.md / GUIDE_FOR_AI.md / README.md / docs/01~23

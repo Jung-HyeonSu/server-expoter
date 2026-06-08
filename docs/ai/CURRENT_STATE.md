@@ -1,5 +1,20 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-08 (에뮬레이터 하네스 멀티에이전트 재검증 + 견고화 [DONE])
+
+- **요청 (사용자, ultracode)**: 직전 에뮬레이터 하네스 작업 전체를 재검증·재검토 — 잘못한 것 없는지 + 프로젝트를 더 견고하게.
+- **검증 (37-에이전트 5차원 적대적 워크플로)**: 하네스 충실도 / 테스트 견고성 / 규칙·문서 정합 / 주장 실측 / 견고화. **모든 주장(797 pass / 오프라인 / 결정성 byte-identical / 프로덕션 코드 무변경 / rule 21 R1 준수)을 적대적 재현으로 전부 사실 확인.** 과장/오류 0건. 21 확정 발견(대부분 low/info — 검증자가 원 HIGH 다수 강등 + 원 권고 버그까지 교정).
+- **견고화 적용 (전부 tests/ + 문서, 프로덕션 코드 0)**:
+  - **hermetic 가드 (conftest autouse)**: 비-live 중 `rg.urlreq.urlopen` 차단 → "네트워크 0" 불변식을 convention → enforced assertion 격상. `_probe_realm_hint` 등 seam 우회 누출 즉시 검출 + 가드 self-test.
+  - **error_count golden 편입** + **타깃 의미 assertion** (memory.total_mib / firmware / bmc.fw / FC HBA·WWPN — FC fixture keyed, golden-laundering 방어).
+  - **.gitattributes(eol=lf)** + capture `newline="\n"` (EOL 결정화).
+  - **stale 수치 정정**: CLAUDE.md / rule 00 / PROJECT_MAP fixtures 380→395 (실장비 380 + 에뮬레이터 15, rule 25 R7-B), test 48/445→49/462. **fingerprint `--update` 실제 수행 → drift 0** (직전 커밋의 미수행 항목 해소).
+- **검증 (✅ 확인층)**: ✅ `pytest tests/integration/` 44 pass / 4 skip (가드 self-test 포함). ✅ 전체 815 pass / 4 skip (기존 797/1 → +18/+3). ✅ py_compile / fingerprint drift 0 / verify_vendor_boundary / verify_harness_consistency PASS.
+- **보류 (검증자 판정 — 사용자 승인/거버넌스 필요)**: (1) Jenkins Stage 4 에 tests/integration 편입 — Jenkinsfile 보호 경로(rule 80) → NEXT_ACTIONS 등재 + 사용자 승인 대기. (2) CURRENT_STATE/evidence ✅ 이모지 — verification.md(3상태 강제)와 충돌 + 기존 컨벤션, ADR 전 현상 유지. (3) main() list(set)→sorted — cosmetic 프로덕션 변경 보류.
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-08 (HPE iLO 에뮬레이터 오프라인 회귀 하네스 도입 [DONE])
 
 - **요청 (사용자)**: HPE 공식 iLO Redfish 에뮬레이터를 "웹 소스 MOCK 보다 한 단계 위인 고품질 테스트 타깃"으로 도입해 프로젝트를 더 견고하게. 환경=이 PC 의 Docker.
@@ -12,7 +27,7 @@
   - ✅ 에뮬레이터 기동: `curl -k https://127.0.0.1/redfish/v1/` → Vendor HPE, Oem.Hpe.
   - ✅ **오프라인 보장**: 컨테이너 중지 후 `pytest tests/integration/` → **26 pass / 1 skip(live)**. 네트워크 0.
   - ✅ **무회귀**: `pytest tests/ --ignore=tests/e2e_browser` → **797 pass / 1 skip** (10.3s, 기존 771 +26).
-  - ✅ py_compile 4 파일 PASS / project_map fingerprint 갱신 (tests/integration 신설).
+  - ✅ py_compile 4 파일 PASS. ⚠️ project_map fingerprint 는 본 커밋에서 미반영(파일 untracked 시점 --update no-op) → 후속 견고화 라운드에서 실제 --update 수행 (위 항목).
 - **회귀 메커니즘**: 파싱 변경 시 `test_golden_match` 가 필드 diff 노출. 의도된 변경 시 `capture_emulator.py` 로 golden 재생성.
 - **후속 (실장비 — PENDING 유지)**: 에뮬레이터는 실장비 대체 못함. iLO5/iLO6/Gen12 실장비 캡처+baseline 은 LAB_PENDING_MATRIX 계속 PENDING.
 - **(선택) Phase 2 미착수**: 다중 인스턴스 병렬 CI 매트릭스용 `port` Additive 파라미터 — 순차 캡처로 충분해 보류 (운영 코드 변경 → 별도 사용자 승인 시).

@@ -1282,6 +1282,7 @@
       "uuid": "37363750-3630-4D32-3244-325130325448"
     }
   },
+  "error_count": 0,
   "failed_sections": [],
   "multi_node": null,
   "probe_facts": {

@@ -167,9 +167,10 @@ server-exporter/ (프로젝트 루트)
    ├── filter_plugins/diagnosis_mapper.py, field_mapper.py
    └── module_utils/adapter_common.py (점수 계산, 벤더 정규화)
 
-[6] 테스트 (tests/fixtures 380개 + 9 baseline + test_*.py 48파일/445 함수 [e2e_browser 2 포함] — 2026-06-08 재실측)
+[6] 테스트 (tests/fixtures 395개 [실장비 380 + HPE 에뮬레이터 15] + 9 baseline + test_*.py 49파일/462 함수 [e2e_browser 2 포함] — 2026-06-08 재실측)
    ├── tests/redfish-probe/ (probe_redfish.py, deep_probe_redfish.py)
-   ├── tests/fixtures/ (실장비 JSON 응답)
+   ├── tests/integration/ (HPE iLO 에뮬레이터 record/replay 오프라인 회귀 하네스)
+   ├── tests/fixtures/ (실장비 JSON 응답 + hpe_emulator_* 에뮬레이터 캡처)
    ├── tests/evidence/ (Round 7-10 조건부 검토)
    └── tests/scripts/ (conditional_review.py, os_esxi_verify.sh)
 

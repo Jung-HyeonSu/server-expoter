@@ -1,0 +1,4 @@
+# Fixture / golden 결정성: 기여자 core.autocrlf 설정과 무관하게 LF 로 정규화.
+# 에뮬레이터 golden 재생성 시 EOL 차이로 인한 전체-파일 diff 노이즈를 차단한다.
+tests/fixtures/**/*.json text eol=lf
+tests/fixtures/redfish/hpe_emulator_*/README.md text eol=lf

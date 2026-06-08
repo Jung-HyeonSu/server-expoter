@@ -41,6 +41,11 @@ def _discover():
 CASES = _discover()
 CASE_IDS = [d.name for d in CASES]
 
+# FC HBA 를 실제 보유한 fixture (실측 2026-06-08: dl325_fc=2, dl365=2, 그 외=0).
+# golden 이 아니라 fixture 이름으로 keyed — golden 재생성 시 함께 비워져 방어가
+# 무력화되는 것(golden-laundering)을 막는다.
+FC_FIXTURES = {"hpe_emulator_dl325_gen10plus_fc", "hpe_emulator_dl365_gen10plus"}
+
 
 def _load(path: Path):
     with open(path, encoding="utf-8") as f:
@@ -119,6 +124,51 @@ class TestHpeEmulatorReplay:
             f"{case_dir.name}: storage.controllers 누락"
         )
 
+    def test_memory_total_mib(self, replay_case):
+        """메모리 총량 파싱 — total_mib > 0 (int/str cast 회귀 방어)."""
+        result, _golden, case_dir = replay_case
+        mem = result["data"].get("memory") or {}
+        assert (mem.get("total_mib") or 0) > 0, (
+            f"{case_dir.name}: memory.total_mib 미파싱(int/str cast 회귀 의심)"
+        )
+
+    def test_firmware_non_empty(self, replay_case):
+        """펌웨어 인벤토리 파싱 — FirmwareInventory 비어있지 않음."""
+        result, _golden, case_dir = replay_case
+        if "firmware" not in result["collected"]:
+            pytest.skip(f"{case_dir.name}: firmware 미수집")
+        fw = result["data"].get("firmware") or []
+        assert isinstance(fw, list) and fw, (
+            f"{case_dir.name}: FirmwareInventory 빈 결과(엔드포인트 파싱 회귀)"
+        )
+
+    def test_bmc_firmware_version(self, replay_case):
+        """BMC 펌웨어 버전 추출 — OEM 경로 (iLO5/iLO6/Gen12 표기 차이 무관).
+
+        주의: 'iLO' 부분문자열 검사 금지 — Gen12 는 bmc.firmware_version 이
+        '1.13.01 May 13 2025' 로 'iLO' 미포함. 존재만 검증.
+        """
+        result, _golden, case_dir = replay_case
+        bmc = result["data"].get("bmc") or {}
+        assert bmc.get("firmware_version"), (
+            f"{case_dir.name}: bmc.firmware_version 미추출(OEM 추출 경로 회귀)"
+        )
+
+    def test_fc_hbas_present(self, replay_case):
+        """FC HBA 파싱 — FC fixture(dl325_fc/dl365)에서 fc_hbas + WWPN 추출.
+
+        dl325_gen10plus_fc/dl365_gen10plus 가 FC HBA 를 보유 — 이 fixture 의
+        존재 이유(FC 경로 회귀)를 직접 검증. 그 외 fixture 는 skip.
+        """
+        result, _golden, case_dir = replay_case
+        if case_dir.name not in FC_FIXTURES:
+            pytest.skip(f"{case_dir.name}: FC HBA fixture 아님")
+        fc = (result["data"].get("network_adapters") or {}).get("fc_hbas") or []
+        assert fc, f"{case_dir.name}: FC HBA 파싱 회귀(fc_hbas 비어있음)"
+        assert any(h.get("wwpn") for h in fc), (
+            f"{case_dir.name}: FC HBA WWPN 미추출"
+        )
+
 
 @pytest.mark.integration
 def test_at_least_one_fixture_present():
@@ -126,6 +176,17 @@ def test_at_least_one_fixture_present():
     assert CASES, (
         "hpe_emulator_* fixture 가 0 개. capture_emulator.py 로 캡처 필요."
     )
+
+
+@pytest.mark.integration
+def test_hermetic_guard_is_active():
+    """conftest 의 hermetic 가드 자체 회귀 방지 — 비-live 중 실 urlopen 이 차단되는지.
+
+    가드가 silent 하게 깨지면(예: monkeypatch 대상 오타) 오프라인 불변식이 무력화되므로,
+    가드가 실제로 RuntimeError 를 던지는지 직접 검증한다.
+    """
+    with pytest.raises(RuntimeError, match="hermetic guard"):
+        H.rg.urlreq.urlopen("https://127.0.0.1/redfish/v1/")
 
 
 # ---------------------------------------------------------------------------

@@ -974,6 +974,7 @@
       "uuid": "39343550-3330-4D32-3244-324A30304C34"
     }
   },
+  "error_count": 0,
   "failed_sections": [],
   "multi_node": null,
   "probe_facts": {
