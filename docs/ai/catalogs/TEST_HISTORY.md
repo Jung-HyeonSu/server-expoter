@@ -2,6 +2,18 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-08 (AR-1 redfish vendor 정규화 reference 단위 테스트)
+
+AUDIT AR-1(esxi vendor substring fallback 누락 — cross-channel divergence) 의 **검증 가능한 절반**: redfish 정규화 정본 `_normalize_vendor_from_aliases`(직접 테스트 부재였음) 고정.
+
+### 신규 테스트
+- `tests/unit/test_vendor_normalize_aliases.py` (신규, 5 함수 → **16 케이스**): 정확매칭 / **substring fallback**("dell inc" 마침표 없음 → 'dell', AR-1 대표) / 'unknown' default. esxi 가 맞춰야 할 기준선.
+
+### 회귀 결과
+- 신규 **16 passed**. py_compile PASS.
+- esxi YAML 수정은 미적용(ansible-playbook Windows POSIX-only 미동작 + yamllint 부재 + rule §0 `[ANSIBLE]` defer 정책) → recipe = NEXT_ACTIONS §0.8 (Jenkins Agent + esxi baseline 회귀).
+- 정정: AUDIT AR-1 → [PARTIAL] / CLAUDE.md test_*.py 51→52파일 / 487→492함수.
+
 ## 2026-06-08 (CS-3 CSUS per-partition normalize grouping drift 가드)
 
 AUDIT CS-3 — `_summarize_partition_disks`/`_normalize_{storage,cpu,memory,network}_raw`(~210줄 평행 경로)의 grouping 로직에 drift 가드 부재를 보강. additive only(프로덕션 코드 0).

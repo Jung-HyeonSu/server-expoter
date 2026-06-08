@@ -1,5 +1,16 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-08 (AR-1 redfish vendor 정규화 reference 고정 [PARTIAL])
+
+- **요청 (사용자)**: "할 수 있는건 하는게 맞지않아? 작업 덜 됐으면. 끝났으면 그만." → 게이트 단정한 항목 재검증 + 가능한 것 실행.
+- **재검증 (실측)**: AR-1 esxi vendor 버그의 esxi 측 FIX 는 진짜 막힘 — `python -m ansible` 의 playbook CLI 가 Windows POSIX-only 로 import 실패 / yamllint 부재 / rule §0 `[ANSIBLE]` defer 정책(사용자 설정) / "운영 깨지면 안됨". → esxi YAML 미수정 결정(unvalidatable production YAML).
+- **무엇 (검증 가능한 절반 — Additive, 프로덕션 0)**: redfish 정규화 정본 `_normalize_vendor_from_aliases`(직접 단위 테스트 부재였음 — rule 95 production=bug후보) 고정. `tests/unit/test_vendor_normalize_aliases.py`(16 케이스): substring fallback("dell inc"→'dell', AR-1 대표) + 'unknown' default. esxi 수정 시 동일 입력 동일 canonical 이어야 할 기준선.
+- **검증 (✅)**: ✅ 신규 16 pass / py_compile PASS.
+- **후속 (Jenkins Agent)**: esxi YAML 수정 recipe(공유 filter 또는 inline substring) = NEXT_ACTIONS §0.8. 적용 후 esxi baseline 회귀로 검증.
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-08 (CS-3 per-partition normalize grouping drift 가드 [DONE])
 
 - **요청 (사용자)**: DMTF 작업 후 "다음 작업 이어나가라" → 자율 진행(승인). audit backlog 중 환경 내 가능 + 고가치 항목 선택.

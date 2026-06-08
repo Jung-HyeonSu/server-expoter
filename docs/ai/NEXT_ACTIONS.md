@@ -62,6 +62,24 @@
 
 ---
 
+## 0.8 AR-1 esxi vendor 정규화 substring fallback — [PARTIAL] (Jenkins Agent 후속)
+
+> AUDIT-2026-05-29 AR-1. **실 버그**: `vendor` envelope 필드 채널 divergence.
+> 2026-06-08 — redfish reference 측 단위 테스트 고정 완료(`tests/unit/test_vendor_normalize_aliases.py` 16 케이스). esxi YAML 수정은 **이 환경에서 미적용**(ansible-playbook CLI = Windows POSIX-only 미동작 / yamllint 부재 / rule §0 `[ANSIBLE]` defer 정책 / "운영 깨지면 안됨").
+
+**근본 원인** (실측):
+- redfish `_normalize_vendor_from_aliases`(:467): 정확매칭 → **substring fallback** → 'unknown'.
+- esxi inline Jinja2(`esxi-gather/site.yml:162-175`): **정확매칭만**, substring 없음, default=raw.
+- 결과: "Dell Inc"(마침표 없음) → redfish='dell' ↔ esxi=raw('Dell Inc'). vendor 필드 불일치.
+
+**Jenkins Agent 적용 recipe** (택1, 적용 후 esxi baseline 회귀로 검증 — rule 40):
+- **(권장) 공유 filter**: `filter_plugins/normalize_vendor.py` 신설(redfish `_normalize_vendor_from_aliases` 로직 mirror — jedec_mapper.py 패턴) → esxi `_e_vendor_normalized` 를 `{{ (_e_raw_facts.ansible_system_vendor | default('')) | trim | lower | normalize_vendor(_e_vendor_aliases_map) }}` 로 교체(14줄 fragile Jinja2 제거). + JEDEC 식 redfish↔filter parity 가드 test 추가.
+- **(최소 diff) inline 확장**: 현 Jinja2 loop 뒤에 substring pass 추가(`{%- if a|lower in raw_lower or raw_lower in a|lower -%}`) + default `none`→`'unknown'`.
+- **주의**: default 를 raw→'unknown' 로 바꾸면 미지 vendor 의 esxi `vendor` 값이 변함 → esxi baseline 영향 가능(VMware 는 alias 매칭이라 무영향 예상). baseline 재검증 의무.
+- 기준선: redfish 동작 = `test_vendor_normalize_aliases.py`. esxi 수정 후 동일 입력 동일 canonical 이어야 함.
+
+---
+
 ## 1. AI 환경에서 즉시 가능 — F6 OS baseline expansion (사용자 access 제공 완료)
 
 | 항목 | 상태 | 진입 |
