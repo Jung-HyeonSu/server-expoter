@@ -428,7 +428,8 @@ def _try_redfish_auth(host, open_port, username, password, timeout_auth, verify_
     json_data = payload.get("json") if payload else None
     if json_data:
         members = json_data.get("Members", [])
-        if members:
+        # rule 95 R1 #2: 비-dict 멤버([null]/[str]) 방어 — members[0].get AttributeError 회피
+        if members and isinstance(members[0], dict):
             result["probe_facts"]["first_system_uri"] = members[0].get("@odata.id", "")
     return True
 
