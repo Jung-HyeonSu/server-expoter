@@ -106,6 +106,8 @@ def pattern_match_any(patterns, value):
     """
     if not patterns or not value:
         return False
+    if isinstance(patterns, str):  # Round 12 #3: scalar pattern(YAML 오타) → 단일 list (char 순회 방지)
+        patterns = [patterns]
     value = str(value)
     for pattern in patterns:
         if not isinstance(pattern, str):  # rule 95 R1: adapter YAML 비-str pattern 방어
@@ -137,6 +139,8 @@ def adapter_matches(adapter, facts, aliases=None):
 
     # vendor 매칭
     vendor_patterns = match.get("vendor", [])
+    if isinstance(vendor_patterns, str):  # Round 12 #2: scalar vendor(YAML 오타) → list (char 순회 방지)
+        vendor_patterns = [vendor_patterns]
     if vendor_patterns:
         raw_vendor = facts.get("vendor", "")
         norm_vendor = normalize_vendor(raw_vendor, aliases)
@@ -171,7 +175,7 @@ def adapter_matches(adapter, facts, aliases=None):
     os_type = match.get("os_type")
     if os_type:
         detected = facts.get("detected_os") or facts.get("os_type") or ""
-        if detected.lower() != os_type.lower():
+        if str(detected).lower() != str(os_type).lower():  # Round 12 #0: 비-str os_type/detected .lower 방어
             return False
 
     # 배포판 패턴 매칭
@@ -236,6 +240,8 @@ def adapter_match_score(adapter, facts, aliases=None):
 
     # vendor 매칭 보너스
     vendor_patterns = match.get("vendor", [])
+    if isinstance(vendor_patterns, str):  # Round 12 #2: scalar vendor(YAML 오타) → list (char 순회 방지)
+        vendor_patterns = [vendor_patterns]
     if vendor_patterns:
         raw_vendor = facts.get("vendor", "")
         norm_vendor = normalize_vendor(raw_vendor, aliases)

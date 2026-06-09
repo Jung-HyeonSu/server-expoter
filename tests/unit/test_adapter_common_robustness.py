@@ -76,3 +76,22 @@ def test_normalize_vendor_whitespace_only_returns_none():
     assert normalize_vendor("   ") is None  # 가드 전: '' 가 모든 alias 에 substring 매칭
     assert normalize_vendor("\t\n ") is None
     assert normalize_vendor("Dell Inc.", {"dell inc.": "dell"}) == "dell"  # 정상 불변
+
+
+# Round 12 — adapter_common string-method/scalar sweep
+def test_adapter_matches_non_str_os_type():
+    """os_type 가 비-str(int) → os_type.lower() AttributeError 방어 (UNWRAPPED P0)."""
+    adapter = {"match": {"os_type": 123}}
+    assert adapter_matches(adapter, {"detected_os": "linux"}) in (True, False)  # 가드 전: int.lower
+
+
+def test_adapter_matches_scalar_vendor():
+    """vendor 가 scalar str(YAML 오타) → char 순회 방지."""
+    adapter = {"match": {"vendor": "dell"}}  # list 아님
+    assert adapter_matches(adapter, {"vendor": "Dell Inc."}, {"dell inc.": "dell", "dell": "dell"}) is True
+
+
+def test_pattern_match_any_scalar_pattern():
+    """patterns 가 scalar str → 단일 패턴으로 처리(char 순회 아님)."""
+    assert pattern_match_any("R7[0-9]0", "PowerEdge R760") is True  # 가드 전: 'R'/'7'/'[' char 순회
+    assert pattern_match_any("Xyz", "PowerEdge R760") is False
