@@ -1,5 +1,16 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 2 적대적 hunt — 변경코드 재검수 + 심화 [DONE])
+
+- **방법**: 동일 9 finder + 3-lens, 단 "이미 고친 24건 + 의도적 미적용 2건" 컨텍스트 주입 → Round 1 fix 재검수 + 미탐색 심화. 50 raw → 45 deduped → **23 confirmed**(144 agent).
+- **수정 (~15)**: #1 `_normalize_cpu_raw` cores_per_socket **혼합코어 same-model 평균 미갱신**(correctness) / #0 callback `json.dumps` 비-직렬화 객체 crash → str fallback / power capacity·PSU·network SpeedMbps **watt·mbps int 통일**(Round 1 watt 통일의 누락 사이트) / `_is_404_only_error` 비-str detail `in` TypeError / ctrl_members·AssociatedNetworkAddresses·`_resolve_all` isinstance / esxi normalize `| string` 가드(Jenkins-verify).
+- **기각·보류 (4)**: #6 SmartStorage `cap_gb_field is not None`(GB=0/MiB>0 fall-through 깨짐 → 기각) / #19 speed_gbps int(golden `link_speed_gbps` float 32.0 → 기각) / #7 mbps를 gbps에서 파생(gbps 이미 존재 = 손실 아님, golden churn → 보류) / #2 Round 1 fix 정상(doc nit).
+- **검증 (✅)**: ✅ `pytest --ignore=e2e_browser` **938 pass, 5 skip**(+7 회귀, callback 1 skip=ansible 부재). golden **52 byte 불변**. 커밋 8604f3b/e2bc3c2.
+- **추세**: Round 1 26 → Round 2 23 confirmed(주로 같은 테마의 미도달 사이트 심화). Round 3 진행 — confirmed 0(결정대기 #12 제외)까지.
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-09 (Round 1 멀티에이전트 적대적 bug hunt — 24/26 confirmed 수정 [DONE])
 
 - **요청 (사용자)**: "더 딥하게 production 버그/개선점 찾아서 더이상 안 나올 때까지 멀티에이전트 교차검증 + 루프. 완벽한 프로젝트."

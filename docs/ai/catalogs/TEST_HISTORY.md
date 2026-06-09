@@ -2,6 +2,16 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-09 (Round 2 적대적 hunt — 23 confirmed, ~15 수정)
+
+### 신규 테스트 (+9, +1 skip)
+- `tests/unit/test_callback_json_only_robustness.py` (2, ansible 부재 시 skip): json.dumps 비-직렬화 str fallback.
+- `tests/integration/test_redfish_round2_robustness.py` (7): cores_per_socket 평균 / _is_404 비-str / power capacity int / ctrl_members·resolve_all isinstance / network SpeedMbps int.
+
+### 회귀 결과
+- `pytest --ignore=e2e_browser` **938 passed, 5 skipped**(직전 931 + 7). 무회귀. golden 52 byte 불변.
+- 기각 2(#6/#19 golden float / fall-through) + 보류 2(#7 enhancement / #2 non-issue) — CURRENT_STATE 참조.
+
 ## 2026-06-09 (Round 1 멀티에이전트 적대적 hunt — 24/26 confirmed 수정)
 
 9 finder + 3-lens 적대적 검증(132 agent) → 26 confirmed → 24 수정. TDD RED→GREEN→golden 불변.
