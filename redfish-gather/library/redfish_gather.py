@@ -281,6 +281,11 @@ def _dicts(x):
     """외부 배열에서 dict 원소만 추출 (비-list/비-dict 방어 — .get() 반복 crash 차단, Round 3)."""
     return [e for e in x if isinstance(e, dict)] if isinstance(x, list) else []
 
+def _str(x):
+    """문자열 메서드(.lower/.strip/.split 등) 호출 전 비-str(int/dict 오염) 방어.
+    str 면 그대로, 아니면 '' (Round 8). `(x or '')` 와 str/None 입력에 동일 — golden 불변."""
+    return x if isinstance(x, str) else ''
+
 def _err(section, message, detail=None):
     return {'section': section, 'message': str(message), 'detail': detail}
 
@@ -818,8 +823,8 @@ def _classify_rmc_label(manager_uri, manager_id, manager_layout):               
     """
     if not manager_layout:
         return None
-    lid = (manager_id or '').lower()
-    luri = (manager_uri or '').lower()
+    lid = _str(manager_id).lower()
+    luri = _str(manager_uri).lower()
     # 우선순위: ID substring → URI substring → layout default
     if 'rmc' in lid or 'rmc' in luri:                                            # nosec rule12-r1
         return 'RMC'                                                             # nosec rule12-r1
@@ -845,8 +850,8 @@ def _classify_manager_role(manager_uri, manager_id, manager_layout):            
     """
     if not manager_layout:
         return None
-    lid = (manager_id or '').lower()
-    luri = (manager_uri or '').lower()
+    lid = _str(manager_id).lower()
+    luri = _str(manager_uri).lower()
     if 'rmc' in lid or 'rmc' in luri:                                            # nosec rule12-r1
         return 'primary'
     if manager_layout in ('rmc_primary', 'rmc_primary_ilo_secondary'):
@@ -868,8 +873,8 @@ def _classify_chassis_kind(chassis_uri, chassis_id, chassis_data):              
 
     Returns: str | None
     """
-    lid = (chassis_id or '').lower()
-    luri = (chassis_uri or '').lower()
+    lid = _str(chassis_id).lower()
+    luri = _str(chassis_uri).lower()
     if 'base' in lid or 'base' in luri:
         return 'base'
     if 'expansion' in lid or 'expansion' in luri:
@@ -878,7 +883,7 @@ def _classify_chassis_kind(chassis_uri, chassis_id, chassis_data):              
         return 'compute_module'
     # ChassisType 표준 fallback
     if isinstance(chassis_data, dict):
-        ctype = (_safe(chassis_data, 'ChassisType') or '').lower()
+        ctype = _str(_safe(chassis_data, 'ChassisType')).lower()
         if ctype == 'enclosure':
             # base / expansion 구분 안 되는 generic enclosure
             return 'enclosure'
@@ -1595,7 +1600,7 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
                         if nic_first_ip is None:
                             nic_first_ip = ip
                         gw = _safe(addr, 'Gateway')
-                        if gw and gw not in ('0.0.0.0', '') and gw not in bmc_gateways:
+                        if gw and isinstance(gw, str) and gw not in ('0.0.0.0', '') and gw not in bmc_gateways:  # Round 8 #2: 비-str Gateway
                             bmc_gateways.append(gw)
                 # NameServers / StaticNameServers — 모든 NIC 누적 (중복 제거 + placeholder skip).
                 # 실측 (Lenovo XCC SR650 V2): NameServers=["","","","::","::","::"] 처럼
@@ -1752,7 +1757,7 @@ def gather_memory(bmc_ip, system_uri, username, password, timeout, verify_ssl):
         # 2026-04-29 fix B09: locator (DIMM 물리 위치) 추가 — 교체 작업 시 식별용.
         slots.append({
             'id':              _safe(mdata, 'Id'),
-            'name':            _safe(mdata, 'Name'),
+            'name':            _strip_or_none(_safe(mdata, 'Name')),
             # 'locator' 별도 키: DeviceLocator (벤더 표준 — 'A1','DIMM_A1','PROC1.DIMMA1' 등)
             # MemoryLocation.Slot 도 폴백 (Dell iDRAC 일부 펌웨어).
             'locator':         _safe(mdata, 'DeviceLocator') or _safe(mdata, 'MemoryLocation', 'Slot'),
@@ -2138,7 +2143,7 @@ def gather_storage(bmc_ip, system_uri, username, password, timeout, verify_ssl):
             errors.append(_err('storage', f'Storage/SimpleStorage/SmartStorage 모두 실패: {err or st}'))
             return {'controllers': [], 'volumes': []}, errors
 
-    members = _safe(coll, 'Members') or []
+    members = _dicts(_safe(coll, 'Members'))  # Round 8 #3: 비-list Members 방어
     if use_simple:
         controllers, sub_errors = _gather_simple_storage(bmc_ip, members, username, password, timeout, verify_ssl)
         errors.extend(sub_errors)
@@ -2200,9 +2205,9 @@ def _detect_nic_ocp_slot(adata):                                              # 
     if not isinstance(adata, dict):
         return None
     loc = _safe(adata, 'Location', 'PartLocation') or {}
-    service_label = (_safe(loc, 'ServiceLabel') or '').upper()
-    location_type = (_safe(loc, 'LocationType') or '').lower()
-    name = (_safe(adata, 'Name') or '').upper()
+    service_label = _str(_safe(loc, 'ServiceLabel')).upper()
+    location_type = _str(_safe(loc, 'LocationType')).lower()
+    name = _str(_safe(adata, 'Name')).upper()
     if 'OCP' in service_label or 'OCP' in name:
         return 'ocp'
     # HPE OEM fallback
@@ -2278,13 +2283,13 @@ def _classify_port_protocol(port_protocol, link_tech, ndf, pdata=None):
     PortType enum 에는 FC/IB 값이 없어 사용 금지 (구 코드 dead-code 원인).
     rule 12 R1 Allowed — DMTF Protocol/NetDevFuncType spec 직접 의존 (vendor 분기 아님).
     """
-    pp = (port_protocol or '').strip().upper()
-    lt = (link_tech or '').strip().lower()
+    pp = _str(port_protocol).strip().upper()
+    lt = _str(link_tech).strip().lower()
     ndf_type = ''
     ndf_tech = ''
     if isinstance(ndf, dict):
-        ndf_type = (ndf.get('func_type') or '').strip().lower()
-        ndf_tech = (ndf.get('net_dev_tech') or '').strip().lower()
+        ndf_type = _str(ndf.get('func_type')).strip().lower()
+        ndf_tech = _str(ndf.get('net_dev_tech')).strip().lower()
     # IB 우선 (IB NDF 가 Ethernet 으로 오인되지 않도록)
     if lt == 'infiniband' or ndf_tech == 'infiniband' or ndf_type == 'infiniband':
         return 'InfiniBand'
@@ -2449,8 +2454,8 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
         if ctrls and isinstance(ctrls, list):
             caps = _safe(ctrls[0], 'ControllerCapabilities') or {}
             port_count = _safe_int(_safe(caps, 'NetworkPortCount'), default=0) or 0
-        mfr = (_safe(adata, 'Manufacturer') or '').strip()
-        model = (_safe(adata, 'Model') or '').strip()
+        mfr = _str(_safe(adata, 'Manufacturer')).strip()
+        model = _str(_safe(adata, 'Model')).strip()
         if port_count == 0 and not mfr and not model:
             continue
         # 2026-04-29 fix B93: HPE iLO NetworkAdapter는 mac/link/speed 가 NetworkAdapter root에 없고
@@ -3609,7 +3614,7 @@ def account_service_provision(
         )
         if post_code in (200, 201, 204) and not post_err:
             out['method']   = 'delete_repost'
-            out['slot_uri'] = _safe(post_data, '@odata.id') or existing.get('slot_uri')
+            out['slot_uri'] = _str(_safe(post_data, '@odata.id')) or existing.get('slot_uri')  # Round 8 #4: 비-str @odata.id
             out['recovered'] = True
         else:
             out['errors'].append(_err(
