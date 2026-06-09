@@ -36,7 +36,9 @@
                 {%- set _ = out.append({
                   'id':         _dev_path,
                   'device':     _dev_path,
-                  'model':      dev.model | default(none) | trim if dev.model is defined else none,
+                  {# Round 16: lsblk 가 virtio/일부 가상 disk 에 "model": null 방출 → 'is defined'
+                     통과 후 None|trim='None' 누설. truthy 체크로 None/''/undefined → none. #}
+                  'model':      (dev.model | trim) if dev.model else none,
                   'total_mb':   (dev.size | int / 1048576) | round(0,'floor') | int,
                   'media_type': 'HDD' if (dev.rota | default('1') | string) in ['1','true','True'] else 'SSD',
                   'protocol':   _proto,
@@ -181,7 +183,9 @@
                 {%- set _ = out.append({
                   'id':         _dev_path,
                   'device':     _dev_path,
-                  'model':      dev.model | default(none) | trim if dev.model is defined else none,
+                  {# Round 16: lsblk 가 virtio/일부 가상 disk 에 "model": null 방출 → 'is defined'
+                     통과 후 None|trim='None' 누설. truthy 체크로 None/''/undefined → none. #}
+                  'model':      (dev.model | trim) if dev.model else none,
                   'total_mb':   (dev.size | int / 1048576) | round(0,'floor') | int,
                   'media_type': 'HDD' if (dev.rota | default('1') | string) in ['1','true','True'] else 'SSD',
                   'protocol':   _proto,

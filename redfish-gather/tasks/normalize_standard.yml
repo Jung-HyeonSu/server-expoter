@@ -28,7 +28,10 @@
     _rf_d_cpus: >-
       {%- set out = [] -%}
       {%- for p in (_rf_d_procs | default([])) -%}
-        {%- set ptype = (p.processor_type | default('') | string | trim | upper) -%}
+        {# Round 16: default('') 는 undefined 만 치환 — JSON null(_safe→None)은 'None'→'NONE'
+           가 되어 위 주석의 "null=CPU 간주" 의도와 반대로 제외됨 (Python _normalize_cpu_raw
+           L3304 `or ''` 와도 불일치). default('', true) 로 falsy(None 포함) → '' 강제. #}
+        {%- set ptype = (p.processor_type | default('', true) | string | trim | upper) -%}
         {%- if ptype in ('CPU', 'CORE', '') or ptype is none -%}
           {%- set _ = out.append(p) -%}
         {%- endif -%}
