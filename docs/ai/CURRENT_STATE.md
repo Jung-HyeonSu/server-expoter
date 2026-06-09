@@ -1,5 +1,13 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 9 — 기존 가드 완성, 신규 패턴클래스 0 [수렴])
+
+- 9 finder + 3-lens. 24 deduped → 4 confirmed(81 agent). 추세 26→23→21→17→11→9→5→6→4.
+- **신규 패턴클래스 없음** — 4건 전부 기존 가드의 미세 완성: alias_list가 str일 때 char순회 방지(adapter_common+redfish) / NameServers 비-str element isinstance(Gateway와 일관) / whitespace-only vendor→None(empty substring 오탐) / adapter YAML scalar skip.
+- 검증: 964 pass(+3). golden 52 byte 불변. 커밋 직후.
+
+---
+
 ## 일자: 2026-06-09 (Round 8 적대적 hunt — 새 패턴클래스 string-method 폐쇄 [DONE])
 
 - 9 finder + 3-lens. 24 deduped → 6 confirmed(81 agent). 추세 26→23→21→17→11→9→5→6(새 클래스 발견으로 소폭 상승).
