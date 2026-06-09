@@ -93,8 +93,11 @@
             {%- endif -%}
           {%- endfor -%}
           {%- set _ = out.update({k: merged}) -%}
-        {%- elif bv is iterable and bv is not string
-             and fv is iterable and fv is not string -%}
+        {%- elif bv is iterable and bv is not string and bv is not mapping
+             and fv is iterable and fv is not string and fv is not mapping -%}
+          {#- rule 95 R1: dict 는 Jinja2 에서 iterable=True 라 list+dict 오염 시
+              `bv + fv` TypeError. mapping 제외로 정상 list+list 만 concat,
+              오염(list↔dict)은 else(fv 우선)로 graceful 강등. 정상 입력 불변. -#}
           {%- set _ = out.update({k: bv + fv}) -%}
         {%- else -%}
           {%- set _ = out.update({k: fv}) -%}
