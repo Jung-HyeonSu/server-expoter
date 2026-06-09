@@ -2,6 +2,12 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-09 (Round 4 적대적 hunt — 17 confirmed, ~13 수정)
+
+- 신규 `tests/integration/test_redfish_round4_robustness.py` (5): _capped 비-list / _compute_final_status 비-str detail / SimpleStorage Devices / gather_system total_gib / gather_memory rank·width int.
+- production: 잔여 배열 루프 _dicts/_as_list sweep + _post/_patch json + int 통일 + esxi datastore 가드.
+- **949 passed, 5 skipped**(직전 944 + 5). golden 52 byte 불변. 추세 26→23→21→17 confirmed.
+
 ## 2026-06-09 (Round 3 적대적 hunt — 21 confirmed, ~14 수정)
 
 - 신규 `tests/integration/test_redfish_round3_robustness.py` (6): _as_list/_dicts 헬퍼 + pc0/_resolve_all/normalize ipv4/processors int/_make_ib_port.

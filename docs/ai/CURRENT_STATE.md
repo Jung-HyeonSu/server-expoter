@@ -1,5 +1,15 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 4 적대적 hunt — 배열 가드 sweep 마무리 [DONE])
+
+- **방법**: 동일 9 finder + 3-lens. 50 raw → 48 deduped → **17 confirmed**(153 agent). 추세 26→23→21→17(수렴).
+- **수정 (~13)**: 잔여 무가드 배열 루프 일괄(Members ×5 `_dicts` / SimpleStorage Devices / _extract_storage_drives / AssociatedPortGUIDs / `_capped` 비-list coerce) → "외부 배열 순회" 패턴 **완전 폐쇄** / `_post`·`_patch` json.dumps str fallback(callback 과 동일) / `_compute_final_status` 비-str detail / total_gib·rank·width `_safe_int` / SmartStorage capacity_gb float 일관 / esxi datastore None 가드(Jenkins-verify).
+- **기각·skip**: #6 `match: null`(generic 반환 — false positive) / #12 sort key str(거대객체)(perf, crash 아님) / #15 errors[].detail dict(구조적 detail — 의도) / #16 account provision Dell 테스트(커버리지 backlog).
+- **검증 (✅)**: ✅ **949 pass**(+5 회귀). golden **52 byte 불변**. 커밋 3e4b8fb/24c4291.
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-09 (Round 3 적대적 hunt — 배열 가드 systemic + int 통일 [DONE])
 
 - **방법**: 동일 9 finder + 3-lens. 54 raw → 44 deduped → **21 confirmed**(141 agent). 추세 26→23→21.
