@@ -69,7 +69,7 @@
         "ntp_synchronized": true,
         "firewall_tool": "firewalld",
         "firewall_state": "active",
-        "listening_ports": [22, 53, 111, 631],
+        "listening_ports": ["22", "53", "111", "631"],
         "swap_total_mb": 5119,
         "swap_used_mb": 0,
         "swap_free_mb": 5119

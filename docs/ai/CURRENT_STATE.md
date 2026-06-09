@@ -502,7 +502,7 @@
 ### 9 필드 통일 envelope (Linux + Windows + ESXi 동일)
 - `timezone` (str) / `ntp_active` (bool) / `ntp_synchronized` (bool)
 - `firewall_tool` (str) / `firewall_state` (str)
-- `listening_ports` (int[])
+- `listening_ports` (str[])  <!-- Round 16: 정정 — gather_runtime(정본 빌더)가 str[] 방출. output_examples + 실장비 캡처 일치. -->
 - `swap_total_mb` / `swap_used_mb` / `swap_free_mb` (int) — Windows pagefile = Linux swap 등가
 
 ### Linux 실측 결과 (3 호스트)

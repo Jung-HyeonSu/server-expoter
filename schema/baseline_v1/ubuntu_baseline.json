@@ -68,7 +68,7 @@
         "ntp_synchronized": true,
         "firewall_tool": "ufw",
         "firewall_state": "inactive",
-        "listening_ports": [22, 53],
+        "listening_ports": ["22", "53"],
         "swap_total_mb": 4095,
         "swap_used_mb": 0,
         "swap_free_mb": 4095

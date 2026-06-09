@@ -113,14 +113,18 @@
       {%- set ns = namespace(groups=[], seen={}) -%}
       {%- for n in (_w_norm_interfaces | default([])) -%}
         {%- set sp = n.speed_mbps | default(none) -%}
-        {%- set link_up = (n.link_status | default('') | lower) in ['up','linkup'] -%}
-        {%- set key = sp | string -%}
-        {%- if key in ns.seen -%}
-          {%- set idx = ns.seen[key] -%}
-          {%- set _ = ns.groups[idx].update({'quantity': ns.groups[idx].quantity + 1, 'link_up_count': ns.groups[idx].link_up_count + (1 if link_up else 0)}) -%}
-        {%- else -%}
-          {%- set _ = ns.seen.update({key: ns.groups | length}) -%}
-          {%- set _ = ns.groups.append({'speed_mbps': sp, 'link_type': none, 'quantity': 1, 'link_up_count': 1 if link_up else 0}) -%}
+        {# Round 16: speed 없는(null/0) NIC(disconnected/virtual)는 summary group 제외 —
+           Linux(gather_network.yml line 157) 와 동일 가드. 'None' 키 group 누설 차단. #}
+        {%- if sp is not none and (sp | int) > 0 -%}
+          {%- set link_up = (n.link_status | default('') | lower) in ['up','linkup'] -%}
+          {%- set key = sp | string -%}
+          {%- if key in ns.seen -%}
+            {%- set idx = ns.seen[key] -%}
+            {%- set _ = ns.groups[idx].update({'quantity': ns.groups[idx].quantity + 1, 'link_up_count': ns.groups[idx].link_up_count + (1 if link_up else 0)}) -%}
+          {%- else -%}
+            {%- set _ = ns.seen.update({key: ns.groups | length}) -%}
+            {%- set _ = ns.groups.append({'speed_mbps': sp, 'link_type': none, 'quantity': 1, 'link_up_count': 1 if link_up else 0}) -%}
+          {%- endif -%}
         {%- endif -%}
       {%- endfor -%}
       {{ {'groups': ns.groups} }}

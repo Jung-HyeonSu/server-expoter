@@ -86,7 +86,12 @@
               }) -%}
             {%- endif -%}
           {%- endfor -%}
-          {{ users | sort(attribute='uid') }}
+          {# Round 16: uid 는 문자열('0'/'1000') — sort(attribute='uid') 는 lexicographic
+             정렬이라 999 가 1000 뒤로(잘못) 감. int 키로 수치 정렬하되 출력 dict 에는
+             보조 키를 노출하지 않음(map(attribute='u') 로 원본만 추출). #}
+          {%- set _su = [] -%}
+          {%- for u in users -%}{%- set _ = _su.append({'k': (u.uid | int), 'u': u}) -%}{%- endfor -%}
+          {{ _su | sort(attribute='k') | map(attribute='u') | list }}
       no_log: true
 
     # F23 (cycle 2026-05-01): getent 부재 환경 (Alpine / distroless / busybox)
@@ -222,7 +227,12 @@
               }) -%}
             {%- endif -%}
           {%- endfor -%}
-          {{ users | sort(attribute='uid') }}
+          {# Round 16: uid 는 문자열('0'/'1000') — sort(attribute='uid') 는 lexicographic
+             정렬이라 999 가 1000 뒤로(잘못) 감. int 키로 수치 정렬하되 출력 dict 에는
+             보조 키를 노출하지 않음(map(attribute='u') 로 원본만 추출). #}
+          {%- set _su = [] -%}
+          {%- for u in users -%}{%- set _ = _su.append({'k': (u.uid | int), 'u': u}) -%}{%- endfor -%}
+          {{ _su | sort(attribute='k') | map(attribute='u') | list }}
       no_log: true
 
     # F23 (cycle 2026-05-01): raw 경로에서도 getent 명령 부재 시 _l_raw_passwd

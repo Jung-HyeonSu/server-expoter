@@ -77,8 +77,11 @@
             {%- set cap_gb = (cap_mb / 1024) | round(0, 'floor') | int -%}
             {%- set t = s.type | default(none) -%}
             {%- set sp = s.speed_mhz | default(none) -%}
-            {%- set mfr = (s.manufacturer | default('') | trim) | default(none) -%}
-            {%- set pn = (s.part_number | default('') | trim) | default(none) -%}
+            {# Round 16: JSON null Manufacturer/PartNumber 시 'None'(문자열) 누설 방어 —
+               default('') 는 undefined 만 치환하고 None|trim 은 'None' 이 됨. slots 루프
+               (line 63-64) 와 동일하게 truthy 체크 후 trim. #}
+            {%- set mfr = (s.manufacturer | default(none) | trim) if s.manufacturer else none -%}
+            {%- set pn = (s.part_number | default(none) | trim) if s.part_number else none -%}
             {%- set key = (cap_gb|string)~'|'~(t|string)~'|'~(sp|string)~'|'~(mfr|string)~'|'~(pn|string) -%}
             {%- if key in ns.seen -%}
               {%- set idx = ns.seen[key] -%}

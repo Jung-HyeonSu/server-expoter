@@ -2851,7 +2851,10 @@ def gather_power(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
     # PowerControl — system-level power consumption (Safe Common: 3 vendors verified)
     # production-audit (2026-04-29): pdata가 dict가 아닌 list/None일 가능성 방어 (Cisco/Supermicro edge)
     pc_list = (pdata.get('PowerControl') if isinstance(pdata, dict) else None) or []
-    pc0 = pc_list[0] if (pc_list and isinstance(pc_list[0], dict)) else {}  # Round 3 #0: 비-dict 원소 방어
+    # Round 3 #0: 비-dict 원소 방어. Round 16: PowerControl 자체가 비-list(dict/int) 오염 시
+    # pc_list[0] 가 KeyError(0)/TypeError → power 섹션 전체(이미 수집한 PSU 포함) 유실.
+    # isinstance(pc_list, list) 추가로 컨테이너 타입까지 방어 (정상 list-of-dict 결과 불변).
+    pc0 = pc_list[0] if (isinstance(pc_list, list) and pc_list and isinstance(pc_list[0], dict)) else {}
     pm = pc0.get('PowerMetrics') or {}
     # 2026-04-29 cisco-critical-review: chassis level power_capacity_watts fallback —
     # Cisco 는 PowerControl[0].PowerCapacityWatts 를 null 응답. PSU power_capacity_w
@@ -3139,7 +3142,9 @@ def gather_managers_multi(bmc_ip, managers_coll_uri, vendor, username, password,
         out['errors'].append(_err('multi_node.managers',
             f'Managers 컬렉션 실패: {err}'))
         return out
-    for idx, m in enumerate(members):
+    # Round 16: multi-node 멤버 순회도 _capped DoS 상한 적용 (file 전역 컨벤션 일관 —
+    # account/logs/composition/fabrics 와 동일). 실 BMC 멤버 수 << 상한 → 정상 결과 불변.
+    for idx, m in enumerate(_capped(members, 'multi_node.managers', out['errors'])):
         # cycle 2026-06-09 (review): 첫 Manager 만 layout-default RMC/primary (다중 RMC
         # 오라벨 + name/role 불일치 차단). substring 매치(rmc/pdhc/ilo)는 position 무관.
         is_first = (idx == 0)
@@ -3387,7 +3392,8 @@ def gather_systems_multi(bmc_ip, systems_coll_uri, vendor, username, password,
             f'Systems 컬렉션 실패: {err}'))
         return out
     creds = (username, password, timeout, verify_ssl)
-    for m in members:
+    # Round 16: per-partition 순회도 _capped DoS 상한 (멤버당 6 GET — file 컨벤션 일관).
+    for m in _capped(members, 'multi_node.partitions', out['errors']):
         sys_data, sys_errs = gather_system(bmc_ip, m['uri'], vendor, *creds, chassis_uri)
         cpu_data, cpu_errs = gather_processors(bmc_ip, m['uri'], *creds)
         mem_data, mem_errs = gather_memory(bmc_ip, m['uri'], *creds)
@@ -3435,7 +3441,8 @@ def gather_chassis_multi(bmc_ip, chassis_coll_uri, username, password,
         out['errors'].append(_err('multi_node.chassis',
             f'Chassis 컬렉션 실패: {err}'))
         return out
-    for m in members:
+    # Round 16: chassis 순회도 _capped DoS 상한 (file 컨벤션 일관).
+    for m in _capped(members, 'multi_node.chassis', out['errors']):
         cst, cdata, cerr = _get(bmc_ip, _p(m['uri']),
                                 username, password, timeout, verify_ssl)
         get_ok = (not cerr and cst == 200)

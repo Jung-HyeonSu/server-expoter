@@ -110,9 +110,13 @@ def tcp_check(host, port, timeout):
     except socket.gaierror as e:
         return False, "DNS 해석 실패: {0}".format(e)
     for family, socktype, proto, _canon, sockaddr in addr_infos:
-        sock = socket.socket(family, socktype, proto)
-        sock.settimeout(timeout)
+        # Round 16: socket.socket() 를 try 안으로 — IPv6 비활성 host 에서 AF_INET6
+        # 주소군에 socket() 이 OSError(EAFNOSUPPORT) 를 던지면(try 밖이면) 모듈 전체가
+        # 죽음. try 안에서 잡아 다음 주소군(IPv4)으로 graceful degradation.
+        sock = None
         try:
+            sock = socket.socket(family, socktype, proto)
+            sock.settimeout(timeout)
             sock.connect(sockaddr)
             return True, None
         except socket.timeout:
@@ -122,10 +126,11 @@ def tcp_check(host, port, timeout):
         except OSError as e:
             last_err = str(e)
         finally:
-            try:
-                sock.close()
-            except Exception:
-                pass
+            if sock is not None:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
     return False, last_err
 
 
@@ -179,13 +184,16 @@ def http_get(url, timeout, verify=False, auth=None):
     if auth_header:
         req.add_header("Authorization", auth_header)
     try:
-        resp = urllib.request.urlopen(req, timeout=timeout, context=ctx)
-        body = resp.read().decode("utf-8", errors="replace")
+        # Round 16: with 컨텍스트 매니저로 응답(소켓) 결정적 close (GC 의존 제거).
+        # probe + auth 단계가 http_get 를 수회 호출 — 응답 미close 시 소켓 누적.
+        with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+            body = resp.read().decode("utf-8", errors="replace")
+            status = resp.getcode()
         try:
             json_body = json.loads(body)
         except (ValueError, json.JSONDecodeError):
             json_body = None
-        return True, None, {"status_code": resp.getcode(), "json": json_body}
+        return True, None, {"status_code": status, "json": json_body}
     except urllib.error.HTTPError as e:
         return False, "HTTP {0}".format(e.code), {
             "status_code": e.code,
@@ -208,9 +216,13 @@ def ssh_banner_check(host, port, timeout):
     except socket.gaierror as e:
         return False, "DNS 해석 실패: {0}".format(e), None
     for family, socktype, proto, _canon, sockaddr in addr_infos:
-        sock = socket.socket(family, socktype, proto)
-        sock.settimeout(timeout)
+        # Round 16: socket.socket()/settimeout() 를 try 안으로 — IPv6 비활성 host 의
+        # AF_INET6 주소군에서 socket() OSError(EAFNOSUPPORT) 가 모듈을 죽이지 않게
+        # (tcp_check 와 동일). 잡아서 다음 주소군(IPv4)으로 진행.
+        sock = None
         try:
+            sock = socket.socket(family, socktype, proto)
+            sock.settimeout(timeout)
             sock.connect(sockaddr)
             banner = sock.recv(256).decode("utf-8", errors="replace").strip()
             if banner.startswith("SSH-"):
@@ -221,10 +233,11 @@ def ssh_banner_check(host, port, timeout):
         except Exception as e:
             last_err = str(e)
         finally:
-            try:
-                sock.close()
-            except Exception:
-                pass
+            if sock is not None:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
     return False, last_err, None
 
 

@@ -107,7 +107,7 @@ python3 tests/validate_field_dictionary.py
       "runtime": {
         "timezone": "Etc/UTC", "ntp_active": true, "ntp_synchronized": true,
         "firewall_tool": "ufw", "firewall_state": "inactive",
-        "listening_ports": [22, 53], "swap_total_mb": 4095, "swap_used_mb": 0, "swap_free_mb": 4095
+        "listening_ports": ["22", "53"], "swap_total_mb": 4095, "swap_used_mb": 0, "swap_free_mb": 4095
       }
     },
     "hardware": null, "bmc": null,

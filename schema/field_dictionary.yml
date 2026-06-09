@@ -1073,7 +1073,7 @@ fields:
     # cycle 2026-05-11 field-channel-refinement F5: OS channel 추가 (Linux + Windows 빌더 구현).
     # 9 필드 통일 shape (Linux/Windows/ESXi 동일):
     #   timezone(str) / ntp_active(bool) / ntp_synchronized(bool) /
-    #   firewall_tool(str) / firewall_state(str) / listening_ports(int[]) /
+    #   firewall_tool(str) / firewall_state(str) / listening_ports(str[]) /
     #   swap_total_mb(int) / swap_used_mb(int) / swap_free_mb(int)
     # Windows pagefile = Linux swap 등가 (swap_*_mb 로 표현 — Win32_PageFileUsage).
     # 정본 빌더:
