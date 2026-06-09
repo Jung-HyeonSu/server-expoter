@@ -1,5 +1,16 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 5 적대적 hunt — 배열 루프 전수 폐쇄 + precheck P0 [DONE])
+
+- **방법**: 9 finder + 3-lens. 33 deduped → **11 confirmed**(108 agent). 추세 26→23→21→17→11.
+- **근본 원인 파악**: Round 4 replace_all 이 정확 텍스트(member/coll)만 잡아 변수명 다른 배열 루프(v_member/pd_m/pmember/psu/nm/m) 누락 → **proactive 전수 grep 후 일괄 폐쇄**. 실측: 잔여 무가드  = **0** 확인.
+- **수정 (~10)**: 잔여 배열 루프 7개 _dicts + _normalize_storage_raw volumes isinstance(controllers/drives 와 일관) + gather_power PowerSupplies + **precheck probe_redfish/_try_redfish_auth json_data isinstance(dict)**(비-dict ServiceRoot/Systems JSON → UNWRAPPED 실 P0 모듈사망) + redfish _load_vendor_aliases 비-str alias.
+- **skip**: #3 esxi(Round 2  으로 이미 graceful) / #9 SmartStorage cap falsy(GB=0/MiB fall-through — 기존 기각).
+- **검증 (✅)**: ✅ **954 pass**(+9 회귀). golden **52 byte 불변**. 배열 패턴 22 _dicts/_as_list 로 전수 가드. 커밋 e987feb.
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-09 (Round 4 적대적 hunt — 배열 가드 sweep 마무리 [DONE])
 
 - **방법**: 동일 9 finder + 3-lens. 50 raw → 48 deduped → **17 confirmed**(153 agent). 추세 26→23→21→17(수렴).
