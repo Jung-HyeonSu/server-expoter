@@ -41,7 +41,7 @@
       {%- set names = [] -%}
       {%- for ds in (_e_raw_ds | default([])) -%}
         {%- set has_cap = (ds.capacity is defined and (ds.capacity | int) > 0) -%}
-        {%- set has_total = (ds.total is defined and ((ds.total | regex_replace('[^0-9.]','') | default('0')) | float) > 0) -%}
+        {%- set has_total = (ds.total is defined and ((ds.total | string | regex_replace('[^0-9.]','') | default('0', boolean=true)) | float) > 0) -%}
         {%- if not (has_cap or has_total) -%}
           {%- set _ = names.append(ds.name | default('unknown')) -%}
         {%- endif -%}
