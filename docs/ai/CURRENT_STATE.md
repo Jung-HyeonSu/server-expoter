@@ -1,5 +1,13 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 7 적대적 hunt — 5 confirmed, 실 신규 defect 0 [수렴 접근])
+
+- 9 finder + 3-lens. 21 deduped → 5 confirmed(72 agent). 추세 26→23→21→17→11→9→5.
+- **실 신규 defect 0**: #0/#1 esxi max_speed_mhz = **false-positive**(regex_search()는 list 반환→| first 정상, golden baseline 2200 정상 확인. 다수결 2-3/3 confirm이나 소수 의견이 golden 증거로 정답 — 교차검증 한계 사례) / #2 SmartStorage GB=0&MiB=0(기존 기각) / #4 port speed 0(preserve-0 design) / #3만 적용(gather_bmc 비-str Address 가드, 이론적).
+- 검증: 958 pass. golden 52 byte 불변. 커밋 c247810.
+
+---
+
 ## 일자: 2026-06-09 (Round 6 적대적 hunt — 9 confirmed, ~4 수정 [DONE])
 
 - 9 finder + 3-lens. 20 deduped → 9 confirmed(69 agent). 추세 26→23→21→17→11→9.
