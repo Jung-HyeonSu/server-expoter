@@ -739,7 +739,7 @@ def _resolve_first_member_uri(bmc_ip, coll_uri, username, password, timeout, ver
     if err or st != 200:
         return None, st, err or f'HTTP {st}'
     members = _safe(coll, 'Members') or []
-    if not members:
+    if not isinstance(members, list) or not members:  # rule 95 R1 #2: 비-list Members 방어 (Round 1 #24)
         return None, st, 'members 없음'
     return _safe(members[0], '@odata.id'), st, None
 
@@ -1797,7 +1797,7 @@ def _extract_storage_controller_info(sdata, bmc_ip, username, password, timeout,
     # 정상 부재와 구분 불가했음.
     errors = []
     inline_ctrls = _safe(sdata, 'StorageControllers') or []
-    if inline_ctrls:
+    if isinstance(inline_ctrls, list) and inline_ctrls:  # rule 95 R1 #2: 비-list StorageControllers 방어 (Round 1 #0)
         c = inline_ctrls[0]
         return {
             'controller_name':         _safe(c, 'Name'),
@@ -1910,7 +1910,7 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
         member_ids = [
             d_oid.rstrip('/').rsplit('/', 1)[-1]
             for d_link in (_safe(vdata, 'Links', 'Drives') or [])
-            for d_oid in [_safe(d_link, '@odata.id')] if d_oid
+            for d_oid in [_safe(d_link, '@odata.id')] if d_oid and isinstance(d_oid, str)  # rule 95: 비-str @odata.id 방어 (Round 1 #1)
         ]
         # JBOD/pass-through 필터: Non-RAID 모드에서 물리 디스크를 개별 Volume으로 노출
         vol_id = _safe(vdata, 'Id')
@@ -2039,9 +2039,20 @@ def _gather_smart_storage(bmc_ip, system_uri, username, password, timeout, verif
                         pdst, pddata, _pderr = _get(bmc_ip, _p(pd_uri), username, password, timeout, verify_ssl)
                         if pdst != 200:
                             continue
-                        cap_int = _safe_int(_safe(pddata, 'CapacityGB')) or _safe_int(_safe(pddata, 'CapacityMiB'))
-                        # CapacityGB (iLO4) → bytes
-                        cap_bytes = (cap_int * BYTES_PER_GB_DECIMAL) if cap_int and _safe(pddata, 'CapacityGB') else None
+                        # iLO4 SmartStorage 단위 정정 (Round 1 #10/11/20): CapacityGB 는 십진 GB,
+                        # CapacityMiB 는 이진 MiB. 둘을 혼동해 capacity_gb 에 MiB 값을 그대로 넣어
+                        # ~1000x 부풀려 보고하던 오류 수정. 단위별로 capacity_bytes/capacity_gb 일관 산출.
+                        cap_gb_field = _safe_int(_safe(pddata, 'CapacityGB'))
+                        cap_mib_field = _safe_int(_safe(pddata, 'CapacityMiB'))
+                        if cap_gb_field:
+                            cap_bytes = cap_gb_field * BYTES_PER_GB_DECIMAL
+                            capacity_gb = cap_gb_field
+                        elif cap_mib_field:
+                            cap_bytes = cap_mib_field * BYTES_PER_MIB
+                            capacity_gb = round(cap_bytes / BYTES_PER_GB_DECIMAL, 2)
+                        else:
+                            cap_bytes = None
+                            capacity_gb = None
                         drives.append({
                             'id':             _safe(pddata, 'Id'),
                             'name':           _safe(pddata, 'Model') or _safe(pddata, 'Name'),
@@ -2051,7 +2062,7 @@ def _gather_smart_storage(bmc_ip, system_uri, username, password, timeout, verif
                             'media_type':     _safe(pddata, 'MediaType'),
                             'protocol':       _safe(pddata, 'InterfaceType'),
                             'capacity_bytes': cap_bytes,
-                            'capacity_gb':    cap_int if cap_int else None,
+                            'capacity_gb':    capacity_gb,
                             'health':         _safe(pddata, 'Status', 'Health'),
                         })
             ctrl_id = _safe(ctrl_data, 'Id')
@@ -2909,8 +2920,12 @@ def _normalize_storage_raw(raw):
     raw = raw if isinstance(raw, dict) else {}
     controllers_out, physical, seen = [], [], set()
     for ctrl in (raw.get('controllers') or []):
+        if not isinstance(ctrl, dict):  # rule 95 R1 #2: 비-dict controller 방어 (Round 1 #2)
+            continue
         drives_out = []
         for drv in (ctrl.get('drives') or []):
+            if not isinstance(drv, dict):
+                continue
             cap = drv.get('capacity_bytes')
             tmb = int(cap // BYTES_PER_MIB) if isinstance(cap, (int, float)) and cap else None
             drives_out.append({
@@ -3331,6 +3346,8 @@ def account_service_get(bmc_ip, username, password, timeout, verify_ssl):
         errors.append(_err('account_service', 'GET Accounts 컬렉션 실패', detail=err or f'HTTP {code}'))
         return root_data, [], errors
     members = _safe(acc_coll, 'Members', default=[]) or []
+    if not isinstance(members, list):  # rule 95 R1 #2: 비-list Members → 빈 계정 (Round 1 #25)
+        members = []
     accounts = []
     for m in members:
         slot_uri = _safe(m, '@odata.id')
