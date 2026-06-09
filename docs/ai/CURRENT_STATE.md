@@ -1,5 +1,13 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 10 — multi_node status merge, 단일 genuine 결함 [수렴 임박])
+
+- 9 finder + 3-lens. 12 deduped → 1 confirmed(45 agent). 추세 26→23→21→17→11→9→5→6→4→1.
+- **단 1건(real 3/3)**: main()이 _collect_multi_node_topology errors(401/403)를 all_errors에 merge 안 해 multi_node(HPE RMC) 인증 실패가 success/partial로 오분류 → merge 추가로 failed 정정. harness 미러링.
+- 검증: 967 pass(+3). golden 52 byte 불변(multi_node=None). 커밋 51b9b53.
+
+---
+
 ## 일자: 2026-06-09 (Round 9 — 기존 가드 완성, 신규 패턴클래스 0 [수렴])
 
 - 9 finder + 3-lens. 24 deduped → 4 confirmed(81 agent). 추세 26→23→21→17→11→9→5→6→4.
