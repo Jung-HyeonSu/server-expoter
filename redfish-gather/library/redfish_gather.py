@@ -53,6 +53,7 @@ BYTES_PER_GB_DECIMAL = 1_000_000_000   # 10^9 — CapacityBytes ↔ capacity_gb 
 BYTES_PER_MIB = 1048576                # 2^20 — CapacityBytes → total_mb (binary MiB)
 MIB_PER_GIB = 1024                     # 2^10 — MiB → GiB (binary, grouping key)
 MBPS_PER_GBPS = 1000.0                 # 10^3 — 네트워크 Mbps → Gbps (decimal bitrate, byte 아님)
+MAX_COLLECTION_MEMBERS = 1024          # rule 95 R1: 무경계 Members/Drives 순회 DoS 상한 (실 BMC << 1024)
 
 
 def _removeprefix(s, prefix):
@@ -266,6 +267,22 @@ def _safe(d, *keys, default=None):
 
 def _err(section, message, detail=None):
     return {'section': section, 'message': str(message), 'detail': detail}
+
+
+def _capped(seq, section=None, errors=None):
+    """무경계 collection(Members/Drives) 순회 상한 — P2 DoS/huge-payload 방어.
+
+    오염/악성/버그 BMC 가 수천 멤버를 반환하면 멤버당 _get 가 N회 네트워크 왕복(각 timeout)을
+    유발해 사실상 hang. cap 초과 시 절단 + (errors 제공 시) _err 로 명시(silent 절단 금지 —
+    rule 70). 실 BMC 멤버 수는 cap 보다 훨씬 작아 정상 입력 결과 불변(rule 92 R2 Additive).
+    """
+    seq = seq or []
+    if len(seq) > MAX_COLLECTION_MEMBERS:
+        if errors is not None and section:
+            errors.append(_err(section,
+                f'collection 멤버 {len(seq)} > 상한 {MAX_COLLECTION_MEMBERS} — 절단(DoS 방어)'))
+        return seq[:MAX_COLLECTION_MEMBERS]
+    return seq
 
 
 # 2026-04-29 fix B90 / B23: JEDEC ID -> vendor name normalization (rule 10 stdlib only)
@@ -1693,7 +1710,7 @@ def gather_memory(bmc_ip, system_uri, username, password, timeout, verify_ssl):
         return {'total_mib': None, 'slots': []}, errors
 
     slots, total_mib = [], 0
-    for member in (_safe(coll, 'Members') or []):
+    for member in _capped(_safe(coll, 'Members') or [], 'memory', errors):
         uri = _safe(member, '@odata.id')
         if not uri: continue
         st, mdata, merr = _get(bmc_ip, _p(uri), username, password, timeout, verify_ssl)
@@ -1824,7 +1841,7 @@ def _extract_storage_drives(sdata, bmc_ip, username, password, timeout, verify_s
     """Drives 추출 — Empty Bay 필터링 + 정규화."""
     drives = []
     errors = []
-    for d_member in (_safe(sdata, 'Drives') or []):
+    for d_member in _capped(_safe(sdata, 'Drives') or [], 'storage', errors):
         d_uri = _safe(d_member, '@odata.id')
         if not d_uri:
             continue
@@ -2531,7 +2548,7 @@ def gather_firmware(bmc_ip, username, password, timeout, verify_ssl):
         return [], errors
 
     fw_list = []
-    for member in (_safe(coll, 'Members') or []):
+    for member in _capped(_safe(coll, 'Members') or [], 'firmware', errors):
         member_uri = _safe(member, '@odata.id')
         # Members 에 Name/Version 없으면 개별 URI 조회 (벤더 공통)
         if not _safe(member, 'Name') and member_uri:
@@ -3180,7 +3197,7 @@ def _collect_multi_node_topology(bmc_ip, vendor, service_root,
     managers   = mgr_result.get('managers')   or []
     chassis    = chs_result.get('chassis')    or []
 
-    representative = partitions[0]['id'] if partitions else None
+    representative = partitions[0].get('id') if partitions else None  # rule 95 R1 #2: 방어적 .get (id 누락 KeyError 회피)
     return {
         'enabled': True,
         'layout':  manager_layout,

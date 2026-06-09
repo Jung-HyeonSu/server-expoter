@@ -245,3 +245,34 @@ class TestP1SilentLoss:
             storage = result["data"].get("storage") or {}
             assert storage.get("controllers"), \
                 "storage 5xx 인데 collected 로 분류 + 내용 비어있음 (silent success 위장)"
+
+
+# ---------------------------------------------------------------------------
+# 6) P2 — 무경계 collection 순회 상한 (DoS / huge-payload)
+# ---------------------------------------------------------------------------
+@pytest.mark.integration
+@pytest.mark.skipif(PRIMARY not in CASE_IDS, reason=f"{PRIMARY} fixture 없음")
+class TestP2Bounds:
+    """수천 멤버 collection → 멤버당 _get N회로 hang. 상한으로 절단됨을 검증."""
+
+    def setup_method(self):
+        self.rec = _recording(PRIMARY)
+
+    def test_firmware_huge_member_list_capped(self):
+        """firmware Members 5000개 주입 → 상한 이하로 절단 (무경계 순회 hang 방어).
+
+        가드 전: 5000 멤버 전부 순회(멤버당 _get) → firmware 5000건. 가드 후: cap 이하.
+        """
+        cap = rg.MAX_COLLECTION_MEMBERS
+        result = _run(self.rec, [{"op": "inject_huge_list", "channel": "get",
+                                  "path": "UpdateService/FirmwareInventory",
+                                  "pointer": "/Members", "count": cap + 4000}])
+        assert_graceful(result)
+        fw = result["data"].get("firmware") or []
+        assert len(fw) <= cap, f"firmware 무경계 순회 미차단 (len={len(fw)} > cap={cap})"
+
+    def test_wellformed_firmware_not_truncated(self):
+        """정상 23 멤버는 절단되지 않음 (상한이 정상 입력을 건드리지 않음 — golden 불변)."""
+        result = _run(self.rec, [])
+        fw = result["data"].get("firmware") or []
+        assert 0 < len(fw) <= rg.MAX_COLLECTION_MEMBERS
