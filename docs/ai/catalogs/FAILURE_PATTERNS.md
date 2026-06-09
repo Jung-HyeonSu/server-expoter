@@ -20,6 +20,23 @@
 
 ---
 
+## 2026-06-09 — gather 엔진 외부 JSON 파싱 robustness gap (mutation 하네스로 검출)
+
+- 카테고리: external-contract-drift / production-crash
+- 발견 위치: `redfish_gather.py`(multi_node 정규화 + firmware/_p) / `precheck_bundle.py` / `merge_fragment.yml` (fault-injection 하네스 mutation.py 로 검출)
+- 증상:
+  1. **P0 crash**: BMC 가 `total_cores`/`capacity_mb`/`total_mb` 를 **문자열**로 반환 시 `int()`/`//` ValueError/TypeError → multi_node 정규화는 section runner 밖이라 **모듈 전체 죽음**(envelope 0). CSUS/Superdome 실재 위험.
+  2. **P1 silent-loss**: 1 개 firmware 멤버의 `@odata.id` 가 비-str(dict/int) → `_p().lstrip` AttributeError → section runner catch → firmware 섹션 **전체**(23건) silent 손실.
+  3. **P2 hang**: 무경계 `Members`/`Drives` 순회 → 악성/버그 BMC 수천 멤버에 멤버당 `_get` N회(각 timeout) → 사실상 hang.
+  4. precheck `Members[0].get` 비-dict([null]/[str]) AttributeError. merge_fragment `list+dict` 같은 key → `bv+fv` TypeError.
+- 원인: `_safe_int`/`_safe` 방어 헬퍼가 있는데도 일부 경로가 bare cast/접근. 직전 사이클이 golden 고정만 하고 **변형 입력으로 검증 안 함**.
+- 영향: multi_node(CSUS/Superdome) 전 채널 / firmware·storage·memory 섹션 / precheck 전 채널.
+- 수정: P0 `_safe_int` 통일 + P1 `_p()` 무효 path/split isinstance + P2 `MAX_COLLECTION_MEMBERS`/`_capped` + precheck isinstance + merge_fragment `is not mapping`. 커밋 ad1fc8d/c037ee3/dee9bfe/efe582b/6378453.
+- 재발 방지: `tests/integration/mutation.py` fault-injection 하네스 영구화(변형 입력 회귀 38건). golden byte 불변으로 정상 경로 무침범 보장. rule 95 R1 #2/#7.
+- 관련 rule: rule 95 R1, rule 92 R2(Additive), rule 96 R1-B
+
+---
+
 ## 2026-06-08 — replay 하네스 _REPLAY_MISS 가 absent endpoint 를 failed 로 오분류 (fidelity)
 
 - 카테고리: test-harness-fidelity

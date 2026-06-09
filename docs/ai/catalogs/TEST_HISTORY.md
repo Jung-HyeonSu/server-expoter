@@ -2,6 +2,30 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-09 (redfish/gather 견고화 — fault-injection 하네스 + crash 가드)
+
+사용자 요청: 시뮬레이터/mock 을 **실제로 활용해** gather 로직 견고화(직전 사이클은 golden 고정만 함).
+TDD: 변형 입력 RED → 가드 GREEN → golden byte 불변.
+
+### 신규 테스트/도구 (+38 케이스, +5 test_*.py 파일, +1 도구 모듈)
+- `tests/integration/mutation.py` (신규 도구): recording 변형 레이어(RFC-6901/결정론/deep-copy) — 기존 `make_replayer` seam 재사용.
+- `tests/integration/test_robustness_mutations.py` (신규, 18): pointer 단위 + transparency(no-op=golden) + identity + single-node degrade + P1 @odata.id + P2 bounds.
+- `tests/integration/test_redfish_normalize_robustness.py` (신규, 9): multi_node 정규화 bare int() crash(문자열 cores/capacity) RED→가드.
+- `tests/unit/test_normalize_skeleton_sync.py` (신규, 2): data skeleton 3-파일 동기화 가드(PyYAML).
+- `tests/unit/test_precheck_robustness.py` (신규, 4): precheck Members[0] 비-dict 가드.
+- `tests/unit/test_merge_fragment_render.py` (신규, 5): merge_fragment list+dict 충돌 — 실 YAML 식 Jinja2 렌더 검증.
+
+### production 가드 (TDD)
+- `redfish_gather.py`: P0 `_safe_int`(L2858/2976-77/2985/3019) + P1 `_p()` 비-str/firmware split + P2 `MAX_COLLECTION_MEMBERS`/`_capped`/`partitions[0].get`.
+- `precheck_bundle.py`: `_try_redfish_auth` Members[0] isinstance.
+- `merge_fragment.yml`: data 병합 concat 분기 `is not mapping` (Jenkins 통합 후속).
+
+### 회귀 결과 (실측)
+- `pytest tests/ --ignore=tests/e2e_browser` → **906 passed, 4 skipped** (직전 868 + 38). 무회귀.
+- golden(hpe_emulator ×5 + dmtf ×1) **52 byte 불변** — 매 fix 후 재확인(정상 입력 경로 무침범 증명).
+- 전체 collected 875→913. CLAUDE.md/PROJECT_MAP test_*.py 52→57파일.
+- e2e_browser 2 fail = 사이트 Jenkins(10.100.64.152) Playwright 미도달(본 변경 무관, 네트워크 격리).
+
 ## 2026-06-08 (AR-1 redfish vendor 정규화 reference 단위 테스트)
 
 AUDIT AR-1(esxi vendor substring fallback 누락 — cross-channel divergence) 의 **검증 가능한 절반**: redfish 정규화 정본 `_normalize_vendor_from_aliases`(직접 테스트 부재였음) 고정.

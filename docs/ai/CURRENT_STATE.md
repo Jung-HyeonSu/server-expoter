@@ -1,5 +1,21 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (redfish/gather 견고화 — fault-injection 하네스 + crash 가드 [DONE])
+
+- **요청 (사용자)**: "시뮬레이터/mock 으로 견고하게 해달라 했는데 gather 로직·하네스는 개선 안 된 채 끝났다. 전수조사해서 개선하라."
+- **진단 (git 실측)**: 직전 6 커밋 전부 tests/docs/.claude/Jenkinsfile 만 — production gather 0 줄. 하네스가 현재 출력을 golden 으로 고정(=버그까지 고정)만 함. 시뮬레이터/mock 을 코드 견고화에 미사용.
+- **무엇 (TDD: 변형 입력 RED → 가드 GREEN → golden byte 불변)**:
+  - **하네스 승격**: `tests/integration/mutation.py`(신규) — 기존 `make_replayer` seam 위 변형 레이어(RFC-6901/결정론/deep-copy). characterization → **fault-injection**.
+  - **P0 crash**: `_summarize_partition_disks`/`_normalize_cpu_raw`/`_normalize_memory_raw` bare `int()`/`//` → `_safe_int`. CSUS/Superdome BMC 문자열 cores/capacity → 모듈 전체 죽던 것(envelope 0) 방어.
+  - **P1 silent-loss**: `_p()` 비-str @odata.id 무효 path(ServiceRoot 오인 회피) + firmware split isinstance — 1 멤버 오염이 firmware 섹션 전체(23건) 날리던 것 → 오염 멤버만 skip.
+  - **P2 bounds**: `MAX_COLLECTION_MEMBERS=1024` + `_capped`(firmware/memory/drives) 무경계 순회 hang 방어 + `partitions[0].get('id')`.
+  - **Phase 5**: precheck `_try_redfish_auth` Members[0] 비-dict 가드 + data skeleton 3-파일 sync pytest + merge_fragment `list+dict` 충돌 가드(Jinja2 렌더 검증).
+- **검증 (✅ 실측)**: ✅ `pytest tests/ --ignore=tests/e2e_browser` = **906 pass, 4 skip**(직전 868 + 신규 38). golden(hpe+dmtf) 52 byte 불변(매 fix 후 재확인). 전체 875→913, test_*.py 52→57.
+- **한계 (⚠️)**: merge_fragment.yml 은 Jinja2 렌더 레벨까지만 로컬 검증 — 전체 ansible 통합은 Jenkins(NEXT_ACTIONS). e2e_browser 2 fail = 사이트 Jenkins 미도달(무관).
+- **증거**: `tests/evidence/2026-06-09-redfish-robustness.md`. **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-08 (AR-1 redfish vendor 정규화 reference 고정 [PARTIAL])
 
 - **요청 (사용자)**: "할 수 있는건 하는게 맞지않아? 작업 덜 됐으면. 끝났으면 그만." → 게이트 단정한 항목 재검증 + 가능한 것 실행.

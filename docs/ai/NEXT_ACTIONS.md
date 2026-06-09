@@ -24,6 +24,12 @@
 >
 > **2026-06-04 환경 정정**: ansible **라이브러리** 2.19.9 는 설치되어 있어 (`import ansible` OK) Python 모듈/필터/플러그인은 **pytest 로 로컬 검증 가능** (704 pass). 단 `ansible-playbook` **CLI 는 PATH 부재**(rc=127) — playbook syntax-check/런타임은 여전히 Jenkins Agent 위임. 따라서 §0 의 `[ANSIBLE]` 태그 항목(YAML/playbook 변경)은 계속 보류, Python-only 항목(R-4 등)은 본 환경에서 진행 가능.
 
+### 0.9 (2026-06-09 견고화 사이클) merge_fragment 가드 Jenkins 통합 검증 [PENDING — Jenkins Agent]
+
+- **항목**: `common/tasks/normalize/merge_fragment.yml` 의 data 병합 concat 분기 `is not mapping` 가드(커밋 `6378453`) — list↔dict 오염 시 `bv+fv` TypeError 를 else(fv 우선)로 graceful 강등.
+- **로컬 검증 완료(✅)**: 실 YAML 식을 추출해 Jinja2 로 렌더(`tests/unit/test_merge_fragment_render.py` 5건) — 정상 list+list concat 불변 + 오염 list↔dict graceful 확인.
+- **잔여(Jenkins)**: 전체 ansible set_fact 통합(실 `union` 필터 + `no_log` + 3-채널 gather 흐름)에서 회귀 0 확인. 분류 `[ANSIBLE]`. 정상 입력 결과 불변이라 위험 낮음(Additive).
+
 ---
 
 ## 0.5 HP CSUS 3200 사이트 사고 후속 — Bug C 잔여 [PENDING — 실 envelope 필요]
