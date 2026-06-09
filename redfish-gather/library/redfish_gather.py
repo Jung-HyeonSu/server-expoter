@@ -77,24 +77,42 @@ def _safe_int(x, default=None):
         return default
 
 
+def _safe_num(x, default=None):
+    """유한 숫자 정규화 — int 는 int, **유한 float 는 float 로 보존**; bool/비-숫자/None/inf/nan → default.
+
+    Round 19 (R19-2/3 regression fix): _safe_int 는 int() 라 fractional float 를 truncate 한다
+    (2.5GbE = CurrentSpeedGbps 2.5 → 2 데이터 손상). DMTF Port.CurrentSpeedGbps 는 number 타입이라
+    소수 합법. 본 helper 는 fractional 보존 + inf/nan(json.loads 기본 허용) 은 None 으로 흡수해
+    int() 캐스트 OverflowError/ValueError 도 차단한다.
+    """
+    if isinstance(x, bool):  # bool 은 int 하위형 — float(True)=1.0 오역산 방지
+        return default
+    try:
+        f = float(x)
+    except (ValueError, TypeError):
+        return default
+    if f != f or f in (float('inf'), float('-inf')):  # NaN(f!=f) / ±Infinity
+        return default
+    return int(x) if isinstance(x, int) else f
+
+
 def _normalize_port_speed(pdata):
     """Redfish Port/NetworkPort 의 현재 링크 속도를 (speed_gbps, speed_mbps) 로 정규화.
 
     Round 17 #3: 신 Port resource(1.6+, `Ports`)는 CurrentSpeedGbps(Gbps) 만 주고
     CurrentLinkSpeedMbps(구 `NetworkPorts` 전용)를 안 준다. 따라서 Mbps 가 없으면
     Gbps 에서 역산해야 Ports-only 어댑터(HPE 등)의 current_link_speed_mbps /
-    adapter speed_mbps 가 None 으로 유실되지 않는다. 숫자-문자열 Gbps('10')도
-    _safe_int 로 흡수(bool 은 제외 — JSON true/false 오염 방어).
+    adapter speed_mbps 가 None 으로 유실되지 않는다. _safe_num 으로 정규화하여 숫자-문자열
+    Gbps('10')·fractional Gbps(2.5) 보존 + bool/inf/nan 은 None 으로 방어.
     """
     cur_gbps = _safe(pdata, 'CurrentSpeedGbps')
-    # Round 18 (R18-1 regression fix): 모든 외부 numeric 은 _safe_int 경유 (Round 15 규약).
-    # bool 은 _safe_int(True)=1 오역산 방지 위해 먼저 배제. _safe_int 가 JSON Infinity/NaN
-    # (json.loads 기본 허용)·문자열·None 을 모두 None 으로 흡수 → raw int() 캐스트의
-    # OverflowError(inf)/ValueError(nan) 로 network_adapters 섹션 전체가 drop 되던 회귀 차단.
-    cur_gbps_num = None if isinstance(cur_gbps, bool) else _safe_int(cur_gbps)
+    # Round 18/19: _safe_num 으로 정규화 — bool/문자열-비숫자/None/inf/nan 은 None(섹션 drop 유발
+    # int() OverflowError/ValueError 차단), int 는 int, **fractional float(2.5GbE)는 float 보존**.
+    cur_gbps_num = _safe_num(cur_gbps)
     speed_mbps = _safe_int(_safe(pdata, 'CurrentLinkSpeedMbps'))  # Round 3 #17: mbps int 통일
     if speed_mbps is None and cur_gbps_num:
-        speed_mbps = _safe_int(cur_gbps_num * MBPS_PER_GBPS)
+        # round: fractional Gbps(2.5→2500) 정확 변환 + float 정밀도 truncation 방지
+        speed_mbps = _safe_int(round(cur_gbps_num * MBPS_PER_GBPS))
     if cur_gbps_num is not None:
         speed_gbps = cur_gbps_num
     elif speed_mbps is not None:

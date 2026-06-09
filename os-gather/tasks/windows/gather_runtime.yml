@@ -178,11 +178,14 @@
               ntp_synchronized: "{{ _w_rt_ntp_obj.synced | default(false) | bool }}"
               firewall_tool:    "windows_firewall"
               firewall_state: >-
-                {%- set any_enabled = false -%}
+                {# Round 19 (R19-1): plain set 은 for-loop 밖으로 전파되지 않아 any_enabled 가
+                   항상 false → firewall_state 가 모든 호스트에서 'inactive' 오보(보안 필드).
+                   인접 swap_* 와 동일하게 namespace 사용 (loop-scoping fix). #}
+                {%- set ns = namespace(any=false) -%}
                 {%- for fw in _w_rt_fw_list -%}
-                  {%- if fw.enabled | default(false) -%}{%- set any_enabled = true -%}{%- endif -%}
+                  {%- if fw.enabled | default(false) -%}{%- set ns.any = true -%}{%- endif -%}
                 {%- endfor -%}
-                {{ 'active' if any_enabled else 'inactive' }}
+                {{ 'active' if ns.any else 'inactive' }}
               listening_ports: >-
                 {%- set out = [] -%}
                 {%- for p in (_w_rt_ports_list | default([])) -%}

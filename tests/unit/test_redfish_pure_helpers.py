@@ -298,3 +298,29 @@ def test_port_speed_infinity_nan_no_crash(rfg):
     # inf Gbps + 정상 Mbps → Gbps 무시, Mbps 보존
     g2, m2 = rfg._normalize_port_speed({"CurrentSpeedGbps": float("inf"), "CurrentLinkSpeedMbps": 10000})
     assert m2 == 10000 and g2 == 10.0
+
+
+def test_port_speed_fractional_gbps_preserved(rfg):
+    """R19-2/3 회귀: fractional CurrentSpeedGbps(2.5GbE 등)가 _safe_int truncate(2.5→2)되던 것 →
+    _safe_num 으로 float 보존. mbps 는 round 로 정확(2500)."""
+    gbps, mbps = rfg._normalize_port_speed({"CurrentSpeedGbps": 2.5})
+    assert gbps == 2.5          # 가드 전(_safe_int): 2 (손상)
+    assert mbps == 2500         # 가드 전: 2000 (off by 500)
+    # 정수형 Gbps 불변
+    assert rfg._normalize_port_speed({"CurrentSpeedGbps": 25.0}) == (25.0, 25000)
+    assert rfg._normalize_port_speed({"CurrentSpeedGbps": 10}) == (10, 10000)
+    # 5GbE 소수
+    g5, m5 = rfg._normalize_port_speed({"CurrentSpeedGbps": 5.0})
+    assert (g5, m5) == (5.0, 5000)
+
+
+def test_safe_num_helper(rfg):
+    """_safe_num: int→int, 유한 float→float 보존, bool/None/비숫자/inf/nan→None."""
+    assert rfg._safe_num(10) == 10 and isinstance(rfg._safe_num(10), int)
+    assert rfg._safe_num(2.5) == 2.5
+    assert rfg._safe_num("25") == 25.0
+    assert rfg._safe_num(True) is None
+    assert rfg._safe_num(None) is None
+    assert rfg._safe_num("x") is None
+    assert rfg._safe_num(float("inf")) is None
+    assert rfg._safe_num(float("nan")) is None
