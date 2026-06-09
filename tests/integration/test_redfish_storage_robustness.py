@@ -30,6 +30,13 @@ class TestNormalizeStorageRaw:
         phys = out.get("physical_disks") or []
         assert any(d.get("device") == "d0" for d in phys)
 
+    def test_zero_capacity_preserved_as_zero(self):
+        """capacity_bytes=0 (known-zero) → total_mb=0 (None 으로 소실 안 됨) — Round 1 #15."""
+        out = rg._normalize_storage_raw({"controllers": [
+            {"drives": [{"name": "z0", "capacity_bytes": 0}]}]})
+        phys = out.get("physical_disks") or []
+        assert phys and phys[0]["total_mb"] == 0
+
 
 # ── monkeypatch _get 기반 (오프라인) ──
 def _fake_get_from_tree(tree):

@@ -1777,7 +1777,7 @@ def _gather_simple_storage(bmc_ip, members, username, password, timeout, verify_
                 'media_type':     None,
                 'protocol':       None,
                 'capacity_bytes': cap_int,
-                'capacity_gb':    round(cap_int / BYTES_PER_GB_DECIMAL, 2) if cap_int else None,
+                'capacity_gb':    round(cap_int / BYTES_PER_GB_DECIMAL, 2) if cap_int is not None else None,  # 0 보존(known-zero) Round 1 #16
                 'health':         _safe(dev, 'Status', 'Health'),
             })
         controllers.append({
@@ -1946,7 +1946,7 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
             'controller_id':    controller_id,
             'member_drive_ids': member_ids,
             'raid_level':       raid_type,
-            'total_mb':         (vcap_int // BYTES_PER_MIB) if vcap_int else None,
+            'total_mb':         (vcap_int // BYTES_PER_MIB) if vcap_int is not None else None,  # 0 보존(known-zero) Round 1 #17
             # BUG-19 fix: drive 와 동일하게 Status.Health 누락 시 HealthRollup fallback.
             'health':           _safe(vdata, 'Status', 'Health') or _safe(vdata, 'Status', 'HealthRollup'),
             'state':            _safe(vdata, 'Status', 'State'),
@@ -2935,7 +2935,7 @@ def _normalize_storage_raw(raw):
             if not isinstance(drv, dict):
                 continue
             cap = drv.get('capacity_bytes')
-            tmb = int(cap // BYTES_PER_MIB) if isinstance(cap, (int, float)) and cap else None
+            tmb = int(cap // BYTES_PER_MIB) if isinstance(cap, (int, float)) else None  # 0 보존(known-zero) Round 1 #15
             drives_out.append({
                 'device': drv.get('name'), 'model': drv.get('model'),
                 'total_mb': tmb, 'media_type': drv.get('media_type'),
