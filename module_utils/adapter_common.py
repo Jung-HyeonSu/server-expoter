@@ -30,6 +30,8 @@ def load_vendor_aliases(aliases_path):
             data = yaml.safe_load(f) or {}
         aliases = data.get("vendor_aliases", {})
         for canonical, alias_list in aliases.items():
+            if not isinstance(canonical, str):  # Round 13 #0: 비-str canonical(YAML int key) 방어
+                continue
             for alias in (alias_list if isinstance(alias_list, list) else []):  # Round 9 #0: alias_list 가 str 이면 char 순회 방지
                 if isinstance(alias, str):  # Round 3 #16: None/비-str alias 가 전체 로드를 abort 시키지 않게
                     mapping[alias.strip().lower()] = canonical
@@ -106,7 +108,7 @@ def pattern_match_any(patterns, value):
     """
     if not patterns or not value:
         return False
-    if isinstance(patterns, str):  # Round 12 #3: scalar pattern(YAML 오타) → 단일 list (char 순회 방지)
+    if not isinstance(patterns, (list, tuple)):  # Round 12/13: scalar(str/int 등 YAML 오타) → 단일 list (순회 crash 방지)
         patterns = [patterns]
     value = str(value)
     for pattern in patterns:

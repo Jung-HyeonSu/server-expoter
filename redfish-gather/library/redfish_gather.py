@@ -502,6 +502,8 @@ def _load_vendor_aliases_file():
                 data = yaml.safe_load(f) or {}
             mapping = {}
             for canonical, alias_list in data.get('vendor_aliases', {}).items():
+                if not isinstance(canonical, str):  # Round 13 #0: 비-str canonical(YAML int key) 방어
+                    continue
                 for alias in (alias_list if isinstance(alias_list, list) else []):  # Round 9 #0: str alias_list char 순회 방지
                     if isinstance(alias, str):  # Round 5 #10: None/비-str alias 가 로드 abort 시키지 않게
                         mapping[alias.strip().lower()] = canonical
