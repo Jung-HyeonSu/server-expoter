@@ -190,3 +190,58 @@ class TestSingleNodeDegradation:
         result = _run(self.rec, [{"op": "inject_member_null", "channel": "get",
                                   "path": "Systems/1/Processors"}])
         assert_graceful(result)
+
+
+# ---------------------------------------------------------------------------
+# 5) P1 — @odata.id 오염 / 수집 중 5xx (silent-loss 가드)
+# ---------------------------------------------------------------------------
+@pytest.mark.integration
+@pytest.mark.skipif(PRIMARY not in CASE_IDS, reason=f"{PRIMARY} fixture 없음")
+class TestP1SilentLoss:
+    """비-str @odata.id, 부분 5xx 등 — crash 없이 degrade."""
+
+    def setup_method(self):
+        self.rec = _recording(PRIMARY)
+
+    # 정상 dl360 firmware 멤버 수 (1개 멤버 오염이 전체를 날리지 않음을 검증할 기준).
+    _FW_FLOOR = 20  # 정상 23 — 1개 오염돼도 나머지는 보존돼야 (>= 20)
+
+    def test_firmware_member_corrupt_odata_id(self):
+        """firmware Member 의 @odata.id 가 비-str(dict) → 1개 오염이 섹션 전체 손실 유발 금지.
+
+        가드 전: _p(dict)(uri.lstrip) AttributeError → 섹션 runner 가 catch → firmware
+        섹션 **전체**(23건) 가 failed 로 날아감(silent total-section loss). 가드 후: 오염
+        멤버만 건너뛰고 나머지는 수집.
+        """
+        result = _run(self.rec, [{"op": "corrupt_odata_id", "channel": "get",
+                                  "path": "UpdateService/FirmwareInventory",
+                                  "pointer": "/Members/0/@odata.id"}])
+        assert_graceful(result)
+        fw = result["data"].get("firmware") or []
+        assert len(fw) >= self._FW_FLOOR, (
+            f"1개 멤버 @odata.id 오염이 firmware 섹션 전체 손실 유발 (len={len(fw)})"
+        )
+
+    def test_firmware_member_numeric_odata_id(self):
+        """@odata.id 가 숫자(int) 인 변종 → 역시 섹션 보존."""
+        result = _run(self.rec, [{"op": "set_value", "channel": "get",
+                                  "path": "UpdateService/FirmwareInventory",
+                                  "pointer": "/Members/0/@odata.id", "value": 12345}])
+        assert_graceful(result)
+        fw = result["data"].get("firmware") or []
+        assert len(fw) >= self._FW_FLOOR, f"숫자 @odata.id 오염이 firmware 전체 손실 (len={len(fw)})"
+
+    def test_storage_collection_http_500_not_silent_success(self):
+        """Storage 컬렉션 5xx → 섹션이 silent success 로 위장되지 않음 (degradation-lock).
+
+        storage 가 collected 로 분류되면 data.storage 가 실제 내용을 가져야 하고,
+        실패면 failed/unsupported 로 가야 한다 — 빈 채로 success 위장 금지.
+        """
+        result = _run(self.rec, [{"op": "http_status", "channel": "get",
+                                  "path": "Systems/1/Storage", "status": 500}])
+        assert_graceful(result)
+        # storage 가 '성공 수집' 으로 남았다면 실제 controllers 데이터가 있어야 함
+        if "storage" in result["collected"]:
+            storage = result["data"].get("storage") or {}
+            assert storage.get("controllers"), \
+                "storage 5xx 인데 collected 로 분류 + 내용 비어있음 (silent success 위장)"

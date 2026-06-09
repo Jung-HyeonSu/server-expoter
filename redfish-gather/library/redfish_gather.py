@@ -246,7 +246,15 @@ def _patch(bmc_ip, path, body, username, password, timeout, verify_ssl):
         return 0, {}, f'Unexpected: {type(e).__name__}: {e}'
 
 def _p(uri):
-    """@odata.id URI → _get() path 인수"""
+    """@odata.id URI → _get() path 인수.
+
+    rule 95 R1: @odata.id 는 Redfish spec 상 str URI 지만, 오염/펌웨어 버그로 비-str
+    (dict/int)이 오면 uri.lstrip 이 AttributeError → 호출 섹션 전체가 죽는다(silent
+    total-section loss). 비-str 은 절대 매치 안 되는 무효 path 로 치환해 _get 가 404 로
+    깨끗이 실패하게 한다 — '' 반환은 ServiceRoot(200) 오인 위험이 있어 금지.
+    """
+    if not isinstance(uri, str):
+        return '__invalid_odata_id__'
     return _removeprefix(_removeprefix(uri.lstrip('/'), 'redfish/v1/'), 'redfish/v1').rstrip('/')
 
 def _safe(d, *keys, default=None):
@@ -2530,7 +2538,8 @@ def gather_firmware(bmc_ip, username, password, timeout, verify_ssl):
             st2, fw_data, ferr = _get(bmc_ip, _p(member_uri), username, password, timeout, verify_ssl)
             if not ferr and st2 == 200:
                 member = fw_data
-        fw_id = _safe(member, 'Id') or (member_uri.split('/')[-1] if member_uri else None)
+        fw_id = _safe(member, 'Id') or (member_uri.split('/')[-1]
+                                        if isinstance(member_uri, str) and member_uri else None)
         # Q-14: Dell Previous- 항목 스킵 (비활성 이전 버전)
         if fw_id and isinstance(fw_id, str) and fw_id.startswith('Previous-'):
             continue
