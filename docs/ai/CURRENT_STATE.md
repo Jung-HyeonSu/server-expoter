@@ -1,5 +1,16 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 3 적대적 hunt — 배열 가드 systemic + int 통일 [DONE])
+
+- **방법**: 동일 9 finder + 3-lens. 54 raw → 44 deduped → **21 confirmed**(141 agent). 추세 26→23→21.
+- **수렴 진단**: 지배 패턴 = "외부 배열 `for e in (_safe()or[])` + `e.get()` 에 isinstance 가드 부재". 실측 — redfish 배열 루프 21개 중 15 가드됨 → **잔여 6개만**(유한). systemic 처리.
+- **수정 (~14)**: `_as_list`/`_dicts` 헬퍼 신설 + 잔여 무가드 배열 루프(pc0/IPv4Addresses/InfiniBand/NameServers/normalize ipv4/@odata.id) 일괄 가드 / cpu·memory speed+count `_safe_int` 통일(correctness — 문자열 MHz/Count) / `_normalize_cpu_raw` 외 / adapter None alias 가 전체 로드 abort 시키던 것 방지 / port mbps int.
+- **기각·보류**: #9 os YAML(clarity nit, 로직 정상) / #10 speed_gbps(golden float) / #13 memory total 0→None(데이터 없음=None 적절) / #12/#18/#19(테스트 유지보수 nit).
+- **검증 (✅)**: ✅ **944 pass**(+6 회귀). golden **52 byte 불변**. 커밋 d7c062f.
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-09 (Round 2 적대적 hunt — 변경코드 재검수 + 심화 [DONE])
 
 - **방법**: 동일 9 finder + 3-lens, 단 "이미 고친 24건 + 의도적 미적용 2건" 컨텍스트 주입 → Round 1 fix 재검수 + 미탐색 심화. 50 raw → 45 deduped → **23 confirmed**(144 agent).

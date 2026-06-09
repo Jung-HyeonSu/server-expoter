@@ -2,6 +2,12 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-09 (Round 3 적대적 hunt — 21 confirmed, ~14 수정)
+
+- 신규 `tests/integration/test_redfish_round3_robustness.py` (6): _as_list/_dicts 헬퍼 + pc0/_resolve_all/normalize ipv4/processors int/_make_ib_port.
+- production: redfish_gather.py(_as_list/_dicts + 배열 가드 6 + cpu/memory int) + adapter_common(None alias).
+- **944 passed, 5 skipped**(직전 938 + 6). golden 52 byte 불변. 추세 26→23→21 confirmed.
+
 ## 2026-06-09 (Round 2 적대적 hunt — 23 confirmed, ~15 수정)
 
 ### 신규 테스트 (+9, +1 skip)
