@@ -167,7 +167,10 @@ def _get(bmc_ip, path, username, password, timeout, verify_ssl):
 def _post(bmc_ip, path, body, username, password, timeout, verify_ssl):
     """P2 (cycle 2026-04-28): AccountService 계정 생성 (POST /Accounts)."""
     url = f'https://{bmc_ip}/redfish/v1/{path.lstrip("/")}'
-    payload = json.dumps(body).encode('utf-8')
+    try:
+        payload = json.dumps(body).encode('utf-8')
+    except TypeError:  # Round 4 #4/#5: 비-직렬화 body 방어 (provision crash 차단)
+        payload = json.dumps(str(body)).encode('utf-8')
     req = urlreq.Request(url, data=payload, method='POST', headers={
         'Authorization': _auth(username, password),
         'Accept': 'application/json',
@@ -220,7 +223,10 @@ def _delete(bmc_ip, path, username, password, timeout, verify_ssl):
 def _patch(bmc_ip, path, body, username, password, timeout, verify_ssl):
     """P2 (cycle 2026-04-28): AccountService 계정 update (PATCH /Accounts/{id})."""
     url = f'https://{bmc_ip}/redfish/v1/{path.lstrip("/")}'
-    payload = json.dumps(body).encode('utf-8')
+    try:
+        payload = json.dumps(body).encode('utf-8')
+    except TypeError:  # Round 4 #4/#5: 비-직렬화 body 방어 (provision crash 차단)
+        payload = json.dumps(str(body)).encode('utf-8')
     req = urlreq.Request(url, data=payload, method='PATCH', headers={
         'Authorization': _auth(username, password),
         'Accept': 'application/json',
@@ -286,7 +292,7 @@ def _capped(seq, section=None, errors=None):
     유발해 사실상 hang. cap 초과 시 절단 + (errors 제공 시) _err 로 명시(silent 절단 금지 —
     rule 70). 실 BMC 멤버 수는 cap 보다 훨씬 작아 정상 입력 결과 불변(rule 92 R2 Additive).
     """
-    seq = seq or []
+    seq = seq if isinstance(seq, list) else []  # Round 4 #2: 비-list 방어 (len/slice crash 차단)
     if len(seq) > MAX_COLLECTION_MEMBERS:
         if errors is not None and section:
             errors.append(_err(section,
@@ -1453,7 +1459,7 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
             'health': _safe(data, 'ProcessorSummary', 'Status', 'Health'),
         },
         'memory_summary': {
-            'total_gib': _safe(data, 'MemorySummary', 'TotalSystemMemoryGiB'),
+            'total_gib': _safe_int(_safe(data, 'MemorySummary', 'TotalSystemMemoryGiB')),  # Round 4 #7: int 통일
             'health':    mem_health,
         },
         'oem': {},
@@ -1669,7 +1675,7 @@ def gather_processors(bmc_ip, system_uri, username, password, timeout, verify_ss
         return [], errors
 
     processors = []
-    for member in (_safe(coll, 'Members') or []):
+    for member in _dicts(_safe(coll, 'Members')):  # Round 4: 비-list/비-dict Members 방어
         uri = _safe(member, '@odata.id')
         if not uri: continue
         st, pdata, perr = _get(bmc_ip, _p(uri), username, password, timeout, verify_ssl)
@@ -1754,9 +1760,9 @@ def gather_memory(bmc_ip, system_uri, username, password, timeout, verify_ssl):
             'serial':          _strip_or_none(_safe(mdata, 'SerialNumber')),
             # 2026-04-30: Cisco 등 trailing whitespace 정규화.
             'part_number':     _strip_or_none(_safe(mdata, 'PartNumber')),
-            'rank_count':      _safe(mdata, 'RankCount'),
-            'data_width_bits': _safe(mdata, 'DataWidthBits'),
-            'bus_width_bits':  _safe(mdata, 'BusWidthBits'),
+            'rank_count':      _safe_int(_safe(mdata, 'RankCount')),  # Round 4 #8/#14: int 통일
+            'data_width_bits': _safe_int(_safe(mdata, 'DataWidthBits')),
+            'bus_width_bits':  _safe_int(_safe(mdata, 'BusWidthBits')),
             'error_correction': _safe(mdata, 'ErrorCorrection'),
             'health':          _safe(mdata, 'Status', 'Health'),
         })
@@ -1776,7 +1782,7 @@ def _gather_simple_storage(bmc_ip, members, username, password, timeout, verify_
             errors.append(_err('storage', f'SimpleStorage {uri} 실패: {serr or st}'))
             continue
         drives = []
-        for dev in (_safe(sdata, 'Devices') or []):
+        for dev in _dicts(_safe(sdata, 'Devices')):  # Round 4 #1: 비-list Devices 방어
             cap_int = _safe_int(_safe(dev, 'CapacityBytes'))
             drives.append({
                 'id':             None,
@@ -2030,7 +2036,7 @@ def _gather_smart_storage(bmc_ip, system_uri, username, password, timeout, verif
         if cerr or cst != 200:
             errors.append(_err('storage', f'SmartStorage.{coll_key} 실패: {cerr or cst}'))
             continue
-        for member in (_safe(coll, 'Members') or []):
+        for member in _dicts(_safe(coll, 'Members')):  # Round 4: 비-list/비-dict Members 방어
             ctrl_uri = _safe(member, '@odata.id')
             if not ctrl_uri:
                 continue
@@ -2058,7 +2064,7 @@ def _gather_smart_storage(bmc_ip, system_uri, username, password, timeout, verif
                         cap_mib_field = _safe_int(_safe(pddata, 'CapacityMiB'))
                         if cap_gb_field:
                             cap_bytes = cap_gb_field * BYTES_PER_GB_DECIMAL
-                            capacity_gb = cap_gb_field
+                            capacity_gb = round(float(cap_gb_field), 2)  # Round 4 #13: MiB 경로와 float 타입 일관
                         elif cap_mib_field:
                             cap_bytes = cap_mib_field * BYTES_PER_MIB
                             capacity_gb = round(cap_bytes / BYTES_PER_GB_DECIMAL, 2)
@@ -2148,7 +2154,7 @@ def gather_network(bmc_ip, system_uri, username, password, timeout, verify_ssl):
         return [], errors
 
     nics = []
-    for member in (_safe(coll, 'Members') or []):
+    for member in _dicts(_safe(coll, 'Members')):  # Round 4: 비-list/비-dict Members 방어
         uri = _safe(member, '@odata.id')
         if not uri: continue
         st, ndata, nerr = _get(bmc_ip, _p(uri), username, password, timeout, verify_ssl)
@@ -2370,7 +2376,7 @@ def _make_ib_port(adapter_id, adapter_info, port_id, link_status, speed_gbps, pd
             arr = _as_list(ibobj.get('AssociatedNodeGUIDs'))
             node_guid = arr[0] if arr else None
         if not port_guid:
-            arr = ibobj.get('AssociatedPortGUIDs') or []
+            arr = _as_list(ibobj.get('AssociatedPortGUIDs'))  # Round 4 #0: 비-list 방어 (L2370과 일관)
             port_guid = arr[0] if arr else None
     return {
         'adapter':       adapter_id,
@@ -2416,7 +2422,7 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
                            f'NetworkAdapters 미지원 또는 실패: {err or st}'))
         return out, errors
 
-    for member in (_safe(coll, 'Members') or []):
+    for member in _dicts(_safe(coll, 'Members')):  # Round 4: 비-list/비-dict Members 방어
         adp_uri = _safe(member, '@odata.id')
         if not adp_uri:
             continue
@@ -2638,7 +2644,7 @@ def _gather_power_subsystem(bmc_ip, chassis_uri, username, password, timeout, ve
     if psu_link:
         st_c, coll, _err_c = _get(bmc_ip, _p(psu_link), username, password, timeout, verify_ssl)
         if st_c == 200:
-            for member in (_safe(coll, 'Members') or []):
+            for member in _dicts(_safe(coll, 'Members')):  # Round 4: 비-list/비-dict Members 방어
                 m_uri = _safe(member, '@odata.id')
                 if not m_uri:
                     continue
@@ -3302,8 +3308,8 @@ def _compute_final_status(collected, failed, errors=None):
         for e in errors:
             if not isinstance(e, dict):
                 continue
-            detail = (e.get('detail') or '')
-            msg = (e.get('message') or '')
+            detail = str(e.get('detail') or '')  # Round 4 #11: 비-str detail(int 등) 'in' TypeError 방어
+            msg = str(e.get('message') or '')
             if 'HTTP 401' in detail or 'HTTP 403' in detail:
                 return 'failed', clean
             if '401' in msg and 'auth' in msg.lower():
