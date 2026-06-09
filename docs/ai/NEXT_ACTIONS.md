@@ -134,6 +134,13 @@
 - **ADR**: `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md`, `ADR-2026-05-29-hba-ib-csus.md`
 - **cycle 2026-05-29 (hba-ib-csus)**: baseline 을 전 공통 섹션 realistic mock 으로 채움 (FC HBA + RAID1 SATA + DDR5 + 3 partition canonical). 여전히 **mock** — C1 사이트 fixture 캡처 후 실 baseline 으로 교체 의무 ("검증됨" 주장 금지 — rule 25 R7-B).
 - **2026-06-08 에뮬레이터 범위 명시**: HPE 공식 iLO 에뮬레이터는 **CSUS/Superdome mockup 부재** → 본 항목(CSUS/Superdome)은 에뮬레이터로 못 메움. 실장비/사이트 fixture 가 유일 경로. (에뮬레이터는 iLO5/iLO6/Gen12 ProLiant 만 — `tests/integration/test_hpe_emulator_replay.py` 오프라인 회귀로 별도 커버.)
+- **cycle 2026-06-09 (ADR-2026-06-09)**: CSUS 3200 Redfish 모델 검수 → 누락 5종 (boot / thermal / log_services / composition(ResourceBlocks) / fabrics(FlexGrid)) Additive 구현 + mock fixture/baseline/테스트. 여전히 **mock** — 아래 C9~C14 사이트 실측 정정 의무 (rule 96 R1-C):
+  - **C9**: CompositionService/ResourceBlock 실 schema (RB↔chassis 매핑 / Processors·Memory 표현)
+  - **C10**: Fabrics/FlexGrid 실 FabricType (NUMAlink 표기) / Switch.SwitchType / Endpoint.EndpointProtocol
+  - **C11**: Chassis Thermal 실 sensor 명 / `/Thermal` vs `/ThermalSubsystem` 펌웨어 분기
+  - **C12**: RMC LogServices 실 ID (IML/IEL 추정) / OverWritePolicy
+  - **C13**: per-partition `Boot.BootOrder` 실 표현
+  - **C14**: (최적화) `gather_boot` / `gather_manager_logs` 재-GET 제거 — `gather_system`/`gather_bmc` raw 재사용 (현재 partition/manager 당 1회 추가 round-trip)
 
 ### 2.4 HBA / InfiniBand 사이트 fixture (lab 부재 — cycle 2026-05-29)
 

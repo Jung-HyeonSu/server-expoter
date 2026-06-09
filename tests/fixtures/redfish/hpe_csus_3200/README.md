@@ -24,6 +24,21 @@
 | chassis_collection.json | DMTF Chassis v1.20 + HPE FlexNodeInfo 추정 | MED |
 | Oem.Hpe.PartitionInfo | sdflex-ironic-driver wiki + sdflexutils 1.5.1 | MED |
 
+### cycle 2026-06-09 (ADR-2026-06-09) 신규 — CSUS 3200 모델 5종 누락분 fixture
+
+> 사용자 제시 CSUS 3200 Redfish 모델 검수 → boot / thermal / log_services / CompositionService / Fabrics 추가.
+> `test_csus_fixture_replay.py` 가 @odata.id 로 키잉해 `_collect_multi_node_topology` end-to-end 재생.
+
+| 파일 | Redfish 리소스 | Source | Confidence |
+|---|---|---|---|
+| chassis_base_thermal.json / chassis_expansion{1,2}_thermal.json | `Chassis/{id}/Thermal` | DMTF Thermal.v1 | MED |
+| manager_rmc_logservices.json + manager_rmc_logservice_{iml,iel}.json | `Managers/RMC/LogServices` | DMTF LogServiceCollection (IML/IEL 추정 — HPE 관례) | MED |
+| compositionservice.json + resourceblocks_collection.json + resourceblock_block{0,1,2}.json | `CompositionService` + `ResourceBlocks` | DMTF CompositionService/ResourceBlock + HPE CSUS Admin Guide (각 RB ↔ chassis) | MED |
+| fabrics_collection.json + fabric_flexgrid.json + switches_collection.json + switch_switch{0,1}.json + endpoints_collection.json + endpoint_endpoint{0,1}.json | `Fabrics` + FlexGrid (Switches/Endpoints) | DMTF Fabric/Switch/Endpoint + HPE CSUS architecture (NUMAlink) | LOW — FabricType=PCIe placeholder (DMTF enum 에 NUMAlink 부재) |
+| chassis_expansion{1,2}.json | `Chassis/Expansion{1,2}` | DMTF Chassis v1.20 (3-chassis 시나리오 완성) | MED |
+
+system_partition0.json `Boot` 에 `BootOrder` 추가 / manager_rmc.json 에 `LogServices` 링크 추가 / service_root.json 에 `Fabrics` + `CompositionService` 링크 추가.
+
 ## 핵심 web sources
 
 - https://servermanagementportal.ext.hpe.com/docs/concepts/gettingstarted — HPE Server Management Portal (확인 2026-05-12)

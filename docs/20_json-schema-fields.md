@@ -435,6 +435,8 @@ hostname = system.hostname  OR  system.fqdn  OR  ip_fallback
 ## 7-bis. RMC 멀티-노드 토폴로지 (`data.multi_node`)
 
 > cycle 2026-05-12 (ADR-2026-05-12) 추가. HPE Compute Scale-up Server 3200 / Superdome Flex 처럼 단일 RMC (Rack Management Controller) 가 N개 chassis × N개 nPartition × 다중 Manager 를 통합 노출하는 환경 정식 지원.
+>
+> cycle 2026-06-09 (ADR-2026-06-09) 확장. CSUS 3200 Redfish 모델 검수 결과 누락분 5종 Additive 추가 — per-partition `boot` (부팅 순서), per-chassis `thermal` (온도/팬), per-manager `log_services` (LogServices), `multi_node.composition` (CompositionService/ResourceBlocks), `multi_node.fabrics` (Fabrics/FlexGrid Switches+Endpoints, NUMAlink). 모두 `data.multi_node` 내부 신 키 (envelope 13 필드 / 기존 9 section path 변경 0).
 
 ### 활성 조건
 
@@ -464,24 +466,49 @@ hostname = system.hostname  OR  system.fqdn  OR  ip_fallback
         "partition_count": 3,
         "manager_count": 4,
         "chassis_count": 3,
-        "representative_partition": "Partition0"
+        "representative_partition": "Partition0",
+        "resource_block_count": 3,
+        "fabric_count": 1
       },
       "partitions": [
         { "id": "Partition0", "system_uri": "/redfish/v1/Systems/Partition0",
-          "system": {}, "cpu": {}, "memory": {}, "storage": {}, "network": {} },
+          "system": {}, "cpu": {}, "memory": {}, "storage": {}, "network": {},
+          "boot": { "boot_order": ["Boot0001", "Boot0002"],
+                    "boot_source_override_enabled": "Disabled",
+                    "boot_source_override_target": "None",
+                    "boot_source_override_mode": "UEFI" } },
         { "id": "Partition1" },
         { "id": "Partition2" }
       ],
       "managers": [
         { "id": "RMC",       "uri": "/redfish/v1/Managers/RMC",
-          "role": "primary",   "bmc": { "name": "RMC" } },
-        { "id": "PDHC0",     "role": "secondary", "bmc": { "name": "PDHC" } },
-        { "id": "Bay1.iLO5", "role": "secondary", "bmc": { "name": "iLO" } }
+          "role": "primary",   "bmc": { "name": "RMC" },
+          "log_services": [ { "id": "IML", "name": "Integrated Management Log",
+                              "overwrite_policy": "WrapsWhenFull", "service_enabled": true } ] },
+        { "id": "PDHC0",     "role": "secondary", "bmc": { "name": "PDHC" }, "log_services": [] },
+        { "id": "Bay1.iLO5", "role": "secondary", "bmc": { "name": "iLO" }, "log_services": [] }
       ],
       "chassis": [
-        { "id": "Base",       "kind": "base",      "chassis_type": "Enclosure" },
+        { "id": "Base",       "kind": "base",      "chassis_type": "Enclosure",
+          "power": {}, "thermal": { "temperatures": [ { "name": "Inlet", "reading_celsius": 22, "health": "OK" } ],
+                                    "fans": [ { "name": "Fan 1", "reading": 8000, "reading_units": "RPM", "health": "OK" } ] } },
         { "id": "Expansion1", "kind": "expansion" },
         { "id": "Expansion2", "kind": "expansion" }
+      ],
+      "composition": {
+        "enabled": true, "state": "Enabled", "health": "OK", "resource_block_count": 3,
+        "resource_blocks": [
+          { "id": "Block0", "resource_block_types": ["Compute"], "composition_state": "Composed",
+            "processor_count": 4, "memory_count": 8,
+            "chassis": ["/redfish/v1/Chassis/Base"],
+            "computer_systems": ["/redfish/v1/Systems/Partition0"] }
+        ]
+      },
+      "fabrics": [
+        { "id": "FlexGrid", "fabric_type": "PCIe", "health": "OK",
+          "switch_count": 2, "endpoint_count": 2,
+          "switches":  [ { "id": "Switch0", "switch_type": "PCIe", "health": "OK" } ],
+          "endpoints": [ { "id": "Endpoint0", "endpoint_protocol": "PCIe", "health": "OK" } ] }
       ]
     }
   },
@@ -494,12 +521,27 @@ hostname = system.hostname  OR  system.fqdn  OR  ip_fallback
 }
 ```
 
+### 확장 컴포넌트 (cycle 2026-06-09 — ADR-2026-06-09)
+
+CSUS 3200 Redfish 모델 검수 결과 추가된 5종. 모두 `data.multi_node` 내부 (Additive). Redfish 표준 리소스 미노출 시 graceful (boot/thermal=`{}`, log_services=`[]`, composition/fabrics=`null`).
+
+| 키 | 출처 Redfish 리소스 | 필드 | 비고 |
+|---|---|---|---|
+| `partitions[].boot` | `Systems/{id}.Boot` | `boot_order[]`, `boot_source_override_enabled/target/mode`, `boot_next`, `uefi_target` | nPartition 별 부팅 순서 (설명 모델 요구). 미노출 시 `{}` |
+| `chassis[].thermal` | `Chassis/{id}/Thermal` (404 시 `/ThermalSubsystem` DMTF 2020.4 fallback) | `temperatures[]` (name/reading_celsius/health/upper_critical), `fans[]` (name/reading/reading_units/health) | chassis 별 온도/팬. `power` 와 쌍 (설명 모델). 미노출 시 `{}` |
+| `managers[].log_services` | `Managers/{id}/LogServices` | `id`, `name`, `overwrite_policy`, `service_enabled`, `log_entry_type`, `date_time` | RMC 의 Services/Logs (설명 모델). 로그 엔트리 자체는 범위 외. 미노출 시 `[]` |
+| `composition` | `CompositionService` + `ResourceBlocks` | `enabled`, `state/health`, `resource_block_count`, `resource_blocks[]` (id/types/composition_state/processor_count/memory_count/`chassis[]`/`computer_systems[]`) | nPartition 조합 구조. 각 ResourceBlock ↔ chassis 대응 (설명 모델). ServiceRoot 미노출 시 `null` |
+| `fabrics` | `Fabrics` + `Fabrics/{id}` (Switches/Endpoints) | `[]` of {id/fabric_type/health/`switch_count`/`endpoint_count`/`switches[]`/`endpoints[]`} | NUMAlink FlexGrid (Switches+Endpoints, Links/Zones 미사용 — 설명 모델). ServiceRoot 미노출 시 `null` |
+
+> **Lab 부재 주의**: 위 5종은 lab 부재 web sources (DMTF DSP0266 + HPE CSUS 3200 Admin Guide + Superdome Flex 상속) 합성 검증. `fabric_type` 은 DMTF enum 에 NUMAlink 가 없어 placeholder (`PCIe`) — 사이트 실측 시 정정 (NEXT_ACTIONS).
+
 ### 호출자 가이드
 
 | 시나리오 | 권장 처리 |
 |---|---|
 | 기존 호출자 (`data.system` / `data.bmc` 만 사용) | 변경 0 — Partition0 데이터로 동일 동작 |
 | 멀티-노드 인식 호출자 | `data.multi_node != null` 확인 후 `partitions[]` / `managers[]` / `chassis[]` 순회 |
+| 확장 컴포넌트 인식 호출자 | `multi_node.composition` / `multi_node.fabrics` (null 가드) + `partitions[].boot` / `chassis[].thermal` / `managers[].log_services` 순회 |
 | 활성화 미상 진단 | `diagnosis.details.rmc_activation_check == false` 시 사이트 RMC Redfish 서비스 / Subscription 라이선스 확인 (`docs/22_rmc-activation-guide.md`) |
 
 ### Lab 부재 한계 (NEXT_ACTIONS C1~C8)

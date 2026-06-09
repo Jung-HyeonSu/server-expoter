@@ -1,5 +1,18 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (HPE CSUS 3200 Redfish 모델 검수 + 누락 5종 구현 [DONE])
+
+- **검수**: 사용자 제시 CSUS 3200 Redfish 모델 vs 구현 — 적대적 12-agent (6 컴포넌트 × verify+refute, refuted 0). Systems(nPartition)/Chassis/Managers 3축은 구현, **5종 누락 확정**: per-partition boot / chassis thermal / manager log_services / CompositionService+ResourceBlocks / Fabrics+FlexGrid(NUMAlink).
+- **구현 (Additive — data.multi_node 내부, ADR-2026-06-09)**: `redfish_gather.py` 신 함수 7개 (gather_thermal/_gather_thermal_subsystem/gather_boot/gather_manager_logs/gather_composition_service/gather_fabrics/_gather_fabric_members) + 3 multi collector wiring + `_collect_multi_node_topology` composition/fabrics + summary.resource_block_count/fabric_count. stdlib only.
+- **연결-영역 버그 fix**: `gather_chassis_multi` drop-on-fail(continue) → append-on-fail (systems/managers 와 일관, chassis_count under-report 해소) + 비-dict 방어. self-review: boot/logs 재-GET 실패 silent (중복 error noise → status 오분류 차단).
+- **적대적 review 4 loop (≈30 agent) 자기검증**: genuine 버그 수렴(6→5→1→2). 추가 fix — chassis 실패 시 doomed sub-GET 차단 / composition malformed-200 enabled=None / `_classify_rmc_label` 첫 Manager 한정 RMC(`is_first`) + name·role 동일 id source 통일(`name=='RMC' ⇔ role=='primary'` 구조 보장) / `_*_subsystem` `_capped`. 회귀 테스트 동반. 상세 ADR-2026-06-09 "검수 후속 fix".
+- **데이터/문서**: fixture 14 신규 + service_root 링크 + baseline 5종 키 + output_example.jsonc + docs/20 7-bis "확장 컴포넌트" + docs/22 + adapter vendor_notes + ADR-2026-06-09.
+- **테스트 (신규)**: `tests/unit/test_csus_extended_topology.py`(16) + `test_csus_fixture_replay.py`(7). CSUS 합계 38 pass.
+- **검증 (✅)**: ✅ `pytest tests/ --ignore=tests/e2e_browser` = **1005 passed, 5 skipped** (CSUS 신규 25 테스트 포함). e2e_browser 2건은 live-Jenkins(10.100.64.152) 미도달 fail — 본 작업 무관(세션 시작부터 동일). output_schema_drift / verify_vendor_boundary / verify_harness_consistency PASS. 13 vendor multi_node=null 불변 (blast radius 0).
+- **lab 부재**: 5종 mock (DMTF + HPE CSUS Admin Guide 합성) — 사이트 실측 정정 의무 C9~C14 (NEXT_ACTIONS).
+
+---
+
 ## 일자: 2026-06-09 (Round 14 — 적대적 robustness 루프 수렴 [CONVERGED])
 
 - 9 finder + 3-lens. 22 deduped → 3 confirmed(75 agent). 추세 26→23→21→17→11→9→5→6→4→1→7→4→7→3.

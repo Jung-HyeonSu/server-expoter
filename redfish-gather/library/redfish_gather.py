@@ -808,7 +808,7 @@ def _resolve_all_member_uris(bmc_ip, coll_uri, username, password, timeout, veri
     return out, st, None
 
 
-def _classify_rmc_label(manager_uri, manager_id, manager_layout):                # nosec rule12-r1
+def _classify_rmc_label(manager_uri, manager_id, manager_layout, is_first=True):  # nosec rule12-r1
     """Manager URI / ID + adapter capability 기반 BMC 표시명 결정 (cycle 2026-05-12).
 
     HPE CSUS 3200 / Superdome Flex 의 RMC primary 시스템에서 manager 별 라벨 분기:
@@ -816,8 +816,14 @@ def _classify_rmc_label(manager_uri, manager_id, manager_layout):               
       - PDHC (per-chassis controller) → 'PDHC'
       - per-node iLO 5 → 'iLO'
 
-    rule 12 R1 Allowed 영역 — line 1308 `bmc_names` 매핑 (외부 spec 기반 표준 이름) 의
+    rule 12 R1 Allowed 영역 — line ~1559 `bmc_names` 매핑 (외부 spec 기반 표준 이름) 의
     fallback path 확장. `manager_layout` None 시 기존 동작 100% 보존 (Additive).
+
+    cycle 2026-06-09 (review): `is_first` 추가. layout-default 'RMC' 는 **첫 Manager**
+    에만 적용한다. 구: substring 미매치 Manager 가 전부 'RMC' 로 오라벨 + _classify_manager_role
+    의 role 과 불일치 (name='RMC' 인데 role=None). 비-first unmatched → None 반환 →
+    호출자가 generic bmc_names[vendor] 사용. 비-documented manager ID (Managers/1 / Self)
+    환경에서 다중 RMC 오라벨 + name/role 모순 차단 (lab 부재 — 사이트 ID 패턴 NEXT_ACTIONS C6).
 
     source (rule 96 R1-A): HPE Superdome Flex Admin Guide + sdflexutils GitHub README
 
@@ -827,26 +833,32 @@ def _classify_rmc_label(manager_uri, manager_id, manager_layout):               
         return None
     lid = _str(manager_id).lower()
     luri = _str(manager_uri).lower()
-    # 우선순위: ID substring → URI substring → layout default
+    # 우선순위: ID substring → URI substring → (첫 Manager 한정) layout default
     if 'rmc' in lid or 'rmc' in luri:                                            # nosec rule12-r1
         return 'RMC'                                                             # nosec rule12-r1
     if 'pdhc' in lid or 'pdhc' in luri:                                          # nosec rule12-r1
         return 'PDHC'                                                            # nosec rule12-r1
     if 'ilo' in lid or 'ilo' in luri:                                            # nosec rule12-r1
         return 'iLO'                                                             # nosec rule12-r1
-    # layout default — `rmc_primary` 시 첫 Manager 는 RMC 로 가정 (호출자가 순서 지정)
-    if manager_layout in ('rmc_primary', 'rmc_primary_ilo_secondary'):
+    # layout default — `rmc_primary` 시 **첫 Manager 만** RMC 로 가정. 비-first 는 None
+    # (호출자 generic fallback) — 다중 RMC 오라벨 방지.
+    if is_first and manager_layout in ('rmc_primary', 'rmc_primary_ilo_secondary'):
         return 'RMC'                                                             # nosec rule12-r1
     return None
 
 
-def _classify_manager_role(manager_uri, manager_id, manager_layout):             # nosec rule12-r1
+def _classify_manager_role(manager_uri, manager_id, manager_layout, is_first=False):  # nosec rule12-r1
     """Manager 의 role (primary / secondary) 결정 (cycle 2026-05-12).
 
     `manager_layout` + ID substring 매칭 기반:
       - RMC → primary
-      - PDHC / iLO (rmc_primary_ilo_secondary 시) → secondary
+      - PDHC / iLO → secondary
+      - 그 외 첫 Manager → primary, 비-first → secondary
       - layout 미정의 → None
+
+    cycle 2026-06-09 (review): `is_first` 추가 — `_classify_rmc_label` 과 name/role 정합.
+    첫 Manager unmatched → primary (RMC 가정), 비-first unmatched → secondary. substring
+    매치(pdhc/ilo)는 position 무관 secondary (첫 슬롯이라도 PDHC/iLO 면 secondary).
 
     Returns: str | None
     """
@@ -859,6 +871,8 @@ def _classify_manager_role(manager_uri, manager_id, manager_layout):            
     if manager_layout in ('rmc_primary', 'rmc_primary_ilo_secondary'):
         if 'pdhc' in lid or 'pdhc' in luri or 'ilo' in lid or 'ilo' in luri:    # nosec rule12-r1
             return 'secondary'
+        # substring 미매치: 첫 Manager 는 primary (RMC 가정 — label 과 정합), 그 외 secondary
+        return 'primary' if is_first else 'secondary'
     return None
 
 
@@ -1523,7 +1537,7 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
 
 
 def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_ssl,
-               manager_layout=None):
+               manager_layout=None, is_first=True, manager_id=None):
     """bmc 섹션 수집 (Redfish endpoints).
 
     호출 endpoint:
@@ -1553,7 +1567,11 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
                  'quanta': 'BMC'}                                              # nosec rule12-r1
     # cycle 2026-05-12 (ADR-2026-05-12): RMC primary 시스템 (HPE CSUS 3200 / Superdome Flex)
     # 라벨 분기 — manager_layout 정의 시 _classify_rmc_label 우선. None 일 때 기존 동작.
-    rmc_label = _classify_rmc_label(manager_uri, _safe(data, 'Id'), manager_layout)
+    # cycle 2026-06-09 (review): name(label) 과 role 가 동일 id 로 분류돼 모순 불가능하도록,
+    # multi 경로는 manager_id(=URI segment m['id']) 를 명시 전달 — _classify_manager_role 와
+    # 동일 source. 단일 노드(manager_id=None)는 응답 body Id 사용 (기존 동작 보존).
+    _mid = manager_id if manager_id is not None else _safe(data, 'Id')
+    rmc_label = _classify_rmc_label(manager_uri, _mid, manager_layout, is_first)
     # cycle-016 Phase M/N: BMC 운영 정보 강화 — datetime / dns / mac / uuid / last_reset / timezone / power_state
     result = {
         'name':             rmc_label or bmc_names.get(vendor, 'BMC'),
@@ -2656,7 +2674,7 @@ def _gather_power_subsystem(bmc_ip, chassis_uri, username, password, timeout, ve
     if psu_link:
         st_c, coll, _err_c = _get(bmc_ip, _p(psu_link), username, password, timeout, verify_ssl)
         if st_c == 200:
-            for member in _dicts(_safe(coll, 'Members')):  # Round 4: 비-list/비-dict Members 방어
+            for member in _capped(_dicts(_safe(coll, 'Members')), 'power', errors):  # Round 4 비-list 방어 + cycle 2026-06-09 DoS 상한 (sibling 일관)
                 m_uri = _safe(member, '@odata.id')
                 if not m_uri:
                     continue
@@ -2828,6 +2846,147 @@ def gather_power(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
     return {'power_supplies': psus, 'power_control': power_control}, errors
 
 
+def gather_thermal(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
+    """Chassis/{id}/Thermal — 온도 센서 + 팬 정보 (cycle 2026-06-09, ADR-2026-06-09).
+
+    gather_power 패턴 mirror. /Thermal (legacy) 404 시 /ThermalSubsystem fallback
+    (DMTF 2020.4 / Redfish 1.13+ 신 schema). HPE Compute Scale-up Server 3200 /
+    Superdome Flex 의 multi-chassis 환경에서 chassis 별 Thermal 수집 — 설명 모델
+    ("각 chassis 는 Power 와 Thermal 리소스를 둔다") 요구.
+
+    source (rule 96 R1-A):
+      - DMTF DSP0266 Thermal.v1 (legacy) + ThermalSubsystem.v1_0 (2020.4)
+      - HPE Superdome Flex Admin Guide (chassis Thermal 표준 Redfish)
+    lab 부재 — 사이트 실측 시 정정 의무 (NEXT_ACTIONS).
+
+    Returns: (data_dict, errors_list)  — 빈 {} 시 Thermal 미지원 (graceful).
+    """
+    errors = []
+    if not chassis_uri:
+        return {}, [_err('thermal', 'chassis_uri 없음')]
+
+    thermal_path = _p(chassis_uri) + '/Thermal'
+    st, tdata, terr = _get(bmc_ip, thermal_path, username, password, timeout, verify_ssl)
+
+    # /Thermal 404 = 신 펌웨어 가능 → ThermalSubsystem fallback (gather_power 패턴 동일)
+    if st == 404:
+        return _gather_thermal_subsystem(bmc_ip, chassis_uri, username, password, timeout, verify_ssl)
+
+    if terr or st != 200:
+        return {}, [_err('thermal', f'Thermal 정보 실패: {terr or st}')]
+
+    temps = []
+    for t in _dicts(_safe(tdata, 'Temperatures')):  # 비-list/dict 방어 (rule 95 R1 #2)
+        temps.append({
+            'name':             _safe(t, 'Name'),
+            'reading_celsius':  _safe_int(_safe(t, 'ReadingCelsius')),  # str '42' 방어
+            'health':           _safe(t, 'Status', 'Health'),
+            'state':            _safe(t, 'Status', 'State'),
+            'upper_critical':   _safe_int(_safe(t, 'UpperThresholdCritical')),
+            'physical_context': _safe(t, 'PhysicalContext'),
+        })
+    fans = []
+    for f in _dicts(_safe(tdata, 'Fans')):
+        # 펌웨어별 Reading / ReadingRPM 혼재 (legacy schema)
+        reading = _safe(f, 'Reading')
+        if reading is None:
+            reading = _safe(f, 'ReadingRPM')
+        fans.append({
+            'name':          _safe(f, 'Name'),
+            'reading':       _safe_int(reading),
+            'reading_units': _safe(f, 'ReadingUnits'),
+            'health':        _safe(f, 'Status', 'Health'),
+            'state':         _safe(f, 'Status', 'State'),
+        })
+    return {'temperatures': temps, 'fans': fans}, errors
+
+
+def _gather_thermal_subsystem(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
+    """DMTF 2020.4 ThermalSubsystem fallback — /Thermal 404 시 (cycle 2026-06-09).
+
+    ThermalMetrics.TemperatureReadingsCelsius[] + Fans 컬렉션. _gather_power_subsystem
+    패턴 mirror.
+    source: redfish.dmtf.org/schemas/v1/ThermalSubsystem.v1_0_0.json (2020.4)
+    """
+    errors = []
+    ts_path = _p(chassis_uri) + '/ThermalSubsystem'
+    st, ts, terr = _get(bmc_ip, ts_path, username, password, timeout, verify_ssl)
+    if terr or st != 200:
+        # ThermalSubsystem 도 없으면 미지원 — 404 는 noise 차단 (_gather_power_subsystem 패턴)
+        return {}, ([] if st == 404 else [_err('thermal', f'ThermalSubsystem 미지원: {terr or st}')])
+
+    temps = []
+    tm_link = _safe(ts, 'ThermalMetrics', '@odata.id')
+    if tm_link:
+        mst, tm, _e = _get(bmc_ip, _p(tm_link), username, password, timeout, verify_ssl)
+        if mst == 200:
+            for tr in _dicts(_safe(tm, 'TemperatureReadingsCelsius')):
+                temps.append({
+                    'name':             _safe(tr, 'DeviceName') or _safe(tr, 'Name'),
+                    'reading_celsius':  _safe_int(_safe(tr, 'Reading')),
+                    'health':           _safe(tr, 'Status', 'Health'),
+                    'state':            _safe(tr, 'Status', 'State'),
+                    'upper_critical':   None,
+                    'physical_context': _safe(tr, 'PhysicalContext'),
+                })
+    fans = []
+    fans_link = _safe(ts, 'Fans', '@odata.id')
+    if fans_link:
+        fst, fcoll, _e = _get(bmc_ip, _p(fans_link), username, password, timeout, verify_ssl)
+        if fst == 200:
+            for fm in _capped(_dicts(_safe(fcoll, 'Members')), 'thermal', errors):  # DoS 상한 (sibling 일관)
+                furi = _safe(fm, '@odata.id')
+                if not furi:
+                    continue
+                fst2, fdata, _e2 = _get(bmc_ip, _p(furi), username, password, timeout, verify_ssl)
+                if fst2 != 200:
+                    continue
+                fans.append({
+                    'name':          _safe(fdata, 'Name'),
+                    'reading':       _safe_int(_safe(fdata, 'SpeedPercent', 'Reading')),
+                    'reading_units': 'Percent' if _safe(fdata, 'SpeedPercent') else None,
+                    'health':        _safe(fdata, 'Status', 'Health'),
+                    'state':         _safe(fdata, 'Status', 'State'),
+                })
+    if not temps and not fans:
+        return {}, errors
+    return {'temperatures': temps, 'fans': fans}, errors
+
+
+def gather_boot(bmc_ip, system_uri, username, password, timeout, verify_ssl):
+    """Systems/{id} Boot 객체 → 부팅 순서 + override 설정 (cycle 2026-06-09).
+
+    설명 모델 요구 — "각 Systems/<id> (nPartition) 는 ... 부팅 순서 ... 를 포함".
+    기존 gather_system 은 boot_progress (BootProgress.LastState) 만 추출 — 본 함수는
+    Boot.BootOrder / BootSourceOverride* 를 별도 수집해 multi_node.partitions[].boot
+    로 노출 (Additive — 단일 노드 path / 13 vendor 영향 0).
+
+    source (rule 96 R1-A): DMTF DSP0266 ComputerSystem.Boot (BootOrder /
+      BootSourceOverrideTarget / BootSourceOverrideEnabled)
+    Returns: (data_dict, errors_list)  — 빈 {} 시 Boot 미노출 (graceful).
+    """
+    errors = []
+    if not system_uri:
+        return {}, [_err('boot', 'system_uri 없음')]
+    st, sdata, serr = _get(bmc_ip, _p(system_uri), username, password, timeout, verify_ssl)
+    if serr or st != 200:
+        # System GET 실패는 gather_system 이 이미 errors[] 에 보고 — boot 는 보조 정보라
+        # silent (중복 error noise → status 오분류 방지). cycle 2026-06-09 self-review.
+        return {}, []
+    boot = _safe(sdata, 'Boot')
+    if not isinstance(boot, dict):  # Boot 미노출 / 비-dict 오염 방어
+        return {}, errors
+    boot_order = [b for b in _as_list(_safe(boot, 'BootOrder')) if isinstance(b, str)]
+    return {
+        'boot_order':                   boot_order,
+        'boot_source_override_enabled': _safe(boot, 'BootSourceOverrideEnabled'),
+        'boot_source_override_target':  _safe(boot, 'BootSourceOverrideTarget'),
+        'boot_source_override_mode':    _safe(boot, 'BootSourceOverrideMode'),
+        'boot_next':                    _safe(boot, 'BootNext'),
+        'uefi_target':                  _safe(boot, 'UefiTargetBootSourceOverride'),
+    }, errors
+
+
 # ── 메인 ─────────────────────────────────────────────────────────────────────
 
 def _is_404_only_error(errs):
@@ -2886,6 +3045,51 @@ def _make_section_runner(all_errors, collected, failed, unsupported=None):
     return _run
 
 
+def gather_manager_logs(bmc_ip, manager_uri, username, password, timeout, verify_ssl):
+    """Managers/{id}/LogServices → 로그 서비스 목록 (cycle 2026-06-09).
+
+    설명 모델 요구 — "RMC 는 ... Services 와 Logs 리소스로 연결된다". 본 함수는
+    LogServices 컬렉션 메타(각 LogService 의 id/name/정책)를 수집해
+    multi_node.managers[].log_services 로 노출 (Additive — 단일 노드 path /
+    13 vendor 영향 0). 로그 엔트리 자체(대용량)는 수집하지 않음 — 범위 외.
+
+    source (rule 96 R1-A): DMTF DSP0266 LogService / LogServiceCollection
+    Returns: (list_of_log_services, errors_list)  — 빈 [] 시 LogServices 미노출.
+    """
+    errors = []
+    if not manager_uri:
+        return [], [_err('log_services', 'manager_uri 없음')]
+    st, mdata, merr = _get(bmc_ip, _p(manager_uri), username, password, timeout, verify_ssl)
+    if merr or st != 200:
+        # Manager GET 실패는 gather_bmc 가 이미 errors[] 에 보고 — log_services 는 보조
+        # 정보라 silent (중복 error noise 차단). cycle 2026-06-09 self-review.
+        return [], []
+    ls_link = _safe(mdata, 'LogServices', '@odata.id')
+    if not ls_link:
+        return [], errors  # LogServices 미노출 — graceful (정상)
+    cst, coll, cerr = _get(bmc_ip, _p(ls_link), username, password, timeout, verify_ssl)
+    if cerr or cst != 200:
+        # 404 는 noise 차단 (endpoint 부재 = 미지원)
+        return [], ([] if cst == 404 else [_err('log_services', f'LogServices 컬렉션 실패: {cerr or cst}')])
+    out = []
+    for m in _capped(_dicts(_safe(coll, 'Members')), 'log_services', errors):
+        uri = _safe(m, '@odata.id')
+        if not uri:
+            continue
+        lst, ld, _e = _get(bmc_ip, _p(uri), username, password, timeout, verify_ssl)
+        if lst != 200 or not isinstance(ld, dict):
+            continue
+        out.append({
+            'id':               _safe(ld, 'Id'),
+            'name':             _safe(ld, 'Name'),
+            'overwrite_policy': _safe(ld, 'OverWritePolicy'),
+            'service_enabled':  _safe(ld, 'ServiceEnabled'),
+            'log_entry_type':   _safe(ld, 'LogEntryType'),
+            'date_time':        _safe(ld, 'DateTime'),
+        })
+    return out, errors
+
+
 def gather_managers_multi(bmc_ip, managers_coll_uri, vendor, username, password,
                           timeout, verify_ssl, manager_layout=None):
     """모든 Managers Member 별 gather_bmc 호출 (cycle 2026-05-12 / ADR-2026-05-12).
@@ -2906,19 +3110,28 @@ def gather_managers_multi(bmc_ip, managers_coll_uri, vendor, username, password,
         out['errors'].append(_err('multi_node.managers',
             f'Managers 컬렉션 실패: {err}'))
         return out
-    for m in members:
+    for idx, m in enumerate(members):
+        # cycle 2026-06-09 (review): 첫 Manager 만 layout-default RMC/primary (다중 RMC
+        # 오라벨 + name/role 불일치 차단). substring 매치(rmc/pdhc/ilo)는 position 무관.
+        is_first = (idx == 0)
         bmc_data, bmc_errs = gather_bmc(
             bmc_ip, m['uri'], vendor,
             username, password, timeout, verify_ssl,
-            manager_layout=manager_layout,
+            manager_layout=manager_layout, is_first=is_first,
+            manager_id=m['id'],  # role 와 동일 id source (name/role 모순 차단 — review)
         )
+        # cycle 2026-06-09: Manager LogServices 수집 (설명 모델 "Services 와 Logs").
+        logs_data, logs_errs = gather_manager_logs(
+            bmc_ip, m['uri'], username, password, timeout, verify_ssl)
         out['managers'].append({
-            'id':   m['id'],
-            'uri':  m['uri'],
-            'role': _classify_manager_role(m['uri'], m['id'], manager_layout),
-            'bmc':  bmc_data,
+            'id':           m['id'],
+            'uri':          m['uri'],
+            'role':         _classify_manager_role(m['uri'], m['id'], manager_layout, is_first),
+            'bmc':          bmc_data,
+            'log_services': logs_data,
         })
         out['errors'].extend(bmc_errs)
+        out['errors'].extend(logs_errs)
     return out
 
 
@@ -3151,6 +3364,8 @@ def gather_systems_multi(bmc_ip, systems_coll_uri, vendor, username, password,
         mem_data, mem_errs = gather_memory(bmc_ip, m['uri'], *creds)
         sto_data, sto_errs = gather_storage(bmc_ip, m['uri'], *creds)
         net_data, net_errs = gather_network(bmc_ip, m['uri'], *creds)
+        # cycle 2026-06-09: per-partition boot order (설명 모델 "부팅 순서").
+        boot_data, boot_errs = gather_boot(bmc_ip, m['uri'], *creds)
         out['partitions'].append({
             'id':         m['id'],
             'system_uri': m['uri'],
@@ -3162,12 +3377,15 @@ def gather_systems_multi(bmc_ip, systems_coll_uri, vendor, username, password,
             'memory':     _normalize_memory_raw(mem_data),
             'storage':    _normalize_storage_raw(sto_data),
             'network':    _normalize_network_raw(net_data),
+            # cycle 2026-06-09: boot order (Additive — Boot 미노출 시 {}).
+            'boot':       boot_data,
         })
         out['errors'].extend(sys_errs)
         out['errors'].extend(cpu_errs)
         out['errors'].extend(mem_errs)
         out['errors'].extend(sto_errs)
         out['errors'].extend(net_errs)
+        out['errors'].extend(boot_errs)
     return out
 
 
@@ -3191,13 +3409,26 @@ def gather_chassis_multi(bmc_ip, chassis_coll_uri, username, password,
     for m in members:
         cst, cdata, cerr = _get(bmc_ip, _p(m['uri']),
                                 username, password, timeout, verify_ssl)
-        if cerr or cst != 200:
+        get_ok = (not cerr and cst == 200)
+        if not get_ok:
             out['errors'].append(_err('multi_node.chassis',
                 f"Chassis {m['id']} GET 실패: {cerr or cst}"))
-            continue
+            # cycle 2026-06-09: append-on-fail — GET 실패해도 멤버는 노출한다.
+            # gather_systems_multi / gather_managers_multi 와 일관 (구: continue 로 drop
+            # → chassis_count 가 collection 멤버 수보다 작게 under-report 되는 불일치).
+        if not isinstance(cdata, dict):  # 비-dict 응답 오염 방어 (rule 95 R1 #2)
+            cdata = {}
         kind = _classify_chassis_kind(m['uri'], m['id'], cdata)
-        pwr_data, pwr_errs = gather_power(bmc_ip, m['uri'],
-                                          username, password, timeout, verify_ssl)
+        # cycle 2026-06-09 (review): chassis GET 성공 시에만 Power/Thermal sub-GET.
+        # 실패 chassis 에 doomed sub-GET (2 round-trip) + 중복 error noise 차단 — 멤버는
+        # append (chassis_count 보존). 설명 모델 "Power 와 Thermal".
+        if get_ok:
+            pwr_data, pwr_errs = gather_power(bmc_ip, m['uri'],
+                                              username, password, timeout, verify_ssl)
+            thm_data, thm_errs = gather_thermal(bmc_ip, m['uri'],
+                                                username, password, timeout, verify_ssl)
+        else:
+            pwr_data, pwr_errs, thm_data, thm_errs = {}, [], {}, []
         out['chassis'].append({
             'id':            m['id'],
             'uri':           m['uri'],
@@ -3208,9 +3439,187 @@ def gather_chassis_multi(bmc_ip, chassis_coll_uri, username, password,
             'serial_number': _safe(cdata, 'SerialNumber'),
             'part_number':   _safe(cdata, 'PartNumber'),
             'power':         pwr_data,
+            # cycle 2026-06-09: thermal (Additive — Thermal 미노출 시 {}).
+            'thermal':       thm_data,
         })
         out['errors'].extend(pwr_errs)
+        out['errors'].extend(thm_errs)
     return out
+
+
+def gather_composition_service(bmc_ip, service_root, username, password, timeout, verify_ssl):
+    """CompositionService + ResourceBlocks 수집 (cycle 2026-06-09, ADR-2026-06-09).
+
+    설명 모델 요구 — HPE CSUS 3200 nPartition 은 표준 Redfish Composition Service 로
+    구성된다. 각 ResourceBlock 은 하나의 chassis 에 대응하고 CPU/DIMM 을 포함하며,
+    ResourceBlock 의 ComputerSystems 링크가 조합된 nPartition 을 가리킨다.
+
+    multi_node.composition (Additive — manager_layout 정의 vendor 만 호출).
+    CompositionService 링크 부재 시 None (graceful — 대다수 vendor 는 미노출).
+
+    source (rule 96 R1-A):
+      - DMTF DSP0266 CompositionService / ResourceBlock
+        (redfish.dmtf.org/schemas/v1/ResourceBlock.json)
+      - HPE Compute Scale-up Server 3200 Administration Guide (nPartition = ResourceBlock 조합)
+    lab 부재 — 사이트 실측 시 정정 의무 (NEXT_ACTIONS).
+
+    Returns: (dict_or_None, errors_list)
+    """
+    errors = []
+    if not isinstance(service_root, dict):
+        return None, errors
+    comp_uri = _safe(service_root, 'CompositionService', '@odata.id')
+    if not comp_uri:
+        return None, errors  # CompositionService 미노출 — graceful (대다수 vendor)
+    st, comp, cerr = _get(bmc_ip, _p(comp_uri), username, password, timeout, verify_ssl)
+    if cerr or st != 200:
+        return None, ([] if st == 404 else
+                      [_err('multi_node.composition', f'CompositionService 실패: {cerr or st}')])
+
+    blocks = []
+    rb_link = _safe(comp, 'ResourceBlocks', '@odata.id')
+    if rb_link:
+        rst, rcoll, rerr = _get(bmc_ip, _p(rb_link), username, password, timeout, verify_ssl)
+        if rerr or rst != 200:
+            if rst != 404:
+                errors.append(_err('multi_node.composition',
+                                   f'ResourceBlocks 컬렉션 실패: {rerr or rst}'))
+        else:
+            for m in _capped(_dicts(_safe(rcoll, 'Members')), 'multi_node.composition', errors):
+                uri = _safe(m, '@odata.id')
+                if not uri:
+                    continue
+                bst, bd, _e = _get(bmc_ip, _p(uri), username, password, timeout, verify_ssl)
+                if bst != 200 or not isinstance(bd, dict):
+                    continue
+                # 각 ResourceBlock 의 chassis 대응 + 조합된 ComputerSystems (nPartition) 링크
+                chassis_links = [
+                    _safe(c, '@odata.id')
+                    for c in _dicts(_safe(bd, 'Links', 'Chassis'))
+                    if _safe(c, '@odata.id')
+                ]
+                systems_links = [
+                    _safe(s, '@odata.id')
+                    for s in _dicts(_safe(bd, 'Links', 'ComputerSystems'))
+                    if _safe(s, '@odata.id')
+                ]
+                blocks.append({
+                    'id':                   _safe(bd, 'Id'),
+                    'name':                 _safe(bd, 'Name'),
+                    'resource_block_types': [t for t in _as_list(_safe(bd, 'ResourceBlockType'))
+                                             if isinstance(t, str)],
+                    'state':                _safe(bd, 'Status', 'State'),
+                    'health':               _safe(bd, 'Status', 'Health'),
+                    'composition_state':    _safe(bd, 'CompositionStatus', 'CompositionState'),
+                    # 표준 ResourceBlock = Processors/Memory idRef 배열 (DMTF). 비-표준
+                    # collection-link(dict) 펌웨어면 0 으로 under-count — lab 부재, 사이트
+                    # fixture 확인 시 정정 (NEXT_ACTIONS C9, rule 96 R1-A).
+                    'processor_count':      len(_dicts(_safe(bd, 'Processors'))),
+                    'memory_count':         len(_dicts(_safe(bd, 'Memory'))),
+                    'chassis':              chassis_links,
+                    'computer_systems':     systems_links,
+                })
+    return {
+        # cycle 2026-06-09 (review): 비-dict/null 200 body 는 enabled=None (정직한 unknown).
+        # dict 면 ServiceEnabled 누락 시 DMTF 관례상 True. sibling gather_manager_logs 와 정합.
+        'enabled':              (bool(comp.get('ServiceEnabled', True)) if isinstance(comp, dict) else None),
+        'state':                _safe(comp, 'Status', 'State'),
+        'health':               _safe(comp, 'Status', 'Health'),
+        'resource_block_count': len(blocks),
+        'resource_blocks':      blocks,
+    }, errors
+
+
+def _gather_fabric_members(bmc_ip, coll_uri, username, password, timeout, verify_ssl, errors, kind):
+    """Fabric 의 Switches / Endpoints 컬렉션 멤버 수집 helper (cycle 2026-06-09).
+
+    kind='switch' → SwitchType / Status. kind='endpoint' → EndpointProtocol / Status.
+    source (rule 96 R1-A): DMTF DSP0266 Switch / Endpoint.
+    """
+    if not coll_uri:
+        return []
+    st, coll, cerr = _get(bmc_ip, _p(coll_uri), username, password, timeout, verify_ssl)
+    if cerr or st != 200:
+        return []
+    out = []
+    for m in _capped(_dicts(_safe(coll, 'Members')), f'multi_node.fabrics.{kind}', errors):
+        uri = _safe(m, '@odata.id')
+        if not uri:
+            continue
+        mst, md, _e = _get(bmc_ip, _p(uri), username, password, timeout, verify_ssl)
+        if mst != 200 or not isinstance(md, dict):
+            continue
+        if kind == 'switch':
+            out.append({
+                'id':          _safe(md, 'Id'),
+                'name':        _safe(md, 'Name'),
+                'switch_type': _safe(md, 'SwitchType'),
+                'state':       _safe(md, 'Status', 'State'),
+                'health':      _safe(md, 'Status', 'Health'),
+            })
+        else:  # endpoint
+            out.append({
+                'id':                _safe(md, 'Id'),
+                'name':              _safe(md, 'Name'),
+                'endpoint_protocol': _safe(md, 'EndpointProtocol'),
+                'state':             _safe(md, 'Status', 'State'),
+                'health':            _safe(md, 'Status', 'Health'),
+            })
+    return out
+
+
+def gather_fabrics(bmc_ip, service_root, username, password, timeout, verify_ssl):
+    """Fabrics + FlexGrid (Switches/Endpoints) 수집 (cycle 2026-06-09, ADR-2026-06-09).
+
+    설명 모델 요구 — HPE CSUS 3200 은 NUMAlink fabric 을 표준 Redfish Fabric 모델로
+    표현하며, FlexGrid Flex Fabric 은 Switches 와 Endpoints 를 사용한다 (Links/Zones 미사용).
+
+    multi_node.fabrics (Additive — manager_layout 정의 vendor 만 호출). Fabrics 링크
+    부재 시 None (graceful).
+
+    source (rule 96 R1-A):
+      - DMTF DSP0266 Fabric / Switch / Endpoint
+      - HPE Compute Scale-up Server 3200 architecture (NUMAlink / FlexGrid)
+    lab 부재 — 사이트 실측 시 정정 의무 (NEXT_ACTIONS).
+
+    Returns: (list_of_fabrics_or_None, errors_list)
+    """
+    errors = []
+    if not isinstance(service_root, dict):
+        return None, errors
+    fab_uri = _safe(service_root, 'Fabrics', '@odata.id')
+    if not fab_uri:
+        return None, errors  # Fabrics 미노출 — graceful
+    st, fcoll, ferr = _get(bmc_ip, _p(fab_uri), username, password, timeout, verify_ssl)
+    if ferr or st != 200:
+        return None, ([] if st == 404 else
+                      [_err('multi_node.fabrics', f'Fabrics 컬렉션 실패: {ferr or st}')])
+    fabrics = []
+    for m in _capped(_dicts(_safe(fcoll, 'Members')), 'multi_node.fabrics', errors):
+        furi = _safe(m, '@odata.id')
+        if not furi:
+            continue
+        fst, fdata, _e = _get(bmc_ip, _p(furi), username, password, timeout, verify_ssl)
+        if fst != 200 or not isinstance(fdata, dict):
+            continue
+        switches = _gather_fabric_members(
+            bmc_ip, _safe(fdata, 'Switches', '@odata.id'),
+            username, password, timeout, verify_ssl, errors, kind='switch')
+        endpoints = _gather_fabric_members(
+            bmc_ip, _safe(fdata, 'Endpoints', '@odata.id'),
+            username, password, timeout, verify_ssl, errors, kind='endpoint')
+        fabrics.append({
+            'id':             _safe(fdata, 'Id'),
+            'name':           _safe(fdata, 'Name'),
+            'fabric_type':    _safe(fdata, 'FabricType'),
+            'state':          _safe(fdata, 'Status', 'State'),
+            'health':         _safe(fdata, 'Status', 'Health'),
+            'switch_count':   len(switches),
+            'endpoint_count': len(endpoints),
+            'switches':       switches,
+            'endpoints':      endpoints,
+        })
+    return fabrics, errors
 
 
 def _collect_multi_node_topology(bmc_ip, vendor, service_root,
@@ -3249,12 +3658,21 @@ def _collect_multi_node_topology(bmc_ip, vendor, service_root,
     chs_result = gather_chassis_multi(
         bmc_ip, chassis_uri_coll, username, password, timeout, verify_ssl,
     )
+    # cycle 2026-06-09: CompositionService/ResourceBlocks + Fabrics/FlexGrid 수집
+    # (설명 모델 요구). ServiceRoot 에 링크 부재 시 None (graceful — Additive).
+    composition, comp_errs = gather_composition_service(
+        bmc_ip, service_root, username, password, timeout, verify_ssl,
+    )
+    fabrics, fab_errs = gather_fabrics(
+        bmc_ip, service_root, username, password, timeout, verify_ssl,
+    )
 
     partitions = sys_result.get('partitions') or []
     managers   = mgr_result.get('managers')   or []
     chassis    = chs_result.get('chassis')    or []
 
     representative = partitions[0].get('id') if partitions else None  # rule 95 R1 #2: 방어적 .get (id 누락 KeyError 회피)
+    rb_count = composition.get('resource_block_count', 0) if isinstance(composition, dict) else 0
     return {
         'enabled': True,
         'layout':  manager_layout,
@@ -3263,14 +3681,22 @@ def _collect_multi_node_topology(bmc_ip, vendor, service_root,
             'manager_count':             len(managers),
             'chassis_count':             len(chassis),
             'representative_partition':  representative,
+            # cycle 2026-06-09: composition / fabric 규모 (Additive 신 키)
+            'resource_block_count':      rb_count,
+            'fabric_count':              len(fabrics) if isinstance(fabrics, list) else 0,
         },
         'partitions': partitions,
         'managers':   managers,
         'chassis':    chassis,
+        # cycle 2026-06-09: 신 컨테이너 (None = ServiceRoot 미노출 — Additive).
+        'composition': composition,
+        'fabrics':     fabrics,
         'errors': (
             sys_result.get('errors', [])
             + mgr_result.get('errors', [])
             + chs_result.get('errors', [])
+            + comp_errs
+            + fab_errs
         ),
     }
 

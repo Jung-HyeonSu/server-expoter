@@ -28,7 +28,13 @@
     "MemoryMirroring": "None",
     "Status": {"Health": "OK"}
   },
-  "Boot": {"BootSourceOverrideEnabled": "Disabled"},
+  "Boot": {
+    "BootSourceOverrideEnabled": "Disabled",
+    "BootSourceOverrideTarget": "None",
+    "BootSourceOverrideMode": "UEFI",
+    "BootOrder": ["Boot0001", "Boot0002", "Boot0003"],
+    "BootNext": ""
+  },
   "Processors": {"@odata.id": "/redfish/v1/Systems/Partition0/Processors"},
   "Memory":     {"@odata.id": "/redfish/v1/Systems/Partition0/Memory"},
   "Storage":    {"@odata.id": "/redfish/v1/Systems/Partition0/Storage"},

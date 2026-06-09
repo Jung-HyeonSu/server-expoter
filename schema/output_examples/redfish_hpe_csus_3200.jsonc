@@ -178,12 +178,22 @@
         "partition_count": 3,                           // nPAR partition 개수 (Partition0/1/2)
         "manager_count": 4,                             // RMC + PDHC0 + PDHC1 + Bay1.iLO5
         "chassis_count": 3,                             // Base + Expansion1 + Expansion2 (최대 4 chassis)
-        "representative_partition": "Partition0"        // data.system / data.bmc / data.cpu 등 기존 9 section path 의 source
+        "representative_partition": "Partition0",        // data.system / data.bmc / data.cpu 등 기존 9 section path 의 source
+        "resource_block_count": 3,                      // cycle 2026-06-09 — CompositionService ResourceBlocks 개수
+        "fabric_count": 1                               // cycle 2026-06-09 — Fabrics(FlexGrid) 개수
       },
       "partitions": [                                   // per-partition 수집 list — 각 partition 의 system/cpu/memory/storage/network
         {                                                // F1+F2 cycle 2026-05-12 갱신 — Partition0/1/2 각 4-socket × 2TB 동일 mock (sdflexutils + DMTF v1.15 합성)
           "id": "Partition0",                           // /redfish/v1/Systems/<id> 의 마지막 segment (representative — data.system / data.cpu 의 source)
           "system_uri": "/redfish/v1/Systems/Partition0",
+          "boot": {                                     // cycle 2026-06-09 — Systems.Boot 부팅 순서 (per-nPartition)
+            "boot_order": ["Boot0001", "Boot0002", "Boot0003"],
+            "boot_source_override_enabled": "Disabled",
+            "boot_source_override_target": "None",
+            "boot_source_override_mode": "UEFI",
+            "boot_next": "",
+            "uefi_target": null
+          },
           "system": {                                   // hardware 깊이 (cycle-016 Phase N 16 필드 패턴 — sku/asset_tag/system_type/part_number 등)
             "manufacturer": "HPE",
             "model": "Compute Scale-up Server 3200",
@@ -301,6 +311,10 @@
           "id": "RMC",
           "uri": "/redfish/v1/Managers/RMC",
           "role": "primary",                            // RMC = primary AccountService host
+          "log_services": [                             // cycle 2026-06-09 — Managers/LogServices (RMC Services/Logs)
+            {"id": "IML", "name": "Integrated Management Log", "overwrite_policy": "WrapsWhenFull", "service_enabled": true, "log_entry_type": "OEM", "date_time": "2026-06-09T12:00:00Z"},
+            {"id": "IEL", "name": "Integrated Event Log", "overwrite_policy": "WrapsWhenFull", "service_enabled": true, "log_entry_type": "Event", "date_time": "2026-06-09T12:00:00Z"}
+          ],
           "bmc": {
             "name": "RMC",                              // _classify_rmc_label substring 매칭 결과
             "firmware_version": "3.10.00",
@@ -313,6 +327,7 @@
           "id": "PDHC0",                                // per-chassis PDHC (Power and Device Health Controller)
           "uri": "/redfish/v1/Managers/PDHC0",
           "role": "secondary",
+          "log_services": [],                           // LogServices 미노출 → [] (RMC 만 IML/IEL)
           "bmc": {
             "name": "PDHC",                             // _classify_rmc_label — 'pdhc' substring → 'PDHC'
             "firmware_version": "3.10.00",
@@ -323,6 +338,7 @@
           "id": "PDHC1",
           "uri": "/redfish/v1/Managers/PDHC1",
           "role": "secondary",
+          "log_services": [],
           "bmc": {
             "name": "PDHC",
             "firmware_version": "3.10.00",
@@ -333,6 +349,7 @@
           "id": "Bay1.iLO5",                            // per-compute-module iLO 5 (Superdome Flex 패턴 — CSUS 3200 lab 부재 추정)
           "uri": "/redfish/v1/Managers/Bay1.iLO5",
           "role": "secondary",
+          "log_services": [],
           "bmc": {
             "name": "iLO",                              // _classify_rmc_label — 'ilo' substring → 'iLO'
             "firmware_version": "2.85",
@@ -345,6 +362,16 @@
           "id": "Base",
           "uri": "/redfish/v1/Chassis/Base",
           "kind": "base",                               // _classify_chassis_kind — 'base' substring → 'base'
+          "thermal": {                                  // cycle 2026-06-09 — Chassis/Thermal (Power 와 쌍)
+            "temperatures": [
+              {"name": "Inlet Ambient", "reading_celsius": 22, "health": "OK", "state": "Enabled", "upper_critical": 42, "physical_context": "Intake"},
+              {"name": "CPU 1", "reading_celsius": 55, "health": "OK", "state": "Enabled", "upper_critical": 90, "physical_context": "CPU"}
+            ],
+            "fans": [
+              {"name": "Fan 1", "reading": 8000, "reading_units": "RPM", "health": "OK", "state": "Enabled"},
+              {"name": "Fan 2", "reading": 7800, "reading_units": "RPM", "health": "OK", "state": "Enabled"}
+            ]
+          },
           "chassis_type": "Enclosure",                  // DMTF ChassisType enum
           "manufacturer": "HPE",
           "model": "Compute Scale-up Server 3200 Base",
@@ -356,6 +383,15 @@
           "id": "Expansion1",
           "uri": "/redfish/v1/Chassis/Expansion1",
           "kind": "expansion",                          // _classify_chassis_kind — 'expansion' substring
+          "thermal": {                                  // gather_chassis_multi 은 모든 chassis 에 thermal emit (미노출 시 {})
+            "temperatures": [
+              {"name": "Inlet Ambient", "reading_celsius": 23, "health": "OK", "state": "Enabled", "upper_critical": 42, "physical_context": "Intake"}
+            ],
+            "fans": [
+              {"name": "Fan 1", "reading": 7900, "reading_units": "RPM", "health": "OK", "state": "Enabled"},
+              {"name": "Fan 2", "reading": 7950, "reading_units": "RPM", "health": "OK", "state": "Enabled"}
+            ]
+          },
           "chassis_type": "Enclosure",
           "manufacturer": "HPE",
           "model": "Compute Scale-up Server 3200 Expansion",
@@ -367,12 +403,51 @@
           "id": "Expansion2",
           "uri": "/redfish/v1/Chassis/Expansion2",
           "kind": "expansion",
+          "thermal": {                                  // gather_chassis_multi 은 모든 chassis 에 thermal emit
+            "temperatures": [
+              {"name": "Inlet Ambient", "reading_celsius": 23, "health": "OK", "state": "Enabled", "upper_critical": 42, "physical_context": "Intake"}
+            ],
+            "fans": [
+              {"name": "Fan 1", "reading": 8050, "reading_units": "RPM", "health": "OK", "state": "Enabled"},
+              {"name": "Fan 2", "reading": 8000, "reading_units": "RPM", "health": "OK", "state": "Enabled"}
+            ]
+          },
           "chassis_type": "Enclosure",
           "manufacturer": "HPE",
           "model": "Compute Scale-up Server 3200 Expansion",
           "serial_number": null,
           "part_number": null,
           "power": null
+        }
+      ],
+      "composition": {                                  // cycle 2026-06-09 — CompositionService + ResourceBlocks (nPartition 조합 구조)
+        "enabled": true,
+        "state": "Enabled",
+        "health": "OK",
+        "resource_block_count": 3,
+        "resource_blocks": [                            // 각 ResourceBlock 은 하나의 chassis 에 대응 (CPU/DIMM 포함)
+          {"id": "Block0", "name": "Compute Resource Block 0 (Base)", "resource_block_types": ["Compute"], "state": "Enabled", "health": "OK", "composition_state": "Composed", "processor_count": 4, "memory_count": 8, "chassis": ["/redfish/v1/Chassis/Base"], "computer_systems": ["/redfish/v1/Systems/Partition0"]},
+          {"id": "Block1", "name": "Compute Resource Block 1 (Expansion1)", "resource_block_types": ["Compute"], "state": "Enabled", "health": "OK", "composition_state": "Composed", "processor_count": 4, "memory_count": 8, "chassis": ["/redfish/v1/Chassis/Expansion1"], "computer_systems": ["/redfish/v1/Systems/Partition1"]},
+          {"id": "Block2", "name": "Compute Resource Block 2 (Expansion2)", "resource_block_types": ["Compute"], "state": "Enabled", "health": "OK", "composition_state": "Composed", "processor_count": 4, "memory_count": 8, "chassis": ["/redfish/v1/Chassis/Expansion2"], "computer_systems": ["/redfish/v1/Systems/Partition2"]}
+        ]
+      },
+      "fabrics": [                                       // cycle 2026-06-09 — Fabrics + FlexGrid (NUMAlink, Switches+Endpoints, Links/Zones 미사용)
+        {
+          "id": "FlexGrid",
+          "name": "NUMAlink FlexGrid Fabric",
+          "fabric_type": "PCIe",                        // DMTF enum 에 NUMAlink 부재 → placeholder (사이트 실측 정정)
+          "state": "Enabled",
+          "health": "OK",
+          "switch_count": 2,
+          "endpoint_count": 2,
+          "switches": [
+            {"id": "Switch0", "name": "FlexGrid Switch 0", "switch_type": "PCIe", "state": "Enabled", "health": "OK"},
+            {"id": "Switch1", "name": "FlexGrid Switch 1", "switch_type": "PCIe", "state": "Enabled", "health": "OK"}
+          ],
+          "endpoints": [
+            {"id": "Endpoint0", "name": "FlexGrid Endpoint 0 (Base)", "endpoint_protocol": "PCIe", "state": "Enabled", "health": "OK"},
+            {"id": "Endpoint1", "name": "FlexGrid Endpoint 1 (Expansion1)", "endpoint_protocol": "PCIe", "state": "Enabled", "health": "OK"}
+          ]
         }
       ]
     }

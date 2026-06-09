@@ -2,6 +2,15 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-09 (HPE CSUS 3200 모델 검수 + 누락 5종 구현 — ADR-2026-06-09)
+
+CSUS 3200 Redfish 모델 검수 → 누락 5종(boot/thermal/log_services/composition/fabrics) Additive 구현.
+
+- 신규 테스트: `tests/unit/test_csus_extended_topology.py` (16 — gather_thermal legacy+ThermalSubsystem fallback / gather_boot / gather_manager_logs / gather_composition_service / gather_fabrics / 통합 토폴로지 + 13-vendor 무영향) + `tests/unit/test_csus_fixture_replay.py` (7 — fixture @odata.id 재생 end-to-end).
+- 신규 fixture 14 (thermal / logservices+2 / compositionservice+resourceblocks+3 / fabrics+flexgrid+switches2+endpoints2 / expansion chassis2+thermal2) + service_root 링크 + baseline 5종 키.
+- 연결-영역 fix: gather_chassis_multi append-on-fail (chassis_count under-report 해소).
+- 검증: pytest **996 passed, 6 skipped, 2 failed** (e2e_browser live-Jenkins 10.100.64.152 미도달 — 본 작업 무관). output_schema_drift / vendor_boundary / harness gate PASS. baseline JSON parse OK. golden(hpe emulator+dmtf) 불변 (multi_node 비-emulator 경로).
+
 ## 2026-06-09 (적대적 robustness 루프 R7~R14 — 수렴 완료)
 
 14 라운드 멀티에이전트 적대적 hunt 수렴. 추세 26→23→21→17→11→9→5→6→4→1→7→4→7→3, R11-14 genuine 0.

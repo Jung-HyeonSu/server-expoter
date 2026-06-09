@@ -439,12 +439,22 @@
         "partition_count": 3,
         "manager_count": 4,
         "chassis_count": 3,
-        "representative_partition": "Partition0"
+        "representative_partition": "Partition0",
+        "resource_block_count": 3,
+        "fabric_count": 1
       },
       "partitions": [
         {
           "id": "Partition0",
           "system_uri": "/redfish/v1/Systems/Partition0",
+          "boot": {
+            "boot_order": ["Boot0001", "Boot0002", "Boot0003"],
+            "boot_source_override_enabled": "Disabled",
+            "boot_source_override_target": "None",
+            "boot_source_override_mode": "UEFI",
+            "boot_next": "",
+            "uefi_target": null
+          },
           "system": {
             "manufacturer": "HPE",
             "model": "Compute Scale-up Server 3200",
@@ -544,6 +554,14 @@
         {
           "id": "Partition1",
           "system_uri": "/redfish/v1/Systems/Partition1",
+          "boot": {
+            "boot_order": ["Boot0001", "Boot0002", "Boot0003"],
+            "boot_source_override_enabled": "Disabled",
+            "boot_source_override_target": "None",
+            "boot_source_override_mode": "UEFI",
+            "boot_next": "",
+            "uefi_target": null
+          },
           "system": {
             "manufacturer": "HPE",
             "model": "Compute Scale-up Server 3200",
@@ -641,6 +659,14 @@
         {
           "id": "Partition2",
           "system_uri": "/redfish/v1/Systems/Partition2",
+          "boot": {
+            "boot_order": ["Boot0001", "Boot0002", "Boot0003"],
+            "boot_source_override_enabled": "Disabled",
+            "boot_source_override_target": "None",
+            "boot_source_override_mode": "UEFI",
+            "boot_next": "",
+            "uefi_target": null
+          },
           "system": {
             "manufacturer": "HPE",
             "model": "Compute Scale-up Server 3200",
@@ -741,6 +767,10 @@
           "id": "RMC",
           "uri": "/redfish/v1/Managers/RMC",
           "role": "primary",
+          "log_services": [
+            {"id": "IML", "name": "Integrated Management Log", "overwrite_policy": "WrapsWhenFull", "service_enabled": true, "log_entry_type": "OEM", "date_time": "2026-06-09T12:00:00Z"},
+            {"id": "IEL", "name": "Integrated Event Log", "overwrite_policy": "WrapsWhenFull", "service_enabled": true, "log_entry_type": "Event", "date_time": "2026-06-09T12:00:00Z"}
+          ],
           "bmc": {
             "name": "RMC",
             "firmware_version": "3.10.00",
@@ -753,6 +783,7 @@
           "id": "PDHC0",
           "uri": "/redfish/v1/Managers/PDHC0",
           "role": "secondary",
+          "log_services": [],
           "bmc": {
             "name": "PDHC",
             "firmware_version": "3.10.00",
@@ -763,6 +794,7 @@
           "id": "PDHC1",
           "uri": "/redfish/v1/Managers/PDHC1",
           "role": "secondary",
+          "log_services": [],
           "bmc": {
             "name": "PDHC",
             "firmware_version": "3.10.00",
@@ -773,6 +805,7 @@
           "id": "Bay1.iLO5",
           "uri": "/redfish/v1/Managers/Bay1.iLO5",
           "role": "secondary",
+          "log_services": [],
           "bmc": {
             "name": "iLO",
             "firmware_version": "2.85",
@@ -785,6 +818,18 @@
           "id": "Base",
           "uri": "/redfish/v1/Chassis/Base",
           "kind": "base",
+          "thermal": {
+            "temperatures": [
+              {"name": "Inlet Ambient", "reading_celsius": 22, "health": "OK", "state": "Enabled", "upper_critical": 42, "physical_context": "Intake"},
+              {"name": "CPU 1", "reading_celsius": 55, "health": "OK", "state": "Enabled", "upper_critical": 90, "physical_context": "CPU"},
+              {"name": "CPU 2", "reading_celsius": 54, "health": "OK", "state": "Enabled", "upper_critical": 90, "physical_context": "CPU"}
+            ],
+            "fans": [
+              {"name": "Fan 1", "reading": 8000, "reading_units": "RPM", "health": "OK", "state": "Enabled"},
+              {"name": "Fan 2", "reading": 7800, "reading_units": "RPM", "health": "OK", "state": "Enabled"},
+              {"name": "Fan 3", "reading": 8100, "reading_units": "RPM", "health": "OK", "state": "Enabled"}
+            ]
+          },
           "chassis_type": "Enclosure",
           "manufacturer": "HPE",
           "model": "Compute Scale-up Server 3200 Base",
@@ -809,6 +854,15 @@
           "id": "Expansion1",
           "uri": "/redfish/v1/Chassis/Expansion1",
           "kind": "expansion",
+          "thermal": {
+            "temperatures": [
+              {"name": "Inlet Ambient", "reading_celsius": 23, "health": "OK", "state": "Enabled", "upper_critical": 42, "physical_context": "Intake"}
+            ],
+            "fans": [
+              {"name": "Fan 1", "reading": 7900, "reading_units": "RPM", "health": "OK", "state": "Enabled"},
+              {"name": "Fan 2", "reading": 7950, "reading_units": "RPM", "health": "OK", "state": "Enabled"}
+            ]
+          },
           "chassis_type": "Enclosure",
           "manufacturer": "HPE",
           "model": "Compute Scale-up Server 3200 Expansion",
@@ -833,12 +887,64 @@
           "id": "Expansion2",
           "uri": "/redfish/v1/Chassis/Expansion2",
           "kind": "expansion",
+          "thermal": {
+            "temperatures": [
+              {"name": "Inlet Ambient", "reading_celsius": 23, "health": "OK", "state": "Enabled", "upper_critical": 42, "physical_context": "Intake"}
+            ],
+            "fans": [
+              {"name": "Fan 1", "reading": 8050, "reading_units": "RPM", "health": "OK", "state": "Enabled"},
+              {"name": "Fan 2", "reading": 8000, "reading_units": "RPM", "health": "OK", "state": "Enabled"}
+            ]
+          },
           "chassis_type": "Enclosure",
           "manufacturer": "HPE",
           "model": "Compute Scale-up Server 3200 Expansion",
           "serial_number": "MOCK-CSUS-EXP2-003",
           "part_number": "P52341-B21",
-          "power": null
+          "power": {
+            "power_supplies": [
+              {"name": "HpeServerPowerSupply", "model": "P52600-B21", "serial": "5XLCSUS0005", "manufacturer": "LTEON", "power_capacity_w": 1600, "firmware_version": "2.10", "health": "OK", "state": "Enabled"},
+              {"name": "HpeServerPowerSupply", "model": "P52600-B21", "serial": "5XLCSUS0006", "manufacturer": "LTEON", "power_capacity_w": 1600, "firmware_version": "2.10", "health": "OK", "state": "Enabled"}
+            ],
+            "power_control": {
+              "power_consumed_watts": 1320,
+              "power_capacity_watts": 3200,
+              "interval_in_min": 20,
+              "min_consumed_watts": 1280,
+              "avg_consumed_watts": 1305,
+              "max_consumed_watts": 1400
+            }
+          }
+        }
+      ],
+      "composition": {
+        "enabled": true,
+        "state": "Enabled",
+        "health": "OK",
+        "resource_block_count": 3,
+        "resource_blocks": [
+          {"id": "Block0", "name": "Compute Resource Block 0 (Base)", "resource_block_types": ["Compute"], "state": "Enabled", "health": "OK", "composition_state": "Composed", "processor_count": 4, "memory_count": 8, "chassis": ["/redfish/v1/Chassis/Base"], "computer_systems": ["/redfish/v1/Systems/Partition0"]},
+          {"id": "Block1", "name": "Compute Resource Block 1 (Expansion1)", "resource_block_types": ["Compute"], "state": "Enabled", "health": "OK", "composition_state": "Composed", "processor_count": 4, "memory_count": 8, "chassis": ["/redfish/v1/Chassis/Expansion1"], "computer_systems": ["/redfish/v1/Systems/Partition1"]},
+          {"id": "Block2", "name": "Compute Resource Block 2 (Expansion2)", "resource_block_types": ["Compute"], "state": "Enabled", "health": "OK", "composition_state": "Composed", "processor_count": 4, "memory_count": 8, "chassis": ["/redfish/v1/Chassis/Expansion2"], "computer_systems": ["/redfish/v1/Systems/Partition2"]}
+        ]
+      },
+      "fabrics": [
+        {
+          "id": "FlexGrid",
+          "name": "NUMAlink FlexGrid Fabric",
+          "fabric_type": "PCIe",
+          "state": "Enabled",
+          "health": "OK",
+          "switch_count": 2,
+          "endpoint_count": 2,
+          "switches": [
+            {"id": "Switch0", "name": "FlexGrid Switch 0", "switch_type": "PCIe", "state": "Enabled", "health": "OK"},
+            {"id": "Switch1", "name": "FlexGrid Switch 1", "switch_type": "PCIe", "state": "Enabled", "health": "OK"}
+          ],
+          "endpoints": [
+            {"id": "Endpoint0", "name": "FlexGrid Endpoint 0 (Base)", "endpoint_protocol": "PCIe", "state": "Enabled", "health": "OK"},
+            {"id": "Endpoint1", "name": "FlexGrid Endpoint 1 (Expansion1)", "endpoint_protocol": "PCIe", "state": "Enabled", "health": "OK"}
+          ]
         }
       ]
     }

@@ -18,6 +18,9 @@
   "EthernetInterfaces": {
     "@odata.id": "/redfish/v1/Managers/RMC/EthernetInterfaces"
   },
+  "LogServices": {
+    "@odata.id": "/redfish/v1/Managers/RMC/LogServices"
+  },
   "Links": {
     "ManagerForServers": [
       {"@odata.id": "/redfish/v1/Systems/Partition0"},

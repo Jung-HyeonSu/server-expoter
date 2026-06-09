@@ -2,6 +2,22 @@
 
 > 외부 시스템 (Redfish / IPMI / SSH / WinRM / vSphere) 계약 카탈로그. rule 28 #11 측정 대상 (TTL 90일). rule 96 origin 주석 정본.
 
+## 일자: 2026-06-09 (cycle csus-model-completion — CSUS 3200 모델 5종 신 계약 — ADR-2026-06-09)
+
+> CSUS 3200 Redfish 모델 검수 → 누락 5종 수집 추가. 표준 DMTF DSP0266 리소스 (lab 부재 — 사이트 실측 정정 의무 C9~C14).
+
+| 신 계약 (Redfish 리소스) | 사용 필드 | 출처 | 사이트 실측 |
+|---|---|---|---|
+| `Systems/{id}.Boot` | `BootOrder[]` / `BootSourceOverrideEnabled/Target/Mode` / `BootNext` / `UefiTargetBootSourceOverride` | DMTF ComputerSystem.Boot | C13 (BootOrder 실 표현 — BootString vs BootOption ref) |
+| `Chassis/{id}/Thermal` (+ `/ThermalSubsystem` fallback) | `Temperatures[]` (ReadingCelsius/Status/UpperThresholdCritical) / `Fans[]` (Reading\|ReadingRPM/ReadingUnits/Status); ThermalSubsystem: `ThermalMetrics.TemperatureReadingsCelsius[]` + `Fans` 컬렉션(`SpeedPercent.Reading`) | DMTF Thermal.v1 + ThermalSubsystem.v1 (2020.4) | C11 (sensor 명 / 펌웨어 분기) |
+| `Managers/{id}/LogServices` | LogServiceCollection.Members → `Id/Name/OverWritePolicy/ServiceEnabled/LogEntryType/DateTime` | DMTF LogServiceCollection / LogService | C12 (실 ID IML/IEL 추정) |
+| `CompositionService` + `ResourceBlocks` | `ServiceEnabled/Status` ; ResourceBlock `Id/ResourceBlockType[]/Status/CompositionStatus.CompositionState/Processors[]/Memory[]/Links.Chassis[]/Links.ComputerSystems[]` | DMTF CompositionService/ResourceBlock + HPE CSUS Admin Guide (nPartition=ResourceBlock 조합, 각 RB↔chassis) | C9 (RB↔chassis 매핑 실측) |
+| `Fabrics` + `Fabrics/{id}` (FlexGrid) | Fabric `Id/FabricType/Status` ; `Switches` 컬렉션 → Switch `SwitchType/Status` ; `Endpoints` 컬렉션 → Endpoint `EndpointProtocol/Status` (Links/Zones 미사용) | DMTF Fabric/Switch/Endpoint + HPE CSUS architecture (NUMAlink) | C10 (FabricType NUMAlink 표기 — DMTF enum 부재로 placeholder PCIe) |
+
+### server-exporter 적용 (cycle 2026-06-09)
+- `redfish_gather.py` — `gather_boot` / `gather_thermal`(+`_gather_thermal_subsystem`) / `gather_manager_logs` / `gather_composition_service` / `gather_fabrics`(+`_gather_fabric_members`) 신설 (Additive, stdlib only). `_collect_multi_node_topology` 에 composition/fabrics + summary 카운트.
+- envelope: `data.multi_node.{partitions[].boot, chassis[].thermal, managers[].log_services, composition, fabrics}` + `summary.{resource_block_count, fabric_count}`. ServiceRoot 링크 부재 시 graceful (composition/fabrics=null, boot/thermal={}, log_services=[]).
+
 ## 일자: 2026-06-08 (DMTF Published Mockups — DSP2043 오프라인 회귀 reference)
 
 > DMTF 공식 Redfish **Mockup Bundle (DSP2043, BSD-3-Clause)** — `@odata.id` 경로별 index.json 트리.

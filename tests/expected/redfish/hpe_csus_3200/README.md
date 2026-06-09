@@ -8,8 +8,8 @@
 
 ## 용도
 
-- pytest 회귀 — `test_hpe_csus_multi_node.py` 가 fixture → run → expected 비교
-- 호출자 시스템 reference — `data.multi_node` 컨테이너 shape 확인
+- 호출자 시스템 / 운영자 **reference** — `data.multi_node` 컨테이너 shape 요약 확인 (compact)
+- 실제 fixture → run 회귀는 **`tests/unit/test_csus_fixture_replay.py`** (fixture 를 `@odata.id` 로 키잉해 `_collect_multi_node_topology` 재생 + 구조 assert). 본 `mock_v1.json` 은 테스트가 직접 로드하지 않는 요약 reference 다 (cycle 2026-06-09 정정 — 구 README 의 "test_hpe_csus_multi_node.py 가 expected 비교" 는 사실이 아니었음. 해당 테스트는 inline map 사용).
 - lab 도입 cycle 시 `schema/baseline_v1/hpe_csus_3200_baseline.json` 으로 승격 후 본 디렉터리 삭제
 
 ## 출처

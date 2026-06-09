@@ -11,6 +11,8 @@ HPE 의 스케일업 서버 군 (CSUS 3200 / Superdome Flex / Flex 280) 은 단�
 
 server-exporter 는 cycle 2026-05-12 부터 RMC primary 시스템 전수 수집을 정식 지원한다 (ADR-2026-05-12, `data.multi_node` Additive 컨테이너).
 
+cycle 2026-06-09 (ADR-2026-06-09) 부터 CSUS 3200 Redfish 모델 전체를 수집한다 — nPartition 별 부팅 순서(`partitions[].boot`), chassis 별 Thermal(`chassis[].thermal`, Power 와 쌍), RMC LogServices(`managers[].log_services`), CompositionService/ResourceBlocks(`multi_node.composition` — 각 ResourceBlock ↔ chassis 대응), Fabrics/FlexGrid(`multi_node.fabrics` — NUMAlink Switches+Endpoints). 상세 shape 는 `docs/20_json-schema-fields.md` 7-bis "확장 컴포넌트" 절 참조.
+
 ## 2. 알려진 위험 신호
 
 HPE community 게시물 ([7200359 "impossible to get redfish answer from superdome flex rmc"](https://community.hpe.com/t5/servers-general/impossible-to-get-redfish-answer-from-superdome-flex-rmc/td-p/7200359?nobounce)):

@@ -20,6 +20,12 @@
   "Systems": {
     "@odata.id": "/redfish/v1/Systems"
   },
+  "Fabrics": {
+    "@odata.id": "/redfish/v1/Fabrics"
+  },
+  "CompositionService": {
+    "@odata.id": "/redfish/v1/CompositionService"
+  },
   "SessionService": {
     "@odata.id": "/redfish/v1/SessionService"
   },
