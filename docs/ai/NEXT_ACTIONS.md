@@ -30,6 +30,14 @@
 - **로컬 검증 완료(✅)**: 실 YAML 식을 추출해 Jinja2 로 렌더(`tests/unit/test_merge_fragment_render.py` 5건) — 정상 list+list concat 불변 + 오염 list↔dict graceful 확인.
 - **잔여(Jenkins)**: 전체 ansible set_fact 통합(실 `union` 필터 + `no_log` + 3-채널 gather 흐름)에서 회귀 0 확인. 분류 `[ANSIBLE]`. 정상 입력 결과 불변이라 위험 낮음(Additive).
 
+### 0.11 (2026-06-09 적대적 robustness 루프 R1~R14 수렴) 잔여
+
+> 14 라운드 수렴 완료(genuine 0). 아래는 의도적 보류:
+- **[CONTRACT 결정대기]** SimpleStorage empty-bay 필터링 방향 (dmtf golden 빈베이 포함) — 사용자 설계 결정 (R1 #12).
+- **[ANSIBLE/Jenkins]** OS/ESXi YAML 가드(merge_fragment list+dict / normalize_storage·system | string·default) — Jinja2 렌더 검증 완료, 전체 ansible 통합은 Jenkins Agent.
+- **[INFRA]** gitlab(10.100.64.156) push — 네트워크 미도달, 연결 환경서 `git push origin main`. e2e_browser(10.100.64.152 Jenkins master)도 도달 환경 재실행.
+- **[CONSISTENCY]** link_speed_gbps 채널간 타입(redfish float vs OS/ESXi int) — redfish float이 정확(fractional Gbps), CSUS mock baseline int은 실데이터로 교체 시 정정. 통일 시 OS/ESXi를 float로(int cast 제거) — 별도 cycle.
+
 ### 0.10 (2026-06-09 Round 1 멀티에이전트 hunt) 미적용/결정대기 항목
 
 > Round 1 = 9 finder + 3-lens 적대적 검증 → 26 confirmed. 24건 수정 완료(커밋 cc39beb~0f5e45e).

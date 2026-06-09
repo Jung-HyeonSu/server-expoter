@@ -2,6 +2,17 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-09 (적대적 robustness 루프 R7~R14 — 수렴 완료)
+
+14 라운드 멀티에이전트 적대적 hunt 수렴. 추세 26→23→21→17→11→9→5→6→4→1→7→4→7→3, R11-14 genuine 0.
+누적 ~106 production 가드 + 18 robustness 테스트파일. 상세: tests/evidence/2026-06-09-adversarial-robustness-loop.md.
+
+- 신규(R7~14): test_redfish_round{4,5,6,8,9,10,11}_robustness.py + test_callback_json_only_robustness.py + precheck/adapter_common 회귀 보강.
+- production: redfish_gather.py(_str/_as_list/_dicts 헬퍼 + 전 클래스 가드) / adapter_common.py / precheck_bundle.py / merge_fragment.yml(Jinja2) / esxi normalize(Jenkins-verify) / callback json_only.py.
+- 검증: pytest 973 passed(+e2e_browser 2 fail=사이트 Jenkins 무관) / golden 52 byte 불변 전 라운드 / gates OK.
+- false-positive 차단: regex_search float/list 오해 2건, speed_gbps int 4회 기각 (golden ground-truth).
+
+
 ## 2026-06-09 (Round 4 적대적 hunt — 17 confirmed, ~13 수정)
 
 - 신규 `tests/integration/test_redfish_round4_robustness.py` (5): _capped 비-list / _compute_final_status 비-str detail / SimpleStorage Devices / gather_system total_gib / gather_memory rank·width int.
