@@ -30,8 +30,9 @@ def load_vendor_aliases(aliases_path):
             data = yaml.safe_load(f) or {}
         aliases = data.get("vendor_aliases", {})
         for canonical, alias_list in aliases.items():
-            for alias in alias_list:
-                mapping[alias.strip().lower()] = canonical
+            for alias in (alias_list or []):
+                if isinstance(alias, str):  # Round 3 #16: None/비-str alias 가 전체 로드를 abort 시키지 않게
+                    mapping[alias.strip().lower()] = canonical
     except (IOError, OSError, yaml.YAMLError, AttributeError, TypeError) as exc:
         import sys
         print(f"[adapter_common] vendor_aliases 로드 경고: {exc}", file=sys.stderr)

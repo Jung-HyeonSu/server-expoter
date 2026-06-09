@@ -267,6 +267,14 @@ def _safe(d, *keys, default=None):
         if d is None: return default
     return d
 
+def _as_list(x):
+    """비-list 오염 방어 — list 면 그대로, 아니면 [] (문자열/숫자 배열 반복용, Round 3)."""
+    return x if isinstance(x, list) else []
+
+def _dicts(x):
+    """외부 배열에서 dict 원소만 추출 (비-list/비-dict 방어 — .get() 반복 crash 차단, Round 3)."""
+    return [e for e in x if isinstance(e, dict)] if isinstance(x, list) else []
+
 def _err(section, message, detail=None):
     return {'section': section, 'message': str(message), 'detail': detail}
 
@@ -773,7 +781,7 @@ def _resolve_all_member_uris(bmc_ip, coll_uri, username, password, timeout, veri
     out = []
     for m in raw_members:
         uri = _safe(m, '@odata.id')
-        if not uri:
+        if not uri or not isinstance(uri, str):  # Round 3 #3: 비-str @odata.id .rstrip 방어
             continue
         # Member ID = URI 의 마지막 path segment (trailing '/' 제거)
         mid = uri.rstrip('/').rsplit('/', 1)[-1] if '/' in uri else uri
@@ -1438,9 +1446,9 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
         'boot_progress':  _safe(data, 'BootProgress', 'LastState'),
         'tpm':            tpm_summary,
         'cpu_summary': {
-            'count':  _safe(data, 'ProcessorSummary', 'Count'),
-            'core_count':              _safe(data, 'ProcessorSummary', 'CoreCount'),
-            'logical_processor_count': _safe(data, 'ProcessorSummary', 'LogicalProcessorCount'),
+            'count':  _safe_int(_safe(data, 'ProcessorSummary', 'Count')),  # Round 3 #7: int 통일
+            'core_count':              _safe_int(_safe(data, 'ProcessorSummary', 'CoreCount')),
+            'logical_processor_count': _safe_int(_safe(data, 'ProcessorSummary', 'LogicalProcessorCount')),
             'model':  _safe(data, 'ProcessorSummary', 'Model'),
             'health': _safe(data, 'ProcessorSummary', 'Status', 'Health'),
         },
@@ -1571,7 +1579,7 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
                 # IPv4 — 첫 매칭만 result['ip']/['mac_address']/['dns_name'] 에 사용,
                 # 모든 NIC 의 Gateway 는 누적 (멀티 NIC: dedicated + shared 등 대비)
                 nic_first_ip = None
-                for addr in (_safe(ndata, 'IPv4Addresses') or []):
+                for addr in _dicts(_safe(ndata, 'IPv4Addresses')):  # Round 3 #4: 비-list/비-dict 방어
                     ip = _safe(addr, 'Address')
                     if ip and ip not in ('0.0.0.0', ''):
                         if nic_first_ip is None:
@@ -1583,10 +1591,10 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
                 # 실측 (Lenovo XCC SR650 V2): NameServers=["","","","::","::","::"] 처럼
                 # 미설정 슬롯이 빈 문자열 / "::" / "0.0.0.0" 같은 placeholder 로 채워지므로 필터.
                 _ns_placeholders = ('', '0.0.0.0', '::', '::0', '::1')
-                for ns in (_safe(ndata, 'NameServers') or []):
+                for ns in _as_list(_safe(ndata, 'NameServers')):  # Round 3 #15: 비-list 방어
                     if ns and ns not in _ns_placeholders and ns not in bmc_name_servers:
                         bmc_name_servers.append(ns)
-                for ns in (_safe(ndata, 'StaticNameServers') or []):
+                for ns in _as_list(_safe(ndata, 'StaticNameServers')):
                     if ns and ns not in _ns_placeholders and ns not in bmc_static_name_servers:
                         bmc_static_name_servers.append(ns)
                 # MAC + FQDN — IP 가 있는 첫 NIC 에서 추출 (기존 동작 유지)
@@ -1684,9 +1692,9 @@ def gather_processors(bmc_ip, system_uri, username, password, timeout, verify_ss
             'model':             _ne_p('Model'),
             'manufacturer':      _ne_p('Manufacturer'),
             'socket':            _safe(pdata, 'Socket'),
-            'total_cores':       _safe(pdata, 'TotalCores'),
-            'total_threads':     _safe(pdata, 'TotalThreads'),
-            'speed_mhz':         _safe(pdata, 'MaxSpeedMHz'),
+            'total_cores':       _safe_int(_safe(pdata, 'TotalCores')),
+            'total_threads':     _safe_int(_safe(pdata, 'TotalThreads')),
+            'speed_mhz':         _safe_int(_safe(pdata, 'MaxSpeedMHz')),  # Round 3 #6: int 통일
             'health':            _safe(pdata, 'Status', 'Health'),
             'processor_type':    _safe(pdata, 'ProcessorType'),
             'architecture':      _safe(pdata, 'ProcessorArchitecture'),
@@ -1741,7 +1749,7 @@ def gather_memory(bmc_ip, system_uri, username, password, timeout, verify_ssl):
             'capacity_mb':     cap_int,
             'type':            _safe(mdata, 'MemoryDeviceType'),
             'base_module_type': _safe(mdata, 'BaseModuleType'),
-            'speed_mhz':       _safe(mdata, 'OperatingSpeedMhz'),
+            'speed_mhz':       _safe_int(_safe(mdata, 'OperatingSpeedMhz')),  # Round 3 #8: int 통일
             'manufacturer':    _normalize_jedec(_safe(mdata, 'Manufacturer')),
             'serial':          _strip_or_none(_safe(mdata, 'SerialNumber')),
             # 2026-04-30: Cisco 등 trailing whitespace 정규화.
@@ -2150,7 +2158,7 @@ def gather_network(bmc_ip, system_uri, username, password, timeout, verify_ssl):
         ipv4_addrs = [
             {'address': a.get('Address'), 'subnet_mask': a.get('SubnetMask'),
              'gateway': a.get('Gateway'), 'address_origin': a.get('AddressOrigin')}
-            for a in (_safe(ndata, 'IPv4Addresses') or [])
+            for a in _dicts(_safe(ndata, 'IPv4Addresses'))
             if a.get('Address') not in (None, '0.0.0.0', '')
         ]
         # 2026-04-29 fix B13: link_status enum 정규화 — Dell linkup/linkdown / HPE NoLink / Cisco Connected/Disconnected → up/down/unknown
@@ -2356,9 +2364,10 @@ def _make_ib_port(adapter_id, adapter_info, port_id, link_status, speed_gbps, pd
     node_guid = ndf.get('node_guid') if isinstance(ndf, dict) else None
     port_guid = ndf.get('port_guid') if isinstance(ndf, dict) else None
     if isinstance(pdata, dict):
-        ibobj = pdata.get('InfiniBand') or {}
+        ib_raw = pdata.get('InfiniBand')
+        ibobj = ib_raw if isinstance(ib_raw, dict) else {}  # Round 3 #2: 비-dict InfiniBand 방어
         if not node_guid:
-            arr = ibobj.get('AssociatedNodeGUIDs') or []
+            arr = _as_list(ibobj.get('AssociatedNodeGUIDs'))
             node_guid = arr[0] if arr else None
         if not port_guid:
             arr = ibobj.get('AssociatedPortGUIDs') or []
@@ -2476,7 +2485,7 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
                         continue
                     # 속도: 신 CurrentSpeedGbps(Gbps) 우선 > 구 CurrentLinkSpeedMbps/1000
                     cur_gbps = _safe(pdata, 'CurrentSpeedGbps')
-                    speed_mbps = _safe(pdata, 'CurrentLinkSpeedMbps')
+                    speed_mbps = _safe_int(_safe(pdata, 'CurrentLinkSpeedMbps'))  # Round 3 #17: mbps int 통일
                     if isinstance(cur_gbps, (int, float)):
                         speed_gbps = cur_gbps
                     elif isinstance(speed_mbps, (int, float)):
@@ -2777,7 +2786,7 @@ def gather_power(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
     # PowerControl — system-level power consumption (Safe Common: 3 vendors verified)
     # production-audit (2026-04-29): pdata가 dict가 아닌 list/None일 가능성 방어 (Cisco/Supermicro edge)
     pc_list = (pdata.get('PowerControl') if isinstance(pdata, dict) else None) or []
-    pc0 = pc_list[0] if pc_list else {}
+    pc0 = pc_list[0] if (pc_list and isinstance(pc_list[0], dict)) else {}  # Round 3 #0: 비-dict 원소 방어
     pm = pc0.get('PowerMetrics') or {}
     # 2026-04-29 cisco-critical-review: chassis level power_capacity_watts fallback —
     # Cisco 는 PowerControl[0].PowerCapacityWatts 를 null 응답. PSU power_capacity_w
@@ -2994,7 +3003,7 @@ def _normalize_network_raw(raw_nics):
         if not isinstance(nic, dict):
             continue
         addrs = []
-        for a in (nic.get('ipv4') or []):
+        for a in _as_list(nic.get('ipv4')):  # Round 3 #5: 비-list ipv4 방어
             addr = a.get('address') if isinstance(a, dict) else None
             if addr and addr not in ('0.0.0.0', ''):
                 addrs.append({'family': 'ipv4', 'address': addr, 'prefix_length': None,
