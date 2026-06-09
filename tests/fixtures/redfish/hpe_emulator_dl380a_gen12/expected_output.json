@@ -738,7 +738,7 @@
           "part_number": "P65324-001",
           "port_count": 2,
           "serial_number": "FRZ2754149689",
-          "speed_mbps": null
+          "speed_mbps": 100000
         },
         {
           "firmware_version": "16.28.4000",
@@ -800,7 +800,7 @@
           "adapter_id": "DE042000",
           "adapter_model": "HPE InfiniBand NDR200/Ethernet 200GbE 2-port QSFP112 PCIe5 x16 MCX755106AC-HEAT Adapter",
           "associated_address": null,
-          "current_link_speed_mbps": null,
+          "current_link_speed_mbps": 100000,
           "health": "OK",
           "link_state": "Enabled",
           "link_status": "up",
@@ -813,7 +813,7 @@
           "adapter_id": "DE042000",
           "adapter_model": "HPE InfiniBand NDR200/Ethernet 200GbE 2-port QSFP112 PCIe5 x16 MCX755106AC-HEAT Adapter",
           "associated_address": null,
-          "current_link_speed_mbps": null,
+          "current_link_speed_mbps": 100000,
           "health": "OK",
           "link_state": "Enabled",
           "link_status": "up",

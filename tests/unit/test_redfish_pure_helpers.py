@@ -197,3 +197,53 @@ def test_normalize_link_status_unknown(rfg):
 def test_normalize_link_status_unknown_vendor_value_preserved(rfg):
     # 매트릭스에 없는 vendor-specific 값은 추적성 위해 raw(lowercase) 보존
     assert rfg._normalize_link_status("WeirdState") == "weirdstate"
+
+
+# ── _normalize_port_speed (Round 17 #3) ──────────────────────────────────────
+# 신 Port resource(1.6+, Ports)는 CurrentSpeedGbps 만, 구 NetworkPort 는
+# CurrentLinkSpeedMbps 만 준다. Mbps 미제공 시 Gbps 에서 역산해야 유실 없음.
+def test_port_speed_ports_only_gbps_derives_mbps(rfg):
+    """신 Ports-only 어댑터(HPE): CurrentSpeedGbps=10, Mbps 없음 → mbps 10000 역산."""
+    gbps, mbps = rfg._normalize_port_speed({"CurrentSpeedGbps": 10})
+    assert mbps == 10000          # 가드 전: None (유실)
+    assert gbps == 10
+
+
+def test_port_speed_numeric_string_gbps(rfg):
+    """숫자-문자열 Gbps('25') 흡수 → gbps/mbps 둘 다 보존 (가드 전: 둘 다 유실)."""
+    gbps, mbps = rfg._normalize_port_speed({"CurrentSpeedGbps": "25"})
+    assert mbps == 25000
+    assert gbps == 25
+
+
+def test_port_speed_legacy_mbps_only_preserved(rfg):
+    """구 NetworkPort: CurrentLinkSpeedMbps=10000 만 → 기존 동작 불변."""
+    gbps, mbps = rfg._normalize_port_speed({"CurrentLinkSpeedMbps": 10000})
+    assert mbps == 10000
+    assert gbps == 10.0
+
+
+def test_port_speed_both_present_gbps_wins(rfg):
+    """둘 다 있으면 Gbps 우선(기존), Mbps 는 보고된 값 유지."""
+    gbps, mbps = rfg._normalize_port_speed({"CurrentSpeedGbps": 10, "CurrentLinkSpeedMbps": 10000})
+    assert gbps == 10
+    assert mbps == 10000
+
+
+def test_port_speed_none_when_absent(rfg):
+    """속도 필드 전무 → (None, None) (link-down/구 펌웨어)."""
+    assert rfg._normalize_port_speed({}) == (None, None)
+
+
+def test_port_speed_bool_gbps_ignored(rfg):
+    """CurrentSpeedGbps 가 JSON true(오염) → int(True)=1 오역산 방지, Mbps 폴백."""
+    gbps, mbps = rfg._normalize_port_speed({"CurrentSpeedGbps": True, "CurrentLinkSpeedMbps": 1000})
+    assert mbps == 1000
+    assert gbps == 1.0   # Mbps(1000)/1000 — bool Gbps 는 무시
+
+
+def test_port_speed_zero_gbps_no_phantom_mbps(rfg):
+    """CurrentSpeedGbps=0(link down) → mbps 0 역산 안 함(기존 동작 보존: gbps=0, mbps=None)."""
+    gbps, mbps = rfg._normalize_port_speed({"CurrentSpeedGbps": 0})
+    assert gbps == 0
+    assert mbps is None

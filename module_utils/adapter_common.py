@@ -87,10 +87,22 @@ def normalize_vendor(raw_vendor, aliases=None):
         canonical = flat.get(v)
         if canonical:
             return canonical
-        # 부분 매칭 시도 — alias가 v에 포함되거나 그 역
+        # 부분 매칭 — forward(alias 가 v 에 포함)만. Round 17:
+        #  (1) 역방향(v in alias) 제거 — 'inc'/'computer' 같은 짧은 입력이 긴 alias 의
+        #      substring 으로 걸려 엉뚱한 vendor 로 오분류되는 것 차단
+        #  (2) 짧은 alias(<3, 사실상 'hp')는 whole-word 토큰일 때만 — 'HPC Systems Inc.' 를
+        #      hpe 로 오분류하지 않으면서 'HP Enterprise' 같은 토큰 표기는 보존
+        #  (3) 최장 alias 우선 — dict 순회 순서에 의존하지 않는 결정적 결과
+        v_tokens = set(re.split(r"[^a-z0-9]+", v))
+        best_alias, best_canon = "", None
         for alias, canon in flat.items():
-            if alias and (alias in v or v in alias):
-                return canon
+            if not alias:
+                continue
+            hit = (alias in v) if len(alias) >= 3 else (alias in v_tokens)
+            if hit and len(alias) > len(best_alias):
+                best_alias, best_canon = alias, canon
+        if best_canon:
+            return best_canon
 
     return v
 
@@ -135,7 +147,9 @@ def adapter_matches(adapter, facts, aliases=None):
     Returns:
         bool: 모든 match 조건이 충족되면 True
     """
-    match = adapter.get("match") or {}  # Round 16: 빈 'match:'(YAML null) → {} (NoneType .get AttributeError 방지 — adapter 1개 오타가 전체 lookup abort)
+    match = adapter.get("match")  # Round 16: 빈 'match:'(YAML null) → {}; Round 17: list/scalar 등 비-dict match(YAML 오타)도 {} (truthy non-dict 가 .get AttributeError 로 전체 lookup abort 방지)
+    if not isinstance(match, dict):
+        match = {}
     if not match:
         return True  # match 조건 없으면 항상 매칭 (generic)
 
@@ -207,7 +221,9 @@ def adapter_specificity(adapter):
     Returns:
         int: specificity 점수
     """
-    match = adapter.get("match") or {}  # Round 16: 빈 'match:'(YAML null) → {} (NoneType .get AttributeError 방지 — adapter 1개 오타가 전체 lookup abort)
+    match = adapter.get("match")  # Round 16: 빈 'match:'(YAML null) → {}; Round 17: list/scalar 등 비-dict match(YAML 오타)도 {} (truthy non-dict 가 .get AttributeError 로 전체 lookup abort 방지)
+    if not isinstance(match, dict):
+        match = {}
     score = 0
 
     if match.get("vendor"):
@@ -237,7 +253,9 @@ def adapter_match_score(adapter, facts, aliases=None):
     Returns:
         int: match 점수 (매칭 실패 시 -9999)
     """
-    match = adapter.get("match") or {}  # Round 16: 빈 'match:'(YAML null) → {} (NoneType .get AttributeError 방지 — adapter 1개 오타가 전체 lookup abort)
+    match = adapter.get("match")  # Round 16: 빈 'match:'(YAML null) → {}; Round 17: list/scalar 등 비-dict match(YAML 오타)도 {} (truthy non-dict 가 .get AttributeError 로 전체 lookup abort 방지)
+    if not isinstance(match, dict):
+        match = {}
     score = 0
 
     # vendor 매칭 보너스

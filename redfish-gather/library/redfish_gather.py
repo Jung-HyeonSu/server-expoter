@@ -76,6 +76,35 @@ def _safe_int(x, default=None):
     except (ValueError, TypeError, OverflowError):  # Round 15: int(float('inf')) → OverflowError 방어
         return default
 
+
+def _normalize_port_speed(pdata):
+    """Redfish Port/NetworkPort 의 현재 링크 속도를 (speed_gbps, speed_mbps) 로 정규화.
+
+    Round 17 #3: 신 Port resource(1.6+, `Ports`)는 CurrentSpeedGbps(Gbps) 만 주고
+    CurrentLinkSpeedMbps(구 `NetworkPorts` 전용)를 안 준다. 따라서 Mbps 가 없으면
+    Gbps 에서 역산해야 Ports-only 어댑터(HPE 등)의 current_link_speed_mbps /
+    adapter speed_mbps 가 None 으로 유실되지 않는다. 숫자-문자열 Gbps('10')도
+    _safe_int 로 흡수(bool 은 제외 — JSON true/false 오염 방어).
+    """
+    cur_gbps = _safe(pdata, 'CurrentSpeedGbps')
+    if isinstance(cur_gbps, bool):
+        cur_gbps_num = None
+    elif isinstance(cur_gbps, (int, float)):
+        cur_gbps_num = cur_gbps
+    else:
+        cur_gbps_num = _safe_int(cur_gbps)
+    speed_mbps = _safe_int(_safe(pdata, 'CurrentLinkSpeedMbps'))  # Round 3 #17: mbps int 통일
+    if speed_mbps is None and cur_gbps_num:
+        speed_mbps = int(cur_gbps_num * MBPS_PER_GBPS)
+    if cur_gbps_num is not None:
+        speed_gbps = cur_gbps_num
+    elif speed_mbps is not None:
+        speed_gbps = speed_mbps / MBPS_PER_GBPS
+    else:
+        speed_gbps = None
+    return speed_gbps, speed_mbps
+
+
 try:
     import urllib.request as urlreq
     import urllib.error as urlerr
@@ -152,7 +181,15 @@ def _get(bmc_ip, path, username, password, timeout, verify_ssl):
     })
     try:
         with urlreq.urlopen(req, context=_ctx(verify_ssl), timeout=timeout) as resp:
-            return resp.status, json.loads(resp.read().decode('utf-8', errors='replace')), None
+            # Round 17 #18: 성공 path 의 json.loads 를 지역 guard 로 감싼다 (_post/_patch 와 동일).
+            # 200(또는 2xx) + 빈/비-JSON body(프록시 HTML, 잘린 응답)가 함수-레벨
+            # except(ValueError)로 떨어져 status 0(전송 실패) 으로 오보되던 것 방지 — 실제 status 보존.
+            raw = resp.read()
+            try:
+                data = json.loads(raw.decode('utf-8', errors='replace')) if raw else {}
+            except (json.JSONDecodeError, ValueError, UnicodeDecodeError):
+                data = {}
+            return resp.status, data, None
     except urlerr.HTTPError as e:
         try:    body = json.loads(e.read().decode('utf-8', errors='replace'))
         except (json.JSONDecodeError, ValueError, UnicodeDecodeError): body = {}
@@ -596,7 +633,14 @@ def _get_noauth(bmc_ip, path, timeout, verify_ssl):
     })
     try:
         with urlreq.urlopen(req, context=_ctx(verify_ssl), timeout=timeout) as resp:
-            return resp.status, json.loads(resp.read().decode('utf-8', errors='replace')), None
+            # Round 17 #18: 성공 path json.loads 지역 guard (_get/_post/_patch 와 동일) — 200+빈/비-JSON
+            # body 가 status 0 으로 오보되던 것 방지. detect/gather GET 이 모두 이 경로를 탄다.
+            raw = resp.read()
+            try:
+                data = json.loads(raw.decode('utf-8', errors='replace')) if raw else {}
+            except (json.JSONDecodeError, ValueError, UnicodeDecodeError):
+                data = {}
+            return resp.status, data, None
     except urlerr.HTTPError as e:
         try:    body = json.loads(e.read().decode('utf-8', errors='replace'))
         except (json.JSONDecodeError, ValueError, UnicodeDecodeError): body = {}
@@ -2545,15 +2589,8 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
                     st4, pdata, perr2 = _get(bmc_ip, _p(p_uri), username, password, timeout, verify_ssl)
                     if perr2 or st4 != 200:
                         continue
-                    # 속도: 신 CurrentSpeedGbps(Gbps) 우선 > 구 CurrentLinkSpeedMbps/1000
-                    cur_gbps = _safe(pdata, 'CurrentSpeedGbps')
-                    speed_mbps = _safe_int(_safe(pdata, 'CurrentLinkSpeedMbps'))  # Round 3 #17: mbps int 통일
-                    if isinstance(cur_gbps, (int, float)):
-                        speed_gbps = cur_gbps
-                    elif isinstance(speed_mbps, (int, float)):
-                        speed_gbps = speed_mbps / MBPS_PER_GBPS
-                    else:
-                        speed_gbps = None
+                    # 속도: 신 CurrentSpeedGbps(Gbps) 우선 > 구 CurrentLinkSpeedMbps/1000 (Round 17 #3)
+                    speed_gbps, speed_mbps = _normalize_port_speed(pdata)
                     assoc = _safe(pdata, 'AssociatedNetworkAddresses', default=[]) or []
                     if not isinstance(assoc, list):  # rule 95 R1 #2: 비-list 방어 (Round 2 #14)
                         assoc = []

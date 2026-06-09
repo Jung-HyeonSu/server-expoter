@@ -67,7 +67,12 @@
   ansible.builtin.set_fact:
     _w_cpu_summary: >-
       {%- set ns = namespace(groups=[], seen={}) -%}
-      {%- for p in (_w_cpu_data.processors | default([])) -%}
+      {# Round 17 #8: PS5.1 ConvertTo-Json 단일 원소 배열 → object collapse 방어 (gather_storage.yml 동일).
+         단일 소켓 호스트(흔한 케이스)에서 processors 가 dict 가 되어 for 가 KEY(문자열)를 순회 →
+         p.name/cores/manufacturer 가 Undefined → summary 가 model='unknown'/cores=0 으로 corrupt. #}
+      {%- set _procs = _w_cpu_data.processors | default([]) -%}
+      {%- if _procs is mapping -%}{%- set _procs = [_procs] -%}{%- endif -%}
+      {%- for p in _procs -%}
         {%- set m = p.name | default('unknown') -%}
         {# Round 16: JSON null/비-str manufacturer 시 'X' in None → TypeError (host 전체 rescue
            collapse). default('') 는 undefined 만 치환 → (.. or '') | string 로 str 강제. #}

@@ -114,3 +114,62 @@ def test_null_match_does_not_crash_scoring():
     # 정상 adapter 점수 불변 (회귀 방어)
     good = {"match": {"vendor": ["dell"], "model_patterns": ["PowerEdge R7.*"]}, "priority": 100}
     assert adapter_score(good, facts) == 100 * 1000 + 30 * 10 + 45  # priority + spec(10+20) + match(20+25)
+
+
+# Round 17 #1 — 비-dict match(list/scalar YAML 오타) → match=[...]/str/int 이면 'or {}' 가
+# truthy 라 그대로 통과 → 다음 줄 match.get() AttributeError 로 lookup 전체 abort 방어
+@pytest.mark.parametrize("bad_match", [
+    [{"vendor": "dell"}],   # list (들여쓰기 오타: 'match:\n  - vendor: dell')
+    "dell",                 # scalar str
+    5,                      # scalar int
+    ("x",),                 # tuple
+])
+def test_non_dict_match_does_not_crash_scoring(bad_match):
+    facts = {"vendor": "dell", "model": "PowerEdge R760"}
+    a = {"match": bad_match, "priority": 50, "adapter_id": "broken"}
+    # 비-dict match 는 {} 로 강제 → generic(조건 없음) 과 동일 취급, crash 없음
+    assert adapter_matches(a, facts) is True       # 가드 전: 'list/str/int' object has no attribute 'get'
+    assert adapter_specificity(a) == 0             # 가드 전: AttributeError
+    assert adapter_match_score(a, facts) == 0      # 가드 전: AttributeError
+    assert adapter_score(a, facts) == 50 * 1000    # priority 만 반영
+
+
+# Round 17 #5 — normalize_vendor substring fallback 오탐 차단
+# (짧은 alias 'hp' 가 'HPC Systems' 를 hpe 로 / 역방향 'Computer' 가 'Super Micro Computer' 로)
+_R17_ALIASES = {
+    "dell": ["Dell", "Dell Inc.", "Dell EMC"],
+    "hpe": ["HPE", "Hewlett Packard Enterprise", "HP Enterprise", "HP", "Hp"],
+    "lenovo": ["Lenovo", "IBM"],
+    "supermicro": ["Supermicro", "Super Micro Computer", "SMCI"],
+    "cisco": ["Cisco Systems", "Cisco"],
+    "quanta": ["Quanta Computer", "QCT"],
+}
+
+
+def test_normalize_vendor_short_alias_no_false_positive():
+    """'HPC Systems Inc.' 는 2-char 'hp' substring 으로 hpe 오분류되면 안 됨 → unknown(raw) 으로 수렴."""
+    out = normalize_vendor("HPC Systems Inc.", _R17_ALIASES)
+    assert out != "hpe"                 # 가드 전: 'hp' in 'hpc...' → hpe
+    assert out == "hpc systems inc."    # 미매칭 → raw(소문자) 패스스루
+
+
+def test_normalize_vendor_short_alias_whole_word_preserved():
+    """'HP rackmount server' 의 'hp' 는 whole-word 토큰 → hpe 보존 (회귀 방어)."""
+    assert normalize_vendor("HP rackmount server", _R17_ALIASES) == "hpe"
+
+
+def test_normalize_vendor_reverse_direction_removed():
+    """역방향(v in alias) 제거: 'Computer' 단독이 'Super Micro Computer'/'Quanta Computer' 로 오분류 안 됨."""
+    out = normalize_vendor("Computer", _R17_ALIASES)
+    assert out not in ("supermicro", "quanta")
+    assert out == "computer"
+
+
+def test_normalize_vendor_legit_substring_preserved():
+    """정상 substring 수렴 불변 (forward, len>=3)."""
+    assert normalize_vendor("Dell Inc", _R17_ALIASES) == "dell"            # 마침표 없음
+    assert normalize_vendor("Super Micro Computer X11", _R17_ALIASES) == "supermicro"
+    assert normalize_vendor("Hewlett Packard Enterprise Co", _R17_ALIASES) == "hpe"
+    # 정확/토큰 매칭 불변
+    assert normalize_vendor("HP Enterprise", _R17_ALIASES) == "hpe"        # 정확 alias
+    assert normalize_vendor("HP", _R17_ALIASES) == "hpe"                   # 정확 alias(2-char)

@@ -473,7 +473,7 @@
           "part_number": "P10113-001",
           "port_count": 2,
           "serial_number": "RTB1542985391",
-          "speed_mbps": null
+          "speed_mbps": 25000
         }
       ],
       "fc_hbas": [
@@ -540,7 +540,7 @@
           "adapter_id": "DE07A000",
           "adapter_model": "BCM57414",
           "associated_address": null,
-          "current_link_speed_mbps": null,
+          "current_link_speed_mbps": 25000,
           "health": "OK",
           "link_state": "Enabled",
           "link_status": "up",
@@ -553,7 +553,7 @@
           "adapter_id": "DE07A000",
           "adapter_model": "BCM57414",
           "associated_address": null,
-          "current_link_speed_mbps": null,
+          "current_link_speed_mbps": 25000,
           "health": "OK",
           "link_state": "Enabled",
           "link_status": "up",

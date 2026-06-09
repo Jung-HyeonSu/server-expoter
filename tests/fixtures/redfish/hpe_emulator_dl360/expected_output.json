@@ -508,7 +508,7 @@
           "part_number": "P13186-001",
           "port_count": 2,
           "serial_number": "WMI9968983785",
-          "speed_mbps": null
+          "speed_mbps": 25000
         }
       ],
       "fc_hbas": [],
@@ -518,7 +518,7 @@
           "adapter_id": "DE080000",
           "adapter_model": "Ethernet 10/25Gb 2-port SFP28 MCX512F-ACHT Adapter",
           "associated_address": null,
-          "current_link_speed_mbps": null,
+          "current_link_speed_mbps": 25000,
           "health": "OK",
           "link_state": "Enabled",
           "link_status": "up",
@@ -531,7 +531,7 @@
           "adapter_id": "DE080000",
           "adapter_model": "Ethernet 10/25Gb 2-port SFP28 MCX512F-ACHT Adapter",
           "associated_address": null,
-          "current_link_speed_mbps": null,
+          "current_link_speed_mbps": 25000,
           "health": "OK",
           "link_state": "Enabled",
           "link_status": "up",
