@@ -1,5 +1,14 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 11 — 분리형 string-method + status 403 + account @odata.id [DONE])
+
+- 9 finder + 3-lens. 19 deduped → 7 confirmed(66 agent). 추세 ...4→1→7(missed sibling 사이트).
+- **수정 (~7)**: drive_name=_safe()or'' 후 .lower() 분리형 _str 가드 / _compute_final_status가 message측 HTTP40x도 감지(multi_node 403 → failed) / account_service_provision POST @odata.id 4경로 _str.
+- skip: #0 memory locator(unused dead field, contested not-a-bug).
+- 검증: 970 pass(+3). golden 52 byte 불변. 커밋 직후.
+
+---
+
 ## 일자: 2026-06-09 (Round 10 — multi_node status merge, 단일 genuine 결함 [수렴 임박])
 
 - 9 finder + 3-lens. 12 deduped → 1 confirmed(45 agent). 추세 26→23→21→17→11→9→5→6→4→1.
