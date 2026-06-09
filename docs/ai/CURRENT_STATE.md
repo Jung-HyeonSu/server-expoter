@@ -1,5 +1,14 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 6 적대적 hunt — 9 confirmed, ~4 수정 [DONE])
+
+- 9 finder + 3-lens. 20 deduped → 9 confirmed(69 agent). 추세 26→23→21→17→11→9.
+- 수정(4): _fetch_service_root 비-dict ServiceRoot 계약 방어 + gather_network MTU int(마지막 수치 필드) + account_service_get 무경계 cap + esxi tg/fg default 가드(Jenkins-verify).
+- skip(design 판단): memory total 0→None(no-data=None 적절) / cpu sockets 0→None / memory <1GiB(현존 안함 — GiB 단위 설계) / drives cap 0(empty bay 상위 필터) / SmartStorage GB=0&MiB=0(fall-through 기각).
+- 검증: 958 pass(+4). golden 52 byte 불변. 커밋 6fae250.
+
+---
+
 ## 일자: 2026-06-09 (Round 5 적대적 hunt — 배열 루프 전수 폐쇄 + precheck P0 [DONE])
 
 - **방법**: 9 finder + 3-lens. 33 deduped → **11 confirmed**(108 agent). 추세 26→23→21→17→11.
