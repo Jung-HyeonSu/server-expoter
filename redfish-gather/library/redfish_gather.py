@@ -1877,7 +1877,7 @@ def _extract_storage_drives(sdata, bmc_ip, username, password, timeout, verify_s
             errors.append(_err('storage', f'Drive {d_uri} 실패: {derr or dst}'))
             continue
         # Q-09: HPE Empty Bay 필터 — CapacityBytes가 없거나 Name에 "Empty" 포함 시 스킵
-        drive_name = _safe(ddata, 'Name') or ''
+        drive_name = _str(_safe(ddata, 'Name'))  # Round 11 #1: 분리형 string-method 방어
         cap_int = _safe_int(_safe(ddata, 'CapacityBytes'), default=0)
         if not cap_int:
             continue
@@ -3321,7 +3321,8 @@ def _compute_final_status(collected, failed, errors=None):
                 continue
             detail = str(e.get('detail') or '')  # Round 4 #11: 비-str detail(int 등) 'in' TypeError 방어
             msg = str(e.get('message') or '')
-            if 'HTTP 401' in detail or 'HTTP 403' in detail:
+            if ('HTTP 401' in detail or 'HTTP 403' in detail
+                    or 'HTTP 401' in msg or 'HTTP 403' in msg):  # Round 11 #2: msg 측 40x 도 감지
                 return 'failed', clean
             if '401' in msg and 'auth' in msg.lower():
                 return 'failed', clean
@@ -3742,7 +3743,7 @@ def account_service_provision(
         )
         if code in (200, 201, 204) and not err:
             out['recovered'] = True
-            out['slot_uri']  = _safe(resp_data, '@odata.id') or f'/redfish/v1/AccountService/Accounts/{target_id}'
+            out['slot_uri']  = _str(_safe(resp_data, '@odata.id')) or f'/redfish/v1/AccountService/Accounts/{target_id}'  # Round 11 #3
         else:
             out['errors'].append(_err(
                 'account_service',
@@ -3773,7 +3774,7 @@ def account_service_provision(
     )
     if code in (200, 201, 204) and not err:
         out['recovered'] = True
-        out['slot_uri']  = _safe(resp_data, '@odata.id')
+        out['slot_uri']  = _str(_safe(resp_data, '@odata.id')) or None  # Round 11 #4
         return out
 
     # 2차 retry: 400/405 — Lenovo PasswordChangeRequired 명시 (일부 XCC 펌웨어 요구)
@@ -3787,7 +3788,7 @@ def account_service_provision(
         )
         if code2 in (200, 201, 204) and not err2:
             out['recovered'] = True
-            out['slot_uri']  = _safe(resp2, '@odata.id')
+            out['slot_uri']  = _str(_safe(resp2, '@odata.id')) or None  # Round 11 #5
             out['errors'].append(_err(
                 'account_service',
                 'POST 1차 실패 → PasswordChangeRequired:false 추가 후 retry 성공 '
@@ -3810,7 +3811,7 @@ def account_service_provision(
             )
             if code3 in (200, 201, 204) and not err3:
                 out['recovered'] = True
-                out['slot_uri']  = _safe(resp3, '@odata.id')
+                out['slot_uri']  = _str(_safe(resp3, '@odata.id')) or None  # Round 11 #6
                 out['errors'].append(_err(
                     'account_service',
                     'POST 1차 실패 → Oem.Hpe.Privileges 추가 후 retry 성공',  # nosec rule12-r1
