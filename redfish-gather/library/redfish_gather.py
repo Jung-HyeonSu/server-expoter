@@ -3429,7 +3429,7 @@ def account_service_find_empty_slot(accounts, skip_slot_ids=None):
     """
     skip = set(skip_slot_ids or [])
     for acc in accounts:
-        if str(acc.get('id') or '') in skip:
+        if ('' if acc.get('id') is None else str(acc.get('id'))) in skip:
             continue
         if not (acc.get('username') or ''):
             return acc
@@ -3441,14 +3441,14 @@ def account_service_find_all_empty_slots(accounts, skip_slot_ids=None):
     skip = set(skip_slot_ids or [])
     empties = [
         a for a in accounts
-        if str(a.get('id') or '') not in skip and not (a.get('username') or '')
+        if ('' if a.get('id') is None else str(a.get('id'))) not in skip and not (a.get('username') or '')
     ]
     # id 가 숫자면 숫자 정렬, 아니면 문자열 정렬
     def _key(a):
         try:
             return (0, int(a.get('id') or '0'))
         except (ValueError, TypeError):
-            return (1, str(a.get('id') or ''))
+            return (1, ('' if a.get('id') is None else str(a.get('id'))))
     empties.sort(key=_key)
     return empties
 
@@ -3720,7 +3720,7 @@ def account_service_provision(
         }
         cisco_role = cisco_role_map.get(target_role, 'admin')
         # 빈 Id 찾기 (2..15 — slot 1 은 admin reserved)
-        used_ids = {str(a.get('id') or '') for a in accounts}
+        used_ids = {('' if a.get('id') is None else str(a.get('id'))) for a in accounts}
         target_id = None
         for candidate_id in range(2, 16):
             if str(candidate_id) not in used_ids:
