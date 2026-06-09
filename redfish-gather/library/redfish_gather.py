@@ -1591,7 +1591,7 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
                 nic_first_ip = None
                 for addr in _dicts(_safe(ndata, 'IPv4Addresses')):  # Round 3 #4: 비-list/비-dict 방어
                     ip = _safe(addr, 'Address')
-                    if ip and ip not in ('0.0.0.0', ''):
+                    if ip and isinstance(ip, str) and ip not in ('0.0.0.0', ''):  # Round 7 #3: 비-str Address 방어
                         if nic_first_ip is None:
                             nic_first_ip = ip
                         gw = _safe(addr, 'Gateway')
