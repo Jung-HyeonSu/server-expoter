@@ -507,7 +507,7 @@ def _normalize_vendor_from_aliases(mfr_lower):
 
     # 부분 매칭 (기존 로직 호환)
     for key, canon in merged.items():
-        if key in mfr_lower or mfr_lower in key:
+        if key and (key in mfr_lower or mfr_lower in key):  # rule 95: 빈 alias wildcard 매칭 방어 (Round 1 #9)
             return canon
 
     return 'unknown'
@@ -640,7 +640,7 @@ def _detect_vendor_from_service_root(root):
     if product and isinstance(product, str):
         p = product.lower()
         for alias, canonical in vm.items():
-            if alias in p:
+            if alias and alias in p:  # rule 95: 빈 alias wildcard 매칭 방어 (Round 1 #8, L619/L635 와 일관)
                 return canonical
         # nosec rule12-r1: BMC 시그니처 → vendor 식별 (외부 Redfish spec OEM namespace)
         for hint, canon in _BMC_PRODUCT_HINTS.items():                        # nosec rule12-r1
@@ -652,7 +652,7 @@ def _detect_vendor_from_service_root(root):
     if name and isinstance(name, str):
         n = name.lower()
         for alias, canonical in vm.items():
-            if alias in n:
+            if alias and alias in n:  # rule 95: 빈 alias wildcard 매칭 방어 (Round 1 #8)
                 return canonical
         # nosec rule12-r1: BMC 시그니처 fallback (Name 필드)
         for hint, canon in _BMC_PRODUCT_HINTS.items():                        # nosec rule12-r1

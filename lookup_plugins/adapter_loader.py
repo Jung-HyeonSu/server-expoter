@@ -138,7 +138,7 @@ def _match_and_score(adapters, facts, aliases, adapter_matches, adapter_score,
                 matched.append((score, adapter))
                 # score breakdown logging (rule 95 R1 — debugging visibility)
                 if adapter_specificity and adapter_match_score:
-                    priority = int(adapter.get("priority", 0))
+                    priority = adapter.get("priority", 0)  # 표시용 raw (int() 제거 — 오타 priority 가 로깅서 crash 안 나게)
                     spec = adapter_specificity(adapter)
                     msc = adapter_match_score(adapter, facts, aliases)
                     display.vvv(

@@ -75,7 +75,7 @@ def normalize_vendor(raw_vendor, aliases=None):
     if not raw_vendor:
         return None
 
-    v = raw_vendor.strip().lower()
+    v = str(raw_vendor).strip().lower()  # rule 95 R1 #2: BMC Manufacturer 비-str(숫자) 방어
     flat = _flatten_aliases(aliases)
 
     if flat:
@@ -105,6 +105,8 @@ def pattern_match_any(patterns, value):
         return False
     value = str(value)
     for pattern in patterns:
+        if not isinstance(pattern, str):  # rule 95 R1: adapter YAML 비-str pattern 방어
+            continue
         try:
             if re.search(pattern, value, re.IGNORECASE):
                 return True
@@ -173,14 +175,16 @@ def adapter_matches(adapter, facts, aliases=None):
     distribution_patterns = match.get("distribution_patterns", [])
     if distribution_patterns:
         distro = facts.get("distribution", "")
-        if not pattern_match_any(distribution_patterns, distro):
+        # 빈 distribution(정보 없음)은 통과 — model/firmware(L153/161) 와 동일 정책 (Round 1 #18)
+        if distro and not pattern_match_any(distribution_patterns, distro):
             return False
 
     # 버전 패턴 매칭
     version_patterns = match.get("version_patterns", [])
     if version_patterns:
         version = facts.get("version", "")
-        if not pattern_match_any(version_patterns, version):
+        # 빈 version(정보 없음)은 통과 — model/firmware 와 동일 정책 (Round 1 #18)
+        if version and not pattern_match_any(version_patterns, version):
             return False
 
     return True
@@ -276,7 +280,10 @@ def adapter_score(adapter, facts, aliases=None):
     Returns:
         int: 최종 점수 (높을수록 우선)
     """
-    priority = int(adapter.get("priority", 0))
+    try:  # rule 95 R1: adapter YAML priority 오타('high' 등) 가 loader 전체를 죽이지 않게
+        priority = int(adapter.get("priority", 0))
+    except (ValueError, TypeError):
+        priority = 0
     specificity = adapter_specificity(adapter)
     match_sc = adapter_match_score(adapter, facts, aliases)
 
