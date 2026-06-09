@@ -74,6 +74,23 @@ def test_auth_wellformed_member_extracts_uri(monkeypatch):
     assert result["probe_facts"]["first_system_uri"] == "/redfish/v1/Systems/1"
 
 
+def test_probe_redfish_non_dict_json_does_not_crash(monkeypatch):
+    """ServiceRoot 가 비-dict JSON('error' 등) 반환 → json_data.get AttributeError 방어 (UNWRAPPED P0)."""
+    monkeypatch.setattr(pb, "http_get",
+                        lambda *a, **k: (True, None, {"status_code": 200, "json": "errorstring"}))
+    ok, err, facts = pb.probe_redfish("10.0.0.1", 443, 5)  # 가드 전: str.get AttributeError
+    assert ok is True and isinstance(facts, dict)
+
+
+def test_auth_non_dict_json_does_not_crash(monkeypatch):
+    """Systems 가 비-dict JSON → json_data.get('Members') AttributeError 방어 (UNWRAPPED P0)."""
+    monkeypatch.setattr(pb, "http_get",
+                        lambda *a, **k: (True, None, {"status_code": 200, "json": 12345}))
+    result = _fresh_result()
+    ok = pb._try_redfish_auth("10.0.0.1", 443, "u", "p", 8.0, False, result)  # 가드 전: int.get
+    assert ok is True and result["auth_success"] is True
+
+
 def test_tcp_check_bad_host_returns_false_not_crash():
     """tcp_check 가 해석 불가 host 에 DNS 실패로 graceful (crash 아님)."""
     ok, err = pb.tcp_check("nonexistent.invalid.", 443, 0.5)

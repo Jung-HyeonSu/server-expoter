@@ -497,8 +497,9 @@ def _load_vendor_aliases_file():
                 data = yaml.safe_load(f) or {}
             mapping = {}
             for canonical, alias_list in data.get('vendor_aliases', {}).items():
-                for alias in alias_list:
-                    mapping[alias.strip().lower()] = canonical
+                for alias in (alias_list or []):
+                    if isinstance(alias, str):  # Round 5 #10: None/비-str alias 가 로드 abort 시키지 않게
+                        mapping[alias.strip().lower()] = canonical
             if mapping:
                 return mapping
         except (IOError, OSError, yaml.YAMLError, AttributeError, TypeError):
@@ -1575,7 +1576,7 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
     if nic_link:
         nst, ncoll, nerr = _get(bmc_ip, _p(nic_link), username, password, timeout, verify_ssl)
         if not nerr and nst == 200:
-            for nm in (_safe(ncoll, 'Members') or []):
+            for nm in _dicts(_safe(ncoll, 'Members')):  # Round 5: 비-list/dict 방어
                 nuri = _safe(nm, '@odata.id')
                 if not nuri:
                     continue
@@ -1914,7 +1915,7 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
     if verr or vst != 200:
         # Volumes 미지원(HBA 모드 등)은 정상 — 에러 추가하지 않음
         return volumes, errors
-    for v_member in (_safe(vcoll, 'Members') or []):
+    for v_member in _dicts(_safe(vcoll, 'Members')):  # Round 5: 비-list/dict 방어
         v_uri = _safe(v_member, '@odata.id')
         if not v_uri:
             continue
@@ -1927,7 +1928,7 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
         # member_drive_ids: Links.Drives[]의 @odata.id에서 마지막 path segment
         member_ids = [
             d_oid.rstrip('/').rsplit('/', 1)[-1]
-            for d_link in (_safe(vdata, 'Links', 'Drives') or [])
+            for d_link in _dicts(_safe(vdata, 'Links', 'Drives'))
             for d_oid in [_safe(d_link, '@odata.id')] if d_oid and isinstance(d_oid, str)  # rule 95: 비-str @odata.id 방어 (Round 1 #1)
         ]
         # JBOD/pass-through 필터: Non-RAID 모드에서 물리 디스크를 개별 Volume으로 노출
@@ -2050,7 +2051,7 @@ def _gather_smart_storage(bmc_ip, system_uri, username, password, timeout, verif
             if pd_link:
                 pst, pcoll, _perr = _get(bmc_ip, _p(pd_link), username, password, timeout, verify_ssl)
                 if pst == 200:
-                    for pd_m in (_safe(pcoll, 'Members') or []):
+                    for pd_m in _dicts(_safe(pcoll, 'Members')):  # Round 5: 비-list/dict 방어
                         pd_uri = _safe(pd_m, '@odata.id')
                         if not pd_uri:
                             continue
@@ -2312,7 +2313,7 @@ def _fetch_ndf_index(bmc_ip, adata, username, password, timeout, verify_ssl):
     st, coll, err = _get(bmc_ip, _p(ndf_link), username, password, timeout, verify_ssl)
     if err or st != 200:
         return ndfs
-    for m in (_safe(coll, 'Members') or []):
+    for m in _dicts(_safe(coll, 'Members')):  # Round 5: 비-list/dict 방어
         u = _safe(m, '@odata.id')
         if not u:
             continue
@@ -2482,7 +2483,7 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
                 errors.append(_err('network_adapters',
                                    f'Ports {ports_link} 실패: {perr or st3}'))
             else:
-                for pmember in (_safe(pcoll, 'Members') or []):
+                for pmember in _dicts(_safe(pcoll, 'Members')):  # Round 5: 비-list/dict 방어
                     p_uri = _safe(pmember, '@odata.id')
                     if not p_uri:
                         continue
@@ -2772,7 +2773,7 @@ def gather_power(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
     # InputRanges[0].OutputWattage 에 PSU 정격을 둔다. envelope 키는 그대로,
     # null 이던 값을 채운다.
     psus = []
-    for psu in (_safe(pdata, 'PowerSupplies') or []):
+    for psu in _dicts(_safe(pdata, 'PowerSupplies')):  # Round 5 #4: 비-list/dict 방어
         psu_capacity = _safe_int(_safe(psu, 'PowerCapacityWatts'))  # Round 2: watt int 통일 (sum 안전 + 타입 일관)
         if psu_capacity is None:
             ranges = _safe(psu, 'InputRanges') or []
@@ -2981,6 +2982,8 @@ def _normalize_storage_raw(raw):
         })
     logical = []
     for vol in (raw.get('volumes') or []):
+        if not isinstance(vol, dict):  # Round 5 #0: controllers/drives 와 일관
+            continue
         logical.append({
             'id': vol.get('id'), 'name': vol.get('name'),
             'controller_id': vol.get('controller_id'),

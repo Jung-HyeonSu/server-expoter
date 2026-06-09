@@ -253,7 +253,7 @@ def probe_redfish(host, port, timeout, verify=False):
         if ok:
             json_data = payload.get("json") if payload else None
             probe_facts = {}
-            if json_data:
+            if isinstance(json_data, dict):
                 probe_facts["redfish_version"] = json_data.get("RedfishVersion")
                 probe_facts["product"] = json_data.get("Product")
                 systems_uri = None
@@ -426,7 +426,7 @@ def _try_redfish_auth(host, open_port, username, password, timeout_auth, verify_
         return False
     result["auth_success"] = True
     json_data = payload.get("json") if payload else None
-    if json_data:
+    if isinstance(json_data, dict):  # Round 5 #2: 비-dict JSON .get AttributeError 방어
         members = json_data.get("Members", [])
         # rule 95 R1 #2: 비-dict 멤버([null]/[str]) 방어 — members[0].get AttributeError 회피
         if members and isinstance(members[0], dict):
