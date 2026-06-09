@@ -1,5 +1,14 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 12 — adapter_common string-method sweep [DONE])
+
+- 9 finder + 3-lens. 18 deduped → 4 confirmed(63 agent). 추세 ...1→7→4.
+- **수정 (3)**: Round 8 string-method sweep가 redfish_gather.py에 한정됐던 것을 adapter_common.py로 확장 — os_type .lower() str 가드(UNWRAPPED P0) + vendor/model_patterns scalar(YAML 오타)→list char순회 방지.
+- skip: #1 _normalize_cpu_raw sockets=sum(group sockets) (len(cpus)와 수학적 동일 — no-op).
+- 검증: 973 pass(+3). adapter 선택 62 unbroken. golden 불변.
+
+---
+
 ## 일자: 2026-06-09 (Round 11 — 분리형 string-method + status 403 + account @odata.id [DONE])
 
 - 9 finder + 3-lens. 19 deduped → 7 confirmed(66 agent). 추세 ...4→1→7(missed sibling 사이트).
