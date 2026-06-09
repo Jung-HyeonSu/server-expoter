@@ -28,6 +28,18 @@
 | LOW | vendor `tasks/vendors/*/collect_oem.yml`·`normalize_oem.yml` — 어떤 include 도 없는 **미wiring placeholder**. 내부 `when: _rf_raw_collect.systems`(모듈 미emit 키)라 wiring 시에도 dead. OEM 확장 시 모듈서 raw Oem 보존 + repoint 필요 | `[CONTRACT][LAB]` | 사용자 |
 | LOW | Ansible **Jinja 템플릿 회귀 하네스** 도입 — windows cpu/storage/network null-가드 fix 는 Jinja2 직접 렌더로 검증, 영속 회귀는 baseline 의존(null-field fixture 부재) | `[QA]` | qa |
 
+## Round 17 (2026-06-10 멀티에이전트 버그헌트) 후속
+
+> 상세: `tests/evidence/2026-06-10-round17-multiagent-bughunt.md`. 23 confirmed 중 18 적용·검증
+> 완료(batch1/2). 아래는 **lab/실행 환경 필요로 보류**(검증 불가 → 정직 보고).
+
+| 우선 | 항목 | 분류 | 결정 주체 |
+|---|---|---|---|
+| MED | **vendor OEM 추출 cluster (#13~#17)** — huawei/inspur/fujitsu/quanta/hpe-superdome `collect_oem.yml` 이 `_rf_raw_collect.systems[0]`(모듈 미emit) 또는 `data.system.Oem`(대문자, 실제는 소문자 `data.system.oem`)·`data.chassis`(미존재) 를 읽어 **항상 빈 OEM**. wiring 됨(adapter `oem_tasks`)이나 dead. graceful(crash/envelope 위반 없음). 진짜 fix = ① huawei/inspur/fujitsu/quanta 를 `_OEM_EXTRACTORS` 에 추가(라이브러리) + ② raw Oem 보존 또는 path repoint(`data.system.oem`) + ③ 사이트 fixture. 4종 lab 부재라 추출기 추가해도 검증 불가 → 사이트 fixture 선행 필요 | `[CONTRACT][LAB]` | 사용자+lab |
+| MED | 본 cycle os/esxi/redfish/precheck **YAML + Jenkinsfile_portal 변경 1회 실 ansible-playbook/Jenkins smoke 검증** (본 환경 ansible/Jenkins 부재 → Jinja2 렌더 + pytest 로만 검증). 대상: gather_runtime/gather_system(#6/#7/#19/#20), esxi/os site.yml adapter 선택(#9/#10), run_precheck(#4), try_one_credential(#2/#21), Jenkinsfile_portal Stage3(#23) | `[ANSIBLE][CI][LAB]` | 사용자+lab |
+| LOW | **precheck timeout 동작 변경 확인** — `_precheck_timeout`(redfish=_rf_timeout, esxi=30) 이 이제 protocol/auth 에 반영(기존 15/8 → 30). 느린 BMC false-negative 해소하나 실패 호스트 precheck 시간 증가. 운영 배치에서 허용 가능 확인 | `[LAB]` | 사용자 |
+| LOW | cisco `collect_oem.yml` 도 `data.system.Oem`(대문자) 읽어 supplement dead — 단 cisco 는 `_OEM_EXTRACTORS` 라 라이브러리가 `data.system.oem`(소문자) 채움(부분 동작). lab 후 path 정정 + 회귀 | `[CONTRACT][LAB]` | lab |
+
 ## 0. 2026-05-29 audit-cleanup 후속 (전수 audit 결과 — 미적용 backlog)
 
 > 정본: `docs/ai/AUDIT-2026-05-29.md` (전체 권고 + 정확 file:line + diff).

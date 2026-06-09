@@ -181,15 +181,18 @@ def _get(bmc_ip, path, username, password, timeout, verify_ssl):
     })
     try:
         with urlreq.urlopen(req, context=_ctx(verify_ssl), timeout=timeout) as resp:
-            # Round 17 #18: 성공 path 의 json.loads 를 지역 guard 로 감싼다 (_post/_patch 와 동일).
-            # 200(또는 2xx) + 빈/비-JSON body(프록시 HTML, 잘린 응답)가 함수-레벨
-            # except(ValueError)로 떨어져 status 0(전송 실패) 으로 오보되던 것 방지 — 실제 status 보존.
+            # Round 17 #18: 성공 path 의 json.loads 를 지역 guard 로 감싼다.
+            # 200(또는 2xx) + 빈 body 는 {}(tolerant), 비-JSON body(프록시 HTML/잘린 응답)는
+            # err 설정. 둘 다 실제 status 를 보존(기존엔 함수-레벨 except 로 status 0 오보).
+            # 빈 vs 비-JSON 구분: ServiceRoot 같은 detect 경로에서 malformed body 는 명확히
+            # 실패로 남겨야 함(빈 {} 로 진행해 vendor=unknown 으로 새지 않게).
             raw = resp.read()
             try:
                 data = json.loads(raw.decode('utf-8', errors='replace')) if raw else {}
+                decode_err = None
             except (json.JSONDecodeError, ValueError, UnicodeDecodeError):
-                data = {}
-            return resp.status, data, None
+                data, decode_err = {}, f'HTTP {resp.status}: body not JSON'
+            return resp.status, data, decode_err
     except urlerr.HTTPError as e:
         try:    body = json.loads(e.read().decode('utf-8', errors='replace'))
         except (json.JSONDecodeError, ValueError, UnicodeDecodeError): body = {}
@@ -633,14 +636,15 @@ def _get_noauth(bmc_ip, path, timeout, verify_ssl):
     })
     try:
         with urlreq.urlopen(req, context=_ctx(verify_ssl), timeout=timeout) as resp:
-            # Round 17 #18: 성공 path json.loads 지역 guard (_get/_post/_patch 와 동일) — 200+빈/비-JSON
-            # body 가 status 0 으로 오보되던 것 방지. detect/gather GET 이 모두 이 경로를 탄다.
+            # Round 17 #18: 성공 path json.loads 지역 guard — 200+빈 body 는 {}(tolerant),
+            # 비-JSON body 는 err 설정. status 0 오보 방지 + detect 경로 malformed 명확 실패.
             raw = resp.read()
             try:
                 data = json.loads(raw.decode('utf-8', errors='replace')) if raw else {}
+                decode_err = None
             except (json.JSONDecodeError, ValueError, UnicodeDecodeError):
-                data = {}
-            return resp.status, data, None
+                data, decode_err = {}, f'HTTP {resp.status}: body not JSON'
+            return resp.status, data, decode_err
     except urlerr.HTTPError as e:
         try:    body = json.loads(e.read().decode('utf-8', errors='replace'))
         except (json.JSONDecodeError, ValueError, UnicodeDecodeError): body = {}

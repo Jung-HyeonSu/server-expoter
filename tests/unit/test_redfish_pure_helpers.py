@@ -247,3 +247,42 @@ def test_port_speed_zero_gbps_no_phantom_mbps(rfg):
     gbps, mbps = rfg._normalize_port_speed({"CurrentSpeedGbps": 0})
     assert gbps == 0
     assert mbps is None
+
+
+# ── _get / _get_noauth 성공-path decode guard (Round 17 #18 + R18 refinement) ──
+class _FakeResp:
+    def __init__(self, status, body):
+        self.status = status
+        self._body = body
+    def read(self):
+        return self._body
+    def __enter__(self):
+        return self
+    def __exit__(self, *a):
+        return False
+
+
+def test_get_empty_body_tolerant_but_nonjson_errs(rfg, monkeypatch):
+    """200+유효JSON→(200,data,None); 200+빈body→(200,{},None) tolerant;
+    200+비-JSON→(200,{},err) — detect 경로에서 malformed 를 명확히 실패로."""
+    box = {"status": 200, "body": b""}
+
+    def fake_urlopen(req, context=None, timeout=None):
+        return _FakeResp(box["status"], box["body"])
+    monkeypatch.setattr(rfg.urlreq, "urlopen", fake_urlopen)
+
+    box.update(status=200, body=b'{"a": 1}')
+    assert rfg._get("1.1.1.1", "x", "u", "p", 5, False) == (200, {"a": 1}, None)
+
+    box.update(status=200, body=b"")
+    st, data, err = rfg._get("1.1.1.1", "x", "u", "p", 5, False)
+    assert st == 200 and data == {} and err is None        # 빈 body tolerant (가드 전: status 0)
+
+    box.update(status=200, body=b"<html>oops</html>")
+    st, data, err = rfg._get("1.1.1.1", "x", "u", "p", 5, False)
+    assert st == 200 and data == {} and err is not None     # 비-JSON: status 보존 + err
+
+    # _get_noauth 동일 계약
+    box.update(status=200, body=b"")
+    st, data, err = rfg._get_noauth("1.1.1.1", "x", 5, False)
+    assert st == 200 and data == {} and err is None
