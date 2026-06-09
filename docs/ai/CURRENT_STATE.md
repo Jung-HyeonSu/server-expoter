@@ -1,5 +1,15 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 14 — 적대적 robustness 루프 수렴 [CONVERGED])
+
+- 9 finder + 3-lens. 22 deduped → 3 confirmed(75 agent). 추세 26→23→21→17→11→9→5→6→4→1→7→4→7→3.
+- **3건 전부 non-genuine**: #0 speed_gbps→int = **4번째 기각**(emulator golden 32.0 float가 정확+fractional Gbps 보존, int는 lossy+golden 파괴, breaksGolden 3/3) / #1 Product→model #2 MAC = 비-str(dict) 타입 일관 — Redfish spec 위반 입력(실 BMC 미발생). #1/#2는 cheap golden-safe라 hardening 적용.
+- **수렴 판정**: genuine BMC-trigger production 결함은 R1-3(SmartStorage 1000x/빈alias wildcard/multi_node int crash/FC-WWPN) + R10(multi_node status merge)에서 종료. R11-14는 sibling-file 완성/false-positive(regex_search ×2)/config robustness/이론적 type-on-non-str — 진짜 버그 0. 14 라운드 누적 ~106 수정.
+- **검증 (✅)**: ✅ `pytest tests/` = **973 passed, 6 skipped, 2 failed**(e2e_browser Jenkins-master 10.100.64.152 미도달 — 본 작업 무관, 세션 시작부터 동일). golden(hpe+dmtf) 52 byte 불변 전 라운드. vendor-boundary/harness gate OK.
+- **branch**: `main`. github 동기 (gitlab 10.100.64.156 미도달 — 네트워크 격리, 연결 환경서 push 필요).
+
+---
+
 ## 일자: 2026-06-09 (Round 13 — 잔여 변형 완성, false-positive 식별 [수렴])
 
 - 9 finder + 3-lens. 22 deduped → 7 confirmed(75 agent). 추세 ...4→7.
