@@ -17,6 +17,17 @@
 | MED | 본 cycle os/esxi YAML + Jenkinsfile·_portal 변경 1회 실 ansible/Jenkins **smoke 검증** (본 환경 ansible/Jenkins 부재로 미실측) | `[LAB][CI]` | 사용자+lab |
 | MED | windows gather_cpu/memory/network — WMI 빈 응답 시 degraded-data **warning 로깅**(섹션 collected 유지, Linux gather_memory 패턴 일관). additive, Windows lab 후 적용 | `[ANSIBLE][LAB]` | lab |
 
+## Round 16 (2026-06-09 멀티에이전트 버그헌트 — 5 pass 수렴) 후속
+
+> 상세: `tests/evidence/2026-06-09-round16-multiagent-bughunt.md`. 15 fix 적용·검증 완료
+> (confirmed 추이 10→1→2→2→0, pass5 CONVERGED). 아래는 lab/하네스 필요로 보류.
+
+| 우선 | 항목 | 분류 | 결정 주체 |
+|---|---|---|---|
+| MED | 본 cycle os/esxi/redfish YAML 변경 1회 실 ansible-playbook **smoke 검증** (본 환경 CLI 부재 → Jinja2 렌더로만 검증) | `[ANSIBLE][LAB]` | 사용자+lab |
+| LOW | vendor `tasks/vendors/*/collect_oem.yml`·`normalize_oem.yml` — 어떤 include 도 없는 **미wiring placeholder**. 내부 `when: _rf_raw_collect.systems`(모듈 미emit 키)라 wiring 시에도 dead. OEM 확장 시 모듈서 raw Oem 보존 + repoint 필요 | `[CONTRACT][LAB]` | 사용자 |
+| LOW | Ansible **Jinja 템플릿 회귀 하네스** 도입 — windows cpu/storage/network null-가드 fix 는 Jinja2 직접 렌더로 검증, 영속 회귀는 baseline 의존(null-field fixture 부재) | `[QA]` | qa |
+
 ## 0. 2026-05-29 audit-cleanup 후속 (전수 audit 결과 — 미적용 backlog)
 
 > 정본: `docs/ai/AUDIT-2026-05-29.md` (전체 권고 + 정확 file:line + diff).

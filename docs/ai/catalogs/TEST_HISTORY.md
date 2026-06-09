@@ -2,6 +2,27 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-09 (Round 16 — 멀티에이전트 적대적 버그헌트 루프, 수렴)
+
+5 pass 멀티에이전트 루프(finder → skeptic refute → 메인 재검증 + Jinja2 렌더/Python 실행). confirmed **15 fix**.
+추세 **10 → 1 → 2 → 2 → 0** (pass5 수렴 게이트 `CONVERGED: true`). pass2~5 diff reviewer 4연속 회귀 0건.
+
+- 신규 테스트 +7: `tests/integration/test_redfish_round16_robustness.py` (6 — gather_power PowerControl 비-list
+  dict/int 컨테이너 방어 3 / multi-node managers·partitions·chassis `_capped` 상한 3) +
+  `tests/unit/test_adapter_common_robustness.py` (+1 — 빈 match YAML null → lookup abort 방어).
+- production fix 15: redfish_gather.py(power 비-list 가드 / multi-node _capped) / precheck_bundle(socket try
+  이동 ×2 / http_get with-close) / adapter_common(null match ×3 함수) / os-gather windows(cpu null crash ×2 /
+  memory 'None' 누설 / network null-speed·link_status) / os-gather linux(users uid 수치정렬 / storage lsblk
+  null model) / esxi collect_runtime(gw loop-scope namespace) / redfish normalize_standard(null ProcessorType).
+- listening_ports 교차검토 충돌 해소: 정본 str[](gather_runtime+examples+실장비) → stale int[] 아티팩트
+  (field_dictionary/docs/baseline×2) 정정. **코드 무변경** (어떤 테스트도 타입 미assert 확인).
+- 재발 class 전수 sweep 종결: None-handling(default('')/is defined) grep 0 / membership('lit' in None) 0 /
+  loop-scope(`pre_commit_jinja_namespace_check.py` 77 YAML) flagged **0/77**.
+- 검증: pytest **1029 passed, 4 skipped** (`--ignore=tests/e2e_browser -m "not live"`; 기준선 1022 무회귀).
+  vendor_boundary / harness / output_schema_drift / py_compile / yaml.safe_load PASS.
+- ⚠️ os/esxi/redfish YAML 변경은 본 환경(ansible-playbook CLI 부재) Jinja2 직접 렌더로 검증 — 실 smoke 권장.
+- 상세: `tests/evidence/2026-06-09-round16-multiagent-bughunt.md`.
+
 ## 2026-06-09 (Round 15 — 멀티에이전트 적대적 버그헌트 루프, 수렴)
 
 6라운드 멀티에이전트 루프(finder → skeptic refute → 메인 재검증). confirmed 53 → **fix 33** / skip·defer 20.
