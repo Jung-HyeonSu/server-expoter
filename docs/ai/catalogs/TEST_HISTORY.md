@@ -2,6 +2,23 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-09 (Round 1 멀티에이전트 적대적 hunt — 24/26 confirmed 수정)
+
+9 finder + 3-lens 적대적 검증(132 agent) → 26 confirmed → 24 수정. TDD RED→GREEN→golden 불변.
+
+### 신규 테스트 (+27)
+- `tests/unit/test_adapter_common_robustness.py` (5): 비-str vendor/pattern/priority + distro/version 빈값.
+- `tests/unit/test_vendor_empty_alias_guard.py` (4): 빈 alias wildcard 매칭 방어.
+- `tests/integration/test_redfish_storage_robustness.py` (11): controller/volume/normalize/resolve/account 비-list/dict/str + SmartStorage MiB 단위 + 0-capacity 보존.
+- `tests/integration/test_redfish_misc_robustness.py` (7): _p 빈path / firmware 후행슬래시 / power int / FC WWPN MAC.
+
+### production 수정
+- redfish_gather.py (storage/vendor/power/firmware/_p), module_utils/adapter_common.py, lookup_plugins/adapter_loader.py, esxi-gather/tasks/normalize_system.yml(Jenkins-verify).
+
+### 회귀 결과
+- `pytest --ignore=e2e_browser` **931 passed, 4 skipped**(직전 906 + 27 신규 - 2 e2e_browser 무관). 무회귀.
+- golden(hpe ×5 + dmtf ×1) **52 byte 불변** — 매 fix 후 재확인.
+
 ## 2026-06-09 (redfish/gather 견고화 — fault-injection 하네스 + crash 가드)
 
 사용자 요청: 시뮬레이터/mock 을 **실제로 활용해** gather 로직 견고화(직전 사이클은 golden 고정만 함).

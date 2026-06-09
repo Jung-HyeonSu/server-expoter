@@ -30,6 +30,15 @@
 - **로컬 검증 완료(✅)**: 실 YAML 식을 추출해 Jinja2 로 렌더(`tests/unit/test_merge_fragment_render.py` 5건) — 정상 list+list concat 불변 + 오염 list↔dict graceful 확인.
 - **잔여(Jenkins)**: 전체 ansible set_fact 통합(실 `union` 필터 + `no_log` + 3-채널 gather 흐름)에서 회귀 0 확인. 분류 `[ANSIBLE]`. 정상 입력 결과 불변이라 위험 낮음(Additive).
 
+### 0.10 (2026-06-09 Round 1 멀티에이전트 hunt) 미적용/결정대기 항목
+
+> Round 1 = 9 finder + 3-lens 적대적 검증 → 26 confirmed. 24건 수정 완료(커밋 cc39beb~0f5e45e).
+> 아래 2건만 미적용:
+
+- **[CONTRACT 결정대기] #12 SimpleStorage empty-bay 필터링**: 표준 storage 경로(`_extract_storage_drives`)는 빈 베이(cap 0/null)를 필터링하는데, SimpleStorage(`_gather_simple_storage`)는 안 함 → cross-path 불일치. **그러나** dmtf golden 이 빈 베이(SATA Bay 3, 전 필드 null)를 **포함**하고 있어 필터링 적용 시 golden 변경 + envelope 계약 변경(빈 베이 노출 여부). **방향(필터 vs null 포함)은 설계/사용자 결정 필요** — DSP2043 mockup 은 의도적으로 빈 베이를 모델링. 결정 시 golden 재생성 필요.
+- **[WONTFIX] #14 PowerSubsystem watt float 보존**: EnvironmentMetrics PowerWatts.Reading 가 float(12.5W) 가능하나 `_safe_int` 가 truncate. **의도적 유지** — /Power 경로(golden)는 watt 를 int 로 emit 하므로 PowerSubsystem 도 int 로 통일해야 envelope 타입 일관(rule 13). 소수 watt 는 운영상 무의미. #21 에서 두 경로 모두 int 통일.
+- **[INFO] #7 Dell PATCH 3-slot 제한**: 의도된 동작(코드 주석 'up to 3'). 버그 아님 — account_service_provision 은 빈 슬롯 최대 3개만 시도. 향후 커버리지 테스트 추가 권장(코드 변경 불요).
+
 ---
 
 ## 0.5 HP CSUS 3200 사이트 사고 후속 — Bug C 잔여 [PENDING — 실 envelope 필요]

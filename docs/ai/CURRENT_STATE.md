@@ -1,5 +1,20 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 1 멀티에이전트 적대적 bug hunt — 24/26 confirmed 수정 [DONE])
+
+- **요청 (사용자)**: "더 딥하게 production 버그/개선점 찾아서 더이상 안 나올 때까지 멀티에이전트 교차검증 + 루프. 완벽한 프로젝트."
+- **방법**: Workflow 오케스트레이션 — 9 finder(영역 분담) fan-out → 41 deduped → **3-lens 적대적 검증**(reachability/real-bug/fix-safety, 과반 confirm) → 26 confirmed(15 refuted). 132 agent.
+- **수정 (24건, TDD: 변형입력 RED→가드 GREEN→golden 불변)**:
+  - adapter/vendor: 비-str vendor/pattern/priority 가드 + distro/version 빈값 일관성 + 빈 alias wildcard 매칭 방어(Product/Name/normalize)
+  - storage: 비-list/dict/str 가드(controller_info/volumes/normalize/resolve_first/account) + **iLO4 SmartStorage CapacityMiB→capacity_gb ~1000x 단위 오류** + 0-capacity known-zero 보존
+  - 기타: power watt int 통일 + FC WWPN MAC 오fallback 방지 + firmware 후행슬래시 id + `_p` 빈path ServiceRoot 오인 방지 + precheck Members[0] + esxi default boolean=true(Jenkins-verify)
+- **결정 (2건 미적용)**: #12 SimpleStorage empty-bay 필터(CONTRACT 결정대기 — golden 빈베이 포함, 방향 사용자결정) / #14 power float(WONTFIX — 타입 일관). NEXT_ACTIONS §0.10.
+- **검증 (✅)**: ✅ `pytest --ignore=e2e_browser` = **931 pass**(직전 906 + Round1 fix 회귀 27). golden(hpe+dmtf) **52 byte 불변** — 매 fix 후 재확인.
+- **다음**: Round 2 — 바뀐 코드 재검수(고친 게 새 문제 안 만들었는지) + 신규 탐색. confirmed 0건까지 반복.
+- **branch**: `main`.
+
+---
+
 ## 일자: 2026-06-09 (redfish/gather 견고화 — fault-injection 하네스 + crash 가드 [DONE])
 
 - **요청 (사용자)**: "시뮬레이터/mock 으로 견고하게 해달라 했는데 gather 로직·하네스는 개선 안 된 채 끝났다. 전수조사해서 개선하라."
