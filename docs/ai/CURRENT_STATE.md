@@ -1,5 +1,29 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-10 (Round 17~20 — 멀티에이전트 적대적 버그헌트 수렴 루프 [CONVERGED])
+
+- **4 Round 수렴 루프**(영역별 finder → 독립 skeptic refute → 메인 재검증 rule 95 R2 + Jinja2 렌더/Python 실행).
+  confirmed 추세 **23 → 4 → 2 → 0**. distinct confirmed 29 / **fix 22** / lab·LOW defer 7(근거 동반).
+- **fix 22 (전 채널)**: adapter_common(비-dict match crash[HIGH] / normalize_vendor 짧은-alias 오탐) +
+  redfish_gather.py(Ports-only speed_mbps Gbps 역산 + `_normalize_port_speed`/`_safe_num` 신설 / `_get` 200+빈·비-JSON
+  body / inf·nan·fractional-Gbps robustness) + esxi·windows 자격 probe(positive-evidence) + windows cpu PS5.1
+  collapse + windows firewall_state loop-scope + schema examples(collection_method·runtime shape) + linux/windows
+  runtime(rescue clobber·listening_ports str[]·swap LANG=C·firewall empty→none) + adapter 선택 facts(esxi 순서·win
+  ansible_kernel) + precheck `_precheck_timeout` wire + cisco_cimc 하이픈 model + Jenkinsfile_portal venv.
+- **회귀 자가검출 2건**: R18 이 R17 #3(speed) 의 inf/nan crash(R18-1)를, R19 가 R18-1(`_safe_int`) 의
+  fractional-Gbps truncation(R19-2/3)을 검출·수정. **Round 20 회귀 0 + 신규 0 — 수렴 확정**.
+  메인 독립 grep 교차검증: loop-scoping anti-pattern 유일 실사례는 수정된 firewall_state(normalize_standard `is_pri`는 정상).
+- **HPE 에뮬레이터 golden 10건 재생성**: speed_mbps null→25000/100000/10000 (diff 가 speed 필드에만 국한 — 옛 버그값).
+- **검증 (✅)**: ✅ `pytest tests/ --ignore=tests/e2e_browser` = **1074 passed, 5 skipped**(기준선 1029 무회귀 +45 회귀
+  테스트). validate_field_dictionary PASS(0 failed) / verify_vendor_boundary / verify_harness_consistency / py_compile /
+  편집 YAML parse 전부 PASS. e2e_browser 2건은 live-Jenkins(10.100.64.152) 미도달 — 코드 무관.
+- **⚠️ 환경 제약 / lab 보류 (정직 보고)**: 본 환경 ansible/Jenkins 부재 → os/esxi/precheck YAML·Jenkinsfile_portal
+  변경 실 smoke 미실측(Jinja2 렌더 + pytest 로만 검증). vendor OEM 추출 cluster(#13~17, 4종 `_OEM_EXTRACTORS` 미등록 +
+  lab 부재 → path-only fix 무의미) / R18-3 dual-collector success clobber / R18-4 link_status enum 은 lab/실측 필요로 보류.
+- **상세**: `tests/evidence/2026-06-10-round17-multiagent-bughunt.md` + `docs/ai/NEXT_ACTIONS.md` Round 17/18 후속.
+
+---
+
 ## 일자: 2026-06-09 (Round 15 — 멀티에이전트 적대적 버그헌트 루프 [CONVERGED])
 
 - **6라운드 멀티에이전트 루프**(영역별 finder → 독립 skeptic refute → 메인 재검증 rule 95 R2).
