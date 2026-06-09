@@ -15,8 +15,8 @@
           {%- set cap  = ds.capacity  | int -%}
           {%- set free = ds.freeSpace | default(ds.free_space | default(0)) | int -%}
         {%- else -%}
-          {%- set tr   = ds.total | default('0 GB') -%}
-          {%- set fr   = ds.free  | default('0 GB') -%}
+          {%- set tr   = ds.total | default('0 GB', boolean=true) | string -%}
+          {%- set fr   = ds.free  | default('0 GB', boolean=true) | string -%}
           {%- set tg   = (tr|regex_replace('[^0-9.]','')|float)*(1024 if 'TB' in tr else 1) -%}
           {%- set fg   = (fr|regex_replace('[^0-9.]','')|float)*(1024 if 'TB' in fr else 1) -%}
           {%- set cap  = (tg*1073741824)|int -%}
