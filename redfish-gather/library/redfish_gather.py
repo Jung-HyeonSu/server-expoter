@@ -768,6 +768,8 @@ def _resolve_all_member_uris(bmc_ip, coll_uri, username, password, timeout, veri
     if err or st != 200:
         return [], st, err or f'HTTP {st}'
     raw_members = _safe(coll, 'Members') or []
+    if not isinstance(raw_members, list):  # rule 95 R1 #2: 비-list Members 방어 (Round 2 #15)
+        raw_members = []
     out = []
     for m in raw_members:
         uri = _safe(m, '@odata.id')
@@ -1723,7 +1725,7 @@ def gather_memory(bmc_ip, system_uri, username, password, timeout, verify_ssl):
             continue
         cap = _safe(mdata, 'CapacityMiB') or 0
         cap_int = _safe_int(cap)
-        if cap_int:
+        if cap_int is not None:  # Round 2 #4: 0-capacity 도 합산(no-op이나 preserve-0 일관)
             total_mib += cap_int
         # cycle-016 Phase N: BaseModuleType / RankCount / ErrorCorrection / DataWidth 추가
         # Phase P: 3 채널 키 일관성 — capacity_mb (이전 capacity_mib) 로 통일
@@ -1819,7 +1821,7 @@ def _extract_storage_controller_info(sdata, bmc_ip, username, password, timeout,
                            detail={'status_code': cst}))
         return {'controller_fetch_status': cst}, errors
     ctrl_members = _safe(ctrl_coll, 'Members') or []
-    if not ctrl_members:
+    if not isinstance(ctrl_members, list) or not ctrl_members:  # rule 95 R1 #2: 비-list 방어 (Round 2 #13)
         return {}, errors
     c_uri = _safe(ctrl_members[0], '@odata.id')
     if not c_uri:
@@ -2154,7 +2156,7 @@ def gather_network(bmc_ip, system_uri, username, password, timeout, verify_ssl):
         # 2026-04-29 fix B13: link_status enum 정규화 — Dell linkup/linkdown / HPE NoLink / Cisco Connected/Disconnected → up/down/unknown
         nics.append({
             'id': _safe(ndata, 'Id'), 'name': _safe(ndata, 'Name') or _safe(ndata, 'Id') or '',
-            'mac': _safe(ndata, 'MACAddress'), 'speed_mbps': _safe(ndata, 'SpeedMbps'),
+            'mac': _safe(ndata, 'MACAddress'), 'speed_mbps': _safe_int(_safe(ndata, 'SpeedMbps')),  # Round 2 #18: mbps int 통일
             'mtu': _safe(ndata, 'MTUSize'),
             'link_status': _normalize_link_status(_safe(ndata, 'LinkStatus')),
             'health': _safe(ndata, 'Status', 'Health'),
@@ -2482,6 +2484,8 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
                     else:
                         speed_gbps = None
                     assoc = _safe(pdata, 'AssociatedNetworkAddresses', default=[]) or []
+                    if not isinstance(assoc, list):  # rule 95 R1 #2: 비-list 방어 (Round 2 #14)
+                        assoc = []
                     primary_addr = assoc[0] if assoc else None
                     raw_port_type = _safe(pdata, 'PortType') or ''
                     port_protocol = _safe(pdata, 'PortProtocol')
@@ -2754,7 +2758,7 @@ def gather_power(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
     # null 이던 값을 채운다.
     psus = []
     for psu in (_safe(pdata, 'PowerSupplies') or []):
-        psu_capacity = _safe(psu, 'PowerCapacityWatts')
+        psu_capacity = _safe_int(_safe(psu, 'PowerCapacityWatts'))  # Round 2: watt int 통일 (sum 안전 + 타입 일관)
         if psu_capacity is None:
             ranges = _safe(psu, 'InputRanges') or []
             if isinstance(ranges, list) and ranges and isinstance(ranges[0], dict):
@@ -2778,7 +2782,7 @@ def gather_power(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
     # 2026-04-29 cisco-critical-review: chassis level power_capacity_watts fallback —
     # Cisco 는 PowerControl[0].PowerCapacityWatts 를 null 응답. PSU power_capacity_w
     # 합산으로 fallback (PSU 770W × 2 = 1540W 형태).
-    pc_capacity = _safe(pc0, 'PowerCapacityWatts')
+    pc_capacity = _safe_int(_safe(pc0, 'PowerCapacityWatts'))  # Round 2: watt int 통일
     if pc_capacity is None:
         psu_caps = [p['power_capacity_w'] for p in psus if p['power_capacity_w'] is not None]
         if psu_caps:
@@ -2810,8 +2814,8 @@ def _is_404_only_error(errs):
     for e in errs:
         if not isinstance(e, dict):
             return False
-        detail = (e.get('detail') or '')
-        msg = (e.get('message') or '')
+        detail = str(e.get('detail') or '')  # Round 2 #8: 비-str detail/message → 'in' TypeError 방어
+        msg = str(e.get('message') or '')
         # 'HTTP 404' 패턴: detail에 'HTTP 404' 또는 message에 '404' 단독 정수
         if 'HTTP 404' in detail or 'HTTP 404' in msg:
             continue
@@ -3036,6 +3040,7 @@ def _normalize_cpu_raw(procs):
             g = groups[seen[m]]
             g['sockets'] += 1
             g['total_cores'] += tc
+            g['cores_per_socket'] = g['total_cores'] // g['sockets']  # Round 2 #1: 혼합 코어 same-model 평균 갱신
         else:
             seen[m] = len(groups)
             groups.append({'model': m, 'manufacturer': p.get('manufacturer'),

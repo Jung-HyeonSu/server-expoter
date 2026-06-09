@@ -70,7 +70,12 @@ class CallbackModule(CallbackBase):
                         '[json_only] _emit: JSON 파싱 실패, 문자열 그대로 출력 '
                         '(reason={}, head={!r})\n'.format(type(e).__name__, data[:120])
                     )
-        line = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
+        try:
+            line = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
+        except TypeError:
+            # 비-JSON-직렬화 객체(datetime / Ansible 객체 등)가 섞이면 callback 전체가 죽어
+            # OUTPUT 이 통째로 소실된다 → str fallback 으로 graceful (Round 2 #0/#9).
+            line = json.dumps(str(data), ensure_ascii=False, separators=(',', ':'))
         print(line, file=target, flush=True)
         # OUTPUT 결과를 파일로도 기록 (stdout target 일 때만, stderr 결과는 제외)
         if self._output_file and target is sys.stdout:
