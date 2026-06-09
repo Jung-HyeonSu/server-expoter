@@ -238,8 +238,13 @@ pipeline {
             agent { label "${params.loc}" }
             options { timeout(time: 2, unit: 'MINUTES') }
             steps {
-                sh '''set +x
+                // Round 17 #23: venv 활성화 추가 — 메인 Jenkinsfile Stage 3 와 동일하게 PyYAML 이
+                // 있는 /opt/ansible-env 를 활성화. 시스템 python3 에 PyYAML 부재 시 validator 가
+                // ModuleNotFoundError 로 죽어 hard-gate 가 매 빌드 실패하던 것 방지.
+                sh '''#!/bin/bash
+                    set +x
                     cd "${WORKSPACE}"
+                    . /opt/ansible-env/bin/activate
                     python3 tests/validate_field_dictionary.py
                 '''
             }

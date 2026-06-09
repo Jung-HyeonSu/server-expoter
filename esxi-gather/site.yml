@@ -77,16 +77,6 @@
           vars:
             _e_accounts: "{{ accounts | default([]) }}"
 
-        # ── adapter 선택 ─────────────────────────────────────────────────
-        - name: "esxi | select adapter"
-          ansible.builtin.set_fact:
-            _selected_adapter: >-
-              {{ lookup('adapter_loader',
-                         channel='esxi',
-                         facts={},
-                         repo_root=lookup('env','REPO_ROOT')) }}
-          no_log: true
-
         - name: "esxi | collect facts"
           ansible.builtin.include_tasks: tasks/collect_facts.yml
 
@@ -108,6 +98,19 @@
         - name: "esxi | resolve hostname from raw facts"
           ansible.builtin.set_fact:
             _e_hostname: "{{ _e_raw_facts.ansible_hostname | default(_e_ip) }}"
+          no_log: true
+
+        # ── adapter 선택 (collect facts 후 — 실제 ESXi 버전으로 version_patterns 매칭) ──
+        # Round 17 #9: 기존엔 collect_facts 전에 facts={} 로 선택 → version 빈 값이라
+        # version_patterns(^6./^7./^8.)가 죽고 priority 만으로 esxi_8x 가 항상 선택되어
+        # 6.x/7.x 호스트도 adapter_candidate=esxi_8x 로 오기재. 실제 버전을 넘겨 올바로 매칭.
+        - name: "esxi | select adapter"
+          ansible.builtin.set_fact:
+            _selected_adapter: >-
+              {{ lookup('adapter_loader',
+                         channel='esxi',
+                         facts={'version': _e_raw_facts.ansible_distribution_version | default('')},
+                         repo_root=lookup('env','REPO_ROOT')) }}
           no_log: true
 
         - name: "esxi | collect config"

@@ -82,11 +82,14 @@ match:
   # 본 adapter (M4 lab tested + M5~M8 web sources) 는 4.x / 5.x / 6.x cover.
   # M-H4 (cycle 2026-05-07) — S-series storage server 추가 (CIMC 와 유사 + Storage 강화):
   firmware_patterns: ["^[4-6]\\.", "CIMC.*[4-6]"]
+  # Round 17 #22: 실제 Redfish System.Model 은 하이픈형 "UCSC-C220-M5SX" (fixtures 확인).
+  # 기존 패턴은 공백 "C220 M5" 만 허용해 ServiceRoot.Product 외 System.Model 과 미스매치.
+  # [ -] 로 공백/하이픈 양형 수용 (source: tests/fixtures/redfish/cisco_cimc_v{2,3,4}/system.json).
   model_patterns:
-    - "UCSC-C[0-9]+ M[4-8]"
-    - "C220 M[4-8]"
-    - "C240 M[4-8]"
-    - "C480 M[4-8]"
+    - "UCSC-C[0-9]+[ -]M[4-8]"
+    - "C220[ -]M[4-8]"
+    - "C240[ -]M[4-8]"
+    - "C480[ -]M[4-8]"
     - "UCS-S3260.*"     # M-H4 cycle 2026-05-07 — S-series storage server M5+
     - "S3260.*"         # M-H4 cycle 2026-05-07 — S-series 단축형
     - "TA-UNODE.*"

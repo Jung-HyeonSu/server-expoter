@@ -146,7 +146,9 @@
           {%- set _ = ns.kv.update({k: v}) -%}
         {%- endif -%}
       {%- endfor -%}
-      {%- set _ = ns.kv.update({'PORTS': ns.ports | sort | unique | list}) -%}
+      {# Round 17 #7: listening_ports 계약은 str[] (field_dictionary + 전 baseline ["22","53"]).
+         int 로 모아 숫자정렬 후 map('string') 으로 str[] 변환 (정렬은 수치, 출력은 문자열). #}
+      {%- set _ = ns.kv.update({'PORTS': ns.ports | sort | unique | map('string') | list}) -%}
       {{ ns.kv }}
   no_log: true
 

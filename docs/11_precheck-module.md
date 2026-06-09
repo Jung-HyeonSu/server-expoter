@@ -140,7 +140,7 @@ server-exporter 는 본 수집에 들어가기 전에 4단계 사전 진단을 �
   vars:
     _precheck_host:    "{{ _rf_ip }}"
     _precheck_channel: "redfish"     # redfish / os / esxi
-    _precheck_timeout: 30
+    _precheck_timeout: 30            # protocol/auth 공통 (port 제외). 개별: _precheck_timeout_{port,protocol,auth}
 ```
 
 호출 후 두 변수가 채워진다.
@@ -176,7 +176,7 @@ precheck 는 ServiceRoot 한 개만 검증한다. 실제 수집 endpoint 별로 
 구형 IPMI 전용 BMC 거나, Redfish 는 지원하지만 `/redfish/v1/` 가 비표준 path 인 케이스. probe 로 raw 응답을 직접 받아서 확인.
 
 **Q. precheck 가 너무 느리다.**
-기본 timeout 이 30초. 명백히 죽은 호스트가 많은 환경이면 `_precheck_timeout` 을 5~10초로 줄여도 된다. 단, 응답 느린 BMC 에서 false negative 발생 위험.
+단계별 기본 timeout 은 port=3초 / protocol=15초 / auth=8초 (합 최대 ~26초). 죽은 호스트는 port(3초)에서 빠르게 걸러진다. protocol/auth 단계를 줄이려면 `_precheck_timeout` 을 5~10초로 낮추면 된다(port 는 영향 없음). 단, 응답 느린 BMC 에서 false negative 발생 위험. 단계별 개별 조정은 `_precheck_timeout_port` / `_precheck_timeout_protocol` / `_precheck_timeout_auth`.
 
 ---
 

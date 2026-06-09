@@ -426,10 +426,14 @@
         - name: "windows | select adapter"
           ansible.builtin.set_fact:
             _selected_adapter: >-
+              {# Round 17 #10: ansible_os_product_type 은 SKU(server/workstation) 라
+                 version_patterns(2019/2022, 10.0.NNNNN build)와 절대 안 맞아 generation
+                 adapter 가 죽고 windows_generic 만 선택됨. ansible_kernel(=빌드 10.0.20348.0)
+                 을 넘겨 windows_2019/2022 가 올바로 매칭되게 한다. #}
               {{ lookup('adapter_loader',
                          channel='os',
                          facts={'os_type': 'windows',
-                                'version': ansible_os_product_type | default('')},
+                                'version': ansible_kernel | default('')},
                          repo_root=lookup('env','REPO_ROOT')) }}
           no_log: true
 
