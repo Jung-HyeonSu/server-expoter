@@ -256,7 +256,9 @@ def _p(uri):
     """
     if not isinstance(uri, str):
         return '__invalid_odata_id__'
-    return _removeprefix(_removeprefix(uri.lstrip('/'), 'redfish/v1/'), 'redfish/v1').rstrip('/')
+    result = _removeprefix(_removeprefix(uri.lstrip('/'), 'redfish/v1/'), 'redfish/v1').rstrip('/')
+    # 빈 path('/redfish/v1' 같은 퇴화 입력)는 _get('')=ServiceRoot(200) 오인 → 무효 처리 (Round 1 #23)
+    return result if result else '__invalid_odata_id__'
 
 def _safe(d, *keys, default=None):
     for k in keys:
@@ -2325,7 +2327,11 @@ def _make_fc_hba(adapter_id, adapter_info, port_id, cls, link_status, speed_gbps
     wwpn = ndf.get('wwpn') if isinstance(ndf, dict) else None
     wwnn = ndf.get('wwnn') if isinstance(ndf, dict) else None
     if not wwpn:
-        wwpn = _normalize_wwn(primary_addr)
+        # Round 1 #22: primary_addr 가 MAC(6 octet)일 수 있음 — FC WWPN(8 octet/16 hex)으로
+        # 정규화되는 경우에만 fallback. MAC 을 WWPN 으로 오기재하지 않음.
+        cand = _normalize_wwn(primary_addr)
+        if cand and len(cand.replace(':', '')) == 16:
+            wwpn = cand
     return {
         'adapter_id':      adapter_id,
         'adapter_model':   adapter_info.get('model'),
@@ -2566,7 +2572,7 @@ def gather_firmware(bmc_ip, username, password, timeout, verify_ssl):
             st2, fw_data, ferr = _get(bmc_ip, _p(member_uri), username, password, timeout, verify_ssl)
             if not ferr and st2 == 200:
                 member = fw_data
-        fw_id = _safe(member, 'Id') or (member_uri.split('/')[-1]
+        fw_id = _safe(member, 'Id') or (member_uri.rstrip('/').split('/')[-1]  # rstrip: 후행 슬래시 → 빈 id 방지 (Round 1 #13)
                                         if isinstance(member_uri, str) and member_uri else None)
         # Q-14: Dell Previous- 항목 스킵 (비활성 이전 버전)
         if fw_id and isinstance(fw_id, str) and fw_id.startswith('Previous-'):
@@ -2778,12 +2784,14 @@ def gather_power(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
         if psu_caps:
             pc_capacity = sum(psu_caps)
     power_control = {
-        'power_consumed_watts':  _safe(pc0, 'PowerConsumedWatts'),
+        # Round 1 #21: watt 필드는 int 로 통일 (BMC 가 문자열 '1500' 반환 시 타입 불일치 방지).
+        # PowerSubsystem 경로와도 일관 (둘 다 int watts).
+        'power_consumed_watts':  _safe_int(_safe(pc0, 'PowerConsumedWatts')),
         'power_capacity_watts':  pc_capacity,
         'interval_in_min':       _safe(pm, 'IntervalInMin'),
-        'min_consumed_watts':    _safe(pm, 'MinConsumedWatts'),
-        'avg_consumed_watts':    _safe(pm, 'AverageConsumedWatts'),
-        'max_consumed_watts':    _safe(pm, 'MaxConsumedWatts'),
+        'min_consumed_watts':    _safe_int(_safe(pm, 'MinConsumedWatts')),
+        'avg_consumed_watts':    _safe_int(_safe(pm, 'AverageConsumedWatts')),
+        'max_consumed_watts':    _safe_int(_safe(pm, 'MaxConsumedWatts')),
     } if pc0 else None
 
     return {'power_supplies': psus, 'power_control': power_control}, errors
