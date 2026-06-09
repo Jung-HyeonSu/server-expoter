@@ -19,8 +19,10 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "module_utils"))
 
 from adapter_common import (  # noqa: E402
+    adapter_match_score,
     adapter_matches,
     adapter_score,
+    adapter_specificity,
     normalize_vendor,
     pattern_match_any,
 )
@@ -95,3 +97,20 @@ def test_pattern_match_any_scalar_pattern():
     """patterns 가 scalar str → 단일 패턴으로 처리(char 순회 아님)."""
     assert pattern_match_any("R7[0-9]0", "PowerEdge R760") is True  # 가드 전: 'R'/'7'/'[' char 순회
     assert pattern_match_any("Xyz", "PowerEdge R760") is False
+
+
+# Round 16 — 빈 'match:'(YAML null) → match=None 시 .get() AttributeError 로 lookup 전체 abort 방어
+def test_null_match_does_not_crash_scoring():
+    """adapter YAML 에 'match:' 만 쓰고 본문 누락 시 yaml.safe_load → {'match': None}.
+    adapter_specificity / adapter_match_score 가 None.get() AttributeError 로 죽으면
+    adapter_loader._match_and_score 가 매칭된 정상 adapter 까지 버리고 전체 gather 실패."""
+    broken = {"match": None, "priority": 50, "adapter_id": "broken"}
+    facts = {"vendor": "dell", "model": "PowerEdge R760"}
+    # 셋 다 crash 없이 — generic(match 없음) 과 동일 취급
+    assert adapter_matches(broken, facts) is True  # 가드 전: (specificity 경유 아님) — matches 는 본래 OK
+    assert adapter_specificity(broken) == 0       # 가드 전: AttributeError
+    assert adapter_match_score(broken, facts) == 0  # 가드 전: AttributeError
+    assert adapter_score(broken, facts) == 50 * 1000  # priority 만 반영
+    # 정상 adapter 점수 불변 (회귀 방어)
+    good = {"match": {"vendor": ["dell"], "model_patterns": ["PowerEdge R7.*"]}, "priority": 100}
+    assert adapter_score(good, facts) == 100 * 1000 + 30 * 10 + 45  # priority + spec(10+20) + match(20+25)

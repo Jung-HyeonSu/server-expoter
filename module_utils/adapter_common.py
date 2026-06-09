@@ -135,7 +135,7 @@ def adapter_matches(adapter, facts, aliases=None):
     Returns:
         bool: 모든 match 조건이 충족되면 True
     """
-    match = adapter.get("match", {})
+    match = adapter.get("match") or {}  # Round 16: 빈 'match:'(YAML null) → {} (NoneType .get AttributeError 방지 — adapter 1개 오타가 전체 lookup abort)
     if not match:
         return True  # match 조건 없으면 항상 매칭 (generic)
 
@@ -207,7 +207,7 @@ def adapter_specificity(adapter):
     Returns:
         int: specificity 점수
     """
-    match = adapter.get("match", {})
+    match = adapter.get("match") or {}  # Round 16: 빈 'match:'(YAML null) → {} (NoneType .get AttributeError 방지 — adapter 1개 오타가 전체 lookup abort)
     score = 0
 
     if match.get("vendor"):
@@ -237,7 +237,7 @@ def adapter_match_score(adapter, facts, aliases=None):
     Returns:
         int: match 점수 (매칭 실패 시 -9999)
     """
-    match = adapter.get("match", {})
+    match = adapter.get("match") or {}  # Round 16: 빈 'match:'(YAML null) → {} (NoneType .get AttributeError 방지 — adapter 1개 오타가 전체 lookup abort)
     score = 0
 
     # vendor 매칭 보너스
