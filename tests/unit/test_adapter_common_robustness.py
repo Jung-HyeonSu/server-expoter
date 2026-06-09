@@ -69,3 +69,10 @@ def test_adapter_matches_empty_version_passes_like_model():
     adapter = {"match": {"version_patterns": ["9\\..*"]}}
     assert adapter_matches(adapter, {"version": ""}) is True  # 가드 전: False
     assert adapter_matches(adapter, {"version": "8.10"}) is False
+
+
+# Round 9 #2 — whitespace-only vendor → None (empty-string substring 오탐 방지)
+def test_normalize_vendor_whitespace_only_returns_none():
+    assert normalize_vendor("   ") is None  # 가드 전: '' 가 모든 alias 에 substring 매칭
+    assert normalize_vendor("\t\n ") is None
+    assert normalize_vendor("Dell Inc.", {"dell inc.": "dell"}) == "dell"  # 정상 불변

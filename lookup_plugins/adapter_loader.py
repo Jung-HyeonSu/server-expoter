@@ -107,6 +107,8 @@ def _scan_adapters(adapter_dir):
         try:
             with open(path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
+            if not isinstance(data, dict):  # Round 9 #3: scalar/list adapter YAML → skip (item assignment crash 방지)
+                continue
             data["_source_file"] = path
             data["_filename"] = os.path.basename(path)
             adapters.append(data)

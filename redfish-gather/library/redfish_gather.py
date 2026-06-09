@@ -502,7 +502,7 @@ def _load_vendor_aliases_file():
                 data = yaml.safe_load(f) or {}
             mapping = {}
             for canonical, alias_list in data.get('vendor_aliases', {}).items():
-                for alias in (alias_list or []):
+                for alias in (alias_list if isinstance(alias_list, list) else []):  # Round 9 #0: str alias_list char 순회 방지
                     if isinstance(alias, str):  # Round 5 #10: None/비-str alias 가 로드 abort 시키지 않게
                         mapping[alias.strip().lower()] = canonical
             if mapping:
@@ -1607,10 +1607,10 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
                 # 미설정 슬롯이 빈 문자열 / "::" / "0.0.0.0" 같은 placeholder 로 채워지므로 필터.
                 _ns_placeholders = ('', '0.0.0.0', '::', '::0', '::1')
                 for ns in _as_list(_safe(ndata, 'NameServers')):  # Round 3 #15: 비-list 방어
-                    if ns and ns not in _ns_placeholders and ns not in bmc_name_servers:
+                    if isinstance(ns, str) and ns and ns not in _ns_placeholders and ns not in bmc_name_servers:  # Round 9 #1: 비-str element
                         bmc_name_servers.append(ns)
                 for ns in _as_list(_safe(ndata, 'StaticNameServers')):
-                    if ns and ns not in _ns_placeholders and ns not in bmc_static_name_servers:
+                    if isinstance(ns, str) and ns and ns not in _ns_placeholders and ns not in bmc_static_name_servers:  # Round 9 #1
                         bmc_static_name_servers.append(ns)
                 # MAC + FQDN — IP 가 있는 첫 NIC 에서 추출 (기존 동작 유지)
                 if nic_first_ip:

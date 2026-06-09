@@ -30,7 +30,7 @@ def load_vendor_aliases(aliases_path):
             data = yaml.safe_load(f) or {}
         aliases = data.get("vendor_aliases", {})
         for canonical, alias_list in aliases.items():
-            for alias in (alias_list or []):
+            for alias in (alias_list if isinstance(alias_list, list) else []):  # Round 9 #0: alias_list 가 str 이면 char 순회 방지
                 if isinstance(alias, str):  # Round 3 #16: None/비-str alias 가 전체 로드를 abort 시키지 않게
                     mapping[alias.strip().lower()] = canonical
     except (IOError, OSError, yaml.YAMLError, AttributeError, TypeError) as exc:
@@ -77,6 +77,8 @@ def normalize_vendor(raw_vendor, aliases=None):
         return None
 
     v = str(raw_vendor).strip().lower()  # rule 95 R1 #2: BMC Manufacturer 비-str(숫자) 방어
+    if not v:  # Round 9 #2: 공백-only vendor → '' 가 substring 매칭으로 오탐되는 것 방지
+        return None
     flat = _flatten_aliases(aliases)
 
     if flat:
