@@ -1504,7 +1504,7 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
     # (ServiceRoot.Product 가 BMC 명인 Dell/Lenovo 도 System.Model 있어 fallback 안 탐).
     if result['model'] is None and product_hint:
         _ph = _strip_or_none(product_hint)
-        if _ph is not None:
+        if _ph is not None and isinstance(_ph, str):  # Round 14 #1: 비-str Product → model 타입 일관
             result['model'] = _ph
     if isinstance(chassis_data, dict):
         if result['manufacturer'] is None:
@@ -1619,7 +1619,8 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
                     if not result['ip']:
                         result['ip'] = nic_first_ip
                     if not result['mac_address']:
-                        result['mac_address'] = _safe(ndata, 'MACAddress') or _safe(ndata, 'PermanentMACAddress')
+                        _mac = _safe(ndata, 'MACAddress') or _safe(ndata, 'PermanentMACAddress')
+                        result['mac_address'] = _mac if isinstance(_mac, str) else None  # Round 14 #2: 비-str MAC 방어
                     if not result['dns_name']:
                         result['dns_name'] = _safe(ndata, 'FQDN') or _safe(ndata, 'HostName')
 
