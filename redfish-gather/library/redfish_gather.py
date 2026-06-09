@@ -2854,8 +2854,8 @@ def _summarize_partition_disks(physical_disks):
     """
     groups, seen, total = [], {}, 0
     for d in (physical_disks or []):
-        cap_mb = d.get('total_mb') or 0
-        cap_gb = int(cap_mb // MIB_PER_GIB) if cap_mb else 0
+        cap_mb = _safe_int(d.get('total_mb'), 0)  # rule 95 R1 #7: 펌웨어가 str 반환 시 str//int crash 방어
+        cap_gb = cap_mb // MIB_PER_GIB if cap_mb else 0
         if cap_gb <= 0:
             continue
         mt, pr, md = d.get('media_type'), d.get('protocol'), d.get('model')
@@ -2973,8 +2973,8 @@ def _normalize_cpu_raw(procs):
     procs = procs if isinstance(procs, list) else []
     cpus = [p for p in procs if isinstance(p, dict)
             and (str(p.get('processor_type') or '').strip().upper() in ('CPU', 'CORE', ''))]
-    cores = sum(int(p.get('total_cores') or 0) for p in cpus)
-    threads = sum(int(p.get('total_threads') or 0) for p in cpus)
+    cores = sum(_safe_int(p.get('total_cores'), 0) for p in cpus)  # rule 95 R1 #7: 비-숫자 cores str 방어
+    threads = sum(_safe_int(p.get('total_threads'), 0) for p in cpus)
     models = [p.get('model') for p in cpus if p.get('model')]
     speeds = [p.get('speed_mhz') for p in cpus if p.get('speed_mhz')]
     archs = [p.get('architecture') for p in cpus if p.get('architecture')]
@@ -2982,7 +2982,7 @@ def _normalize_cpu_raw(procs):
     groups, seen = [], {}
     for p in cpus:
         m = p.get('model') or 'unknown'
-        tc = int(p.get('total_cores') or 0)
+        tc = _safe_int(p.get('total_cores'), 0)  # rule 95 R1 #7: grouping 도 동일 방어
         if m in seen:
             g = groups[seen[m]]
             g['sockets'] += 1
@@ -3016,8 +3016,7 @@ def _normalize_memory_raw(raw_mem):
     for s in slots:
         if not isinstance(s, dict):
             continue
-        cap_mb = s.get('capacity_mb') or s.get('capacity_mib') or 0
-        cap_mb = int(cap_mb) if cap_mb else 0
+        cap_mb = _safe_int(s.get('capacity_mb') or s.get('capacity_mib'), 0)  # rule 95 R1 #7: '8GB' 등 단위문자열 방어
         if cap_mb <= 0:
             continue
         cap_gb = cap_mb // MIB_PER_GIB
