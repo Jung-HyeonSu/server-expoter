@@ -63,7 +63,7 @@
           groups:
             - model:            "{{ _e_raw_facts.ansible_processor | default('unknown') }}"
               manufacturer: >-
-                {%- set p = _e_raw_facts.ansible_processor | default('') | lower -%}
+                {%- set p = _e_raw_facts.ansible_processor | default('', boolean=true) | lower -%}
                 {%- if 'intel' in p -%}Intel
                 {%- elif 'amd' in p -%}AMD
                 {%- elif p -%}{{ _e_raw_facts.ansible_processor.split()[0] | default('unknown') }}
@@ -73,7 +73,7 @@
                 {%- set raw_mhz = _e_raw_facts.ansible_processor_mhz | default(none) -%}
                 {%- if raw_mhz -%}{{ raw_mhz }}
                 {%- else -%}
-                  {%- set m = (_e_raw_facts.ansible_processor | default('')) | regex_search('@\s*([0-9.]+)\s*GHz', '\\1') -%}
+                  {%- set m = (_e_raw_facts.ansible_processor | default('', boolean=true)) | regex_search('@\s*([0-9.]+)\s*GHz', '\\1') -%}
                   {%- if m -%}{{ ((m | first | float) * 1000) | int }}{%- else -%}{{ none }}{%- endif -%}
                 {%- endif -%}
               architecture: >-
