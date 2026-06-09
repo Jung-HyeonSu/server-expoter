@@ -73,7 +73,7 @@ def _safe_int(x, default=None):
         return default
     try:
         return int(x)  # rule 95 R1 #7 ok: try/except 보호 안
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, OverflowError):  # Round 15: int(float('inf')) → OverflowError 방어
         return default
 
 try:
@@ -1289,6 +1289,20 @@ def _normalize_link_status(value):
     return s  # unknown vendor-specific value — preserve raw
 
 
+def _valid_iso_date(s):
+    """'YYYY-MM-DD' 문자열이 실제 유효한 달력 날짜인지 (월 1-12 / 일 1-31 / 윤년 반영).
+
+    Round 15: _normalize_bios_date 가 '2024-13-32' / '2024-00-00' 같은 invalid ISO 를
+    생성하지 않도록 최종 검증. 잘못된 날짜면 raw 원문 보존 (호출자 ISO 파싱 실패 방지).
+    """
+    import datetime as _dt
+    try:
+        _dt.date(int(s[0:4]), int(s[5:7]), int(s[8:10]))
+        return True
+    except (ValueError, TypeError, IndexError):
+        return False
+
+
 def _normalize_bios_date(value):
     """Normalize BIOS date to ISO 8601 (YYYY-MM-DD) where possible.
 
@@ -1306,7 +1320,8 @@ def _normalize_bios_date(value):
     # Already ISO date prefix (YYYY-MM-DD)
     import re as _re
     if _re.match(r'^\d{4}-\d{2}-\d{2}', s):
-        return s[:10]
+        cand = s[:10]
+        return cand if _valid_iso_date(cand) else s  # Round 15: invalid (예: 2024-13-32T..) → raw 보존
     # MM/DD/YYYY
     m = _re.match(r'^(\d{1,2})/(\d{1,2})/(\d{4})$', s)
     if m:
@@ -1317,11 +1332,13 @@ def _normalize_bios_date(value):
                 mm, dd = dd, mm
         except ValueError:
             pass
-        return f"{yyyy}-{int(mm):02d}-{int(dd):02d}"
+        iso = f"{yyyy}-{int(mm):02d}-{int(dd):02d}"
+        return iso if _valid_iso_date(iso) else s  # Round 15: 32/13 swap 후도 invalid → raw 보존
     # DD-MM-YYYY or YYYY-MM-DD plain (no T)
     m = _re.match(r'^(\d{4})-(\d{1,2})-(\d{1,2})$', s)
     if m:
-        return f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+        iso = f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+        return iso if _valid_iso_date(iso) else s  # Round 15: 월 0/13 / 일 0/32 invalid → raw 보존
     # Couldn't parse — return raw to preserve data
     return s
 
@@ -1705,6 +1722,7 @@ def gather_processors(bmc_ip, system_uri, username, password, timeout, verify_ss
         return [], errors
 
     processors = []
+    _absent = 0  # Round 15: Absent/Disabled CPU 카운트 (멤버 있으나 전부 Absent 구분용)
     for member in _dicts(_safe(coll, 'Members')):  # Round 4: 비-list/비-dict Members 방어
         uri = _safe(member, '@odata.id')
         if not uri: continue
@@ -1713,6 +1731,7 @@ def gather_processors(bmc_ip, system_uri, username, password, timeout, verify_ss
             errors.append(_err('processors', f'Processor {uri} 실패: {perr or st}'))
             continue
         if _safe(pdata, 'Status', 'State') in ('Absent', 'Disabled'):
+            _absent += 1
             continue
         # 2026-04-29 raw 검증 (HPE iLO 6): SerialNumber / PartNumber 가 빈 문자열 ""
         # 반환 (BMC 한계). "" 은 의미상 None — 호출자가 truthy 비교만으로 판정 가능하도록
@@ -1738,6 +1757,11 @@ def gather_processors(bmc_ip, system_uri, username, password, timeout, verify_ss
             'serial_number':     _ne_p('SerialNumber'),
             'part_number':       _ne_p('PartNumber'),
         })
+    # Round 15: 멤버는 있었으나 전부 Absent/Disabled → 펌웨어 오류/미장착 가능. collected=[] 가
+    # 컬렉션 GET 실패와 구분되도록 warning 명시 (gather_memory total_mib=0 구분 철학과 일관).
+    if not processors and _absent > 0:
+        errors.append(_err('processors',
+                           f'모든 CPU({_absent})가 Absent/Disabled (펌웨어 오류 또는 미장착 가능)'))
     return processors, errors
 
 
@@ -1796,7 +1820,9 @@ def gather_memory(bmc_ip, system_uri, username, password, timeout, verify_ssl):
             'error_correction': _safe(mdata, 'ErrorCorrection'),
             'health':          _safe(mdata, 'Status', 'Health'),
         })
-    return {'total_mib': total_mib or None, 'slots': slots}, errors
+    # Round 15 fix: 'or None' 제거 — 수집 성공 시 total_mib 는 항상 int(>=0).
+    # 0 (모든 DIMM Absent/0-cap) 을 None(수집실패, line 1758)과 구분 (preserve-0 일관, line 1772).
+    return {'total_mib': total_mib, 'slots': slots}, errors
 
 
 def _gather_simple_storage(bmc_ip, members, username, password, timeout, verify_ssl):
@@ -2736,8 +2762,9 @@ def _merge_power_dual(legacy_result, subsystem_result):    # nosec rule12-r1
     DSP0268 v1.13+ 이전/이후 펌웨어가 dual emit 하는 환경 (iDRAC9 5.x / iLO5-6 /
     XCC3 / Supermicro X12-X14) 에서 PowerSupplies 중복 제거.
 
-    Strategy: 두 결과의 power_supplies 를 합치되 같은 (model, serial) 또는 같은
-    (name, model) tuple 은 한 번만. PowerControl 은 legacy 우선 (PowerSubsystem
+    Strategy (Round 15 정정): serial 이 있으면 serial 로 dedup (같은 PSU 의 legacy/
+    subsystem 이중 emit 을 name 차이와 무관하게 1회로). serial 이 없으면 (name, model)
+    로 dedup. PowerControl 은 legacy 우선 (PowerSubsystem
     표준에는 system-level metric 없고 EnvironmentMetrics 로 분리됨 — legacy 가
     더 풍부).
 
@@ -2754,12 +2781,14 @@ def _merge_power_dual(legacy_result, subsystem_result):    # nosec rule12-r1
     for psu in legacy_psus + sub_psus:
         if not isinstance(psu, dict):
             continue
-        # dedup key: (model, serial) 우선, 둘 다 없으면 (name, model)
-        key = (
-            psu.get('model') or '',
-            psu.get('serial') or '',
-            psu.get('name') or '',
-        )
+        # dedup key (Round 15 정정): serial 이 PSU 고유 식별자 — serial 있으면 serial 로만
+        # dedup (legacy/subsystem 가 같은 PSU 를 다른 name 으로 emit 해도 1회로 합침). serial
+        # 없으면 (name, model) — serial 부재 시 name 다른 별개 PSU 를 잘못 합치지 않도록.
+        _ps_serial = psu.get('serial') or ''
+        if _ps_serial:
+            key = ('serial', _ps_serial)
+        else:
+            key = ('name_model', psu.get('name') or '', psu.get('model') or '')
         if key in seen:
             continue
         seen.add(key)
@@ -3963,6 +3992,13 @@ def account_service_provision(
             'Locked':   False,
             'RoleId':   target_role,
         }
+        # Round 15 fix: Cisco CIMC 는 RoleId 표준 enum ('Administrator') 거부 →
+        # vendor enum ('admin'/'user'/'readonly') remap (POST/DELETE+POST 경로와 일관).
+        # 미적용 시 PATCH 기존 사용자 HTTP 400 + fallback 미도달. source: 사이트 실측 10.100.15.2.
+        if vendor == 'cisco':                                                  # nosec rule12-r1
+            cisco_role_map = {'Administrator': 'admin', 'Operator': 'user',
+                              'ReadOnly': 'readonly'}
+            body_full['RoleId'] = cisco_role_map.get(target_role, 'admin')
         code, _, err = _patch(
             bmc_ip, _p(existing['slot_uri']), body_full,
             current_username, current_password, timeout, verify_ssl,

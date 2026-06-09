@@ -177,7 +177,7 @@ pipeline {
                                     extras      : "--vault-password-file=\"${vaultPassFile}\"",
                                 )
                             } finally {
-                                sh "rm -f ${vaultPassFile} || true"
+                                sh "rm -f \"${vaultPassFile}\" || true"
                             }
                         }
                     }

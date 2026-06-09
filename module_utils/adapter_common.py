@@ -280,6 +280,38 @@ def adapter_match_score(adapter, facts, aliases=None):
         else:
             return -9999  # firmware known but doesn't match - disqualify
 
+    # version 매칭 보너스 (Round 15: adapter_specificity(+15)와 대칭 — 이전엔 match_score 누락으로
+    # version_patterns 기반 adapter 가 model/firmware 기반보다 동률 tie-break 에서 불리했음)
+    version_patterns = match.get("version_patterns", [])
+    if version_patterns:
+        if pattern_match_any(version_patterns, facts.get("version", "")):
+            score += 15
+        elif not facts.get("version", ""):
+            pass  # version 정보 없음 → 보너스만 제외 (adapter_matches 가 disqualify 판정)
+        else:
+            return -9999  # version known but doesn't match - disqualify
+
+    # distribution 매칭 보너스 (Round 15: adapter_specificity(+15)와 대칭)
+    distribution_patterns = match.get("distribution_patterns", [])
+    if distribution_patterns:
+        if pattern_match_any(distribution_patterns, facts.get("distribution", "")):
+            score += 15
+        elif not facts.get("distribution", ""):
+            pass
+        else:
+            return -9999  # distribution known but doesn't match - disqualify
+
+    # os_type 매칭 보너스 (Round 15: adapter_specificity(+5)와 대칭 — exact match)
+    os_type = match.get("os_type")
+    if os_type:
+        detected = facts.get("detected_os") or facts.get("os_type") or ""
+        if detected and str(detected).lower() == str(os_type).lower():
+            score += 5
+        elif not detected:
+            pass
+        else:
+            return -9999  # os_type known but doesn't match - disqualify
+
     return score
 
 

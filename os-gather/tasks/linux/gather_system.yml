@@ -197,7 +197,7 @@
         {%- endif -%}
     _l_hosting_type: >-
       {%- set sdv = (_l_raw_sys.SDV | default('')) | trim | lower -%}
-      {%- set vm_signals = ['vmware','kvm','qemu','xen','hyperv','microsoft','oracle','virtualbox','docker','lxc','podman','bhyve','uml','parallels','openvz'] -%}
+      {%- set vm_signals = ['vmware','kvm','qemu','xen','hyperv','microsoft','oracle','virtualbox','docker','lxc','podman','bhyve','uml','parallels','openvz','bochs'] -%}  {# Round 15: 'bochs' 추가 — python path(L284)와 parity #}
       {%- if sdv in vm_signals -%}virtual
       {%- elif sdv == 'none' -%}baremetal
       {%- else -%}unknown
@@ -397,7 +397,7 @@
         architecture:   "{{ ansible_architecture   | default(_l_fb.ARCH | default(none)) }}"
         hosting_type:   "{{ _l_hosting_type | default('unknown') | trim }}"
         uptime_seconds: "{{ (ansible_uptime_seconds | default(_l_fb.UPTIME | default(0))) | int }}"
-        selinux:        "{{ ansible_selinux.status | default(_l_fb.SELINUX | default(none)) }}"
+        selinux:        "{{ (ansible_selinux | default({})).status | default(_l_fb.SELINUX | default(none)) }}"
         fqdn:           "{{ ansible_fqdn | default(_l_fb.FQDN | default(inventory_hostname)) }}"
         serial_number:  "{{ _l_serial_val | default(none) }}"
         system_uuid:    "{{ _l_uuid_val | default(none) }}"

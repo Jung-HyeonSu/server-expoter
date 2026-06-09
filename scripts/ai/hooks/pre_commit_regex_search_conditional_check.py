@@ -73,7 +73,9 @@ POST_GUARD_TOKENS: tuple[str, ...] = (
     "|bool",
     "| default(",
     "|default(",
-    " in ",       # `'x' in (regex_search(...) or '')` — 변형 패턴
+    # Round 15: ' in ' 토큰 제거 — regex_search 뒤 무관한 ' in ' (예: 'status in critical_list')
+    # 에 substring 매칭되어 실제 미가드 violation 을 놓치는 false-negative 발생. 또한 Ansible
+    # strict mode 에서 'in' 연산자는 None 을 가드하지 못함. 현 코드 중 이 토큰 의존 0건 (grep 확인).
 )
 
 # YAML 스캔 대상 디렉터리 (다른 영역 false positive 차단)

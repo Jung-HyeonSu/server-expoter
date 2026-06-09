@@ -43,7 +43,7 @@ JEDEC_MAP = {
 }
 
 # Pattern matchers
-HEX_PATTERN = re.compile(r"^[0-9A-Fa-f]{4,}$")
+HEX_PATTERN = re.compile(r"^[0-9A-Fa-f]{2,}$")  # Round 15: {4,}→{2,} — bare 2-char ID('AD'/'CE') 정규화 (L118-120 fallback 도달)
 PREFIX_HEX_PATTERN = re.compile(r"^0x([0-9A-Fa-f]{2,})$", re.IGNORECASE)
 
 

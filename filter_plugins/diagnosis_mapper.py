@@ -52,7 +52,8 @@ def build_diagnosis(precheck_result, channel, adapter_id=None):
 
     # probe_facts 병합
     probe_facts = precheck_result.get("probe_facts", {})
-    if probe_facts:
+    # Round 15: 비-dict probe_facts (손상된 캐시/외부 JSON) → details.update() ValueError 방어
+    if isinstance(probe_facts, dict) and probe_facts:
         details.update(probe_facts)
 
     return {

@@ -215,7 +215,9 @@ def ssh_banner_check(host, port, timeout):
             banner = sock.recv(256).decode("utf-8", errors="replace").strip()
             if banner.startswith("SSH-"):
                 return True, None, {"ssh_banner": banner}
-            return False, "SSH 배너가 아닙니다: {0}".format(banner[:50]), None
+            # Round 15: 빈/비-SSH 배너 → 즉시 return 대신 다음 주소군(dual-stack) 시도.
+            # 기존엔 IPv6 가 먼저 해석되어 빈 배너 반환 시 IPv4 SSH 를 시도조차 못 함 (tcp_check 패턴 일관).
+            last_err = "SSH 배너가 아닙니다: {0}".format(banner[:50])
         except Exception as e:
             last_err = str(e)
         finally:

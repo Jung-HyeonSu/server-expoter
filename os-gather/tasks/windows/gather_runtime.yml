@@ -182,7 +182,7 @@
                 {%- for fw in _w_rt_fw_list -%}
                   {%- if fw.enabled | default(false) -%}{%- set any_enabled = true -%}{%- endif -%}
                 {%- endfor -%}
-                {{ 'enabled' if any_enabled else 'disabled' }}
+                {{ 'active' if any_enabled else 'inactive' }}
               listening_ports: >-
                 {%- set out = [] -%}
                 {%- for p in (_w_rt_ports_list | default([])) -%}

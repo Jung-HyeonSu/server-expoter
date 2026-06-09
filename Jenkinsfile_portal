@@ -210,7 +210,7 @@ pipeline {
                                     extras      : "--vault-password-file=\"${vaultPassFile}\"",
                                 )
                             } finally {
-                                sh "rm -f ${vaultPassFile} || true"
+                                sh "rm -f \"${vaultPassFile}\" || true"
                             }
                         }
                     }
@@ -292,8 +292,8 @@ pipeline {
                     def gatherArray = rawJsonLines.join(',')
 
                     def callbackBody = '{'  +
-                        '"loc":"'                        + params.loc.replaceAll('"', '\\\\"')                        + '",' +
-                        '"deploymentEnvironmentId":"'   + params.deploymentEnvironmentId.replaceAll('"', '\\\\"')   + '",' +
+                        '"loc":"'                        + params.loc.replaceAll('\\\\', '\\\\\\\\').replaceAll('"', '\\\\"').replaceAll('\n', '\\\\n').replaceAll('\r', '\\\\r').replaceAll('\t', '\\\\t')                        + '",' +
+                        '"deploymentEnvironmentId":"'   + params.deploymentEnvironmentId.replaceAll('\\\\', '\\\\\\\\').replaceAll('"', '\\\\"').replaceAll('\n', '\\\\n').replaceAll('\r', '\\\\r').replaceAll('\t', '\\\\t')   + '",' +
                         '"gatherInfoJson":['             + gatherArray                                               + ']'  +
                     '}'
 

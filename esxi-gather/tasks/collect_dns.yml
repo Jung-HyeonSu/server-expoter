@@ -22,7 +22,9 @@
     username:       "{{ ansible_user }}"
     password:       "{{ ansible_password }}"
     validate_certs: false
-    esxi_hostname:  "{{ _e_ip }}"
+    # Round 15: collect_runtime.yml + site.yml BUG#1 패턴 일관 — 응답 dict 가 ESXi 구성
+    # hostname 으로 keyed 되므로 esxi_hostname 도 _e_hostname 사용 (미정의 시 _e_ip fallback).
+    esxi_hostname:  "{{ _e_hostname | default(_e_ip) }}"
   register:    _e_dns_result
   delegate_to: localhost
   failed_when: false

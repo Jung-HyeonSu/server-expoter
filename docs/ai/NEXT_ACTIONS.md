@@ -7,6 +7,16 @@
 
 ---
 
+## Round 15 (2026-06-09 멀티에이전트 버그헌트) 후속
+
+> 상세: `tests/evidence/2026-06-09-round15-multiagent-bughunt.md`. 본 cycle 33 fix 적용·검증 완료.
+> 아래는 **lab/실행 환경 필요로 보류**한 항목.
+
+| 우선 | 항목 | 분류 | 결정 주체 |
+|---|---|---|---|
+| MED | 본 cycle os/esxi YAML + Jenkinsfile·_portal 변경 1회 실 ansible/Jenkins **smoke 검증** (본 환경 ansible/Jenkins 부재로 미실측) | `[LAB][CI]` | 사용자+lab |
+| MED | windows gather_cpu/memory/network — WMI 빈 응답 시 degraded-data **warning 로깅**(섹션 collected 유지, Linux gather_memory 패턴 일관). additive, Windows lab 후 적용 | `[ANSIBLE][LAB]` | lab |
+
 ## 0. 2026-05-29 audit-cleanup 후속 (전수 audit 결과 — 미적용 backlog)
 
 > 정본: `docs/ai/AUDIT-2026-05-29.md` (전체 권고 + 정확 file:line + diff).

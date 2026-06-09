@@ -19,7 +19,12 @@
 
 - name: "windows | network | parse meta"
   ansible.builtin.set_fact:
-    _w_norm_net_meta: "{{ _w_net_meta_raw.stdout | default('{}') | from_json }}"
+    _w_norm_net_meta: >-
+      {%- if _w_net_meta_raw.stdout is defined and _w_net_meta_raw.stdout | trim | length > 0 -%}
+      {{ _w_net_meta_raw.stdout | from_json }}
+      {%- else -%}
+      {}
+      {%- endif -%}
   no_log: true
 
 - name: "windows | network | interfaces"
@@ -67,7 +72,8 @@
           {%- set p = n.prefix | default(0) | int -%}
           {%- set mask = none -%}
           {%- if p > 0 and p <= 32 -%}
-            {%- set bits = 4294967296 - (1 if p == 0 else 2 ** (32 - p)) -%}
+            {# Round 15: p>0 가드(위 if)로 (1 if p==0 ...) 는 dead branch — 제거 (동작 동일) #}
+            {%- set bits = 4294967296 - (2 ** (32 - p)) -%}
             {%- set mask = '%d.%d.%d.%d' % ((bits // 16777216) % 256, (bits // 65536) % 256, (bits // 256) % 256, bits % 256) -%}
           {%- endif -%}
           {%- set addr = {

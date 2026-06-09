@@ -31,7 +31,7 @@
       'hostname':          ((_merged_data.system | default({})).hostname | default(none))
                            or ((_merged_data.system | default({})).fqdn | default(none))
                            or _out_ip,
-      'vendor':            _out_vendor,
+      'vendor':            (_out_vendor | default(none, true)),
       'status':            _out_status,
       'sections':          _norm_sections,
       'diagnosis':         _diagnosis         | default(none),

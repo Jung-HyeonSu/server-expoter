@@ -21,7 +21,8 @@
       ansible.builtin.set_fact:
         _l_norm_physical_disks: >-
           {%- set out = [] -%}
-          {%- set lsblk = (_l_lsblk_raw.stdout | default('{}') | from_json) -%}
+          {# Round 15: 빈 stdout('')은 default('{}')를 통과(undefined만 catch) → from_json('') crash. raw path(L169)와 동일 length 가드 #}
+          {%- set lsblk = (_l_lsblk_raw.stdout | from_json) if (_l_lsblk_raw.stdout | default('') | trim | length > 0) else {} -%}
           {%- if lsblk.blockdevices is defined -%}
             {%- for dev in lsblk.blockdevices -%}
               {%- if dev.type in ['disk'] and dev.size | int > 0 -%}
@@ -37,7 +38,7 @@
                   'device':     _dev_path,
                   'model':      dev.model | default(none) | trim if dev.model is defined else none,
                   'total_mb':   (dev.size | int / 1048576) | round(0,'floor') | int,
-                  'media_type': 'HDD' if (dev.rota | string) in ['1','true','True'] else 'SSD',
+                  'media_type': 'HDD' if (dev.rota | default('1') | string) in ['1','true','True'] else 'SSD',
                   'protocol':   _proto,
                   'health':     none
                 }) -%}

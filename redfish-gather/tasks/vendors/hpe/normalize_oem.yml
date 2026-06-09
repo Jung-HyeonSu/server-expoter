@@ -37,12 +37,14 @@
     _errors_fragment: []
   when:
     # 2026-05-11 fix: regex_search 미매치 시 None → strict conditional fail. collect_oem.yml 와 동일 정정.
-    - "((_rf_detected_model | default('')) | regex_search('(?i)Superdome|Flex|Compute Scale-up|CSUS')) is not none"
+    # Round 15 fix: _rf_detected_model(미정의 변수) → _rf_probe_facts.model (detect_vendor.yml set).
+    - "(((_rf_probe_facts | default({})).model | default('')) | regex_search('(?i)Superdome|Flex|Compute Scale-up|CSUS')) is not none"
     - (_hpe_superdome_partition | default({})) or (_hpe_superdome_flex_node | default({})) or (_hpe_superdome_global | default({}))
 
 - name: "redfish | hpe | Superdome/CSUS fragment 누적 병합 (조건 매칭 시만)"
   ansible.builtin.include_tasks: "{{ playbook_dir }}/common/tasks/normalize/merge_fragment.yml"
   when:
     # 2026-05-11 fix: regex_search 미매치 시 None → strict conditional fail. collect_oem.yml 와 동일 정정.
-    - "((_rf_detected_model | default('')) | regex_search('(?i)Superdome|Flex|Compute Scale-up|CSUS')) is not none"
+    # Round 15 fix: _rf_detected_model(미정의 변수) → _rf_probe_facts.model (detect_vendor.yml set).
+    - "(((_rf_probe_facts | default({})).model | default('')) | regex_search('(?i)Superdome|Flex|Compute Scale-up|CSUS')) is not none"
     - (_hpe_superdome_partition | default({})) or (_hpe_superdome_flex_node | default({})) or (_hpe_superdome_global | default({}))

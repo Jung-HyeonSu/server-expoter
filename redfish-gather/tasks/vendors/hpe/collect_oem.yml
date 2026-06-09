@@ -85,12 +85,14 @@
         _hpe_superdome_global: {}
   when:
     # Superdome / CSUS 3200 모델 시그니처 매칭 (lab 부재 — model_patterns 기반)
-    # _rf_detected_model 이 없거나 매칭 안 되면 block 자체 skip (Additive)
+    # Round 15 fix: _rf_detected_model 은 어디서도 set 안 되는 변수 (항상 '' → 본 block 영구 skip
+    #   → CSUS 3200 OEM 수집이 한 번도 실행 안 되던 잠복 버그). detect_vendor.yml 가 set 하는
+    #   _rf_probe_facts.model (실제 model 문자열) 로 교체. 일반 iLO 는 model 불일치 → 종전대로 skip.
     # M-CSUS3200 cycle 2026-05-11: "Compute Scale-up|CSUS" 추가 — fragment shape 동일 유지
     # 2026-05-11 fix: regex_search 가 미매치 시 None 반환 — Ansible strict mode 에서 NoneType conditional fail.
     # 일반 iLO 모델 (예: DL380 Gen11) 에서 본 conditional 평가 시 task 전체 fail 사고 (build #133/135/136/137).
     # `is not none` 명시 boolean 변환으로 차단.
-    - "((_rf_detected_model | default('')) | regex_search('(?i)Superdome|Flex|Compute Scale-up|CSUS')) is not none"
+    - "(((_rf_probe_facts | default({})).model | default('')) | regex_search('(?i)Superdome|Flex|Compute Scale-up|CSUS')) is not none"
 
 - name: "redfish | hpe | Superdome/CSUS 변수 기본값 보정 (when 미진입 / rescue 미진입)"
   ansible.builtin.set_fact:

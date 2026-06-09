@@ -158,7 +158,8 @@ def main() -> int:
 
     drifted = []
     for d, h in current.items():
-        if baseline.get(d) and baseline[d] != h:
+        # Round 15: baseline[d] 가 빈 문자열이어도 drift 감지 (baseline.get(d) falsy 단락 방지)
+        if d in baseline and baseline[d] != h:
             drifted.append((d, baseline[d], h))
         elif d not in baseline:
             drifted.append((d, "(미등록)", h))

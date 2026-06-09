@@ -82,9 +82,14 @@ class CallbackModule(CallbackBase):
             try:
                 with open(self._output_file, 'a', encoding='utf-8') as fh:
                     fh.write(line + '\n')
-            except (OSError, IOError):
-                # 파일 쓰기 실패는 silent — stdout 은 정상이므로 callback 흐름에 영향 없음
-                pass
+            except (OSError, IOError) as e:
+                # 파일 쓰기 실패: stdout 은 정상이라 callback 흐름은 유지하되, 파일 소비자(다운스트림)
+                # 가 빈 결과를 받는 silent data-loss 를 stderr 로 가시화 (Round 15 observability).
+                # stderr 는 stdout JSON 과 분리되어 호출자 파싱에 영향 없음.
+                sys.stderr.write(
+                    '[json_only] WARNING: OUTPUT 파일 쓰기 실패 ({}): {}\n'.format(
+                        self._output_file, type(e).__name__)
+                )
 
     def _emit_error(self, error_type, message, host=None, task=None):
         payload = {

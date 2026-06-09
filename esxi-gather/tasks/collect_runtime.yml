@@ -161,8 +161,10 @@
           swap_total_mb:    null
           swap_used_mb:     null
           swap_free_mb:     null
-      network:
-        default_gateways: "{{ _e_default_gateways_list | default([]) }}"
+      # Round 15: 빈 list 가 normalize_network.yml 의 유효 gateway 를 merge 에서 덮어쓰지
+      # 않도록 — vsphere config 에서 gateway 미발견([]) 시 default_gateways 키 자체를
+      # fragment 에서 제외 (merge_fragment 가 base 의 유효 gateway 보존).
+      network: "{{ {'default_gateways': _e_default_gateways_list} if (_e_default_gateways_list | default([]) | length > 0) else {} }}"
     _sections_supported_fragment: ['system', 'network']
     _sections_collected_fragment: ['system', 'network']
     _sections_failed_fragment: []

@@ -1,5 +1,29 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 15 — 멀티에이전트 적대적 버그헌트 루프 [CONVERGED])
+
+- **6라운드 멀티에이전트 루프**(영역별 finder → 독립 skeptic refute → 메인 재검증 rule 95 R2).
+  candidates 122 / confirmed 53 / **fix 33** / skip·defer 20(근거 동반). confirmed 추세 22→13→7→7→3→1(오탐).
+- **fix 33 (전 채널)**: redfish_gather.py(Cisco PATCH RoleId remap [critical] / memory preserve-0 / bios-date
+  invalid ISO 차단 / merge_power serial dedup / processors all-absent warning / _safe_int OverflowError) +
+  adapter_common(version·distribution·os_type match_score 보너스) + precheck(ssh dual-stack continue) +
+  diagnosis_mapper(비-dict 가드) + jedec(2-char hex) + build_output(vendor empty→null) + linux gather
+  (selinux/dns/ipv4 dict 가드 / from_json·rota 가드 / vm_signals bochs) + windows gather(cpu cores_per_socket /
+  cpu·net from_json 가드 / netmask dead-ternary / firewall active·inactive) + esxi(dns hostname / gateway
+  empty-overwrite) + scripts(drift falsy / regex hook " in " false-negative) + Jenkinsfile·_portal(rm quote /
+  callback JSON escape).
+- **재발 class 전수 grep 종결**: `default('{}'|'[]')|from_json` 0건 / os-gather 미가드 dict-fact `.attr` 0건.
+- **회귀 0 — 6연속 라운드 regression reviewer confirmed 0**. skip-audit(R3) 1건 reject(내 skip 옳음 확인).
+  Round 6 유일 confirmed 는 오탐(Round 1 이미 reject 한 `sh '${WORKSPACE}'` bash-expand 재-litigate).
+- **검증 (✅)**: ✅ `pytest tests/ --ignore=tests/e2e_browser` = **1022 passed, 5 skipped**(기준선 1005 무회귀 +
+  신규 `test_round15_fixes.py` 17). verify_vendor_boundary / verify_harness_consistency / regex hook self-test
+  10/10 / 변경 YAML yaml.safe_load / 변경 Python py_compile 전부 PASS.
+- **⚠️ 환경 제약**: 본 환경 ansible/Jenkins 부재 → os/esxi YAML·Jenkinsfile* 변경은 **미실측**(정적 검증만,
+  proven-pattern 복제 or clean-input no-op 만 적용). 실 ansible/Jenkins 1회 smoke 권장(NEXT_ACTIONS).
+- **상세**: `tests/evidence/2026-06-09-round15-multiagent-bughunt.md`(33 fix + 20 skip 근거 + 수렴 판정).
+
+---
+
 ## 일자: 2026-06-09 (HPE CSUS 3200 Redfish 모델 검수 + 누락 5종 구현 [DONE])
 
 - **검수**: 사용자 제시 CSUS 3200 Redfish 모델 vs 구현 — 적대적 12-agent (6 컴포넌트 × verify+refute, refuted 0). Systems(nPartition)/Chassis/Managers 3축은 구현, **5종 누락 확정**: per-partition boot / chassis thermal / manager log_services / CompositionService+ResourceBlocks / Fabrics+FlexGrid(NUMAlink).

@@ -54,7 +54,12 @@
 
 - name: "windows | cpu | parse"
   ansible.builtin.set_fact:
-    _w_cpu_data: "{{ _w_cpu_raw.stdout | default('{}') | from_json }}"
+    _w_cpu_data: >-
+      {%- if _w_cpu_raw.stdout is defined and _w_cpu_raw.stdout | trim | length > 0 -%}
+      {{ _w_cpu_raw.stdout | from_json }}
+      {%- else -%}
+      {}
+      {%- endif -%}
   no_log: true
 
 # cycle-016 Phase O 후속: Linux 와 일관 — manufacturer 정규화 (GenuineIntel → Intel)
@@ -72,7 +77,10 @@
         {%- endif -%}
         {%- if m in ns.seen -%}
           {%- set idx = ns.seen[m] -%}
-          {%- set _ = ns.groups[idx].update({'sockets': ns.groups[idx].sockets + 1, 'total_cores': ns.groups[idx].total_cores + (p.cores | default(0) | int)}) -%}
+          {# Round 15: 같은 model 중복 시 cores_per_socket 도 재계산 (Redfish _normalize_cpu_raw L3307 일관 — 혼합 코어 same-model 평균) #}
+          {%- set _nt = ns.groups[idx].total_cores + (p.cores | default(0) | int) -%}
+          {%- set _nsk = ns.groups[idx].sockets + 1 -%}
+          {%- set _ = ns.groups[idx].update({'sockets': _nsk, 'total_cores': _nt, 'cores_per_socket': (_nt // _nsk)}) -%}
         {%- else -%}
           {%- set _ = ns.seen.update({m: ns.groups | length}) -%}
           {%- set _ = ns.groups.append({

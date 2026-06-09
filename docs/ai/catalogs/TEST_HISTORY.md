@@ -2,6 +2,21 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-09 (Round 15 — 멀티에이전트 적대적 버그헌트 루프, 수렴)
+
+6라운드 멀티에이전트 루프(finder → skeptic refute → 메인 재검증). confirmed 53 → **fix 33** / skip·defer 20.
+추세 22→13→7→7→3→1(오탐). 6연속 라운드 regression reviewer 0건 + skip-audit reject(skip 옳음).
+
+- 신규 테스트: `tests/unit/test_round15_fixes.py` (17 — bios_date 검증 / merge_power serial dedup /
+  adapter version·distribution·os_type 보너스 / diagnosis 비-dict 가드 / gather_processors all-absent / jedec 2-char).
+- production fix 33 (전 채널): redfish_gather.py / adapter_common / precheck / diagnosis_mapper / jedec_mapper /
+  build_output / os-gather(linux+windows) / esxi-gather / scripts(drift+regex hook) / Jenkinsfile·_portal.
+- 재발 class grep 종결: `default('{}'|'[]')|from_json` 0 / os-gather 미가드 dict-fact `.attr` 0.
+- 검증: pytest **1022 passed, 5 skipped** (`--ignore=tests/e2e_browser`; 기준선 1005 무회귀). vendor_boundary /
+  harness / regex hook self-test 10/10 / yaml.safe_load / py_compile PASS.
+- ⚠️ os/esxi YAML + Jenkinsfile* 변경은 본 환경(ansible/Jenkins 부재) 미실측 — 정적 검증만. 실 smoke 권장.
+- 상세: `tests/evidence/2026-06-09-round15-multiagent-bughunt.md`.
+
 ## 2026-06-09 (HPE CSUS 3200 모델 검수 + 누락 5종 구현 — ADR-2026-06-09)
 
 CSUS 3200 Redfish 모델 검수 → 누락 5종(boot/thermal/log_services/composition/fabrics) Additive 구현.

@@ -52,8 +52,8 @@
 
     - name: "linux | network | set primary info"
       ansible.builtin.set_fact:
-        _l_norm_primary_iface: "{{ ansible_default_ipv4.interface | default('') }}"
-        _l_norm_default_gw:    "{{ ansible_default_ipv4.gateway   | default(none) }}"
+        _l_norm_primary_iface: "{{ (ansible_default_ipv4 | default({})).interface | default('') }}"
+        _l_norm_default_gw:    "{{ (ansible_default_ipv4 | default({})).gateway   | default(none) }}"
         _l_norm_dns_servers: >-
           {%- set real = [] -%}
           {%- for line in (_l_real_dns.stdout_lines | default([])) -%}
@@ -63,7 +63,7 @@
             {%- endif -%}
           {%- endfor -%}
           {%- set fallback = [] -%}
-          {%- for ns in (ansible_dns.nameservers | default([])) -%}
+          {%- for ns in ((ansible_dns | default({})).nameservers | default([])) -%}
             {%- set s = ns | string -%}
             {%- if not s.startswith('127.') and s not in fallback -%}
               {%- set _ = fallback.append(s) -%}
