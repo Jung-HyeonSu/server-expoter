@@ -40,6 +40,16 @@
 | LOW | **precheck timeout 동작 변경 확인** — `_precheck_timeout`(redfish=_rf_timeout, esxi=30) 이 이제 protocol/auth 에 반영(기존 15/8 → 30). 느린 BMC false-negative 해소하나 실패 호스트 precheck 시간 증가. 운영 배치에서 허용 가능 확인 | `[LAB]` | 사용자 |
 | LOW | cisco `collect_oem.yml` 도 `data.system.Oem`(대문자) 읽어 supplement dead — 단 cisco 는 `_OEM_EXTRACTORS` 라 라이브러리가 `data.system.oem`(소문자) 채움(부분 동작). lab 후 path 정정 + 회귀 | `[CONTRACT][LAB]` | lab |
 
+### Round 18 재스캔 후속 (R17 수정 회귀검수 — 4 confirmed 중 2 적용, 2 보류)
+
+> R18-1(회귀: _normalize_port_speed inf/nan crash) + R18-2(Windows runtime rescue clobber) 적용·검증 완료.
+> 아래 2건은 LOW + 선재(pre-existing) + 실측/lab 검증 필요로 보류 (verification.md — 검증 불가 변경 자제).
+
+| 우선 | 항목 | 분류 | 결정 주체 |
+|---|---|---|---|
+| LOW | **runtime dual-collector success-path clobber (R18-3)** — gather_runtime(Linux+Windows) 가 success 경로에서도 gather_system 의 더 견고한 runtime(chronyd loop / nftables / systemctl firewall / become:true)을 inferior 값으로 덮음. 선재(F5 commit f2ccea36). 근본 fix = gather_runtime 의 runtime 생산 제거(gather_system 단일 정본화) — site.yml include 제거 + 파일 삭제. 구조 변경이라 실 ansible smoke 후 적용 권장 | `[ANSIBLE][LAB]` | 사용자+lab |
+| LOW | **network.interfaces[].link_status enum drift (R18-4)** — field_dictionary enum `[linkup/linkdown/none]` 이 redfish 코드 출력 `up/down/unknown` 와 불일치 + dell/hpe/lenovo baseline 은 옛 값(linkup), hpe_csus/cisco 등은 신 값. unenforced(런타임 무영향). fix = enum→up/down/unknown 통일 + dell/hpe/lenovo baseline 실장비 재생성(rule 13 R4) + docs/20. baseline 재생성 lab 필요 | `[SCHEMA][LAB]` | 사용자+lab |
+
 ## 0. 2026-05-29 audit-cleanup 후속 (전수 audit 결과 — 미적용 backlog)
 
 > 정본: `docs/ai/AUDIT-2026-05-29.md` (전체 권고 + 정확 file:line + diff).

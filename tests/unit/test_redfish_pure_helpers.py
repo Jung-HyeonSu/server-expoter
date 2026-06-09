@@ -286,3 +286,15 @@ def test_get_empty_body_tolerant_but_nonjson_errs(rfg, monkeypatch):
     box.update(status=200, body=b"")
     st, data, err = rfg._get_noauth("1.1.1.1", "x", 5, False)
     assert st == 200 and data == {} and err is None
+
+
+def test_port_speed_infinity_nan_no_crash(rfg):
+    """R18-1 회귀: JSON Infinity/NaN(json.loads 기본 허용) Gbps → int() OverflowError/ValueError
+    로 network_adapters 섹션 전체 drop 되던 것 → _safe_int 경유로 (None,None) graceful."""
+    assert rfg._normalize_port_speed({"CurrentSpeedGbps": float("inf")}) == (None, None)
+    assert rfg._normalize_port_speed({"CurrentSpeedGbps": float("-inf")}) == (None, None)
+    gbps, mbps = rfg._normalize_port_speed({"CurrentSpeedGbps": float("nan")})
+    assert gbps is None and mbps is None
+    # inf Gbps + 정상 Mbps → Gbps 무시, Mbps 보존
+    g2, m2 = rfg._normalize_port_speed({"CurrentSpeedGbps": float("inf"), "CurrentLinkSpeedMbps": 10000})
+    assert m2 == 10000 and g2 == 10.0

@@ -215,7 +215,9 @@
           firewall_state: >-
             {%- set v = (_w_runtime.firewall_state | default('')) | string | trim -%}
             {{ v if v else none }}
-          listening_ports: "{{ _w_runtime.listening_ports | default([]) }}"
+          # Round 18 (R18-2): str[] 계약 (gather_runtime·field_dictionary 와 동일). Get-NetTCPConnection
+          # LocalPort 는 int → map('string'). gather_runtime rescue 가 {} 로 바뀌어 이 값이 보존될 때 계약 유지.
+          listening_ports: "{{ (_w_runtime.listening_ports | default([])) | map('string') | list }}"
           swap_total_mb: >-
             {%- set v = _w_runtime.swap_total_mb | default(none) -%}
             {{ (v | int) if (v is not none) else none }}

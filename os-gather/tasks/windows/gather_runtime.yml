@@ -220,23 +220,12 @@
         _errors_fragment:             []
       no_log: true
   rescue:
-    - name: "windows | runtime | rescue (best-effort skip)"
+    - name: "windows | runtime | rescue (best-effort skip — gather_system runtime 보존)"
       ansible.builtin.set_fact:
-        _data_fragment:
-          system:
-            runtime:
-              timezone:         null
-              ntp_active:       null
-              ntp_synchronized: null
-              firewall_tool:    "windows_firewall"
-              firewall_state:   null
-              listening_ports:  []
-              swap_total_mb:    null
-              swap_used_mb:     null
-              swap_free_mb:     null
-              firewall_profiles: []
-              pagefiles:        []
-              ntp_last_sync:    null
+        # Round 18 (R18-2): Linux #6 와 동일 — 기존엔 all-null runtime 을 emit → merge_fragment 의
+        # 2-level wholesale 교체로 gather_system 이 이미 수집한 runtime 을 통째로 덮어써 데이터 유실.
+        # 빈 fragment 를 emit 해 gather_system 의 runtime 을 보존한다.
+        _data_fragment: {}
         _sections_supported_fragment: ['system']
         _sections_collected_fragment: []
         _sections_failed_fragment:    ['system_runtime']

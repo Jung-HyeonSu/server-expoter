@@ -87,15 +87,14 @@ def _normalize_port_speed(pdata):
     _safe_int 로 흡수(bool 은 제외 — JSON true/false 오염 방어).
     """
     cur_gbps = _safe(pdata, 'CurrentSpeedGbps')
-    if isinstance(cur_gbps, bool):
-        cur_gbps_num = None
-    elif isinstance(cur_gbps, (int, float)):
-        cur_gbps_num = cur_gbps
-    else:
-        cur_gbps_num = _safe_int(cur_gbps)
+    # Round 18 (R18-1 regression fix): 모든 외부 numeric 은 _safe_int 경유 (Round 15 규약).
+    # bool 은 _safe_int(True)=1 오역산 방지 위해 먼저 배제. _safe_int 가 JSON Infinity/NaN
+    # (json.loads 기본 허용)·문자열·None 을 모두 None 으로 흡수 → raw int() 캐스트의
+    # OverflowError(inf)/ValueError(nan) 로 network_adapters 섹션 전체가 drop 되던 회귀 차단.
+    cur_gbps_num = None if isinstance(cur_gbps, bool) else _safe_int(cur_gbps)
     speed_mbps = _safe_int(_safe(pdata, 'CurrentLinkSpeedMbps'))  # Round 3 #17: mbps int 통일
     if speed_mbps is None and cur_gbps_num:
-        speed_mbps = int(cur_gbps_num * MBPS_PER_GBPS)
+        speed_mbps = _safe_int(cur_gbps_num * MBPS_PER_GBPS)
     if cur_gbps_num is not None:
         speed_gbps = cur_gbps_num
     elif speed_mbps is not None:
