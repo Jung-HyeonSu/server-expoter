@@ -118,19 +118,21 @@
       {%- set ans = (_e_hfvs_result.ansible_facts | default({})) -%}
       {%- if ans -%}
         {%- set net = (ans.config | default({})).network | default({}) -%}
-        {%- set gw = net.routeConfig.defaultGateway | default(none) if net.routeConfig is defined else none -%}
-        {%- if not gw -%}
-          {%- set gw = net.ipRouteConfig.defaultGateway | default(none) if net.ipRouteConfig is defined else none -%}
-        {%- endif -%}
-        {%- if not gw and net.vnic is defined -%}
+        {# Round 16: gw 를 namespace 로 — for 루프 안 {% set gw %} 는 loop-scoped 라 바깥에
+           반영 안 됨 (vnic-only gateway 토폴로지에서 gateway 유실). normalize_network.yml:62
+           pns 패턴 일관. 상위 routeConfig/ipRouteConfig 경로는 동작 불변. #}
+        {%- set gns = namespace(v=none) -%}
+        {%- if net.routeConfig is defined -%}{%- set gns.v = net.routeConfig.defaultGateway | default(none) -%}{%- endif -%}
+        {%- if not gns.v and net.ipRouteConfig is defined -%}{%- set gns.v = net.ipRouteConfig.defaultGateway | default(none) -%}{%- endif -%}
+        {%- if not gns.v and net.vnic is defined -%}
           {%- for vnic in (net.vnic | default([])) -%}
-            {%- if not gw -%}
+            {%- if not gns.v -%}
               {%- set rc = vnic.spec.ipRouteConfig | default(vnic.spec.routeConfig | default({})) -%}
-              {%- if rc.defaultGateway -%}{%- set gw = rc.defaultGateway -%}{%- endif -%}
+              {%- if rc.defaultGateway -%}{%- set gns.v = rc.defaultGateway -%}{%- endif -%}
             {%- endif -%}
           {%- endfor -%}
         {%- endif -%}
-        {{ gw }}
+        {{ gns.v }}
       {%- else -%}{{ none }}{%- endif -%}
   no_log: true
 

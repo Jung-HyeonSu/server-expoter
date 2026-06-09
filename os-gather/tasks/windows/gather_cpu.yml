@@ -69,7 +69,9 @@
       {%- set ns = namespace(groups=[], seen={}) -%}
       {%- for p in (_w_cpu_data.processors | default([])) -%}
         {%- set m = p.name | default('unknown') -%}
-        {%- set raw_mfr = p.manufacturer | default('') -%}
+        {# Round 16: JSON null/비-str manufacturer 시 'X' in None → TypeError (host 전체 rescue
+           collapse). default('') 는 undefined 만 치환 → (.. or '') | string 로 str 강제. #}
+        {%- set raw_mfr = (p.manufacturer | default('') or '') | string -%}
         {%- set mfr = none -%}
         {%- if 'GenuineIntel' in raw_mfr or 'Intel' in raw_mfr -%}{%- set mfr = 'Intel' -%}
         {%- elif 'AuthenticAMD' in raw_mfr or 'AMD' in raw_mfr -%}{%- set mfr = 'AMD' -%}
@@ -107,7 +109,8 @@
         logical_threads: "{{ _w_cpu_data.logical  | default(ansible_processor_vcpus | default(none)) }}"
         model:           "{{ _w_cpu_data.model    | default(none) }}"
         manufacturer: >-
-          {%- set v = _w_cpu_data.manufacturer | default('') -%}
+          {# Round 16: JSON null/비-str manufacturer 시 'X' in None → TypeError 방어 (위 summary 와 동일). #}
+          {%- set v = (_w_cpu_data.manufacturer | default('') or '') | string -%}
           {%- if 'GenuineIntel' in v or 'Intel' in v -%}Intel
           {%- elif 'AuthenticAMD' in v or 'AMD' in v -%}AMD
           {%- elif v -%}{{ v }}
