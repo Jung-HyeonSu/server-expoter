@@ -3938,6 +3938,10 @@ def main():
         username, password, timeout, verify_ssl,
         manager_layout=manager_layout,
     )
+    # Round 10: multi_node(RMC) 수집 errors(401/403 포함)를 status 계산 + envelope errors[] 에 반영.
+    # 누락 시 multi_node 인증 실패가 success/partial 로 오분류(status 거짓). multi_node=None 시 영향 0.
+    if isinstance(multi_node, dict):
+        all_errors.extend(multi_node.get('errors') or [])
 
     final_status, clean = _compute_final_status(collected, failed, all_errors)
 

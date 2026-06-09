@@ -113,6 +113,10 @@ def run_gather(get_impl, noauth_impl, realm_impl=None, ip="127.0.0.1",
             ip, vendor, service_root, user, pw, timeout, verify_ssl,
             manager_layout=None,
         )
+        # main() 미러링 (Round 10): multi_node errors 를 status 계산에 반영. 본 하네스는
+        # manager_layout=None 이라 multi_node=None → no-op 이지만 main() 흐름 1:1 유지.
+        if isinstance(multi_node, dict):
+            all_errors.extend(multi_node.get('errors') or [])
         final_status, clean = rg._compute_final_status(collected, failed, all_errors)
 
         # sorted(): golden 의 결정적(deterministic) 비교용 정규화. 실제 main()
