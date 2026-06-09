@@ -1,5 +1,15 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-09 (Round 13 — 잔여 변형 완성, false-positive 식별 [수렴])
+
+- 9 finder + 3-lens. 22 deduped → 7 confirmed(75 agent). 추세 ...4→7.
+- **수정 (4)**: pattern_match_any scalar-int도 list화(Round12 str-only 일반화) / _load_vendor_aliases canonical isinstance(2파일, config YAML int key) / account id=0 보존(4사이트, str(id or '')가 0을 잃던 것).
+- **false-positive 식별**: gather_cpu regex_search('(MiB|MB)') 는 (backreference arg 없으면) 매칭 **문자열** 반환 → |upper 안전. Round 7 esxi 와 동일 Ansible regex_search 오해. #3 HostName already isinstance-guarded.
+- 검증: 973 pass. golden 불변. 커밋 002a917.
+- **수렴 판정**: genuine BMC-trigger 결함은 R1-3+R10에서 종료. R11-13은 sibling-file 완성/false-positive/config/edge — 진짜 production 버그 아님.
+
+---
+
 ## 일자: 2026-06-09 (Round 12 — adapter_common string-method sweep [DONE])
 
 - 9 finder + 3-lens. 18 deduped → 4 confirmed(63 agent). 추세 ...1→7→4.
