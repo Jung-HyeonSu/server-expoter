@@ -693,6 +693,9 @@ def _fetch_service_root(bmc_ip, username, password, timeout, verify_ssl):
         if err or st != 200:
             errors.append(_err('vendor_detect', f'ServiceRoot 실패: {err or st}'))
             return None, errors
+    if not isinstance(root, dict):  # Round 6 #1: 비-dict ServiceRoot JSON(문자열/숫자) 계약 위반 방어
+        errors.append(_err('vendor_detect', 'ServiceRoot JSON 이 object 아님'))
+        return None, errors
     return root, errors
 
 
@@ -2172,7 +2175,7 @@ def gather_network(bmc_ip, system_uri, username, password, timeout, verify_ssl):
         nics.append({
             'id': _safe(ndata, 'Id'), 'name': _safe(ndata, 'Name') or _safe(ndata, 'Id') or '',
             'mac': _safe(ndata, 'MACAddress'), 'speed_mbps': _safe_int(_safe(ndata, 'SpeedMbps')),  # Round 2 #18: mbps int 통일
-            'mtu': _safe(ndata, 'MTUSize'),
+            'mtu': _safe_int(_safe(ndata, 'MTUSize')),  # Round 6 #6: int 통일(마지막 수치 필드)
             'link_status': _normalize_link_status(_safe(ndata, 'LinkStatus')),
             'health': _safe(ndata, 'Status', 'Health'),
             'ipv4': ipv4_addrs,
@@ -3380,7 +3383,7 @@ def account_service_get(bmc_ip, username, password, timeout, verify_ssl):
     if not isinstance(members, list):  # rule 95 R1 #2: 비-list Members → 빈 계정 (Round 1 #25)
         members = []
     accounts = []
-    for m in members:
+    for m in _capped(members, 'account_service', errors):  # Round 6 #8: 무경계 계정 순회 DoS 방어
         slot_uri = _safe(m, '@odata.id')
         if not slot_uri:
             continue
