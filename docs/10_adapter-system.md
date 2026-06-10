@@ -309,6 +309,6 @@ adapter 가 매칭은 됐는데 normalize task 가 그 섹션을 못 채운 경�
 | HPE | DL380 Gen11 (iLO 6, FW 1.73) | `redfish_hpe_ilo6` (P100) | 완료 |
 | Lenovo | SR650 V2 (XCC, FW 5.70) | `redfish_lenovo_xcc` (P100) | 완료 |
 | Supermicro | — | 어댑터만 존재 | 미검증 |
-| Cisco | — | `redfish_cisco_cimc` | baseline 검증, 실장비 미검증 |
+| Cisco | UCS C220 M4 (CIMC 4.1(2g)) | `redfish_cisco_cimc` | M4 partial lab 검증 (M5~M8 미검증) |
 
 상세는 `docs/13_redfish-live-validation.md`.

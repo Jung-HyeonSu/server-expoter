@@ -229,7 +229,7 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
 | HPE | iLO 5 (ProLiant Gen10+), iLO 6 (Gen11) | iLO 4 이하 — `Oem.Hp` 구조 달라 일부 수집 제한 | 검증 완료 |
 | Lenovo | ThinkSystem (X11, SR/ST/SD 시리즈) | ThinkServer — Redfish 미지원 | 검증 완료 |
 | Supermicro | X10/X11/X12/X13/H11/H12 이상 | X9 이하 — Redfish 미지원 | 미검증 (어댑터만 존재) |
-| Cisco | UCS C-Series M4+ (CIMC Redfish 지원) | UCS C-Series M3 이하 — Redfish 미지원 | baseline + E2E 검증 완료 (실장비 미검증) |
+| Cisco | UCS C-Series M4+ (CIMC Redfish 지원) | UCS C-Series M3 이하 — Redfish 미지원 | M4 partial lab 검증 (M5~M8 미검증) |
 
 > 코드는 Redfish 표준 API(DSP0266)를 동적 탐색(API Discovery)하므로,
 > 검증 기준 장비 및 유사한 Redfish 표준 구현에서 **표준 필드**가 정상 수집됐다.
