@@ -34,7 +34,7 @@ fallback 등)** 을 결정적으로 회귀한다. vendor 감지 결과 `unknown`
 
 DSP2043 mockup 트리를 확보한 뒤:
 
-```
+```bash
 python tests/integration/convert_dmtf_mockup.py \
     --mockup-dir <public-rackmount1 경로> --name dmtf_rackmount1 \
     --mockup-label public-rackmount1 --source-url https://redfish.dmtf.org/redfish/mockups/v1/1819 \

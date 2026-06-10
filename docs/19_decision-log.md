@@ -832,15 +832,15 @@ cycle-019 본 cycle 에서 7-loop + 10R extended audit P1 22건 적용 후, 사�
 
 | 단계 | 작업 | 상태 |
 |---|---|---|
-| 1. vendor_aliases.yml 매핑 | 4 vendor alias 추가 | ✅ |
-| 2. adapter YAML 생성 | huawei_ibmc / inspur_isbmc / fujitsu_irmc / quanta_qct_bmc | ✅ |
+| 1. vendor_aliases.yml 매핑 | 4 vendor alias 추가 | [OK] |
+| 2. adapter YAML 생성 | huawei_ibmc / inspur_isbmc / fujitsu_irmc / quanta_qct_bmc | [OK] |
 | 3. (선택) OEM tasks | 부재 (standard_only — 사이트 fixture 확보 후 보강) | DEFER |
 | 4. vault 생성 | vault/redfish/{vendor}.yml | **SKIP (사용자 명시)** |
 | 5. baseline | schema/baseline_v1/{vendor}_baseline.json | DEFER (lab 부재) |
-| 6. ai-context | .claude/ai-context/vendors/{vendor}.md 4종 | ✅ |
-| 7. vendor-boundary-map.yaml | huawei/inspur/fujitsu/quanta 추가 | ✅ |
+| 6. ai-context | .claude/ai-context/vendors/{vendor}.md 4종 | [OK] |
+| 7. vendor-boundary-map.yaml | huawei/inspur/fujitsu/quanta 추가 | [OK] |
 | 8. live-validation | docs/13_redfish-live-validation.md Round 갱신 | DEFER (lab 부재) |
-| 9. decision-log | 본 entry | ✅ |
+| 9. decision-log | 본 entry | [OK] |
 
 ### redfish_gather.py 동기화
 
@@ -915,7 +915,8 @@ agent 10.100.64.154 SSH + 진단 playbook (`tests/scripts/diag_esxi_raw.yml`) �
 
 ---
 
-
+> [!NOTE]
+> 여기부터(§1~§13)는 2026-03~04 초기 검증 라운드 기록이다(번호순). 위쪽은 최근 결정부터의 날짜 역순 기록이다. 현재값은 `adapters/`, `schema/` 와 catalog 를 본다.
 
 ## 1. 코드 점검 1차/2차 결과 요약
 
@@ -1245,14 +1246,14 @@ Ubuntu 24.04에 bond 토폴로지를 구성하여 수집 정확성을 실증했�
 
 | 항목 | 결과 |
 |------|------|
-| bond master 수집 | ✅ bond0 수집됨 |
-| slave 제외 | ✅ dummy slave 제외됨 (master sysfs 감지) |
-| VLAN-on-bond 수집 | ✅ bond0.200 수집됨 |
-| bridge port 제외 | ✅ bridge 하위 port 제외됨 |
+| bond master 수집 | [OK] bond0 수집됨 |
+| slave 제외 | [OK] dummy slave 제외됨 (master sysfs 감지) |
+| VLAN-on-bond 수집 | [OK] bond0.200 수집됨 |
+| bridge port 제외 | [OK] bridge 하위 port 제외됨 |
 
 ### source 우선순위 체계 확정
 
-```
+```text
 kernel sysfs > POSIX 명령 > /proc > /etc
 ```
 

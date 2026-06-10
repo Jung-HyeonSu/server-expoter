@@ -75,7 +75,7 @@ target_type 에 따라 IP 필드명이 다릅니다.
 
 ---
 
-## Jenkins → inventory 스크립트 전달 흐름
+## Jenkins → inventory 스크립트 전달 과정
 
 ### Jenkins 파라미터 → 환경변수 자동 전달
 

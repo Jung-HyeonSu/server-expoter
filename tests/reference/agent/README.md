@@ -23,7 +23,7 @@
 
 ## 디렉터리 컨벤션
 
-```
+```text
 tests/reference/agent/
 ├── agent/<ip>/             ← Jenkins Agent
 └── jenkins_master/<ip>/    ← Jenkins Master

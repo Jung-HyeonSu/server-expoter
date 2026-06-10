@@ -17,7 +17,7 @@
 | `build_empty_data.yml` | (없음) | `_norm_empty_data` (rescue 경로용 빈 skeleton) | rescue 시 _merged_data 대체 |
 | `build_failed_output.yml` | rescue 컨텍스트 | `_output` (status=failed envelope 13 필드) | 완전 실패 시 fallback envelope |
 
-> 8 → 10 파일이 됐지만 핵심 흐름은 8 빌더. `build_empty_data` 와 `build_failed_output` 은 rescue 경로 보조.
+> 8 → 10 파일이 됐지만 핵심 빌더는 8개. `build_empty_data` 와 `build_failed_output` 은 rescue 경로 보조.
 
 ## 호출 순서 (정상 path)
 
@@ -66,7 +66,7 @@ python scripts/ai/hooks/pre_commit_fragment_skeleton_sync.py --all
 
 ## 관련 문서
 
-- `docs/07_normalize-flow.md` — 정규화 흐름 정본
+- `docs/07_normalize-flow.md` — 정규화 과정 정본
 - `docs/13_redfish-live-validation.md` — Round 검증
 - `docs/20_json-schema-fields.md` — envelope 13 필드 정본
 - `tests/regression/test_cross_channel_consistency.py` — 회귀 보호

@@ -41,7 +41,7 @@
 
 ## 디렉터리 컨벤션
 
-```
+```text
 tests/reference/os/<distro>/<ip-with-underscore>/
 ├── _manifest.json
 ├── _summary.txt
@@ -51,7 +51,7 @@ tests/reference/os/<distro>/<ip-with-underscore>/
 ```
 
 각 파일 헤더:
-```
+```text
 # command: <원본 명령>
 # rc: <exit code>
 # requires_root: <true/false>
@@ -71,7 +71,7 @@ tests/reference/os/<distro>/<ip-with-underscore>/
 | RHEL 9.6 | 10.100.64.165 | VM |
 | Ubuntu 24.04 | 10.100.64.167 | VM |
 | Rocky 9.6 | 10.100.64.169 | VM |
-| Windows 10 | 10.100.64.120 | VM (WinRM 5986/5985) |
+| Windows Server 2022 | 10.100.64.135 | VM (WinRM 5985 NTLM) |
 | RHEL bare-metal | 10.100.64.96 | 베어메탈 (Dell 10.100.15.33 BMC) |
 
 ## 활용

@@ -6,7 +6,7 @@
 
 | 사고 시점 | 1차 확인 파일 | 2차 확인 |
 |---|---|---|
-| Jenkins Stage 1 (Validate) 실패 | `Jenkinsfile` 69~121 line | console log 의 `--validate-input` 결과 |
+| Jenkins Stage 1 (Validate) 실패 | `Jenkinsfile` 74~126 line | console log 의 `--validate-input` 결과 |
 | Jenkins Stage 2 (Gather) 실패 | `os-gather/site.yml` 또는 채널별 site.yml | ansible -vvv 로그 |
 | Jenkins Stage 3 (Validate Schema) 실패 | `tests/validate_field_dictionary.py` | `schema/field_dictionary.yml` |
 | Jenkins Stage 4 (E2E Regression) 실패 | `tests/e2e/` pytest 출력 | 영향 vendor `schema/baseline_v1/` |
@@ -31,7 +31,7 @@
 ### Stage 1 — Validate (입력값)
 
 **역할**: loc / target_type / inventory_json 형식 검증.
-**위치**: `Jenkinsfile:69~121`
+**위치**: `Jenkinsfile:74~126`
 **실패 시 확인**:
 - console log 의 `[Stage 1 Validate] FAIL: ...` 메시지
 - 입력 파라미터 형식 (JSON valid? IP 형식? loc enum?)
@@ -40,7 +40,7 @@
 
 **역할**: 채널별 site.yml 실행 (os/esxi/redfish).
 **위치**:
-- `os-gather/site.yml` (3-Play: 포트감지 → Linux → Windows)
+- `os-gather/site.yml` (4-Play: detect/포트감지 → failed-output → Linux → Windows)
 - `esxi-gather/site.yml` (1-Play, community.vmware)
 - `redfish-gather/site.yml` (precheck → detect → adapter → collect → normalize)
 
@@ -52,7 +52,7 @@
 ### Stage 3 — Validate Schema (정합)
 
 **역할**: envelope 13 필드 + sections 10 + field_dictionary 83 정합.
-**위치**: `tests/validate_field_dictionary.py` (Jenkinsfile 181~194)
+**위치**: `tests/validate_field_dictionary.py` (Jenkinsfile 193~203, Stage 'Validate Schema')
 **실패 시 확인**:
 - `schema/field_dictionary.yml` 갱신 누락 (rule 13 R1 3종 동반)
 - `schema/sections.yml` 의 sections 10 정의 누락
@@ -72,11 +72,11 @@
 
 ---
 
-## 2. Fragment 정규화 흐름 별 진입 (rule 22)
+## 2. Fragment 정규화 과정 별 진입 (rule 22)
 
-전체 흐름 (정본: `docs/07_normalize-flow.md`):
+전체 처리 과정 (정본: `docs/07_normalize-flow.md`):
 
-```
+```text
 init_fragments.yml (skeleton 초기화)
   ↓
 gather_<section>.yml × N (각 gather 의 fragment 생성)
@@ -116,21 +116,21 @@ OUTPUT task → callback_plugins/json_only.py → stdout JSON
 
 `ansible-playbook -vvv` 실행 시 `lookup_plugins/adapter_loader.py` 가 다음 로그 출력:
 
-```
+```text
 adapter_loader: channel=redfish, facts vendor=Dell Inc., model=PowerEdge R760, firmware=6.10.30.20
-adapter_loader: scanned 28 candidates from /repo/adapters/redfish
-adapter_loader: dell_idrac9 matched score=100065 (priority=100×1000 + specificity=65×10 + match=70)
-adapter_loader: dell_idrac matched score=10025 (priority=10×1000 + specificity=25×10 + match=20)
-adapter_loader: redfish_generic matched score=-20 (priority=0×1000 + specificity=20 + match=0 − generic 감점 40)
-adapter_loader: 후보 거부 — 25건
+adapter_loader: scanned 31 candidates from /repo/adapters/redfish
+adapter_loader: dell_idrac9 matched score=100345 (priority=100×1000 + specificity=30×10 + match=45)
+adapter_loader: dell_idrac matched score=10120 (priority=10×1000 + specificity=10×10 + match=20)
+adapter_loader: redfish_generic matched score=-400 (priority=0×1000 + specificity=-40×10 + match=0 — generic 감점)
+adapter_loader: 후보 거부 — 28건
   - hpe_ilo6 (match 조건 불일치)
   - lenovo_xcc3 (match 조건 불일치)
   ...
 adapter_loader: top 3 candidates (score 내림차순):
-  #1 dell_idrac9 score=100065
-  #2 dell_idrac score=10025
-  #3 redfish_generic score=20
-adapter_loader: 선택됨 — dell_idrac9 (score=100065) [rule 10 R5 score = priority×1000 + specificity×10 + match]
+  #1 dell_idrac9 score=100345
+  #2 dell_idrac score=10120
+  #3 redfish_generic score=-400
+adapter_loader: 선택됨 — dell_idrac9 (score=100345) [rule 10 R5 score = priority×1000 + specificity×10 + match]
 ```
 
 ### 의도와 다른 adapter 선택 시
@@ -219,8 +219,8 @@ hostname = (system.hostname OR system.fqdn) OR _out_ip
 | `gather_power()` | `/redfish/v1/Chassis/{id}/Power` 또는 PowerSubsystem |
 
 **vendor 분기 위치**:
-- `_OEM_EXTRACTORS` dict (line 979~985) — vendor 별 OEM extractor 함수 매핑
-- `_account_create_method(vendor)` (Phase H 에서 함수 추출 예정) — Dell PATCH vs 그 외 POST
+- `_OEM_EXTRACTORS` dict (line 1416~) — vendor 별 OEM extractor 함수 매핑
+- `_account_create_method_for_vendor(vendor)` (line 3887) — Dell PATCH vs 그 외 POST
 
 ---
 
@@ -298,7 +298,7 @@ ansible-playbook --syntax-check os-gather/site.yml  # 3 채널 syntax
 ## 10. 관련 문서
 
 - `docs/06_gather-structure.md` — 전체 구조
-- `docs/07_normalize-flow.md` — Fragment 정규화 흐름
+- `docs/07_normalize-flow.md` — Fragment 정규화 과정
 - `docs/08_failure-handling.md` — block/rescue/always
 - `docs/10_adapter-system.md` — Adapter 점수 정책 (Phase C 확장)
 - `docs/11_precheck-module.md` — Precheck 4 단계

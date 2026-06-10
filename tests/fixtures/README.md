@@ -11,7 +11,7 @@
 
 ## 1. 디렉토리 구조
 
-```
+```text
 tests/fixtures/redfish/
 ├── lenovo/                       # Lenovo ThinkSystem SR650 V2 (10.50.11.232)
 │   ├── service_root.json         # /redfish/v1/
@@ -81,14 +81,12 @@ tests/fixtures/outputs/           # e2e representative output (raw fixture와 �
 
 ## 4. Fixture 파일 수
 
-| 벤더 | 파일 수 |
-|------|---------|
-| Lenovo | 45 |
-| HPE | 47 |
-| Dell | 53 |
-| Cisco | 23 |
-| Dell (R760) | 22 |
-| **합계** | **190** |
+벤더별 fixture 수는 캡처가 늘면서 자주 바뀐다. 하드코딩 대신 직접 센다.
+
+```bash
+# vendor 별 fixture(.json) 수
+for d in tests/fixtures/redfish/*/; do echo "$(find "$d" -name '*.json' | wc -l)  $d"; done
+```
 
 ## 5. Adapter 테스트 재사용 방법
 

@@ -11,7 +11,7 @@
 
 ## 파일 명명 규칙
 
-```
+```text
 {vendor 또는 os}_baseline.json   ← 회귀 비교용 표준 JSON (수정 금지, 본 폴더)
 ```
 
@@ -58,7 +58,6 @@ mock-derived baseline 의 필수 marker (양쪽 모두):
 ## 기준 시점
 
 - 최초 수집일: 2026-03-23
-- 최초 git HEAD: ea8b8a1
 
 ## 변경이 필요할 때
 

@@ -12,7 +12,7 @@
 
 RBAC Pattern 과 일치해야 권한이 자동 적용된다.
 
-```
+```text
 {프로젝트명}.{작업명}
 ```
 
@@ -72,10 +72,10 @@ Jenkinsfile 은 루트에 1개만 존재한다. 3개 Job 모두 동일한 Script
 |---------|------|------|
 | `loc` | 필수 | 어느 사이트 Agent 에서 실행할지 (`ich` / `chj` / `yi`) |
 | `target_type` | 자동 (Job 별 기본값) | `os` / `esxi` / `redfish` |
-| `inventory_json` | 필수 | 대상 IP 배열 — 형식은 [05_inventory-json-spec.md](05_inventory-json-spec.md) 참조 |
+| `inventory_json` | 필수 | 대상 IP 배열 (os/esxi: `service_ip`, redfish: `bmc_ip`). 형식은 [05_inventory-json-spec.md](05_inventory-json-spec.md) 참조 |
 
-`target_type` 은 Job 정의에 기본값이 박혀 있어 호출자가 매번 보내지 않아도 됩니다.
-다만 외부 호출 시 명시적으로 보내는 것을 권장합니다.
+`target_type` 의 기본값은 각 Job 의 Configure 화면에서 지정한다 (esxi-gather Job 은 `esxi`, redfish-gather Job 은 `redfish`).
+`Jenkinsfile` 의 choice 파라미터 자체에는 기본값이 없어 파이프라인 기본은 첫 항목 `os` 다. 그래서 esxi/redfish Job 은 Configure 에서 기본값을 바꿔 둬야 호출자가 매번 보내지 않아도 된다.
 
 ---
 

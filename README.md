@@ -22,7 +22,7 @@
 
 ## 5분 빠른 이해
 
-```
+```text
 호출자 시스템 (포털 / 백엔드)
   │
   │  HTTPS 443 으로 Jenkins Job 트리거
@@ -64,7 +64,7 @@ server-exporter 는 다음 3가지를 호출자에게 약속한다.
 
 ## 디렉터리 구조
 
-```
+```text
 server-exporter/
 ├── Jenkinsfile              파이프라인 정의 (호출자 진입점)
 ├── Jenkinsfile_portal       포털 callback 전용 파이프라인
@@ -82,7 +82,7 @@ server-exporter/
 ├── redfish-gather/          서버 BMC 수집 (Redfish API)
 │
 ├── adapters/                벤더 / 세대별 어댑터 YAML
-│   ├── redfish/             31개 (Dell / HPE / Lenovo / Supermicro / Cisco / Huawei / Inspur / Fujitsu / Quanta + HPE Superdome)
+│   ├── redfish/             31개 (Dell / HPE / Lenovo / Supermicro / Cisco / Huawei / Inspur / Fujitsu / Quanta 9 벤더 — HPE 계열에 Superdome Flex, CSUS 3200 포함)
 │   ├── os/                  7개 (Linux / Windows 변형)
 │   └── esxi/                4개 (ESXi 6.x / 7.x / 8.x)
 │
@@ -141,7 +141,7 @@ server-exporter/
   "collection_method": "agent | vsphere_api | redfish_api",
   "ip":                "10.x.x.1",
   "hostname":          "10.x.x.1",
-  "vendor":            "dell | hp | hpCsus | lenovo | supermicro | cisco | huawei | inspur | fujitsu | quanta | null",
+  "vendor":            "dell | hp | hpCsus | lenovo | supermicro | cisco | null",
   "status":            "success | partial | failed",
   "sections":          { "system": "success", "cpu": "success", ... },
   "diagnosis":         { "reachable": true, "auth_success": true, "failure_stage": null, "details": {...} },
@@ -214,6 +214,7 @@ server-exporter/
   - Supermicro X9 ~ X14
   - Cisco CIMC M4 ~ M8 + UCS X-Series
   - Huawei iBMC, Inspur ISBMC, Fujitsu iRMC, Quanta QCT BMC
+- 각 범위의 하단 세대(Dell iDRAC 8, HPE iLO 4, Lenovo IMM2, Supermicro X9)는 fallback adapter 로 연결만 되고 대부분 섹션을 `not_supported` 로 보고한다. 세대별 지원 상세는 [docs/22_compatibility-matrix.md](docs/22_compatibility-matrix.md).
 
 (약어 풀이: BMC = Baseboard Management Controller / iDRAC = Integrated Dell Remote Access Controller / iLO = Integrated Lights-Out / XCC = Lenovo XClarity Controller / CIMC = Cisco Integrated Management Controller)
 

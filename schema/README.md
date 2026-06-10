@@ -1,6 +1,6 @@
 # schema/ — 출력 schema 정본 (DB 없는 envelope 계약)
 
-> 호출자 시스템과의 envelope 계약. DB schema 가 없는 server-exporter 에서 본 디렉터리가 등동 역할.
+> 호출자 시스템과의 envelope 계약. DB schema 가 없는 server-exporter 에서 본 디렉터리가 그 역할을 한다.
 
 ## 디렉터리 / 파일 역할
 
@@ -42,7 +42,7 @@ schema 변경 시 다음 3종 동시 갱신:
 
 정본: `common/tasks/normalize/build_output.yml`
 
-```
+```text
 target_type, collection_method, ip, hostname, vendor,
 status, sections, diagnosis, meta, correlation, errors, data,
 schema_version

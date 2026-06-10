@@ -12,11 +12,11 @@ server-exporter 는 한 서버를 3가지 시점으로 본다.
 
 ---
 
-## 1. 호출 흐름
+## 1. 호출 과정
 
-```
+```text
 [ 호출자 (Jenkins Job 트리거) ]
-        │  inventory_json = [{ ip: "10.50.11.162" }]
+        │  inventory_json = [{ bmc_ip: "10.50.11.162" }]
         │  target_type    = "redfish"  (또는 os / esxi)
         │  loc            = "ich"
         ▼
@@ -71,9 +71,9 @@ server-exporter 는 한 서버를 3가지 시점으로 본다.
 
 ## 3. 공통 골격 — 세 채널이 모두 같은 패턴
 
-세 채널 모두 다음 흐름을 똑같이 따른다.
+세 채널 모두 다음 처리 과정을 똑같이 따른다.
 
-```
+```text
 [ A ] init_fragments.yml          ← 누적 변수 비우기 (보고서 빈 종이 준비)
         │
 [ B ] precheck (4단계 진단)        ← 어디까지 닿는지 (docs/11)
@@ -98,14 +98,17 @@ server-exporter 는 한 서버를 3가지 시점으로 본다.
 
 ## 4. os-gather
 
-```
-site.yml
-  Play 1 — 포트 감지
-      SSH(22) 응답하면  → _os_linux 그룹에 등록
-      WinRM(5986) 응답하면 → _os_windows 그룹에 등록
-      둘 다 실패          → build_failed_output (failed envelope 즉시 반환)
+```text
+site.yml (4 Play)
+  Play 1 — 포트 감지 (hosts: all)
+      SSH(22) 응답하면          → _os_linux 그룹에 add_host
+      WinRM(5985/5986) 응답하면 → _os_windows 그룹에 add_host
+      둘 다 실패                → _os_failed 그룹에 add_host
 
-  Play 2 — Linux 일 때
+  Play 1.5 — 포트 감지 실패 (hosts: _os_failed)
+      build_failed_output       → failed envelope 즉시 반환
+
+  Play 2 — Linux (hosts: _os_linux)
       init_fragments
       adapter_loader (os 채널)
       tasks/linux/preflight.yml      → Python 버전 감지 → python_ok / raw_fallback 분기
@@ -115,10 +118,14 @@ site.yml
       tasks/linux/gather_storage.yml → storage fragment  → merge   (lsblk + mounts)
       tasks/linux/gather_network.yml → network fragment  → merge   (gw / dns / speed)
       tasks/linux/gather_users.yml   → users fragment    → merge   (getent + lastlog)
+      tasks/linux/gather_hba_ib.yml  → HBA / InfiniBand   → merge
+      tasks/linux/gather_runtime.yml → runtime 보강       → merge
       build_*  → output
 
-  Play 3 — Windows 일 때
-      Linux 와 동일 구조, tasks/windows/* 사용
+  Play 3 — Windows (hosts: _os_windows)
+      tasks/windows/* 사용. preflight / raw fallback 은 없다.
+      gather_system / gather_hardware / gather_cpu / gather_memory /
+      gather_storage / gather_network / gather_users / gather_runtime → 각 merge → build_* → output
 ```
 
 Linux 는 환경에 따라 두 가지 모드로 동작한다.
@@ -134,15 +141,18 @@ Linux 는 환경에 따라 두 가지 모드로 동작한다.
 
 ## 5. esxi-gather
 
-```
+```text
 site.yml (Play 1개)
   init_fragments
-  tasks/collect_facts.yml      → _e_raw_facts      (vSphere API: HostSystem facts)
-  tasks/collect_config.yml     → _e_raw_config     (vSphere API: HostNetworkSystem 등)
-  tasks/collect_datastores.yml → _e_raw_ds         (vSphere API: HostDatastoreSystem)
-  tasks/normalize_system.yml   → system / hardware / cpu / memory fragment → merge
-  tasks/normalize_network.yml  → network fragment                          → merge
-  tasks/normalize_storage.yml  → storage fragment (datastore / 볼륨 포함)   → merge
+  tasks/collect_facts.yml             → _e_raw_facts   (vSphere API: HostSystem facts)
+  tasks/collect_config.yml            → _e_raw_config  (vSphere API: HostNetworkSystem 등)
+  tasks/collect_datastores.yml        → _e_raw_ds      (vSphere API: HostDatastoreSystem)
+  tasks/collect_dns.yml               → DNS 보강
+  tasks/collect_network_extended.yml  → NIC / vmnic 상세 보강
+  tasks/collect_runtime.yml           → 가동시간 / 상태 보강
+  tasks/normalize_system.yml          → system / hardware / cpu / memory fragment → merge
+  tasks/normalize_network.yml         → network fragment                          → merge
+  tasks/normalize_storage.yml         → storage fragment (datastore / 볼륨 포함)   → merge
   build_*  → output
 ```
 
@@ -154,7 +164,7 @@ ESXi 는 `community.vmware` 컬렉션 + `pyvmomi` 9.0.0 의존. Agent 환경 설
 
 세 채널 중 가장 단계가 많다. Redfish 는 무인증 ServiceRoot 호출로 벤더를 먼저 알아내고, 그 결과로 자격증명을 동적으로 로드한다.
 
-```
+```text
 site.yml (Play 1개)
   init_fragments
   precheck_bundle              → 4단계 진단 (ping → port 443 → /redfish/v1/ → Basic Auth)
@@ -171,7 +181,7 @@ site.yml (Play 1개)
 
 ### 6.1 Redfish 의 Storage 구조
 
-```
+```text
 storage
 ├── controllers[]       — RAID / HBA 컨트롤러
 │   └── drives[]        — 컨트롤러에 매달린 드라이브
@@ -203,6 +213,10 @@ storage
 | Cisco | `redfish_cisco_cimc` | `vault/redfish/cisco.yml` |
 
 신규 벤더 (Huawei / Inspur / Fujitsu / Quanta / HPE Superdome) 도 adapter 가 등록되어 있으나 lab 부재로 미검증. 상세는 `docs/13_redfish-live-validation.md`.
+
+> [!NOTE]
+> 위 "매칭 adapter" 와 vault 는 내부 canonical 이름(`hpe` 등)을 쓴다.
+> 호출자에게 나가는 envelope `vendor` 값은 표시값으로 한 번 더 매핑된다 — HPE → `hp`, HPE CSUS 3200 → `hpCsus`, 나머지는 canonical 그대로. 상세는 `docs/20_json-schema-fields.md`.
 
 ---
 

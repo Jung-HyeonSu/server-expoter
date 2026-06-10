@@ -16,7 +16,7 @@
 
 ## 디렉터리 구조
 
-```
+```text
 tests/reference/
 ├── README.md                  ← 이 파일
 ├── INDEX.md                   ← 전체 카탈로그 (수집 일자 / 장비 list / endpoint 수 / 디스크 사용)
@@ -59,7 +59,7 @@ tests/reference/
 | 수집 로그 | `local/crawl_*.log` | NO |
 
 `.gitignore`에 등록된 패턴:
-```
+```text
 tests/reference/local/*
 !tests/reference/local/.gitkeep
 tests/reference/.cache/

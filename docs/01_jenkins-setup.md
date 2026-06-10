@@ -125,7 +125,7 @@ ufw allow 8080/tcp
 | 플러그인 | 용도 |
 |----------|------|
 | **Pipeline: Stage View** | Stage 별 실행 결과 시각화 |
-| **Blue Ocean** | 파이프라인 흐름 UI |
+| **Blue Ocean** | 파이프라인 실행 과정 UI |
 | **Timestamper** | 콘솔 로그 타임스탬프 |
 | **Workspace Cleanup** | 빌드 후 workspace 자동 정리 |
 
@@ -170,23 +170,23 @@ Jenkins 가 ansible-playbook 을 실행할 때 이 credential 로 vault 를 복�
 
 | 항목 | 값 |
 |------|----|
-| Kind | **Secret file** |
-| File | `.vault_pass` 파일 (단일 라인 평문 패스워드) |
+| Kind | **Secret text** |
+| Secret | vault 마스터 패스워드 (단일 라인 문자열) |
 | ID | `server-gather-vault-password` |
 
 **등록 절차**
 
 1. 운영자가 vault 마스터 패스워드를 결정한다.
-2. 로컬 작업자 PC 에서 그 패스워드를 한 줄짜리 `.vault_pass` 파일로 만든다.
-3. `bash scripts/bootstrap_vault_encrypt.sh` 로 `vault/*.yml` 을 일괄 encrypt 후 commit.
-4. 같은 `.vault_pass` 파일을 본 절차로 Jenkins credentials store 에 Secret file 형태로 등록한다.
-5. `.vault_pass` 는 `.gitignore` 에 의해 절대 commit 되지 않는다 — Jenkins 와 운영자 PC 에만 존재.
+2. 로컬 작업자 PC 에서 그 패스워드를 한 줄짜리 `.vault_pass` 파일로 두고 `bash scripts/bootstrap_vault_encrypt.sh` 로 `vault/*.yml` 을 일괄 encrypt 후 commit 한다.
+3. 같은 패스워드 문자열을 Jenkins credentials store 에 **Secret text** 로 등록한다 (ID `server-gather-vault-password`).
+4. `.vault_pass` 는 `.gitignore` 에 의해 절대 commit 되지 않는다 — 로컬 작업자 PC 에만 둔다.
 
 **Jenkins 빌드 동작**
 
-`withCredentials([file(credentialsId: 'server-gather-vault-password', variable: 'VAULT_PASSWORD_FILE')])`
-가 `$VAULT_PASSWORD_FILE` 환경변수를 주입하고, Pipeline 안에서 패스워드 값 자체는
-콘솔 로그에 노출되지 않도록 자동 마스킹됩니다.
+`withCredentials([string(credentialsId: 'server-gather-vault-password', variable: 'VAULT_PASSWORD')])`
+가 `$VAULT_PASSWORD` 를 주입한다. Pipeline 이 그 값을 임시 파일(`.vault_pass_tmp`, chmod 600)에 써서
+`--vault-password-file` 로 ansible-playbook 에 넘기고, 빌드 종료 시 임시 파일을 삭제한다.
+패스워드 값은 콘솔 로그에 자동 마스킹됩니다.
 
 **검증 (로컬)**
 
@@ -200,7 +200,7 @@ ansible-playbook --vault-password-file=.vault_pass redfish-gather/site.yml -i ..
 이 credential 이 Jenkins 에 등록되지 않은 상태에서 빌드를 실행하면
 다음 오류로 빌드가 즉시 실패합니다.
 
-```
+```text
 Could not find credentials entry with ID 'server-gather-vault-password'
 ```
 

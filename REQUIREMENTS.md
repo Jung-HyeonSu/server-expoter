@@ -209,6 +209,10 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
 | **Supermicro** | BMC | **X10 이상** (BMC FW 3.xx+) | `Systems/1` | `Managers/1` |
 | **Cisco** | CIMC | **CIMC** (UCS C-Series M4+) | 동적 탐색 (Members[0]) | `Managers/CIMC` |
 
+> [!NOTE]
+> 위 5개 벤더 외에 Huawei iBMC / Inspur ISBMC / Fujitsu iRMC / Quanta QCT BMC adapter 도 있다.
+> 이 4개는 lab 부재라 vendor 공식 문서와 DMTF 표준만 보고 작성했고 실장비로는 검증하지 않았다.
+
 **검증 기준 장비 (2026-03-18 직접 HTTPS 호출 검증):**
 
 | 벤더 | 모델 | BMC | FW 버전 | Redfish Version | 매칭 Adapter |
@@ -304,7 +308,7 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
 ## 6. tasks/ 구조 개요
 
 3개 gather 모두 `tasks/` 디렉터리로 수집/정규화 로직이 분리되어 있다.
-상세 구조와 흐름은 [docs/06_gather-structure.md](docs/06_gather-structure.md) 참조.
+상세 구조와 처리 과정은 [docs/06_gather-structure.md](docs/06_gather-structure.md) 참조.
 
 > `REPO_ROOT` 환경변수로 공통 태스크 경로를 참조하므로 Jenkins 에서 `REPO_ROOT=${WORKSPACE}` 설정 필수.
 
@@ -366,6 +370,10 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
 | Cisco UCS C-Series M3 이하 | Redfish 미지원 |
 | Python 3.8 이하 (타겟 Linux) | ansible-core 2.20 모듈 실행 불가 |
 | Python 3.11 이하 (Agent) | 프로젝트 검증 기준 외 |
+
+> [!NOTE]
+> 이 표는 "벤더별 최소 BMC 버전"(3-1절)에 못 미치는 세대를 모은 것이다.
+> 이 중 Dell iDRAC 8 / HPE iLO 4 / Lenovo IMM2 / Supermicro X9 는 priority 50 fallback adapter 가 있어 **연결과 표준 영역 일부 수집은 된다**. 다만 대부분 섹션을 `not_supported` 로 보고한다(완전 차단이 아니라 제한 수집). 완전 차단은 adapter 자체가 없는 더 낮은 세대와 Redfish 미지원 장비(Lenovo ThinkServer 등)다.
 
 **제한 지원** (수집은 되지만 일부 필드 `null`):
 

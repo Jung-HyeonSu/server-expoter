@@ -6,7 +6,7 @@
 
 ## 디렉터리 컨벤션
 
-```
+```text
 tests/reference/redfish/<vendor>/<ip-with-underscore>/
 ├── _manifest.json     ← 전체 endpoint list / status / timing
 ├── _summary.txt       ← 사람이 읽는 요약
@@ -36,13 +36,13 @@ tests/reference/redfish/<vendor>/<ip-with-underscore>/
 
 | Vendor | IP | 상태 | 비고 |
 |---|---|---|---|
-| Dell | 10.100.15.27 | OK | iDRAC9 — 2417 endpoint / 15MB / 596s |
+| Dell | 10.100.15.27 | OK | iDRAC9 — 1624 endpoint (2417 파일) / 15MB / 17.5s (`_manifest.json` 기준) |
 | Dell | 10.100.15.28 | OK | iDRAC9 |
 | Dell | 10.100.15.31 | OK | iDRAC9 |
 | Dell | 10.100.15.32 | **SKIP** | ServiceRoot가 AMI Redfish Server 보고 + root 자격 401 — 자격 / 실 vendor 사용자 확인 필요 |
 | Dell | 10.100.15.33 | OK | iDRAC9 (10.100.64.96 OS의 BMC) |
 | Dell | 10.100.15.34 | OK | iDRAC9 |
-| HPE | 10.50.11.231 | OK | iLO5 (ProLiant DL380 Gen11) |
+| HPE | 10.50.11.231 | OK | iLO6 (ProLiant DL380 Gen11, FW 1.73) |
 | Lenovo | 10.50.11.232 | OK | XCC |
 | Cisco | 10.100.15.1 | **SKIP** | HTTP 503 (장비 다운 의심) |
 | Cisco | 10.100.15.2 | OK | TA-UNODE-G1 (CIMC) |

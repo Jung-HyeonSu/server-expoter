@@ -75,7 +75,7 @@ OS / ESXi 채널은 별도다. Redfish 채널은 OS 로컬 계정을 안 보기 
 | `N/A` (Redfish 가 안 다루는 영역) | 24 | 10% | 정상 |
 | **합계** | **240** | **100%** | |
 
-baseline 을 가진 lab tested 벤더 4개 (Dell iDRAC9 / HPE iLO6 / Lenovo XCC v2 / Cisco CIMC M4) 가 36 칸 (각 9 섹션)을 차지한다. 나머지는 코드 / 어댑터는 있지만 실장비 검증을 못한 상태.
+baseline 을 가진 lab tested 벤더 4개 (Dell iDRAC9 / HPE iLO6 / Lenovo XCC v2 / Cisco CIMC M4) 가 36 칸 (각 9 섹션)을 차지한다. Cisco M4 는 partial lab 검증이다 (`docs/13_redfish-live-validation.md` 참조). 나머지는 코드 / 어댑터는 있지만 실장비 검증을 못한 상태.
 
 ## lab 에 장비가 없는 영역
 
@@ -100,7 +100,7 @@ baseline 을 가진 lab tested 벤더 4개 (Dell iDRAC9 / HPE iLO6 / Lenovo XCC 
 | Baseline JSON 추가 | 해당 row `OK★` → `OK` |
 | `schema/sections.yml` 의 섹션 변경 | column 수정 |
 
-TTL 은 14일. 자동 측정 도구는 도입 예정.
+TTL 은 14일. 현재 수동 갱신이다 (자동 측정 도구는 없다).
 
 ## 칸을 격상 / 격하하는 절차
 

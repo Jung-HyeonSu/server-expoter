@@ -8,6 +8,10 @@
 
 > 검증일: 2026-03-18 | 검증 방식: 직접 HTTPS 호출 (curl/Python urllib)
 
+> [!NOTE]
+> 이 문서를 읽는 법: 1~14절은 2026-03-18 3대 실장비 검증 스냅샷이다. 그 안의 "수정 필요" 표시는 검증 시점 기준이며, 이후 cycle 에서 해결된 항목이 있다 (해결 내역은 `docs/19_decision-log.md`).
+> 15~16절은 이후 lab 부재(web sources) 호환성 cycle 기록이다. 현재 adapter/vendor 전체 목록은 `adapters/redfish/` 디렉터리와 `docs/22_compatibility-matrix.md` 를 본다.
+
 ## 1. 대상 장비
 
 | 벤더 | IP | 모델 | BMC | Redfish Version |
@@ -282,7 +286,7 @@ HPE Gen11은 `StorageControllers` 인라인 배열이 아닌 `Controllers` 서�
 ## 10. Collection 순서 검증
 
 코드 순서 (검증 시점 기준):
-```
+```text
 detect_vendor → gather_system → gather_bmc → gather_processors →
 gather_memory → gather_storage → gather_network → gather_firmware → gather_power
 ```
@@ -321,7 +325,10 @@ ServiceRoot를 조회했으므로 chassis_uri를 함께 반환하면 HTTP 호출
 
 모든 코드 사용 엔드포인트가 검증 기준 3대 장비에서 검증됐다.
 
-## 12. Adapter Inventory (14개 YAML)
+## 12. Adapter Inventory (검증 시점 발췌 — 현재 전체 31개)
+
+> [!NOTE]
+> 아래 표는 2026-03-18 검증 시점의 주요 adapter 발췌다. 이후 adapter 가 추가돼 현재 `adapters/redfish/` 에는 31개가 있다 (dell_idrac10, hpe_ilo6/ilo7, lenovo_xcc3, supermicro_x10~x14, cisco 3종, HPE Superdome/CSUS, lab 부재 4벤더 포함). 현재 전체 목록과 priority 는 `adapters/redfish/` 디렉터리에서 확인한다.
 
 | adapter_id | Priority | Match 조건 | 지원 섹션 |
 |------------|----------|-----------|----------|
@@ -388,7 +395,7 @@ ServiceRoot를 조회했으므로 chassis_uri를 함께 반환하면 HTTP 호출
 | vault 자동 반영 (M-C) | YES (다음 ansible run 부터) — cacheable 0 / fact_caching 0 / gather_facts: no |
 | 호환성 매트릭스 (M-D) | 240 cell 전수 분류 — OK 27 / OK★ 167 / FB 9 / GAP 7 / BLOCK 6 / N/A 24 |
 | Superdome 추가 (M-E) | hpe_superdome_flex.yml (priority=95 → 현재 101, lab 부재 web sources 14건) |
-| docs/20 신설 (M-F) | envelope 13 + sections 10 + field_dictionary 65 정본 + 3채널 비교 |
+| docs/20 신설 (M-F) | envelope 13 + sections 10 + field_dictionary 83 정본 + 3채널 비교 |
 | 학습 추출 (M-G) | (cycle 종료 시) |
 
 ### 15-3. M-D3 W1~W6 호환성 활성화 (2026-05-06)
@@ -442,7 +449,7 @@ ServiceRoot를 조회했으므로 chassis_uri를 함께 반환하면 HTTP 호출
 | vendor | generation | 사이트 BMC | 검증 commit | 결과 |
 |---|---|---|---|---|
 | Dell | iDRAC10 | 5대 (10.100.15.27 / 28 / 31 / 33 / 34) | `0a485823` | [PASS] — 8 Redfish endpoint 모두 SUCCESS |
-| HPE | iLO7 | 1대 (10.50.11.231) | `0a485823` | [PASS] |
+| HPE | iLO6 | 1대 (10.50.11.231) | `0a485823` | [PASS] |
 | Lenovo | XCC3 | 1대 (10.50.11.232) | `0a485823` | [PASS] — Accept-only header 정책 (cycle 2026-04-30 reverse regression) |
 | Cisco | UCS X-series | 1대 (10.100.15.2) | `0a485823` | [PASS] — standalone CIMC |
 

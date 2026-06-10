@@ -9,6 +9,7 @@
 | `tests/unit/` | 단위 테스트 (특정 함수 / 분기 / 회귀) | 새 함수 / 버그 fix |
 | `tests/e2e/` | E2E 테스트 (envelope 13 필드 검증) | 새 baseline / schema 변경 |
 | `tests/regression/` | Cross-channel 회귀 (cycle 2026-05-07 추가) | baseline 추가 / envelope 변경 |
+| `tests/integration/` | 오프라인 회귀 하네스 (HPE iLO 에뮬레이터 + DMTF 표준 mockup replay + robustness round 회귀). Jenkins Stage 4 (`Jenkinsfile`) 가 `-m "not live"` 로 실행 | 펌웨어 robustness 라운드 / mutation 하네스 |
 | `tests/redfish-probe/` | 실장비 probe 스크립트 (probe_redfish + deep_probe) | 새 vendor / 펌웨어 |
 | `tests/fixtures/` | mock 회귀 입력 (실 BMC 응답 sanitize) | 사이트 사고 / capture-site-fixture skill |
 | `tests/scripts/` | 보조 검증 스크립트 (conditional_review 등) | Jenkins Stage 4 보조 |
@@ -41,7 +42,7 @@
 | status enum (4 시나리오) | `test_status_enum` | rule 13 R8 |
 | sections enum | `test_sections_values_enum` | rule 13 R1 |
 | diagnosis 4-stage | `test_diagnosis_has_4stage_keys` | rule 27 |
-| Linux raw fallback (RHEL 8.10) | `tests/unit/test_redfish_*.py` 등 | rule 10 R4 |
+| Linux raw fallback (RHEL 8.10) | `tests/e2e/test_os_output.py` (rhel810_raw_fallback baseline 회귀) | rule 10 R4 |
 
 ## 사이트 fixture 캡처 (rule 21 R2)
 

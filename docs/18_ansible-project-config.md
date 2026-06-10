@@ -6,10 +6,6 @@
 > Agent 노드 자체의 설치 / 컬렉션 / Python 패키지 절차는 본 문서가 아니라 `docs/03_agent-setup.md` 5절을 참고한다.
 > 버전 요건은 `REQUIREMENTS.md` 4절.
 
-> Python 패키지, Ansible 컬렉션, 기본 설치 절차는 `docs/03_agent-setup.md` 5절 참조.
-> Agent 공통 요구사항(버전 요건)은 `REQUIREMENTS.md` 4절 참조.
-> 이 문서는 **프로젝트 고유 설정** (ansible.cfg, 플러그인 경로, 환경변수, vault, 실행 예시)을 정의한다.
-
 ---
 
 ## 1. 프로젝트 ansible.cfg
@@ -26,12 +22,15 @@ module_utils    = ./module_utils           # adapter_common
 stdout_callback = json_only
 callbacks_enabled = json_only
 gathering = explicit                        # gather_facts: no
+jinja2_native = True                        # JSON 출력 타입 보존 (int/bool 유지)
 host_key_checking = False
 interpreter_python = auto
 forks = 200
 timeout = 60
+gather_timeout = 60
 ```
 
+> 위 블록은 핵심 발췌다. 실제 `ansible.cfg` 에는 `[ssh_connection]`(pipelining + 레거시 `ssh_args`), `[winrm]`(`transport = ntlm`), `[inventory]` 섹션도 있다. 전체는 `ansible.cfg` 를 직접 본다.
 > 이 ansible.cfg는 CWD 우선순위로 `/etc/ansible/ansible.cfg`(시스템 설정)보다 우선 적용된다.
 
 ---

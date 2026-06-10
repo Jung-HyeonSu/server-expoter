@@ -7,7 +7,11 @@
 
 ---
 
-### Linux (Ubuntu)
+> [!NOTE]
+> 표의 파일 위치 — Linux: `os-gather/tasks/linux/`, Windows: `os-gather/tasks/windows/`, ESXi: `esxi-gather/tasks/`.
+> OS 채널은 `gather_*.yml` 한 파일이 수집과 fragment 생성을 같이 한다 (별도 `normalize_*.yml` 은 ESXi 일부에만 있다). 그래서 "Normalize File" 칸이 `gather_*.yml` 을 가리키기도 한다.
+
+## Linux (Ubuntu)
 
 | Output Field | Raw Source | Normalize File | 비고 |
 |---|---|---|---|
@@ -37,7 +41,7 @@
 
 ---
 
-### Windows
+## Windows
 
 | Output Field | Raw Source | Normalize File | 비고 |
 |---|---|---|---|
@@ -67,38 +71,38 @@
 
 ---
 
-### ESXi
+## ESXi
 
 | Output Field | Raw Source | Normalize File | 비고 |
 |---|---|---|---|
-| `system.os_family` | `vmware_host_facts` → `ansible_distribution` | `gather_system.yml` | vSphere API |
-| `system.distribution` | `vmware_host_facts` → `ansible_distribution` | `gather_system.yml` | vSphere API |
-| `system.version` | `vmware_host_facts` → `ansible_distribution_version` | `gather_system.yml` | vSphere API |
-| `system.kernel` | `vmware_host_facts` → build number | `gather_system.yml` | vSphere API |
-| `system.architecture` | N/A | `gather_system.yml` | vmware_host_facts가 ansible_machine 키를 제공하지 않음. null 유지. CPU 모델명 기반 추정은 하지 않음 |
-| `system.uptime_seconds` | `vmware_host_facts` → uptime | `gather_system.yml` | vSphere API |
-| `system.selinux` | N/A | `gather_system.yml` | ESXi에는 SELinux 없음 → null |
-| `system.fqdn` | `vmware_host_facts` → FQDN | `gather_system.yml` | vSphere API |
-| `hardware.vendor` | `vmware_host_facts` → `ansible_system_vendor` | `gather_hardware.yml` | vSphere API |
-| `hardware.model` | `vmware_host_facts` → `ansible_product_name` | `gather_hardware.yml` | vSphere API |
-| `hardware.serial` | `vmware_host_facts` → `ansible_product_serial` | `gather_hardware.yml` | vSphere API |
-| `hardware.uuid` | `vmware_host_facts` → `ansible_product_uuid` | `gather_hardware.yml` | vSphere API |
-| `hardware.bios_version` | `vmware_host_facts` → `ansible_bios_version` | `gather_hardware.yml` | vSphere API |
-| `hardware.bios_date` | `vmware_host_facts` → `ansible_bios_date` | `gather_hardware.yml` | vSphere API |
-| `cpu.sockets` | `vmware_host_facts` → `ansible_processor_count` | `gather_cpu.yml` | vSphere API |
-| `cpu.cores_physical` | `vmware_host_facts` → `ansible_processor_cores` | `gather_cpu.yml` | vSphere API |
-| `cpu.logical_threads` | `vmware_host_facts` → `ansible_processor_vcpus` | `gather_cpu.yml` | vSphere API |
-| `cpu.model` | `vmware_host_facts` → processor model | `gather_cpu.yml` | vSphere API |
-| `cpu.architecture` | N/A | — | system.architecture와 동일 — vmware_host_facts 미제공으로 null 유지 |
-| `memory.total_mb` | `vmware_host_facts` → `ansible_memtotal_mb` | `gather_memory.yml` | vSphere API |
-| `memory.total_basis` | hardcoded `"hypervisor_visible"` | `gather_memory.yml` | |
-| `storage.datastores[]` | `vmware_host_facts` → datastore info | `gather_storage.yml` | vSphere API |
-| `network.interfaces[]` | `vmware_host_facts` → vmkernel interfaces | `gather_network.yml` | vSphere API |
-| `network.default_gateways[]` | N/A | `normalize_network.yml` | vmware_host_facts / vsphere schema가 ansible_default_ipv4 구조 자체를 제공하지 않음. [] 유지. ESXi는 vmkernel 기반 네트워크 모델이므로 host-level default gateway 의미가 OS와 다름 |
+| `system.os_family` | `vmware_host_facts` → `ansible_distribution` | `normalize_system.yml` | vSphere API |
+| `system.distribution` | `vmware_host_facts` → `ansible_distribution` | `normalize_system.yml` | vSphere API |
+| `system.version` | `vmware_host_facts` → `ansible_distribution_version` | `normalize_system.yml` | vSphere API |
+| `system.kernel` | `vmware_host_facts` → build number | `normalize_system.yml` | vSphere API |
+| `system.architecture` | `vmware_host_facts` → `ansible_machine` | `normalize_system.yml` | `ansible_machine` 없으면 `x86_64` 기본 (ESXi 7.x/8.x 모두 x86_64) |
+| `system.uptime_seconds` | `vmware_host_facts` → uptime | `normalize_system.yml` | vSphere API |
+| `system.selinux` | N/A | `normalize_system.yml` | ESXi에는 SELinux 없음 → null |
+| `system.fqdn` | `vmware_host_facts` → FQDN | `normalize_system.yml` | vSphere API |
+| `hardware.vendor` | `vmware_host_facts` → `ansible_system_vendor` | `normalize_system.yml` | vSphere API |
+| `hardware.model` | `vmware_host_facts` → `ansible_product_name` | `normalize_system.yml` | vSphere API |
+| `hardware.serial` | `vmware_host_facts` → `ansible_product_serial` | `normalize_system.yml` | vSphere API |
+| `hardware.uuid` | `vmware_host_facts` → `ansible_product_uuid` | `normalize_system.yml` | vSphere API |
+| `hardware.bios_version` | `vmware_host_facts` → `ansible_bios_version` | `normalize_system.yml` | vSphere API |
+| `hardware.bios_date` | `vmware_host_facts` → `ansible_bios_date` | `normalize_system.yml` | vSphere API |
+| `cpu.sockets` | `vmware_host_facts` → `ansible_processor_count` | `normalize_system.yml` | vSphere API |
+| `cpu.cores_physical` | `vmware_host_facts` → `ansible_processor_cores` | `normalize_system.yml` | vSphere API |
+| `cpu.logical_threads` | `vmware_host_facts` → `ansible_processor_vcpus` | `normalize_system.yml` | vSphere API |
+| `cpu.model` | `vmware_host_facts` → processor model | `normalize_system.yml` | vSphere API |
+| `cpu.architecture` | `vmware_host_facts` → `ansible_machine` | `normalize_system.yml` | system.architecture와 동일 — 없으면 `x86_64` 기본 |
+| `memory.total_mb` | `vmware_host_facts` → `ansible_memtotal_mb` | `normalize_system.yml` | vSphere API |
+| `memory.total_basis` | hardcoded `"hypervisor_visible"` | `normalize_system.yml` | |
+| `storage.datastores[]` | `vmware_host_facts` → datastore info | `normalize_storage.yml` | vSphere API |
+| `network.interfaces[]` | `vmware_host_facts` → vmkernel interfaces | `normalize_network.yml` | vSphere API |
+| `network.default_gateways[]` | `ansible_default_ipv4.gateway` (보통 미반환) | `normalize_network.yml` | vSphere schema 가 보통 ansible_default_ipv4 를 안 줘서 `[]` 유지. ESXi는 vmkernel 기반 네트워크 모델이라 host-level default gateway 의미가 OS와 다름 |
 
 ---
 
-### 식별자 수집 경로 (serial_number / system_uuid)
+## 식별자 수집 경로 (serial_number / system_uuid)
 
 | 채널 | 수집 경로 | 비고 |
 |------|----------|------|
@@ -114,7 +118,7 @@
 
 ---
 
-### Redfish와의 차이점
+## Redfish와의 차이점
 
 | 채널 | system | hardware | bmc | cpu | memory | storage | network | firmware | users | power |
 |------|--------|----------|-----|-----|--------|---------|---------|----------|-------|-------|

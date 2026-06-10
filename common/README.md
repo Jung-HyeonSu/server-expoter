@@ -4,7 +4,7 @@
 
 ## 디렉터리 구성
 
-```
+```text
 common/
 ├── library/                    # Python 모듈 (Ansible custom modules)
 │   └── precheck_bundle.py     # 4단계 진단 (ping → port → protocol → auth)
@@ -14,7 +14,8 @@ common/
 │   └── normalize/             # Fragment 정규화 빌더 (10 파일 — 핵심 빌더 8 + 실패 경로 보조 2) — README 별도
 └── vars/
     ├── supported_sections.yml # 10 sections 정본 (rule 13 R1)
-    └── vendor_aliases.yml     # vendor 정규화 정본 (rule 50 R1)
+    ├── vendor_aliases.yml     # vendor 정규화 정본 (rule 50 R1)
+    └── status_rules.yml       # status 판정 보조 규칙
 ```
 
 ## 책임 분리
@@ -47,7 +48,7 @@ ansible-playbook ... -vvv | grep -i precheck
 ## 관련 문서
 
 - `docs/06_gather-structure.md` — 3 채널 + common 구조
-- `docs/07_normalize-flow.md` — Fragment 정규화 흐름
+- `docs/07_normalize-flow.md` — Fragment 정규화 과정
 - `docs/11_precheck-module.md` — 4단계 진단 상세
 - `docs/23_debugging-entrypoints.md` — 디버깅 매트릭스
 - `tasks/normalize/README.md` — 8 빌더 역할표

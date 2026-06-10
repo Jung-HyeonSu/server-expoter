@@ -162,4 +162,4 @@ precheck 4단계 (`docs/11`) 의 결과가 그대로 들어온다.
 | precheck 4단계 상세 | `docs/11_precheck-module.md` |
 | envelope 전체 13 필드 사전 | `docs/20_json-schema-fields.md` |
 | 실패 시 호출자 처리 | `docs/08_failure-handling.md` |
-| 출력 빌더 흐름 | `docs/07_normalize-flow.md` |
+| 출력 빌더 처리 과정 | `docs/07_normalize-flow.md` |

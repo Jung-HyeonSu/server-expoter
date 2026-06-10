@@ -45,6 +45,7 @@ pytest tests/e2e_browser/ -v --tracing on
 |---|---|---|
 | `test_jenkins_master.py` | 마스터 dashboard 도달 | [PASS] 활성 |
 | `test_jenkins_master.py` | 로그인 + jobs list | [PASS] 활성 |
+| `test_bmc_webui.py` | BMC WebUI 도달 (iDRAC/iLO/XCC/CIMC) | lab 자격 있으면 활성 (marker `bmc`/`lab`) |
 
 ## Marker 정의
 

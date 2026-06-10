@@ -41,6 +41,9 @@ python3 tests/validate_field_dictionary.py
 | `windows_baseline.json` | OS (Windows) | Windows 10 22H2 |
 | `rhel810_raw_fallback_baseline.json` | OS (Linux) | RHEL 8.10 (Python raw fallback 경로) |
 
+> [!NOTE]
+> `hpe_baseline.json` 의 `adapter_id` 는 `redfish_hpe_ilo5` 로 기록돼 있다. 이 baseline 은 `redfish_hpe_ilo6` adapter 추가(2026-05-01) 이전에 캡처됐기 때문이다. 현재 adapter 세트에서는 iLO6/FW 1.73 이 `redfish_hpe_ilo6`(P100) 로 매칭된다. baseline 재생성이 필요하다(후속 작업).
+
 ### 한글 주석본 (호출자/운영자 reference)
 
 `schema/output_examples/*.jsonc` 에 실 장비 결과 + 라인별 한글 주석본이 있다 (JSON with Comments). 각 필드 의미를 캡처 응답 위에서 바로 읽고 싶을 때 사용.

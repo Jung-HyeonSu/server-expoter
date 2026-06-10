@@ -76,7 +76,7 @@ grep -rn 'vault_password_file\|vault_identity\|VAULT_PASSWORD_FILE' ansible.cfg
 - Ansible 은 vault decrypt 결과 캐시 안 함 (default)
 - vault password file 만 있고 decrypt 결과 캐시 옵션 없으면 매 run 새로 decrypt
 
-### 4.2 자동 반영 흐름 (Mermaid)
+### 4.2 자동 반영 처리 과정 (Mermaid)
 
 > 이 그림이 말하는 것: vault/redfish/{vendor}.yml 파일을 매 ansible run 마다 새로 읽어 `_rf_accounts` 로 정규화한다. 캐시 없음 — 다음 run 자동 반영.
 
@@ -118,7 +118,7 @@ cp vault/redfish/dell.yml /tmp/dell-vault.bak
 # 2. 새 password 로 rekey
 ansible-vault rekey vault/redfish/dell.yml
 
-# 3. Jenkins credentials 갱신 (ANSIBLE_VAULT_PASSWORD)
+# 3. Jenkins credentials 갱신 (server-gather-vault-password — Secret text)
 # 4. 검증
 ansible-vault view vault/redfish/dell.yml
 ```
@@ -211,9 +211,9 @@ ansible-vault create vault/redfish/{vendor}.yml
 
 primary `infraops/Password123!` 자격이 BMC 에 없으면 (= 사이트 BMC 초기 상태) recovery 자격으로 fallback → `account_service.yml` 가 자동으로 BMC 에 `infraops` 계정 + `Password123!` 비밀번호 + `Administrator` role 로 PATCH/POST.
 
-흐름:
+처리 순서:
 
-```
+```text
 try_one_account.yml (accounts[0] primary 시도)
   └─ 401 (BMC 에 infraops 없음)
        ↓
@@ -339,7 +339,7 @@ accounts:
 2. dry-run: `ansible-playbook --syntax-check redfish-gather/site.yml`
 3. **자동 반영 3 단서 검증** (rule 27 R6) — 4.1 명령 3개
 4. 실장비 1대 대상 본 수집 시도 (target_type별)
-5. callback 결과 envelope `meta.vendor` 정상
+5. callback 결과 envelope 최상위 `vendor` 값 정상
 6. console log 평문 password 노출 없음 확인
 
 ## 10. 보안 주의

@@ -1,4 +1,4 @@
-# 07. Fragment 정규화 흐름
+# 07. Fragment 정규화 과정
 
 ## 비유부터
 
@@ -22,9 +22,9 @@ server-exporter 의 정규화는 그대로다.
 
 ---
 
-## 1. 전체 흐름
+## 1. 전체 과정
 
-```
+```text
 [ 시작 ]
    │
    │  ① 빈 보고서 준비
@@ -107,10 +107,11 @@ _all_errors:         []
 **하는 일 4가지**
 
 1. `_merged_data` 에 `_data_fragment` 를 재귀 병합
-   - dict + dict → 얕은 병합 (fragment 가 같은 키면 덮어씀)
+   - dict + dict → 1단계 재귀 병합 (top-level 키를 합치고, 같은 키의 하위 dict 도 한 단계 병합. 충돌하면 fragment 값 채택)
    - list + list → 합산
    - null + 값 → 값 채택
-2. `_all_sec_supported / collected / failed` 에 fragment 의 섹션 list 를 union 으로 추가
+2. `_all_sec_supported / collected / failed / unsupported` 에 fragment 의 섹션 list 를 union 으로 추가
+   - `unsupported` 는 vendor/펌웨어가 원래 못 주는 섹션을 명시적으로 표시할 때만 채운다. 대부분 gather 는 비워 둔다 (그래서 gather 가 만지는 fragment 는 5개)
 3. `_all_errors` 에 errors 누적
 4. fragment 5개를 **다시 비운다** (다음 태스크에 안 새도록)
 
@@ -130,6 +131,7 @@ merge 가 다 끝나면 누적 변수가 가득 차 있다. 이걸로 envelope �
 
 | 누적 변수에서 이 섹션이… | sections 값 |
 |---|---|
+| unsupported 에 **있다** | `not_supported` (vendor/펌웨어 미지원 — 우선 적용) |
 | supported 에 **없다** | `not_supported` |
 | failed 에 **있다** | `failed` |
 | collected 에 **있다** | `success` |

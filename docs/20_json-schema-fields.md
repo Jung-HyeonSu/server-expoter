@@ -91,7 +91,7 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
 | `target_type` | `os` / `esxi` / `redfish` | 어떤 채널로 수집했나 |
 | `collection_method` | `agent` / `vsphere_api` / `redfish_api` | 실제로 쓴 방법. `target_type` 에 따라 자동으로 결정 |
 | `ip` | 문자열 | 호출자가 넘긴 대상 IP. Redfish 면 BMC IP, OS 면 서버 IP |
-| `hostname` | 문자열 | 풀어낸 호스트명. fallback chain: `system.hostname → system.fqdn → ip`. 상세: 7절 hostname fallback |
+| `hostname` | 문자열 | 풀어낸 호스트명. fallback chain: `system.hostname → system.fqdn → ip`. 상세: 8절 hostname fallback |
 | `vendor` | `dell` / `hp` / `hpCsus` / `lenovo` / `supermicro` / `cisco` / `null` | 호출자 노출 표시값. 내부 canonical(`hpe`)을 `vendor_output_display`/`adapter_output_display`(vendor_aliases.yml)로 매핑. HPE 계열→`hp`, HPE CSUS 3200→`hpCsus`(camelCase 예외, 2026-06-04 ADR). 대부분 소문자 한 단어 |
 
 ### 그룹 B — 결과 (2개)
@@ -283,7 +283,7 @@ if response["data"]["hardware"].get("health") == "Critical":
 
 물리 디스크와 논리 볼륨 사이는 ID 로 묶인다.
 
-```
+```text
 physical_disks[*].id  ─┐
                        ├─ logical_volumes[*].member_drive_ids 에서 참조
 controllers[*].id  ────┤
@@ -376,7 +376,7 @@ PSU 한 대만 fault 여도 `hardware.health` 가 `Critical` 로 올라간다. �
 새 펌웨어 / 보지 못한 모델이라 정규화 못 했다는 뜻. `data.hardware.vendor` 에 BMC 원본 값이 들어있으니 거기서 사람이 판단해야 한다. (그리고 `common/vars/vendor_aliases.yml` 에 별칭 추가하면 다음부터는 정규화된다.)
 
 **Q. `hostname` 이 `ip` 와 같은 값이다. 버그인가?**
-아니다. DNS 역순회가 안 됐거나 BMC 가 fqdn 을 안 줘서 `ip` 로 fallback 한 **의도된 동작** 이다. 상세 fallback chain 은 7절 참조.
+아니다. DNS 역순회가 안 됐거나 BMC 가 fqdn 을 안 줘서 `ip` 로 fallback 한 **의도된 동작** 이다. 상세 fallback chain 은 8절 참조.
 
 **Q. `correlation.bmc_ip` 와 `correlation.host_ip` 가 같다. 버그인가?**
 Redfish 채널은 둘이 같은 게 정상이다 (BMC 를 통해 수집). OS / ESXi 채널은 다를 수 있다 (서비스 IP 와 BMC IP 가 분리되어 있으면).
@@ -386,11 +386,11 @@ Redfish 채널은 둘이 같은 게 정상이다 (BMC 를 통해 수집). OS / E
 
 ---
 
-## 7. hostname fallback chain (의도된 동작 — cycle 2026-05-07 보강)
+## 8. hostname fallback chain (의도된 동작 — cycle 2026-05-07 보강)
 
 `envelope.hostname` 은 다음 우선순위로 결정된다 (정본: `common/tasks/normalize/build_output.yml:31-33`):
 
-```
+```text
 hostname = system.hostname  OR  system.fqdn  OR  ip_fallback
 ```
 
@@ -433,7 +433,7 @@ hostname = system.hostname  OR  system.fqdn  OR  ip_fallback
 
 ---
 
-## 7-bis. RMC 멀티-노드 토폴로지 (`data.multi_node`)
+## 9. RMC 멀티-노드 토폴로지 (`data.multi_node`)
 
 > cycle 2026-05-12 (ADR-2026-05-12) 추가. HPE Compute Scale-up Server 3200 / Superdome Flex 처럼 단일 RMC (Rack Management Controller) 가 N개 chassis × N개 nPartition × 다중 Manager 를 통합 노출하는 환경 정식 지원.
 >
@@ -551,7 +551,7 @@ CSUS 3200 Redfish 모델 검수 결과 추가된 5종. 모두 `data.multi_node` 
 
 ---
 
-## 8. 더 깊이 보고 싶을 때
+## 10. 더 깊이 보고 싶을 때
 
 | 보고 싶은 것 | 파일 |
 |---|---|
@@ -562,6 +562,6 @@ CSUS 3200 Redfish 모델 검수 결과 추가된 5종. 모두 `data.multi_node` 
 | 필드 사전 원본 | `schema/field_dictionary.yml` |
 | **필드 × baseline 사용 실태 매트릭스 (4 상태)** | **`docs/ai/catalogs/FIELD_USAGE_MATRIX.md` (cycle 2026-05-11 신규, 측정 대상 #13)** |
 | 출력 조립 코드 | `common/tasks/normalize/build_output.yml` |
-| 채널 흐름 | `docs/06_gather-structure.md`, `docs/07_normalize-flow.md` |
+| 채널 처리 과정 | `docs/06_gather-structure.md`, `docs/07_normalize-flow.md` |
 | 진단 단계 상세 | `docs/11_precheck-module.md` |
 | 어댑터 매칭 규칙 | `docs/10_adapter-system.md` |

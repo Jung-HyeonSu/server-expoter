@@ -23,7 +23,7 @@
 
 에뮬레이터를 호스트 443 에 `MOCKUP_FOLDER=DL325_Gen10Plus_FC` 로 띄운 뒤:
 
-```
+```bash
 python tests/integration/capture_emulator.py --mockup DL325_Gen10Plus_FC --captured <YYYY-MM-DD>
 ```
 

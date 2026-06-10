@@ -39,9 +39,9 @@ Jenkins Agent 는 로케이션 (이천 / 청주 / 용인) 별로 구성하며, �
 
 ### Redis (마스터 노드에 함께 설치)
 
-호스트 약 1만 대 기준:
+호스트 약 1만 대 기준 (추정):
 
-```
+```text
 호스트당 facts 평균 20~50KB × 10,000대 = 200~500MB
 여유분 포함 → maxmemory 1GB
 eviction policy: allkeys-lru
@@ -210,12 +210,12 @@ EOF
 Windows 에서 커밋된 `.sh` 파일은 Git 에 실행 권한(100755)이 기록되지 않아
 Jenkins checkout 후 Ansible 동적 인벤토리가 동작하지 않는다.
 
-신규 프로젝트를 생성하거나 `inventory.sh` / `my_inventory.sh` 를 새로 추가한 경우,
+세 채널의 동적 인벤토리 스크립트(`os-gather/inventory.sh`, `esxi-gather/inventory.sh`, `redfish-gather/inventory.sh`)를 새로 추가한 경우,
 아래 명령으로 실행 권한을 Git 에 기록한 뒤 커밋한다.
 
 ```bash
 # 프로젝트 clone 후
-git update-index --chmod=+x inventory/my_inventory.sh   # 또는 {channel}-gather/inventory.sh
+git update-index --chmod=+x os-gather/inventory.sh esxi-gather/inventory.sh redfish-gather/inventory.sh
 git commit -m "fix: inventory 스크립트 실행 권한 추가"
 git push
 ```

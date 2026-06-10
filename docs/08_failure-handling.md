@@ -204,4 +204,4 @@ else:  # status == "success"
 | success / partial / failed / not_supported 4가지 응답 예시 | `docs/09_output-examples.md` |
 | precheck 4단계 결과 해석 | `docs/11_precheck-module.md` |
 | diagnosis / meta / correlation 상세 | `docs/12_diagnosis-output.md` |
-| Fragment 누적 흐름 | `docs/07_normalize-flow.md` |
+| Fragment 누적 과정 | `docs/07_normalize-flow.md` |

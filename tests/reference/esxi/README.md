@@ -31,7 +31,7 @@
 
 ## 디렉터리 컨벤션
 
-```
+```text
 tests/reference/esxi/<ip-with-underscore>/
 ├── _manifest.json
 ├── pyvmomi_host_dump.json

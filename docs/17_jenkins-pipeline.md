@@ -9,11 +9,11 @@
 
 ## 1. Jenkinsfile 분석 결과
 
-`Jenkinsfile` v3 기반 — 포털 → Jenkins → Ansible → JSON stdout → 포털 파이프라인.
+`Jenkinsfile` 기반 — 포털 → Jenkins → Ansible → JSON stdout → 포털 파이프라인.
 
 ### 파이프라인 구조
 
-```
+```text
 parameters (loc, target_type, inventory_json)
   → Stage 1: Validate (파라미터 검증)
   → Stage 2: Gather (Ansible 실행)
@@ -26,10 +26,13 @@ parameters (loc, target_type, inventory_json)
 
 | Stage | 도구 | 게이트 | 비고 |
 |-------|------|--------|------|
-| Validate Schema | `python3 tests/validate_field_dictionary.py` | **FAIL** | 실패 시 빌드 FAILURE (Build #7-9 연속 PASS 확인 후 상향) |
+| Validate Schema | `python3 tests/validate_field_dictionary.py` | **FAIL** | 실패 시 빌드 FAILURE |
 | E2E Regression | `pytest tests/e2e/` + `pytest tests/integration/ -m "not live"` (별도 호출, 둘 중 하나라도 FAIL 시 stage 실패) | **FAIL** | tests/e2e=baseline/fixture 회귀, tests/integration=HPE 에뮬레이터 오프라인 회귀 하네스(2026-06-08 추가, 에뮬레이터 불필요·완전 오프라인). 별도 호출 이유=양쪽이 top-level `conftest` 충돌. |
 
 Stage 3/4는 venv Python을 사용한다 (`. /opt/ansible-env/bin/activate`).
+
+> [!NOTE]
+> 파이프라인은 두 종류다. `Jenkinsfile` 과 `Jenkinsfile_portal` 은 Stage 1~3 이 같고 Stage 4 만 다르다 — `Jenkinsfile` = E2E Regression, `Jenkinsfile_portal` = Callback(호출자 통보). 이 문서는 `Jenkinsfile` 기준이다.
 
 ## 2. Jenkins 파라미터
 
@@ -40,11 +43,10 @@ Stage 3/4는 venv Python을 사용한다 (`. /opt/ansible-env/bin/activate`).
 | `inventory_json` | text | 필수 | 호출자가 전달하는 호스트 JSON 배열 (os/esxi: `service_ip`, redfish: `bmc_ip`, fallback: `ip`) |
 
 ### inventory_json 형식
-```json
+```jsonc
+// os/esxi 는 service_ip, redfish 는 bmc_ip 키를 쓴다. 둘 다 없으면 ip 로 fallback.
 [
-  {
-    "ip": "10.50.11.232"
-  }
+  { "service_ip": "10.50.11.232" }
 ]
 ```
 
@@ -114,7 +116,7 @@ ansiblePlaybook(
 | 네트워크 | BMC 대역 (10.50.x.x) 접근 가능 |
 | 디스크 | workspace + ansible 로그 공간 |
 
-## 8. 검증 시점 미완료 설정
+## 8. 검증 시점(2026-03-18) 미완료 설정
 
 | # | 항목 | 영향 | 우선순위 |
 |---|------|------|---------|
@@ -145,12 +147,12 @@ post {
 
 | 항목 | 상태 | 비고 |
 |------|------|------|
-| Jenkinsfile 구조 | ✅ 정상 | v3 — 검증 완료 |
-| 파라미터 검증 | ✅ 정상 | loc, target_type, inventory_json 검증 |
-| ansible.cfg | ✅ 생성 완료 | 2026-03-18 생성 |
-| Agent 환경 | ✅ 확인 완료 | 2026-03-27 SSH 접속 확인 (Python 3.12.3, ansible-core 2.20.3) |
-| Credentials | ⚠️ 미등록 | vault-pass 등록 필요 |
-| 컬렉션 설치 | ✅ 확인 완료 | 2026-03-27 ansible-galaxy list 확인 |
+| Jenkinsfile 구조 | [OK] 정상 | 검증 완료 |
+| 파라미터 검증 | [OK] 정상 | loc, target_type, inventory_json 검증 |
+| ansible.cfg | [OK] 생성 완료 | 2026-03-18 생성 |
+| Agent 환경 | [OK] 확인 완료 | 2026-03-27 SSH 접속 확인 (Python 3.12.3, ansible-core 2.20.3) |
+| Credentials | [WARN] 미등록 | vault-pass 등록 필요 |
+| 컬렉션 설치 | [OK] 확인 완료 | 2026-03-27 ansible-galaxy list 확인 |
 
 ## 10. 준비 순서
 

@@ -27,7 +27,7 @@
 
 호출자가 Dell 서버 BMC IP 를 넘긴 시점부터 어떤 adapter 가 어떻게 선택되는지.
 
-```
+```text
 [ Step 1 ] precheck — 어디까지 닿는지 확인
     ping(10.50.11.162) → OK
     TCP 443 응답 → OK
@@ -58,7 +58,7 @@
     ├─ 매칭된 adapter 들에 점수 매기기 (3절 공식 참조)
     │   - dell_idrac9.yml  = 100,345
     │   - dell_idrac.yml   =  10,120
-    │   - redfish_generic  =     -40
+    │   - redfish_generic  =    -400
     │
     └─ 최고 점수 → dell_idrac9.yml 선택
     │
@@ -81,8 +81,9 @@
 
 ### 공식
 
-```
-score = priority × 1000  +  specificity × 10  +  match_score  -  generic 감점(40)
+```text
+score = priority × 1000  +  specificity × 10  +  match_score
+        (generic adapter 는 specificity 에 −40 이 포함 → 총점에 −400 기여)
 ```
 
 ### 각 요소
@@ -92,15 +93,15 @@ score = priority × 1000  +  specificity × 10  +  match_score  -  generic 감�
 | `priority` | YAML 의 `priority:` 값 | 0(generic) / 10(기본 vendor) / 50(세대별) / 100(최신 세대) |
 | `specificity` | match 조건 개수 / 종류 | vendor 만 = 10, vendor+firmware = 30 |
 | `match_score` | 실제 매칭 성공 보너스 | vendor +20, model +25, firmware +25 |
-| `generic` 감점 | YAML 의 `generic: true` 면 −40 | fallback 용이라 점수 낮춤 |
+| `generic` | YAML 의 `generic: true` 면 specificity 에 −40 | fallback 용이라 점수 낮춤 (총점 −400 기여) |
 
 ### 예시 — Dell iDRAC 9 vs Dell 기본
 
-| adapter | priority | specificity | match | generic 감점 | 합계 |
-|---|---:|---:|---:|---:|---:|
-| `dell_idrac9.yml` | 100×1000 | (10+20)×10 | 20+25 | 0 | **100,345** |
-| `dell_idrac.yml` | 10×1000 | 10×10 | 20 | 0 | **10,120** |
-| `redfish_generic.yml` | 0×1000 | 0×10 | 0 | −40 | **−40** |
+| adapter | priority | specificity | match | 합계 |
+|---|---:|---:|---:|---:|
+| `dell_idrac9.yml` | 100×1000 | (10+20)×10 | 20+25 | **100,345** |
+| `dell_idrac.yml` | 10×1000 | 10×10 | 20 | **10,120** |
+| `redfish_generic.yml` | 0×1000 | −40×10 | 0 | **−400** |
 
 세대별 (`dell_idrac9`) 이 항상 기본 (`dell_idrac`) 보다 압도적으로 높게 나오게 priority 차등을 둔다. 이게 깨지면 (예: dell_idrac9 의 priority 를 5 로 두면) 기본이 뽑히는 이상 동작이 생긴다.
 
@@ -310,5 +311,8 @@ adapter 가 매칭은 됐는데 normalize task 가 그 섹션을 못 채운 경�
 | Lenovo | SR650 V2 (XCC, FW 5.70) | `redfish_lenovo_xcc` (P100) | 완료 |
 | Supermicro | — | 어댑터만 존재 | 미검증 |
 | Cisco | UCS C220 M4 (CIMC 4.1(2g)) | `redfish_cisco_cimc` | M4 partial lab 검증 (M5~M8 미검증) |
+
+> [!NOTE]
+> 위 HPE 행은 현재 코드 기준 매칭이다. 커밋된 `schema/baseline_v1/hpe_baseline.json` 은 `redfish_hpe_ilo6` adapter 추가(2026-05-01) 이전 캡처라 `redfish_hpe_ilo5` 를 기록한다. baseline 재생성이 필요하다(후속 작업).
 
 상세는 `docs/13_redfish-live-validation.md`.

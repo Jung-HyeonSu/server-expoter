@@ -8,6 +8,9 @@
 >
 > **구조**: Redis 는 Jenkins 마스터에 1대만 설치하고, 모든 Agent 가 마스터의 Redis 에 붙는다.
 
+> [!NOTE]
+> server-exporter 의 프로젝트 `ansible.cfg` 는 `gathering = explicit` 라 fact 캐싱을 쓰지 않는다. 위 캐싱 설명은 Agent 공통 `/etc/ansible/ansible.cfg` 를 쓰는 외부 실행에 해당한다. 프로젝트 빌드 경로에서는 Redis 캐시가 비어 보이는 게 정상이다 (`docs/18_ansible-project-config.md` 참조).
+
 > 모든 명령은 **root** 또는 **sudo** 로 실행한다.
 
 ---

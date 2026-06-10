@@ -9,7 +9,7 @@
 다음 3 문서를 먼저 본다. 본문에서 가정하는 개념들이다.
 
 - `docs/06` — 수집 구조 한눈에 (왜 채널이 셋인지)
-- `docs/07` — Fragment 흐름 (왜 자기 영역만 만져야 하는지)
+- `docs/07` — Fragment 정규화 과정 (왜 자기 영역만 만져야 하는지)
 - `docs/10` — Adapter 시스템 (벤더 차이를 어떻게 흡수하는지)
 
 이 절차를 그대로 따르면 Fragment 철학을 위반하지 않고, 기존 3 채널에 영향 없이 새 수집 항목을 붙일 수 있다.
@@ -184,8 +184,8 @@ echo -e "---\nansible_user: CHANGE_ME\nansible_password: CHANGE_ME" > vault/${GA
 
 | 다음 작업 | 문서 |
 |---|---|
-| Fragment 철학 (왜 자기 섹션만 만들어야 하는가) | [06_gather-structure.md](06_gather-structure.md) |
-| Normalize 흐름 | [07_normalize-flow.md](07_normalize-flow.md) |
+| 수집 구조 (왜 채널이 셋인가) | [06_gather-structure.md](06_gather-structure.md) |
+| Fragment 정규화 과정 (왜 자기 섹션만 만지나) | [07_normalize-flow.md](07_normalize-flow.md) |
 | Adapter 시스템 (점수 계산) | [10_adapter-system.md](10_adapter-system.md) |
 | 새 벤더 추가 시 검증 절차 | [13_redfish-live-validation.md](13_redfish-live-validation.md) |
 
@@ -240,9 +240,9 @@ lab 환경에 vendor 장비 없을 때 (예: cycle 2026-05-01 Huawei/Inspur/Fuji
 
 `add-vendor-no-lab` skill 자동화 — lab 부재 vendor 추가 시 호출.
 
-### Priority 값 결정 흐름도
+### Priority 값 결정 절차
 
-```
+```text
 신 vendor / 신 세대 priority 결정
   ↓
 같은 vendor 의 기존 priority 확인

@@ -6,7 +6,7 @@
 
 - `redfish_gather.py` — 단일 모듈, 약 4,500 줄 (2026-06 기준)
 
-## 함수 흐름 인덱스 (호출 endpoint 별)
+## 함수 인덱스 (호출 endpoint 별)
 
 > 위치는 모듈이 커지면서 변하므로 함수명으로 grep 한다 (예: `grep -n 'def gather_power' redfish_gather.py`).
 
