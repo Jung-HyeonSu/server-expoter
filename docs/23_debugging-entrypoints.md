@@ -258,8 +258,8 @@ community.vmware 로그 → `-vvv` 출력의 `vmware_*` 모듈 응답.
 
 **A 고치고 B 깨지는 패턴 차단**:
 
-1. **Cross-channel envelope 회귀** (Phase A 신설): `pytest tests/regression/`
-   - 13 검증 그룹 × 9 baseline + 채널 커버리지 3 = 120 테스트
+1. **Cross-channel envelope 회귀** (Phase A 신설): `pytest tests/regression/test_cross_channel_consistency.py`
+   - 13 검증 그룹 × 9 baseline + 채널 커버리지 3 = 120 테스트 (`tests/regression/` 디렉터리 전체는 158 — HBA/IB·vendor-display·csus-mock 포함)
 2. **Jinja2 namespace 회귀 차단** (Phase B): `pre_commit_jinja_namespace_check.py`
 3. **Fragment skeleton sync 차단** (Phase B): `pre_commit_fragment_skeleton_sync.py`
 4. **사이트 fixture 캡처** (rule 21 R2): `capture-site-fixture` skill
@@ -268,7 +268,7 @@ community.vmware 로그 → `-vvv` 출력의 `vmware_*` 모듈 응답.
 **회귀 검증 명령** (PR 머지 전):
 ```bash
 pytest tests/                                      # 전체 회귀
-pytest tests/regression/                           # cross-channel
+pytest tests/regression/                           # 회귀 전체 158 (cross-channel 120 포함)
 python scripts/ai/verify_harness_consistency.py    # 하네스 일관성
 python scripts/ai/verify_vendor_boundary.py        # vendor 경계 (rule 12)
 ansible-playbook --syntax-check os-gather/site.yml  # 3 채널 syntax
