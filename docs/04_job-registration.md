@@ -41,8 +41,8 @@ RBAC Pattern 과 일치해야 권한이 자동 적용된다.
 
 ### 수집 파이프라인 Script Path
 
-Jenkinsfile 은 루트에 1개만 존재한다. 3개 Job 모두 동일한 Script Path 를 사용하고
-`target_type` 파라미터로 gather 종류를 구분한다.
+수집 파이프라인은 루트의 `Jenkinsfile` 을 쓴다. 3개 gather Job 모두 이 `Jenkinsfile` 을 Script Path 로 사용하고
+`target_type` 파라미터로 gather 종류를 구분한다. (루트에는 호출자 통보용 `Jenkinsfile_portal` 도 있으나 별도 callback 파이프라인이다 — docs/17 참조.)
 
 | Job 이름 | Script Path | target_type 기본값 |
 |----------|-------------|-------------------|

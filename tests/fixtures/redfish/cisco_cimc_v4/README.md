@@ -20,7 +20,7 @@
 ## 매칭 검증
 
 - `cisco_cimc.yml` (priority=100) 매칭 — firmware_patterns "^[4-6]\\." 매치
-- model_patterns "C220 M5" / "UCSC-C220 M5" 매칭
+- model_patterns "UCSC-C[0-9]+[ -]M[4-8]" / "C240[ -]M[4-8]" 매칭 (실제 fixture Model: `UCSC-C240-M6L`)
 
 ## 기존 lab fixture
 

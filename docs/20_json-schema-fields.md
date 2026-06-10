@@ -92,7 +92,7 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
 | `collection_method` | `agent` / `vsphere_api` / `redfish_api` | 실제로 쓴 방법. `target_type` 에 따라 자동으로 결정 |
 | `ip` | 문자열 | 호출자가 넘긴 대상 IP. Redfish 면 BMC IP, OS 면 서버 IP |
 | `hostname` | 문자열 | 풀어낸 호스트명. fallback chain: `system.hostname → system.fqdn → ip`. 상세: 8절 hostname fallback |
-| `vendor` | `dell` / `hp` / `hpCsus` / `lenovo` / `supermicro` / `cisco` / `null` | 호출자 노출 표시값. 내부 canonical(`hpe`)을 `vendor_output_display`/`adapter_output_display`(vendor_aliases.yml)로 매핑. HPE 계열→`hp`, HPE CSUS 3200→`hpCsus`(camelCase 예외, 2026-06-04 ADR). 대부분 소문자 한 단어 |
+| `vendor` | `dell` / `hp` / `hpCsus` / `lenovo` / `supermicro` / `cisco` / `null` | 호출자 노출 표시값. 내부 canonical(`hpe`)을 `vendor_output_display`/`adapter_output_display`(vendor_aliases.yml)로 매핑. HPE 계열→`hp`, HPE Compute Scale-up 패밀리(CSUS 3200 + Superdome Flex)→`hpCsus`(camelCase 예외, 2026-06-04 ADR). 대부분 소문자 한 단어 |
 
 ### 그룹 B — 결과 (2개)
 

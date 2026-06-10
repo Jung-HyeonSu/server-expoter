@@ -89,11 +89,12 @@ _errors_fragment:             []          # 수집 중 본 오류 (이번엔 없
 수집 맨 처음에 한 번만 호출. 누적 변수를 비운다.
 
 ```yaml
-_merged_data:        {}     # data 알맹이 들어갈 빈 그릇
-_all_sec_supported:  []
-_all_sec_collected:  []
-_all_sec_failed:     []
-_all_errors:         []
+_merged_data:         {}    # data 그릇 (실제로는 sections 별 빈 skeleton 으로 초기화 — storage/network 하위 구조 포함)
+_all_sec_supported:   []
+_all_sec_collected:   []
+_all_sec_failed:      []
+_all_sec_unsupported: []    # vendor/펌웨어 미지원 섹션 (cycle 2026-05-01)
+_all_errors:          []
 ```
 
 빠뜨리면 이전 호스트의 데이터가 남아 다음 호스트에 섞일 수 있다.

@@ -45,9 +45,8 @@
 tests/reference/os/<distro>/<ip-with-underscore>/
 ├── _manifest.json
 ├── _summary.txt
-├── ansible_setup.json
-├── cmd_<name>.txt   (Linux)
-└── ps_<name>.txt    (Windows)
+├── ansible_setup.json   (Linux) / setup.json (Windows)
+└── cmd_<name>.txt        (Linux shell + Windows PowerShell 명령 출력)
 ```
 
 각 파일 헤더:

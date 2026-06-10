@@ -148,11 +148,11 @@ site.yml (Play 1개)
   tasks/collect_config.yml            → _e_raw_config  (vSphere API: HostNetworkSystem 등)
   tasks/collect_datastores.yml        → _e_raw_ds      (vSphere API: HostDatastoreSystem)
   tasks/collect_dns.yml               → DNS 보강
-  tasks/collect_network_extended.yml  → NIC / vmnic 상세 보강
-  tasks/collect_runtime.yml           → 가동시간 / 상태 보강
   tasks/normalize_system.yml          → system / hardware / cpu / memory fragment → merge
   tasks/normalize_network.yml         → network fragment                          → merge
   tasks/normalize_storage.yml         → storage fragment (datastore / 볼륨 포함)   → merge
+  tasks/collect_network_extended.yml  → NIC / vmnic 상세 보강 (normalize 후)
+  tasks/collect_runtime.yml           → 가동시간 / 상태 보강 (normalize 후)
   build_*  → output
 ```
 
@@ -216,7 +216,7 @@ storage
 
 > [!NOTE]
 > 위 "매칭 adapter" 와 vault 는 내부 canonical 이름(`hpe` 등)을 쓴다.
-> 호출자에게 나가는 envelope `vendor` 값은 표시값으로 한 번 더 매핑된다 — HPE → `hp`, HPE CSUS 3200 → `hpCsus`, 나머지는 canonical 그대로. 상세는 `docs/20_json-schema-fields.md`.
+> 호출자에게 나가는 envelope `vendor` 값은 표시값으로 한 번 더 매핑된다 — HPE → `hp`, HPE Compute Scale-up 패밀리(CSUS 3200 + Superdome Flex) → `hpCsus`, 나머지는 canonical 그대로. 상세는 `docs/20_json-schema-fields.md`.
 
 ---
 
@@ -225,7 +225,7 @@ storage
 `callback_plugins/json_only.py` 가 stdout 출력을 통제한다.
 
 - Ansible 의 `PLAY / TASK / ok / changed` 같은 진행 메시지를 모두 차단
-- `name: "OUTPUT: ..."` 으로 시작하는 task 의 `msg` 만 stdout 으로 흘려보냄
+- 이름이 정확히 `OUTPUT` 인 task 의 `msg` 만 stdout 으로 흘려보냄 (접두사 매칭 아님 — `name: OUTPUT` 그대로. `ANSIBLE_JSON_OUTPUT_TASK` 로 변경 가능)
 
 호출자가 stdout 한 덩어리를 그대로 JSON 파싱하면 된다. 별도 artifact 도 가능.
 

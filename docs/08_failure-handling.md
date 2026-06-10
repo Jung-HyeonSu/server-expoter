@@ -39,12 +39,12 @@ rescue:
 
 always:
   # ── 무슨 일이 있어도 마지막에 실행 ──
-  - name: "OUTPUT: <channel>"
+  - name: OUTPUT
     debug:
       msg: "{{ _output | to_json }}"
 ```
 
-핵심은 `always` 블록의 OUTPUT 태스크다. block 이 끝까지 갔든, rescue 로 빠졌든 **반드시 한 번** 실행된다. callback plugin (`json_only.py`) 이 이 태스크의 msg 만 stdout 으로 흘려보낸다.
+핵심은 `always` 블록의 OUTPUT 태스크다. block 이 끝까지 갔든, rescue 로 빠졌든 **반드시 한 번** 실행된다. callback plugin (`json_only.py`) 이 이 태스크의 msg 만 stdout 으로 흘려보낸다. 태스크 이름은 정확히 `OUTPUT` 이어야 한다 (`json_only.py` 가 이름이 정확히 `OUTPUT` 인 태스크만 캡처 — `ANSIBLE_JSON_OUTPUT_TASK` 로 변경 가능).
 
 ---
 

@@ -37,7 +37,7 @@
 | RHEL 9.6 | 10.100.64.165 | OK | 106 + ansible_setup | 856K |
 | Rocky 9.6 | 10.100.64.169 | OK | 106 + ansible_setup | 818K |
 | Ubuntu 24.04 | 10.100.64.167 | OK | 106 + ansible_setup | 950K |
-| Windows 10 | 10.100.64.120 | **FAIL** | 0 | 0 | WinRM 5986/5985 모두 거부, NTLM(MD4) 미지원 (rule 96 follow-up) |
+| Windows Server 2022 | 10.100.64.135 | OK | 28 + setup | 4.3M |
 | RHEL bare-metal | 10.100.64.96 | OK | 106 + ansible_setup | 1.5MB |
 
 ### ESXi

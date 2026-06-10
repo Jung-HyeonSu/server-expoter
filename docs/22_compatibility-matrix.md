@@ -37,14 +37,14 @@ OS / ESXi 채널은 별도다. Redfish 채널은 OS 로컬 계정을 안 보기 
 | vendor | generation | system | hardware | bmc | cpu | memory | storage | network | firmware | users | power |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | **Dell** | iDRAC 7 | FB | FB | FB | FB | FB | FB | FB | FB | N/A | FB |
-| **Dell** | iDRAC 8 | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | N/A | GAP |
+| **Dell** | iDRAC 8 | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | N/A | FB |
 | **Dell** | iDRAC 9 | OK | OK | OK | OK | OK | OK | OK | OK | N/A | OK |
 | **Dell** | iDRAC 10 | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | N/A | OK★ |
-| **HPE** | iLO 4 | OK★ | OK★ | OK★ | OK★ | OK★ | GAP | OK★ | OK★ | N/A | GAP |
+| **HPE** | iLO 4 | OK★ | OK★ | OK★ | OK★ | OK★ | FB | OK★ | OK★ | N/A | FB |
 | **HPE** | iLO 5 | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | N/A | OK★ |
 | **HPE** | iLO 6 | OK | OK | OK | OK | OK | OK | OK | OK | N/A | OK |
 | **HPE** | iLO 7 | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | N/A | OK★ |
-| **Lenovo** | IMM2 / XCC1 (legacy) | OK★ | OK★ | OK★ | OK★ | OK★ | GAP | OK★ | OK★ | N/A | GAP |
+| **Lenovo** | IMM2 / XCC1 (legacy) | OK★ | OK★ | OK★ | OK★ | OK★ | FB | OK★ | OK★ | N/A | FB |
 | **Lenovo** | XCC v2 | OK | OK | OK | OK | OK | OK | OK | OK | N/A | OK |
 | **Lenovo** | XCC v3 (OpenBMC) | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | OK★ | N/A | OK★ |
 | **Supermicro** | X9 | BLOCK | BLOCK | BLOCK | BLOCK | BLOCK | GAP | BLOCK | GAP | N/A | GAP |
@@ -69,8 +69,8 @@ OS / ESXi 채널은 별도다. Redfish 채널은 OS 로컬 계정을 안 보기 
 |---|---:|---:|---|
 | `OK` (lab 검증 완료) | 36 | 15% | 가장 신뢰 |
 | `OK★` (코드는 있고 baseline 만 부재) | 157 | 65% | 보통 동작 |
-| `FB` (옛 펌웨어 fallback) | 9 | 4% | 사용 가능 |
-| `GAP` (명시 미지원) | 8 | 3% | not_supported 응답 |
+| `FB` (옛 펌웨어 fallback) | 14 | 6% | 사용 가능 |
+| `GAP` (명시 미지원) | 3 | 1% | not_supported 응답 |
 | `BLOCK` (미검증) | 6 | 2.5% | 신규 추가 필요 |
 | `N/A` (Redfish 가 안 다루는 영역) | 24 | 10% | 정상 |
 | **합계** | **240** | **100%** | |
@@ -82,9 +82,9 @@ baseline 을 가진 lab tested 벤더 4개 (Dell iDRAC9 / HPE iLO6 / Lenovo XCC 
 | 영역 | 부재 사유 | 보완 |
 |---|---|---|
 | Dell iDRAC 7 (9 FB) | EOL 펌웨어 | 옛 펌웨어 fallback 코드로 대응 중 |
-| Dell iDRAC 8 (1 GAP — power) | iDRAC 8 PowerSubsystem 스펙 불명 | adapter capabilities 추가 후보 |
-| HPE iLO 4 (2 GAP) | EOL 펌웨어 + partial PowerSubsystem | adapter capabilities 추가 후보 |
-| Lenovo XCC1 (2 GAP) | legacy IMM2 | XCC1 별도 세대 명시 + fallback 추가 |
+| Dell iDRAC 8 (power FB) | M-D3 W1 PowerSubsystem fallback 적용 (cycle 2026-05-06) | lab 도입 시 baseline 캡처 |
+| HPE iLO 4 (storage/power FB) | M-D3 W2/W3 fallback 적용 (cycle 2026-05-06) | lab 도입 시 baseline 캡처 |
+| Lenovo IMM2/XCC1 (storage/power FB) | M-D3 W4/W5 fallback 적용 (cycle 2026-05-06) | lab 도입 시 baseline 캡처 |
 | Supermicro X9 (6 BLOCK) | EOL + lab fixture 부재 | lab 도입 cycle 에서 fixture 캡처 필요 |
 | Supermicro X9 (3 GAP) | OEM 미지원 generation | adapter capabilities 추가 후보 |
 | 신규 4 vendor (Huawei / Inspur / Fujitsu / Quanta) | lab 부재 + vault 미설정 | vendor 공식 docs / DMTF 스펙 기반으로 작성 |

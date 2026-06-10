@@ -8,13 +8,14 @@
 - Sources: `https://pubs.lenovo.com/xcc/` / `https://lenovopress.lenovo.com/lp1604-lenovo-xclarity-controller-xcc`
 - Generation: XCC2 (ThinkSystem V3) 2020-2024
 
-## 시뮬레이션 시나리오
+## 시뮬레이션 시나리오 (의도)
 
-- ServiceRoot.RedfishVersion: "1.17.0" (DSP0268 v1.10+, XCC2 시기)
-- XCC version: "TAOT 3.10" (XCC2 V3 모델 펌웨어 prefix)
+- ServiceRoot.RedfishVersion: "1.17.0" (DSP0268 v1.10+, XCC2 시기) — `service_root.json` 에 수록
+- XCC version: "TAOT 3.10" (XCC2 V3 모델 펌웨어 prefix) — manager FirmwareVersion 의도값
 - Standard storage path
-- Power deprecated only (PowerSubsystem 미도입 시기 또는 dual)
 - Oem.Lenovo namespace
+
+> 이 fixture 는 최소 구성이다 (`service_root.json` + `system.json` 2개, `manager.json` 없음). 따라서 "TAOT 3.10" firmware / Power 항목은 의도한 변형이며 fixture 에 전부 수록되진 않았다 — vendor/firmware detection 검증용 최소 쌍.
 
 ## HTTP 헤더 정책 (rule 25 R7-A-1)
 

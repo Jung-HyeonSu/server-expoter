@@ -26,12 +26,13 @@
 
 ### cycle 2026-06-09 (ADR-2026-06-09) 신규 — CSUS 3200 모델 5종 누락분 fixture
 
-> 사용자 제시 CSUS 3200 Redfish 모델 검수 → boot / thermal / log_services / CompositionService / Fabrics 추가.
+> 사용자 제시 CSUS 3200 Redfish 모델 검수 → boot / thermal / power / log_services / CompositionService / Fabrics 추가.
 > `test_csus_fixture_replay.py` 가 @odata.id 로 키잉해 `_collect_multi_node_topology` end-to-end 재생.
 
 | 파일 | Redfish 리소스 | Source | Confidence |
 |---|---|---|---|
 | chassis_base_thermal.json / chassis_expansion{1,2}_thermal.json | `Chassis/{id}/Thermal` | DMTF Thermal.v1 | MED |
+| chassis_base_power.json / chassis_expansion{1,2}_power.json | `Chassis/{id}/Power` | DMTF Power.v1 | MED |
 | manager_rmc_logservices.json + manager_rmc_logservice_{iml,iel}.json | `Managers/RMC/LogServices` | DMTF LogServiceCollection (IML/IEL 추정 — HPE 관례) | MED |
 | compositionservice.json + resourceblocks_collection.json + resourceblock_block{0,1,2}.json | `CompositionService` + `ResourceBlocks` | DMTF CompositionService/ResourceBlock + HPE CSUS Admin Guide (각 RB ↔ chassis) | MED |
 | fabrics_collection.json + fabric_flexgrid.json + switches_collection.json + switch_switch{0,1}.json + endpoints_collection.json + endpoint_endpoint{0,1}.json | `Fabrics` + FlexGrid (Switches/Endpoints) | DMTF Fabric/Switch/Endpoint + HPE CSUS architecture (NUMAlink) | LOW — FabricType=PCIe placeholder (DMTF enum 에 NUMAlink 부재) |

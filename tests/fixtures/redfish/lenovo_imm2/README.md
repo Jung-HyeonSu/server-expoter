@@ -13,8 +13,8 @@
 - ServiceRoot.RedfishVersion: "1.0.2" (DSP0268 v1.0+, IMM2 시기)
 - Manufacturer: "Lenovo" (IBM 인수 후. legacy 시스템은 "IBM" 가능)
 - Storage: SimpleStorage path (IMM2 일부 펌웨어 — Volumes/Storage 미지원)
-- Power deprecated path only
-- Oem.Lenovo namespace
+
+> 이 fixture 는 최소 구성이다 (`service_root.json` + `system.json` 2개). system.json 에는 Oem 블록이 없고 Power/chassis fixture 도 없다 — vendor/firmware detection 검증용 최소 쌍.
 
 ## 매칭 검증
 
