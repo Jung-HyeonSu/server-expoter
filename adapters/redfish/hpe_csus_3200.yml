@@ -13,8 +13,8 @@
 #     → Superdome Flex 후속 / 동일 RMC 관리 모델 / Oem.Hpe namespace 공유 (강한 추정)
 #   - 관리 구조 = RMC (Rack Management Controller) primary + PDHC (per-chassis) + RMP (redundancy)
 #   - RMC Redfish API 표준 지원 — HPE OneView profile + 표준 Redfish 동시
-#   - Multi-partition (nPAR) — Superdome Flex 상속. 첫 partition (Partition0) 만 수집.
-#     전체 partition 수집은 별도 cycle (Systems Members[0] 단일 진입 패턴 변경 필요).
+#   - Multi-partition (nPAR) — Superdome Flex 상속. cycle 2026-05-29 이후 전 partition 수집
+#     (gather_systems_multi). top-level data.* 는 Partition0 representative, 전 partition 은 data.multi_node.
 #   - 4-socket × 1~4 chassis 모듈식. 캐비닛 4개까지 단일 시스템 결합.
 #   - DDR5 128 GB DIMM 기준 128 GB ~ 32 TB shared memory.
 #   - Oem.Hpe namespace 동일 → HPE 공통 OEM tasks 재사용 (collect_oem.yml / normalize_oem.yml).
@@ -79,7 +79,7 @@ match:
 
 capabilities:
   sections_supported:
-    - system     # /Systems/Partition<N> — 첫 partition (Partition0) 만 수집
+    - system     # /Systems/Partition<N> — 전 partition 수집 (cycle 2026-05-29), top-level data.* 는 Partition0 representative
     - hardware   # /Chassis/<id> — RMC aggregation (Base + Expansion chassis 최대 4)
     - bmc        # /Managers/<RMC_id> — RMC primary (per-chassis PDHC 는 보조)
     - cpu        # Systems.Processors (Intel Xeon SP)
@@ -94,7 +94,7 @@ collect:
   strategy: standard_plus_oem
   standard_tasks: "redfish-gather/tasks/collect_standard.yml"
   # HPE 공통 OEM tasks 재사용 — Oem.Hpe namespace 동일 + PartitionInfo / FlexNodeInfo / GlobalConfiguration 상속.
-  # model regex 확장으로 CSUS 3200 분기 활성화 (Additive — collect_oem.yml L75).
+  # model regex 확장으로 CSUS 3200 분기 활성화 (Additive — collect_oem.yml Superdome/CSUS OEM 블록).
   oem_tasks: "redfish-gather/tasks/vendors/hpe/collect_oem.yml"
 
 normalize:

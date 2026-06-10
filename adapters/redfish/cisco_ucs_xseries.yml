@@ -14,7 +14,7 @@
 #     1) standalone — CIMC Redfish 직접 (M-series 와 유사) ← 본 adapter cover
 #     2) IMM (Intersight Managed Mode) — Intersight cloud 만 (직접 BMC 연결 불가)
 #       → server-exporter 범위 외 (별도 채널 또는 별도 cycle)
-# Sources (rule 96 R1-A — lab 부재):
+# Sources (rule 96 R1-A — 사이트 1대 검증 완료 외 모델은 lab 부재):
 #   - https://www.cisco.com/c/en/us/support/servers-unified-computing/ucs-x-series-modular-system/series.html
 #   - https://www.cisco.com/c/en/us/td/docs/unified_computing/Intersight/b_Intersight_Managed_Mode_Configuration_Guide/b_intersight_managed_mode_guide_chapter_01010.html
 #   - https://www.cisco.com/c/en/us/td/docs/unified_computing/Intersight/Server-Firmware/4_3/b_intersight_server_fw_rn_4_3.html

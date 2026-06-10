@@ -10,12 +10,13 @@
 #   확정 스키마 JSON (schema_version: "1")
 #
 # 흐름:
-#   Play1: 포트 감지 → Linux/_os_linux | Windows/_os_windows 분류
-#   Play2: Linux  → adapter 선택 → preflight → gather → meta → build_output
-#   Play3: Windows → adapter 선택 → gather → meta → build_output
+#   Play1:   포트 감지 → _os_linux / _os_windows / _os_failed 그룹으로 분류 (add_host)
+#   Play1.5: _os_failed (포트 미응답) host별 독립 OUTPUT (strategy: free)
+#   Play2:   Linux  → preflight → adapter 선택 → gather → meta → build_output
+#   Play3:   Windows → adapter 선택 → gather → meta → build_output
 #
 # 실패 처리:
-#   포트 감지 실패 → Play1 에서 즉시 OUTPUT (diagnosis 포함)
+#   포트 감지 실패 → Play1 이 _os_failed 그룹 등록 → Play1.5 에서 OUTPUT (diagnosis 포함)
 #   수집 예외 → block/rescue → build_failed_output.yml (단일 호출)
 # =============================================================================
 

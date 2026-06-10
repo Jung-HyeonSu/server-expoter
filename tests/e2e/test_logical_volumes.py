@@ -149,9 +149,9 @@ class TestMemberDriveCrossReference:
 
         Dell 제외: BOSS-S1 컨트롤러에서 Drive URI path ('Disk.Direct.0-0:...')와
         Drive.Id ('Disk.Direct.0:...')가 불일치 — Dell BOSS 특유 패턴.
-        Lenovo 제외: baseline physical_disks가 4개 중 2개만 존재 (Disk.0, Disk.3),
-        member_drive_ids 'Disk.1'이 baseline에 없음.
-        두 벤더 모두 별도 이슈 (baseline physical_disks 완전성 또는 ID 포맷 불일치).
+        Lenovo 제외: lenovo_baseline 은 logical_volumes 가 0건 (JBOD 모드)이라
+        교차 참조할 member_drive_ids 자체가 없음 (physical_disks 는 Disk.0~Disk.3 4건 모두 존재).
+        그래서 parametrize 는 volumes 가 있는 hpe / cisco 만 대상으로 한다.
 
         physical_disks id가 '{drive_id}:{controller_id}' 복합 포맷일 수 있으므로
         prefix 매칭도 허용."""

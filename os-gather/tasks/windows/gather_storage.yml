@@ -161,6 +161,8 @@
       Get-CimInstance -Namespace root\WMI -ClassName MSFC_FibrePortHBAAttributes -ErrorAction Stop | ForEach-Object {
         $a = $_.Attributes
         $spd = [int]$a.PortSpeed
+        # MSFC_FibrePortHBAAttributes.PortSpeed 는 T11 FC-HBA API bitmask: 비트값 → FC 세대 Gbps.
+        # 16=10GFC, 32=16GFC, 64=32GFC, 128=64GFC (1/2/4/8 은 그대로 Gb). 비트값 ≠ Gbps 라 매핑 필수.
         $gbps = switch ($spd) { 1 {1} 2 {2} 4 {4} 8 {8} 16 {10} 32 {16} 64 {32} 128 {64} default {$null} }
         $portattrs += [PSCustomObject]@{
           port_wwn   = Wwn-FromBytes $a.PortWWN

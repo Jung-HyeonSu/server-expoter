@@ -16,7 +16,9 @@
 //
 // 출력:
 //   표준 JSON schema v1 (stdout) — json_only callback 필터
-//   BUILD_RESULT artifact (results.json) — 재취득 가능
+//   archiveArtifacts: gather_output*.log,results*.json (allowEmptyArchive)
+//     — 이 파이프라인은 ANSIBLE_JSON_OUTPUT_FILE 을 set 하지 않으므로
+//       실제로는 stdout JSON 만 산출되고 위 artifact 는 비어있을 수 있음.
 //
 // 실패 처리:
 //   Validate 단계 실패 → 즉시 종료

@@ -5,7 +5,7 @@
 # Origin: Huawei FusionServer Pro Series Documentation
 # Last sync: 2026-05-11 (M-C1 — generation 분기 보강, lab 부재 web sources)
 # Notes: FusionServer Pro V5 / V6 + Atlas (AI training). 표준 Redfish + Oem.Huawei 확장.
-#   사용자 명시 승인 (2026-05-01) — vault SKIP. lab/사이트 도입 시 vault만 추가.
+#   사용자 명시 승인 (2026-05-01) — vault 신설 완료 (2026-05-11 M-A1, vault/redfish/huawei.yml).
 # Sources (rule 96 R1-A — lab 부재):
 #   - https://support.huawei.com/enterprise/en/doc/EDOC1000163550/41dfb258/ibmc
 #   - https://support.huawei.com/enterprise/en/servers/fusionserver-pro (확인 2026-05-07)
@@ -28,8 +28,8 @@
 #   - System URI: /redfish/v1/Systems/1 (표준)
 #   - OEM namespace: Oem.Huawei
 #   - 표준 Redfish 호환 + IPMI 2.0 / SNMP / DCMI 보조
-# Vault: 미생성 (사용자 명시 2026-05-01) — vault/redfish/huawei.yml 부재 시
-#   precheck auth 단계에서 status=failed (graceful degradation, rule 27 R4)
+# Vault: 신설 완료 (2026-05-11 M-A1) — vault/redfish/huawei.yml 존재.
+#   미생성 시 precheck auth 단계에서 status=failed (graceful degradation, rule 27 R4)
 # ──────────────────────────────────────────────────────────────────────────────
 adapter_id: redfish_huawei_ibmc
 channel: redfish
@@ -129,7 +129,7 @@ vendor_notes:
 
 diagnosis:
   protocol_name: redfish
-  not_supported_message: "Huawei iBMC 장비 — Redfish 표준 호환 가정 (lab 부재 — web sources 기반). vault 미생성 (사용자 명시 2026-05-01)."
+  not_supported_message: "Huawei iBMC 장비 — Redfish 표준 호환 가정 (lab 부재 — web sources 기반)."
 
 metadata:
   vendor: huawei

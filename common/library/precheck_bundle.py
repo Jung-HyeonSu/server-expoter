@@ -252,7 +252,7 @@ def probe_redfish(host, port, timeout, verify=False):
     배경: 일부 BMC (HPE iLO5/6 보안 강화 펌웨어, Lenovo XCC 일부) 는
     무인증 ServiceRoot에 401을 던진다. 이전 구현은 401/403/503을 모두
     HTTP 실패로 분류해 "Redfish 미지원"으로 오판정 → 통신 정상인 장비를
-    차단. probe_esxi 의 status_code 허용 패턴 (line 260) 을 따라 정정.
+    차단. probe_esxi 의 status_code 허용 패턴을 따라 정정.
 
     G5 (cycle 2026-04-30): payload=None 케이스 (URLError/timeout/SSLError)
     에 1회 retry. BMC 부팅 직후 / 일시 부하 transient 차단.
@@ -284,8 +284,9 @@ def probe_redfish(host, port, timeout, verify=False):
         # 401: 무인증 ServiceRoot 차단 (인증 강화 펌웨어)
         # 403: IP 화이트리스트 / 권한 부족 (BMC는 응답 중)
         # 405: Method Not Allowed — Redfish 응답하나 GET/HEAD 제한 (드물지만 일부 펌웨어)
-        # 406: Not Acceptable — Accept 헤더 협상 불일치 (cycle 2026-04-30: http_get에서
-        #      Accept/OData-Version 명시했으나 BMC 펌웨어가 추가 헤더 요구하는 케이스)
+        # 406: Not Acceptable — Accept 헤더 협상 불일치 (cycle 2026-04-30: http_get은
+        #      Accept 헤더만 명시 — OData-Version/User-Agent는 Lenovo XCC reject로 제거됨.
+        #      그럼에도 BMC 펌웨어가 추가 헤더 요구하는 케이스)
         # 503: BMC 일시 과부하 / 부팅 직후 — 본 수집에서 재시도 가능
         if payload and payload.get("status_code") in (401, 403, 405, 406, 503):
             facts = {

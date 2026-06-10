@@ -21,7 +21,7 @@
       ansible.builtin.set_fact:
         _l_norm_physical_disks: >-
           {%- set out = [] -%}
-          {# Round 15: 빈 stdout('')은 default('{}')를 통과(undefined만 catch) → from_json('') crash. raw path(L169)와 동일 length 가드 #}
+          {# Round 15: 빈 stdout('')은 default('{}')를 통과(undefined만 catch) → from_json('') crash. raw path(_l_norm_physical_disks_raw)와 동일 length 가드 #}
           {%- set lsblk = (_l_lsblk_raw.stdout | from_json) if (_l_lsblk_raw.stdout | default('') | trim | length > 0) else {} -%}
           {%- if lsblk.blockdevices is defined -%}
             {%- for dev in lsblk.blockdevices -%}

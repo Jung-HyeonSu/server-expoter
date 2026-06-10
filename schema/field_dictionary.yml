@@ -769,7 +769,7 @@ fields:
 
   diagnosis.failure_stage:
     type: "string|null"
-    enum: ["port", "protocol", "auth"]
+    enum: ["reachable", "port", "protocol", "auth", "fallback"]
     priority: nice
     channel: [redfish, os, esxi]
     # cycle 2026-05-11 field-channel-refinement: conditional 필드 — channel 유지.
@@ -778,11 +778,13 @@ fields:
     # success-only baseline 한계 — conditional 분류 (channel 축소 안 함).
     help_ko: >-
       실패 시 어느 단계에서 실패했는지. **conditional 필드** — status=failed 시만 채워짐.
-      port=포트 연결 실패, protocol=프로토콜 미지원, auth=인증 실패.
+      reachable=호스트 도달 불가, port=서비스 포트 닫힘, protocol=프로토콜 미지원, auth=인증 실패,
+      fallback=block/rescue 모두 실패 (_output 미생성).
       null=실패하지 않았거나 단계 확인 불가 (success status baseline 에서 항상 null).
     help_en: >-
       Failure stage indicator. **Conditional field** — populated only when status=failed.
-      port=port connection failed, protocol=not supported, auth=auth failed.
+      reachable=host unreachable (no TCP response), port=host up but service port closed,
+      protocol=not supported, auth=auth failed, fallback=block/rescue both failed (no _output).
       null=no failure or stage unknown (always null in success-status baselines).
 
   # ══════════════════════════════════════════════════════════════════════════

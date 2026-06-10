@@ -514,7 +514,8 @@ _BMC_PRODUCT_HINTS = {
     # "Compute Scale-up Server 3200" 으로 응답 — Manufacturer/alias 시그니처 부재
     # 펌웨어에서 무인증 probe 벤더 감지 강건성 향상 (rule 96 R1-A web 검증).
     # 복합 키만 사용 — 'csus'/'compute' 단독은 비-HPE Product/Name 와 substring 충돌
-    # 위험 (워크플로 adversarial 검증 — `if hint in p` plain substring, L614/L626).
+    # 위험 (워크플로 adversarial 검증 — _detect_vendor_from_service_root 의
+    # `if hint in p`(Product) / `if hint in n`(Name) plain substring 매칭).
     # source: HPE Compute Scale-up Server 3200 FAQ + Superdome Flex Admin Guide (CSUS = Superdome Flex 후속).
     'compute scale-up server': 'hpe', 'csus 3200': 'hpe',                   # nosec rule12-r1
 }
@@ -729,7 +730,7 @@ def _detect_vendor_from_service_root(root):
     if product and isinstance(product, str):
         p = product.lower()
         for alias, canonical in vm.items():
-            if alias and alias in p:  # rule 95: 빈 alias wildcard 매칭 방어 (Round 1 #8, L619/L635 와 일관)
+            if alias and alias in p:  # rule 95: 빈 alias wildcard 매칭 방어 (Round 1 #8, 아래 Name 필드 동일 가드)
                 return canonical
         # nosec rule12-r1: BMC 시그니처 → vendor 식별 (외부 Redfish spec OEM namespace)
         for hint, canon in _BMC_PRODUCT_HINTS.items():                        # nosec rule12-r1
@@ -1409,8 +1410,9 @@ def _normalize_bios_date(value):
 
 
 # 주의 (2026-04-28 / NEXT_ACTIONS T3-03):
-# cisco는 의도적으로 OEM helper 없음 — adapter cisco_cimc.yml strategy=standard_only,
-# Round 11 실측 ServiceRoot.Oem 키가 비어있음 확인.
+# cisco ServiceRoot.Oem 은 Round 11 실측 빈 dict (adapter cisco_cimc.yml strategy=standard_only).
+# 단, 2026-04-29 fix B61 이후 System/Chassis Oem.Cisco 에서 일부 운영 메타가 나와
+# _extract_oem_cisco 를 아래 매핑에 추가함 (ServiceRoot 가 아닌 System/Chassis 기준).
 _OEM_EXTRACTORS = {                                                           # nosec rule12-r1
     'hpe':        _extract_oem_hpe,                                           # nosec rule12-r1
     'dell':       _extract_oem_dell,                                          # nosec rule12-r1
@@ -1886,7 +1888,7 @@ def gather_memory(bmc_ip, system_uri, username, password, timeout, verify_ssl):
             'health':          _safe(mdata, 'Status', 'Health'),
         })
     # Round 15 fix: 'or None' 제거 — 수집 성공 시 total_mib 는 항상 int(>=0).
-    # 0 (모든 DIMM Absent/0-cap) 을 None(수집실패, line 1758)과 구분 (preserve-0 일관, line 1772).
+    # 0 (모든 DIMM Absent/0-cap) 을 None(컬렉션 GET 실패 시 반환)과 구분 (cap_int 합산이 0-capacity 도 보존).
     return {'total_mib': total_mib, 'slots': slots}, errors
 
 
@@ -2497,7 +2499,7 @@ def _make_ib_port(adapter_id, adapter_info, port_id, link_status, speed_gbps, pd
             arr = _as_list(ibobj.get('AssociatedNodeGUIDs'))
             node_guid = arr[0] if arr else None
         if not port_guid:
-            arr = _as_list(ibobj.get('AssociatedPortGUIDs'))  # Round 4 #0: 비-list 방어 (L2370과 일관)
+            arr = _as_list(ibobj.get('AssociatedPortGUIDs'))  # Round 4 #0: 비-list 방어 (위 AssociatedNodeGUIDs 가드와 일관)
             port_guid = arr[0] if arr else None
     return {
         'adapter':       adapter_id,
@@ -2861,7 +2863,7 @@ def gather_power(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
     """Chassis/{id}/Power — PSU 정보. chassis_uri는 detect_vendor()에서 전달.
 
     cycle 2026-05-01: /Power 404 시 /PowerSubsystem fallback (DMTF 2020.4 신 schema).
-    Storage SimpleStorage fallback 패턴 따름 (line 1417).
+    Storage SimpleStorage fallback 패턴 따름 (gather_storage 참조).
 
     cycle 2026-05-07 M-I2: dual-emit dedup helper (_merge_power_dual) 추가 (Additive).
     현재 dispatcher 는 404 fallback only — dual emit 펌웨어 (iDRAC9 5.x / iLO5-6
@@ -3190,7 +3192,7 @@ def gather_managers_multi(bmc_ip, managers_coll_uri, vendor, username, password,
     rule 92 R2 Additive only — 기존 `gather_bmc` 함수 변경 0. 다른 vendor 영향 0
     (이 함수는 manager_layout 정의된 vendor 만 호출).
 
-    Returns: {'managers': [{id, uri, role, bmc}], 'errors': [...]}
+    Returns: {'managers': [{id, uri, role, bmc, log_services}], 'errors': [...]}
     """
     out = {'managers': [], 'errors': []}
     members, _st, err = _resolve_all_member_uris(
@@ -3438,7 +3440,7 @@ def gather_systems_multi(bmc_ip, systems_coll_uri, vendor, username, password,
     storage = {controllers, physical_disks, logical_volumes, hbas, infiniband, summary};
     network = {dns_servers, default_gateways, interfaces, adapters, ports, summary}.
 
-    Returns: {'partitions': [{id, system_uri, system, cpu, memory, storage, network}],
+    Returns: {'partitions': [{id, system_uri, system, cpu, memory, storage, network, boot}],
               'errors': [...]}
     """
     out = {'partitions': [], 'errors': []}
@@ -3488,7 +3490,7 @@ def gather_chassis_multi(bmc_ip, chassis_coll_uri, username, password,
 
     Base / Expansion / Compute Module 구분 + ChassisType 표준 fallback.
 
-    Returns: {'chassis': [{id, uri, kind, chassis_type, manufacturer, model, ..., power}],
+    Returns: {'chassis': [{id, uri, kind, chassis_type, manufacturer, model, ..., power, thermal}],
               'errors': [...]}
     """
     out = {'chassis': [], 'errors': []}
@@ -3729,8 +3731,10 @@ def _collect_multi_node_topology(bmc_ip, vendor, service_root,
             'enabled': bool,
             'layout': str,
             'summary': {partition_count, manager_count, chassis_count,
-                        representative_partition},
+                        representative_partition,
+                        resource_block_count, fabric_count},
             'partitions': list, 'managers': list, 'chassis': list,
+            'composition': dict | None, 'fabrics': list | None,
             'errors': list,
         }
     """
@@ -3893,7 +3897,7 @@ def _account_create_method_for_vendor(vendor):
 def account_service_get(bmc_ip, username, password, timeout, verify_ssl):
     """GET /redfish/v1/AccountService + Accounts 컬렉션 enumerate.
 
-    Returns: (acct_service: dict|None, accounts: list[{slot_uri, username, role_id, enabled}], errors)
+    Returns: (acct_service: dict|None, accounts: list[{slot_uri, id, username, role_id, enabled}], errors)
     """
     errors = []
     code, root_data, err = _get(bmc_ip, 'AccountService', username, password, timeout, verify_ssl)
@@ -3996,7 +4000,7 @@ def account_service_provision(
     Returns:
         dict: {
           'recovered': bool,
-          'method':    'patch_existing' | 'patch_empty_slot' | 'post_new' | 'noop' | 'not_supported',
+          'method':    'patch_existing' | 'patch_empty_slot' | 'post_new' | 'delete_repost' | 'noop' | 'not_supported',
           'slot_uri':  '...' or None,
           'dryrun':    bool,
           'errors':    [_err(...), ...],
@@ -4126,8 +4130,8 @@ def account_service_provision(
                 detail=del_err or f'HTTP {del_code}',
             ))
             return out
-        # POST 재생성 (Cisco vendor 분기는 위에서 따로 처리되었지만 PATCH existing 만
-        # 도달했으니 여기서 표준 POST + Cisco 분기 모두 처리 — 코드 단순화 위해 표준만).
+        # POST 재생성 (DELETE 후). PATCH existing 경로만 여기 도달하므로 표준 POST body 를
+        # 만들고, vendor=='cisco' 면 RoleId enum remap + Id 필드를 추가한다.
         body_post = {
             'UserName': target_username,
             'Password': target_password,

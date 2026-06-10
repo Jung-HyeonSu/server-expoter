@@ -5,7 +5,7 @@
 # Origin: Quanta QCT 공식 + OpenBMC 표준
 # Last sync: 2026-05-01 (web sources only — lab 부재)
 # Notes: QuantaGrid D54Q-2U / D52BQ-2U / 기타 OpenBMC 기반 모델.
-#   사용자 명시 승인 (2026-05-01) — vault SKIP. lab/사이트 도입 시 vault만 추가.
+#   사용자 명시 승인 (2026-05-01) — vault 신설 완료 (2026-05-11 M-A4, vault/redfish/quanta.yml).
 # Sources (rule 96 R1-A — lab 부재):
 #   - https://www.qct.io/product/index/Server/rackmount-server/2U-Rackmount-Server/QuantaGrid-D54Q-2U
 #   - https://www.exalit.com/storage/2023/09/D54Q-2U_v20230330.pdf
@@ -91,4 +91,4 @@ vendor_notes:
 
 diagnosis:
   protocol_name: redfish
-  not_supported_message: "Quanta QCT BMC 장비 (OpenBMC 기반) — Redfish 표준 호환 가정 (lab 부재 — web sources 기반). vault 미생성 (사용자 명시 2026-05-01)."
+  not_supported_message: "Quanta QCT BMC 장비 (OpenBMC 기반) — Redfish 표준 호환 가정 (lab 부재 — web sources 기반)."

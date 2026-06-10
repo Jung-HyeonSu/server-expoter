@@ -84,7 +84,7 @@
         {%- endif -%}
         {%- if m in ns.seen -%}
           {%- set idx = ns.seen[m] -%}
-          {# Round 15: 같은 model 중복 시 cores_per_socket 도 재계산 (Redfish _normalize_cpu_raw L3307 일관 — 혼합 코어 same-model 평균) #}
+          {# Round 15: 같은 model 중복 시 cores_per_socket 도 재계산 (Redfish _normalize_cpu_raw 의 same-model grouping 과 일관 — 혼합 코어 same-model 평균) #}
           {%- set _nt = ns.groups[idx].total_cores + (p.cores | default(0) | int) -%}
           {%- set _nsk = ns.groups[idx].sockets + 1 -%}
           {%- set _ = ns.groups[idx].update({'sockets': _nsk, 'total_cores': _nt, 'cores_per_socket': (_nt // _nsk)}) -%}

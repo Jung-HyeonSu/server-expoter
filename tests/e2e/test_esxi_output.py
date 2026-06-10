@@ -9,7 +9,7 @@
 
 baseline 필드 확인 결과:
   - system.os_family: 'VMware ESXi' (안정)
-  - system.fqdn: '10.100.64.2' (안정)
+  - system.fqdn: 'esxi02' (안정)
   - correlation.system_uuid: UUID 형식 확인됨
   - correlation.serial_number: 값 존재 확인됨
 """

@@ -10,7 +10,7 @@
 #   _sections_supported_fragment → ['system']
 #   _sections_collected_fragment → ['system'] or []
 #   _sections_failed_fragment    → [] or ['system']
-#   _errors_fragment             → []
+#   _errors_fragment             → [] (정상) or [식별자 진단 / vendor 추출 실패 errors]
 
 - name: "linux | system | init fallback vars"
   ansible.builtin.set_fact:
@@ -199,7 +199,7 @@
         {%- endif -%}
     _l_hosting_type: >-
       {%- set sdv = (_l_raw_sys.SDV | default('')) | trim | lower -%}
-      {%- set vm_signals = ['vmware','kvm','qemu','xen','hyperv','microsoft','oracle','virtualbox','docker','lxc','podman','bhyve','uml','parallels','openvz','bochs'] -%}  {# Round 15: 'bochs' 추가 — python path(L284)와 parity #}
+      {%- set vm_signals = ['vmware','kvm','qemu','xen','hyperv','microsoft','oracle','virtualbox','docker','lxc','podman','bhyve','uml','parallels','openvz','bochs'] -%}  {# Round 15: 'bochs' 추가 — python path _l_hosting_type 의 vm_signals 와 parity #}
       {%- if sdv in vm_signals -%}virtual
       {%- elif sdv == 'none' -%}baremetal
       {%- else -%}unknown

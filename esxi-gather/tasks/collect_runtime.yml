@@ -7,7 +7,6 @@
 #   - vmware_host_ntp_info → hosts_ntp_info[host][0].{time_zone_name, ntp_servers}
 #   - vmware_host_firewall_info → hosts_firewall_info[host] = list (rule 54개)
 #   - vmware_host_service_info → host_service_info[host] = list of services
-#   - vmware_host_dns_info → hosts_dns_info[host].{host_name, ip_address, search_domain}
 #   - default_gateway: vmware_host_facts schema=vsphere properties=config.network 로 별도 추출
 #
 # 입력:

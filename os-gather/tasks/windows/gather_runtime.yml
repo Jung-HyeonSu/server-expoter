@@ -2,7 +2,7 @@
 # os-gather/tasks/windows/gather_runtime.yml
 #
 # P5 sub-phase b (cycle 2026-04-29): Windows 운영 런타임 정보.
-# w32tm / Get-NetFirewallProfile / Get-NetTCPConnection / Win32_PageFile.
+# w32tm / Get-NetFirewallProfile / Get-NetTCPConnection / Win32_PageFileUsage.
 # best-effort: 일부 cmdlet 미설치 / 권한 부족 시 빈 값.
 #
 # 출력 sub-key: data.system.runtime

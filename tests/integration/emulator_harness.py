@@ -17,7 +17,8 @@
       **실제** detect_vendor → _collect_all_sections → _compute_final_status 를
       오프라인에서 구동 → golden(expected_output.json) 과 비교.
 
-    두 경로 모두 main() gather mode 흐름을 1:1 미러링 (redfish_gather.py L3816~).
+    두 경로 모두 redfish_gather.py main() 의 gather mode 흐름을 1:1 미러링
+    (핵심 섹션 수집은 _collect_all_sections — detect_vendor → 수집 → _compute_final_status 순).
 """
 from __future__ import annotations
 

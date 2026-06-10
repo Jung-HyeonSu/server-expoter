@@ -30,7 +30,7 @@
       {%- for p in (_rf_d_procs | default([])) -%}
         {# Round 16: default('') 는 undefined 만 치환 — JSON null(_safe→None)은 'None'→'NONE'
            가 되어 위 주석의 "null=CPU 간주" 의도와 반대로 제외됨 (Python _normalize_cpu_raw
-           L3304 `or ''` 와도 불일치). default('', true) 로 falsy(None 포함) → '' 강제. #}
+           의 `str(processor_type or '')` 필터와도 불일치). default('', true) 로 falsy(None 포함) → '' 강제. #}
         {%- set ptype = (p.processor_type | default('', true) | string | trim | upper) -%}
         {%- if ptype in ('CPU', 'CORE', '') or ptype is none -%}
           {%- set _ = out.append(p) -%}
@@ -472,7 +472,7 @@
       bmc: "{{ _rf_d_bmc_clean }}"
       cpu:
         # 2026-04-29 fix B01: cpu top-level 도 ProcessorType=='CPU' 만 사용 (GPU 합산 차단).
-        # _rf_d_cpus 는 위 selectattr로 GPU/Accelerator 배제한 결과.
+        # _rf_d_cpus 는 위 Jinja2 for-loop 필터(ProcessorType in CPU/CORE/'')로 GPU/Accelerator 배제한 결과.
         sockets:         "{{ _rf_d_cpus | length if _rf_d_cpus else (_rf_d_system.cpu_summary | default({})).count | default(none) }}"
         # BUG-13 fix: per-processor TotalCores/TotalThreads sum 이 0/None 이면
         # System.ProcessorSummary.CoreCount / LogicalProcessorCount fallback.

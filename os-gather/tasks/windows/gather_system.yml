@@ -58,7 +58,8 @@
 #   - Model/Manufacturer가 알려진 VM 패턴 → virtual
 #   - VM 패턴 아님 + HypervisorPresent=False + 물리 OEM → baremetal
 #   - 그 외 → unknown
-# 물리 OEM evidence(Manufacturer)는 판정의 보강 근거로만 사용
+# baremetal 판정은 OEM Manufacturer 매치를 필수 조건으로 요구한다 (mfr in oem_mfrs).
+# OEM 목록에 없는 물리 서버는 baremetal 이 아니라 unknown 으로 분류된다.
 - name: "windows | system | determine hosting_type"
   ansible.builtin.set_fact:
     _w_hosting_type: >-

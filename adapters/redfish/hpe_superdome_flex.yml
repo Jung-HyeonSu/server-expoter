@@ -9,8 +9,8 @@
 # Tested against: 미확인 — lab 도입 시 capture-site-fixture skill 적용
 # Notes:
 #   - HPE Superdome Flex / Flex 280 (2017+ x86 Xeon SP). RMC = Redfish API host.
-#   - Multi-partition (nPAR) — Systems ID = Partition<N>. server-exporter 첫 partition (Partition0) 만 수집.
-#     전체 partition 수집은 별도 cycle (Systems Members[0] 단일 진입 패턴 변경 필요).
+#   - Multi-partition (nPAR) — Systems ID = Partition<N>. cycle 2026-05-12 (ADR-2026-05-12)
+#     이후 전 partition / 전 manager / 전 chassis 수집 (_collect_multi_node_topology, manager_layout=rmc_primary_ilo_secondary). data.multi_node 컨테이너에 노출.
 #   - Dual-manager — RMC + 각 컴퓨트 모듈 iLO 5. RMC 가 primary AccountService host.
 #   - Oem.Hpe namespace 동일 (기존 hpe OEM tasks 재사용).
 #   - vault profile: hpe (별도 vault 불필요).
@@ -47,7 +47,7 @@ match:
 
 capabilities:
   sections_supported:
-    - system     # /Systems/Partition<N> — 첫 partition (Partition0) 만 수집
+    - system     # /Systems/Partition<N> — 전 partition 수집 (ADR-2026-05-12), top-level data.* 는 Partition0 representative
     - hardware   # /Chassis/<id> — RMC aggregation (Base + Expansion 최대 8)
     - bmc        # /Managers/<RMC_id> — RMC primary (per-node iLO 5 는 보조)
     - cpu        # Systems.Processors
@@ -68,7 +68,7 @@ collect:
 normalize:
   standard_tasks: "redfish-gather/tasks/normalize_standard.yml"
   oem_tasks: "redfish-gather/tasks/vendors/hpe/normalize_oem.yml"
-  # 첫 Partition (Partition0) 만 수집되는 한계는 diagnosis.details 에 multi_partition_warning emit 권장.
+  # top-level data.* 는 Partition0 representative — 전 partition 은 data.multi_node 에 노출 (ADR-2026-05-12).
 
 credentials:
   profile: "hpe"  # vault/redfish/hpe.yml 재사용 (M-E1 결정 (a) HPE sub-line)

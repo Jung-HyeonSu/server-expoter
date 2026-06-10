@@ -198,7 +198,7 @@ def adapter_matches(adapter, facts, aliases=None):
     distribution_patterns = match.get("distribution_patterns", [])
     if distribution_patterns:
         distro = facts.get("distribution", "")
-        # 빈 distribution(정보 없음)은 통과 — model/firmware(L153/161) 와 동일 정책 (Round 1 #18)
+        # 빈 distribution(정보 없음)은 통과 — model/firmware 빈값 통과 정책(위 model_patterns/firmware_patterns 블록)과 동일 (Round 1 #18)
         if distro and not pattern_match_any(distribution_patterns, distro):
             return False
 

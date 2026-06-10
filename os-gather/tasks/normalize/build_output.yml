@@ -6,7 +6,7 @@
 #
 # 이 시점에서 _merged_data, _all_sec_* 는 이미 gather_*.yml 들이 채운 상태다.
 # 여기서는 OS 에서 지원하지 않는 섹션만 _all_sec_supported 에서 제외한다.
-# (hardware, bmc, firmware 는 supported 에 없으므로 자동으로 not_supported)
+# (hardware, bmc, firmware, power 는 supported 에 없으므로 자동으로 not_supported)
 #
 # NOTE: site.yml 은 이 파일을 include 하여 common 의 build_* 체인을
 #       호출한다. site.yml 자체에서 build_sections/status/errors 를

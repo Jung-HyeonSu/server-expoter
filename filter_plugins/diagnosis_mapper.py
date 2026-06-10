@@ -3,7 +3,8 @@
 # diagnosis_mapper.py — 진단 결과 변환 필터 플러그인
 # ==============================================================================
 # precheck_bundle 모듈의 결과를 공통 output JSON의
-# diagnosis 및 errors 구조로 변환합니다.
+# diagnosis 구조(diagnosis dict)로 변환합니다. errors[] 조립은
+# common/tasks/normalize/build_errors.yml 영역 (이 파일 아님).
 #
 # 사용법 (Ansible task):
 #   - set_fact:

@@ -41,7 +41,7 @@ match:
   #     로 의도된 adapter 선택 보장 — 실 기기는 generation 별 firmware format 보고하므로 충돌은 이론적.
   #   - 미래 Gen12 firmware 1.20+ 2-part 시 본 regex 재검토 (사이트 실측 cycle).
   # 점수 메커니즘: firmware_patterns 매치 실패 + facts.firmware 비어있지 않으면
-  # -9999 disqualify (module_utils/adapter_common.py L260-267).
+  # -9999 disqualify (module_utils/adapter_common.py adapter_match_score — firmware known but mismatch).
   firmware_patterns: ["iLO.*7", "^\\d+\\.\\d+\\.\\d+", "^1\\.1[0-9]"]
   model_patterns:
     - "ProLiant DL360 Gen12"
