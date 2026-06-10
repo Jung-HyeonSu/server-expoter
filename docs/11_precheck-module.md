@@ -39,7 +39,7 @@ server-exporter 는 본 수집에 들어가기 전에 4단계 사전 진단을 �
 ```
 
 > 실제로 단계 1+2 는 **TCP connect 한 번**으로 합쳐서 처리한다. ping ICMP 가 차단된 환경이 흔해서 TCP 응답 자체로 reachable 까지 동시 판정.
-> 호스트는 살아있는데 서비스 포트가 닫혀있으면 `failure_stage="reachable"` 로 보고한다.
+> 호스트는 응답하는데 대상 서비스 포트만 닫혀있으면 `failure_stage="port"`, 호스트 자체가 전혀 응답 없으면 `failure_stage="reachable"` 로 보고한다.
 
 각 단계가 막히면 **그 다음 단계는 건너뛰고** `failure_stage` / `failure_reason` 을 envelope 에 담아 반환한다.
 
@@ -83,7 +83,7 @@ server-exporter 는 본 수집에 들어가기 전에 4단계 사전 진단을 �
   "port_open":          false,    ← 여기서 false
   "protocol_supported": false,    ← 막혔으니 false 로 표기 (시도 안 함)
   "auth_success":       false,
-  "failure_stage":      "reachable",
+  "failure_stage":      "port",
   "failure_reason":     "TCP 443 connection refused"
 }
 ```

@@ -206,7 +206,8 @@ if response["data"]["hardware"].get("health") == "Critical":
 | `failure_stage` | 의미 | 해결 방향 |
 |---|---|---|
 | `null` | 실패 안 함 | 정상 |
-| `port` | 포트 응답 없음 | 방화벽 / 서비스 미기동 / 포트 번호 오설정 |
+| `reachable` | 호스트 자체가 응답 없음 | 호스트 전원 / 네트워크 / 라우팅 |
+| `port` | 호스트는 응답하나 포트 닫힘 | 방화벽 / 서비스 미기동 / 포트 번호 오설정 |
 | `protocol` | 포트는 열렸는데 응답 형식이 이상함 | TLS 버전 / cipher / 펌웨어 버그 |
 | `auth` | 자격증명 거부됨 | 비밀번호 회전 / 계정 잠김 / 권한 부족 |
 
@@ -428,7 +429,7 @@ hostname = system.hostname  OR  system.fqdn  OR  ip_fallback
 
 ### 알려진 baseline drift
 
-- `cisco_baseline.json` `hostname=null` (cycle 2026-05-07 검출) — `build_output.yml` fallback chain 갱신 이전 캡처. 후속 작업: lab Cisco UCS 실측 후 baseline 갱신 (`docs/ai/NEXT_ACTIONS.md` 추적).
+- `cisco_baseline.json` 은 `hostname == ip` (`10.100.15.2`, IP fallback) — `data.system.fqdn` 은 `C220-FCH2116V1V0` 로 non-null 이지만 hostname 해석이 IP 로 폴백된 상태. 후속 작업: lab Cisco UCS 실측 후 hostname/fqdn 해석 재검증 + baseline 갱신 (`docs/ai/NEXT_ACTIONS.md` 추적).
 
 ---
 
