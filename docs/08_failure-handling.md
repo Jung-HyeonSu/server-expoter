@@ -188,7 +188,7 @@ else:  # status == "success"
 정상이다. **수집은 성공했는데** 도중에 본 비정상 신호 (PSU fault / SMART warning 등) 가 errors[] 에 기록된다. 알람을 errors 로만 띄우면 정상 케이스에도 시끄러워진다.
 
 **Q. `status: failed` 인데 일부 섹션이 `success` 다.**
-이론적으로는 안 일어나야 하는데, 만약 발생하면 회귀 버그다. `tests/baseline_v1` 회귀가 잡는다.
+이론적으로는 안 일어나야 하는데, 만약 발생하면 회귀 버그다. `schema/baseline_v1` 회귀가 잡는다.
 
 **Q. envelope 의 `data.*` 가 모두 null 인데 status 는 success?**
 모든 섹션이 `not_supported` 인 케이스 (빈 inventory 같은 극단). 거의 안 일어나지만 envelope 일관성을 위해 허용된다.

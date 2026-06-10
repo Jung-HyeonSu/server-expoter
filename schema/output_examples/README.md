@@ -13,7 +13,7 @@ server-exporter가 3-channel (os / esxi / redfish) 통합 수집 후 만들어�
 
 | 디렉터리 | 정본 의도 | 누가 사용 |
 |---|---|---|
-| `schema/baseline_v1/` | **회귀 기준선** (Jenkins Stage 4 pytest 입력 — `tests/test_baseline.py` 등) | 자동화 회귀 |
+| `schema/baseline_v1/` | **회귀 기준선** (Jenkins Stage 4 pytest 입력 — `tests/e2e/test_redfish_baseline.py` 등) | 자동화 회귀 |
 | `schema/output_examples/` | **호출자 / 운영자 reference** — 한글 주석 + 실 응답 | 사람 |
 | `schema/examples/` | 시나리오 별 (success / partial / failed / not_supported) 예시 — 1대 mock 기반 | 호출자 (시나리오 설명) |
 

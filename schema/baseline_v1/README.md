@@ -12,21 +12,24 @@
 ## 파일 명명 규칙
 
 ```
-{vendor 또는 os}_baseline.json            ← 회귀 비교용 표준 JSON (수정 금지)
-{vendor 또는 os}_baseline_annotated.jsonc ← 같은 내용 + 라인별 한글 주석 (교육용 사본)
+{vendor 또는 os}_baseline.json   ← 회귀 비교용 표준 JSON (수정 금지, 본 폴더)
 ```
 
-| 표준 JSON | 한글 주석본 | 채널 | 검증 시 사용된 장비 |
+라인별 한글 주석본은 본 폴더가 아니라 **`schema/output_examples/`** 에 채널/벤더 대표 예시로 보존된다 (아래 표 "한글 주석 예시" 열). JSON 표준은 주석을 허용하지 않아 확장자가 `.jsonc` 다.
+
+| 표준 JSON | 한글 주석 예시 (`schema/output_examples/`) | 채널 | 검증 시 사용된 장비 |
 |---|---|---|---|
-| `dell_baseline.json` | `dell_baseline_annotated.jsonc` | Redfish | Dell PowerEdge R740 (iDRAC 9 / FW 4.00) |
-| `hpe_baseline.json` | `hpe_baseline_annotated.jsonc` | Redfish | HPE ProLiant DL380 Gen11 (iLO 6 / FW 1.73) |
-| **`hpe_csus_3200_baseline.json`** (cycle 2026-05-12) | `schema/output_examples/redfish_hpe_csus_3200.jsonc` | Redfish | **HPE Compute Scale-up Server 3200 — mock-derived (lab 부재 / sdflexutils + DMTF v1.15 + iLO5 API ref 합성)** |
-| `lenovo_baseline.json` | `lenovo_baseline_annotated.jsonc` | Redfish | Lenovo ThinkSystem SR650 V2 (XCC / FW 5.70) |
-| `cisco_baseline.json` | `cisco_baseline_annotated.jsonc` | Redfish | Cisco TA-UNODE-G1 (CIMC) |
-| `esxi_baseline.json` | `esxi_baseline_annotated.jsonc` | ESXi | ESXi 7.0.3 |
-| `ubuntu_baseline.json` | `ubuntu_baseline_annotated.jsonc` | OS (Linux) | Ubuntu 24.04 |
-| `windows_baseline.json` | `windows_baseline_annotated.jsonc` | OS (Windows) | Windows 10 |
-| `rhel810_raw_fallback_baseline.json` | `rhel810_raw_fallback_baseline_annotated.jsonc` | OS (Linux) | RHEL 8.10 — Python raw fallback 경로 |
+| `dell_baseline.json` | `redfish_dell_idrac10.jsonc` | Redfish | Dell PowerEdge R740 (iDRAC 9 / FW 4.00) |
+| `hpe_baseline.json` | `redfish_hpe_ilo6.jsonc` | Redfish | HPE ProLiant DL380 Gen11 (iLO 6 / FW 1.73) |
+| **`hpe_csus_3200_baseline.json`** (cycle 2026-05-12) | `redfish_hpe_csus_3200.jsonc` | Redfish | **HPE Compute Scale-up Server 3200 — mock-derived (lab 부재 / sdflexutils + DMTF v1.15 + iLO5 API ref 합성)** |
+| `lenovo_baseline.json` | `redfish_lenovo_xcc.jsonc` | Redfish | Lenovo ThinkSystem SR650 V2 (XCC / FW 5.70) |
+| `cisco_baseline.json` | `redfish_cisco_cimc.jsonc` | Redfish | Cisco TA-UNODE-G1 (CIMC) |
+| `esxi_baseline.json` | `esxi_vmware.jsonc` | ESXi | ESXi 7.0.3 |
+| `ubuntu_baseline.json` | `os_linux_ubuntu2404.jsonc` | OS (Linux) | Ubuntu 24.04 |
+| `windows_baseline.json` | `os_windows2022.jsonc` | OS (Windows) | Windows 10 |
+| `rhel810_raw_fallback_baseline.json` | `os_linux_rhel810_raw_fallback.jsonc` | OS (Linux) | RHEL 8.10 — Python raw fallback 경로 |
+
+> 주석 예시는 채널/벤더 대표 1대 기준이라 baseline 과 장비가 정확히 같지는 않을 수 있다 (예: dell baseline = R740/iDRAC9, 주석 예시 = R760/iDRAC10 — 같은 Dell Redfish 채널 대표).
 
 ## mock-derived baseline 정책 (cycle 2026-05-12 신설)
 
@@ -38,19 +41,19 @@ mock-derived baseline 의 필수 marker (양쪽 모두):
 2. **baseline JSON 의 `diagnosis.details.baseline_origin`** 필드 — 출처 + cycle + NEXT_ACTIONS 교체 의무 명시
 3. **호환 한글 주석본** (`schema/output_examples/{vendor}.jsonc`) 헤더에 "Lab 부재 — Mock 합성" 명시
 
-회귀 비교 도구 (`tests/test_baseline.py` 등) 가 mock-derived baseline 을 사용할 때 의식할 점:
+회귀 비교 도구 (`tests/e2e/test_redfish_baseline.py` 등) 가 mock-derived baseline 을 사용할 때 의식할 점:
 - mock-derived 통과 = 합성 fixture 통과 ≠ 사이트 통과
 - NEXT_ACTIONS (`docs/ai/NEXT_ACTIONS.md`) 의 C1~C8 등 사이트 fixture 캡처 후속 작업 진행 시 mock-derived baseline 은 실측으로 교체 의무 (rule 13 R4 정신)
 - mock-derived 가 실측 baseline 으로 잘못 인용되는 사고 차단을 위해 `diagnosis.details.baseline_origin` 자동 검사 hook 도입 검토 (NEXT_ACTIONS — 미래 작업)
 
 ### 한글 주석본을 보는 순서
 
-1. **`dell_baseline_annotated.jsonc` 부터 보세요.** Redfish 채널 전체 구조가 가장 자세히 설명되어 있습니다.
+1. **`schema/output_examples/redfish_dell_idrac10.jsonc` 부터 보세요.** Redfish 채널 전체 구조가 가장 자세히 설명되어 있습니다.
 2. 그 다음 `esxi` / `ubuntu` / `windows` — 채널이 다르면 어떻게 달라지는지 비교.
 3. `hpe` / `lenovo` / `cisco` — 같은 Redfish 채널 안에서 벤더별 차이점.
 4. `rhel810_raw_fallback` — Python 이 없는 환경의 raw 모드 fallback 결과.
 
-각 한글 주석본은 같은 폴더의 표준 JSON 과 1:1 대응합니다. JSON 표준은 주석을 허용하지 않아서 확장자가 `.jsonc` (JSON with Comments) 입니다. 운영 코드가 실제로 보내는 파일은 주석 없는 `.json` 입니다.
+한글 주석 예시는 `schema/output_examples/` 에 채널/벤더 대표로 보존됩니다 (위 표 참조). JSON 표준은 주석을 허용하지 않아서 확장자가 `.jsonc` (JSON with Comments) 입니다. 운영 코드가 실제로 보내는 파일은 주석 없는 `.json` 입니다.
 
 ## 기준 시점
 

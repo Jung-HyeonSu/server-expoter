@@ -1284,7 +1284,7 @@ kernel sysfs > POSIX 명령 > /proc > /etc
 
 ### 결정
 
-`tests/reference/` 디렉터리에 종합 reference 데이터를 보존한다. 회귀 input (`tests/fixtures/`) 및 회귀 기준선 (`tests/baseline_v1/`)과는 별개 디렉터리로 분리하여 회귀 입력 변경 위험을 피한다.
+`tests/reference/` 디렉터리에 종합 reference 데이터를 보존한다. 회귀 input (`tests/fixtures/`) 및 회귀 기준선 (`schema/baseline_v1/`)과는 별개 디렉터리로 분리하여 회귀 입력 변경 위험을 피한다.
 
 수집 도구 4개를 작성:
 - `crawl_redfish_full.py` — Redfish ServiceRoot부터 모든 link 재귀 follow (Python stdlib + PyYAML)
