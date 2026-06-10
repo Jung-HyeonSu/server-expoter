@@ -11,7 +11,7 @@ common/
 ├── tasks/
 │   ├── precheck/
 │   │   └── run_precheck.yml   # precheck_bundle 호출 + diagnosis 생성
-│   └── normalize/             # Fragment 정규화 빌더 (8 파일) — README 별도
+│   └── normalize/             # Fragment 정규화 빌더 (10 파일 — 핵심 빌더 8 + 실패 경로 보조 2) — README 별도
 └── vars/
     ├── supported_sections.yml # 10 sections 정본 (rule 13 R1)
     └── vendor_aliases.yml     # vendor 정규화 정본 (rule 50 R1)

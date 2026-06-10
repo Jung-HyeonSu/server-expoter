@@ -70,7 +70,7 @@ target_type 에 따라 IP 필드명이 다릅니다.
 
 2단계 벤더 감지:
 1. 빈 계정으로 Redfish ServiceRoot → `System.Manufacturer` 읽기
-2. 감지된 벤더에 맞는 `vault/redfish/{dell|hpe|lenovo|supermicro}.yml` 로딩
+2. 감지된 벤더에 맞는 `vault/redfish/{vendor}.yml` 로딩 (dell/hpe/lenovo/supermicro/cisco/huawei/inspur/fujitsu/quanta)
 3. 올바른 계정으로 전체 재수집
 
 ---

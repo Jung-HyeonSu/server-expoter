@@ -123,7 +123,8 @@ ESXi 채널이 인증 실패로 rescue 진입한 케이스.
     "cpu":      "failed",  "memory":   "failed",
     "storage":  "failed",  "network":  "failed",
     "firmware": "not_supported",
-    "users":    "not_supported"
+    "users":    "not_supported",
+    "power":    "not_supported"
   },
 
   "diagnosis": { "auth_success": false, "failure_stage": "auth", ... },

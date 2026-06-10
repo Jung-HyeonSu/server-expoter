@@ -28,8 +28,12 @@ precheck 4단계 (`docs/11`) 의 결과가 그대로 들어온다.
   "auth_success":       true,
   "failure_stage":      null,
   "failure_reason":     null,
-  "probe_facts": { "vendor": "Dell Inc.", "firmware": "iDRAC 9 v4.40.00.00" },
-  "checked_ports":      [443]
+  "details": {
+    "channel": "redfish", "adapter_candidate": "redfish_dell_idrac9",
+    "checked_ports": [443], "selected_port": 443,
+    "redfish_version": "1.6.0", "product": "Integrated Dell Remote Access Controller",
+    "systems_uri": "/redfish/v1/Systems"
+  }
 }
 ```
 
@@ -43,8 +47,10 @@ precheck 4단계 (`docs/11`) 의 결과가 그대로 들어온다.
   "auth_success":       false,
   "failure_stage":      "protocol",
   "failure_reason":     "Redfish ServiceRoot (/redfish/v1/) 응답 없음 — iDRAC 7 등 구 세대 추정",
-  "probe_facts":        {},
-  "checked_ports":      [443]
+  "details": {
+    "channel": "redfish", "checked_ports": [443], "selected_port": 443,
+    "probe_facts": {}
+  }
 }
 ```
 

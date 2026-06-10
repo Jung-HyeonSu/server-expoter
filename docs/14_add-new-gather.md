@@ -292,7 +292,7 @@ normalize:
   standard_tasks: "redfish-gather/tasks/normalize_standard.yml"
   oem_tasks:      "redfish-gather/tasks/vendors/dell/normalize_oem.yml"
 credentials:
-  profile:           "redfish_dell"
+  profile:           "dell"
 graceful_degradation:
   critical_sections: [system, hardware]
   optional_sections: [firmware, power]

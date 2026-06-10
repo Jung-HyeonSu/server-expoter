@@ -1,10 +1,10 @@
 # redfish-gather/library/ — Redfish API 엔진 (stdlib only)
 
-> 약 4,500 줄(4,489, 2026-06-10 실측) 단일 Python 모듈. urllib / ssl / json 만 사용 (rule 10 R2 — 외부 라이브러리 금지).
+> 약 4,500 줄 (2026-06 기준) 단일 Python 모듈. urllib / ssl / json 만 사용 (rule 10 R2 — 외부 라이브러리 금지).
 
 ## 파일
 
-- `redfish_gather.py` — 단일 모듈, 약 4,500 줄(4,489, 2026-06-10 실측)
+- `redfish_gather.py` — 단일 모듈, 약 4,500 줄 (2026-06 기준)
 
 ## 함수 흐름 인덱스 (호출 endpoint 별)
 

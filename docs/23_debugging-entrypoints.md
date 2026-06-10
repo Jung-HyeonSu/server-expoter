@@ -51,7 +51,7 @@
 
 ### Stage 3 — Validate Schema (정합)
 
-**역할**: envelope 13 필드 + sections 10 + field_dictionary 65 정합.
+**역할**: envelope 13 필드 + sections 10 + field_dictionary 83 정합.
 **위치**: `tests/validate_field_dictionary.py` (Jenkinsfile 181~194)
 **실패 시 확인**:
 - `schema/field_dictionary.yml` 갱신 누락 (rule 13 R1 3종 동반)
@@ -280,7 +280,7 @@ ansible-playbook --syntax-check os-gather/site.yml  # 3 채널 syntax
 
 **정본**: `docs/12_diagnosis-output.md`
 
-`envelope.diagnosis.details` 안의 4단계 결과:
+`envelope.diagnosis` 최상위 (`details` 와 형제 레벨) 의 4단계 결과:
 
 | key | 의미 |
 |---|---|

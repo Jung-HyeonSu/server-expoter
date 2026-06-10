@@ -57,11 +57,15 @@ server-exporter 는 본 수집에 들어가기 전에 4단계 사전 진단을 �
   "failure_stage":      null,    // 막힌 단계 이름. 정상이면 null.
   "failure_reason":     null,    // 사람이 읽을 사유. 정상이면 null.
 
-  "probe_facts": {               // precheck 단계에서 알아낸 부가 정보
-    "vendor":   "Dell Inc.",
-    "firmware": "iDRAC 9 v4.40.00.00"
-  },
-  "checked_ports": [443]
+  "details": {                   // precheck / probe 단계에서 알아낸 부가 정보 (probe_facts 병합)
+    "channel":           "redfish",
+    "adapter_candidate": "redfish_dell_idrac9",
+    "checked_ports":     [443],
+    "selected_port":     443,
+    "redfish_version":   "1.6.0",
+    "product":           "Integrated Dell Remote Access Controller",
+    "systems_uri":       "/redfish/v1/Systems"
+  }
 }
 ```
 

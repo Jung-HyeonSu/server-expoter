@@ -17,7 +17,7 @@
 parameters (loc, target_type, inventory_json)
   → Stage 1: Validate (파라미터 검증)
   → Stage 2: Gather (Ansible 실행)
-  → Stage 3: Validate Schema (field_dictionary.yml 정합성, UNSTABLE 게이트)
+  → Stage 3: Validate Schema (field_dictionary.yml 정합성, FAIL 게이트)
   → Stage 4: E2E Regression (pytest baseline/fixture 회귀 검증, FAIL 게이트)
   → Post (결과 처리)
 ```

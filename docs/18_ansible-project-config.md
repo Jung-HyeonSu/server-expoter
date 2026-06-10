@@ -19,7 +19,7 @@
 ```ini
 [defaults]
 lookup_plugins  = ./lookup_plugins         # adapter_loader
-filter_plugins  = ./filter_plugins         # field_mapper, diagnosis_mapper
+filter_plugins  = ./filter_plugins         # diagnosis_mapper, jedec_mapper
 callback_plugins = ./callback_plugins       # json_only (단일 사본)
 library         = ./common/library:./redfish-gather/library
 module_utils    = ./module_utils           # adapter_common
@@ -28,7 +28,7 @@ callbacks_enabled = json_only
 gathering = explicit                        # gather_facts: no
 host_key_checking = False
 interpreter_python = auto
-forks = 20
+forks = 200
 timeout = 60
 ```
 
@@ -41,7 +41,7 @@ timeout = 60
 | 플러그인 타입 | 경로 | 파일 |
 |-------------|------|------|
 | lookup | `./lookup_plugins/` | `adapter_loader.py` |
-| filter | `./filter_plugins/` | `diagnosis_mapper.py`, `field_mapper.py` (deprecated) |
+| filter | `./filter_plugins/` | `diagnosis_mapper.py`, `jedec_mapper.py` |
 | callback | `./callback_plugins/` | `json_only.py` |
 | library | `./common/library/`, `./redfish-gather/library/` | `precheck_bundle.py`, `redfish_gather.py` |
 | module_utils | `./module_utils/` | `adapter_common.py` |

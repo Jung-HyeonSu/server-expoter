@@ -64,7 +64,7 @@
     │
     ▼
 [ Step 4 ] 선택된 adapter 가 시키는 대로
-    - credentials.profile = "redfish_dell"  → vault/redfish/redfish_dell.yml 로드
+    - credentials.profile = "dell"  → vault/redfish/dell.yml 로드
     - collect.standard_tasks = "redfish-gather/tasks/collect_standard.yml" 실행
     - collect.oem_tasks      = "redfish-gather/tasks/vendors/dell/collect_oem.yml" 실행
     - normalize.standard_tasks 실행 → fragment 생성
@@ -117,7 +117,7 @@ score = priority × 1000  +  specificity × 10  +  match_score  -  generic 감�
 | **세대 (구형)** | `30~50` | 5+ 년 전 세대 (지원 종료 / 호환성 영역) | `esxi_6x`, `dell_idrac8`, `hpe_ilo4`, `lenovo_imm2`, `supermicro_x9` |
 | **세대 (메인)** | `80~100` | 운영 중 주력 세대 | `esxi_7x/8x`, `dell_idrac9`, `hpe_ilo5/6`, `lenovo_xcc`, `supermicro_x11~13`, `cisco_cimc`, lab 부재 신 vendor (`huawei_ibmc/inspur_isbmc/fujitsu_irmc/quanta_qct_bmc` = 80) |
 | **세대 (최신)** | `110~120` | 신 generation (cycle 2026-05-01 추가 — F41/F47/F55) | `dell_idrac10`, `hpe_ilo7`, `lenovo_xcc3`, `supermicro_x14`, `cisco_ucs_xseries` |
-| **특수 / lab 부재 보호** | `95` | 비표준 (Superdome / 비표준 폼팩터) — lab 없이 web sources 만 | `hpe_superdome_flex` |
+| **특수 / lab 부재 보호** | `101` | 비표준 (Superdome / 비표준 폼팩터) — lab 없이 web sources 만 | `hpe_superdome_flex` |
 
 **OS / ESXi 채널** (세대 / vendor 분기 단순):
 - generic fallback: `0`
@@ -132,9 +132,9 @@ score = priority × 1000  +  specificity × 10  +  match_score  -  generic 감�
 | `120` | dell_idrac10, hpe_ilo7, lenovo_xcc3 |
 | `110` | cisco_ucs_xseries, supermicro_x14 |
 | `102` | hpe_csus_3200 (lab 부재 — Compute Scale-up Server) |
-| `100` | cisco_cimc, dell_idrac9, hpe_ilo6, lenovo_xcc, supermicro_x11, supermicro_x13 |
-| `95` | hpe_superdome_flex (lab 부재) |
-| `90` | hpe_ilo5, supermicro_x12 |
+| `101` | hpe_superdome_flex (lab 부재 — 비표준 폼팩터) |
+| `100` | cisco_cimc, dell_idrac9, hpe_ilo6, lenovo_xcc, supermicro_x11, supermicro_x12, supermicro_x13 |
+| `90` | hpe_ilo5 |
 | `80` | fujitsu_irmc, huawei_ibmc, inspur_isbmc, quanta_qct_bmc (lab 부재 신 vendor), supermicro_ars |
 | `75` | supermicro_x10 |
 | `50` | dell_idrac8, hpe_ilo4, lenovo_imm2, supermicro_x9 (구형) |
@@ -187,8 +187,8 @@ normalize:
   oem_tasks:      "redfish-gather/tasks/vendors/dell/normalize_oem.yml"
 
 credentials:
-  profile:           "redfish_dell"   # vault/redfish/redfish_dell.yml 을 로드
-  fallback_profiles: ["redfish_default"]
+  profile:           "dell"   # vault/redfish/dell.yml 을 로드
+  fallback_profiles: []
 
 graceful_degradation:
   critical_sections: [system, hardware]   # 이게 실패하면 abort

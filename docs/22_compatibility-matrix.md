@@ -88,7 +88,7 @@ baseline 을 가진 lab tested 벤더 4개 (Dell iDRAC9 / HPE iLO6 / Lenovo XCC 
 | Supermicro X9 (6 BLOCK) | EOL + lab fixture 부재 | lab 도입 cycle 에서 fixture 캡처 필요 |
 | Supermicro X9 (3 GAP) | OEM 미지원 generation | adapter capabilities 추가 후보 |
 | 신규 4 vendor (Huawei / Inspur / Fujitsu / Quanta) | lab 부재 + vault 미설정 | vendor 공식 docs / DMTF 스펙 기반으로 작성 |
-| HPE Superdome Flex | lab 부재 + sub-line | priority=95 어댑터 + web sources 14건 |
+| HPE Superdome Flex | lab 부재 + sub-line | priority=101 어댑터 + web sources 14건 |
 
 ## 매트릭스를 갱신해야 하는 시점
 
