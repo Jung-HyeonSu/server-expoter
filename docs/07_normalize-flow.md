@@ -164,7 +164,7 @@ merge 가 다 끝나면 누적 변수가 가득 차 있다. 이걸로 envelope �
 
 ### 5.6 `build_output.yml`
 
-위 모든 결과를 envelope 13 필드로 조립한 뒤, 마지막에 `schema_version: "1"` 을 박는다.
+위 모든 결과를 envelope 13 필드로 조립한다 (`schema_version: "1"` 은 마지막에 각 채널 `site.yml` 이 주입).
 
 ---
 

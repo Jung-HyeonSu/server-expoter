@@ -13,7 +13,7 @@
 | `build_errors.yml` | `_all_errors` | `_norm_errors` (정규화된 errors 리스트) | error 정규화 + dedup |
 | `build_meta.yml` | `_started_at`, `_selected_adapter`, ansible_version 등 | `_meta` (started_at / finished_at / duration_ms / adapter_id / adapter_version / ansible_version) | meta 6 필드 |
 | `build_correlation.yml` | `_merged_data.system`, `_out_ip` 등 | `_correlation` (serial_number / system_uuid / bmc_ip / host_ip) | correlation 4 필드 |
-| `build_output.yml` | 위 모든 결과 | `_output` (envelope 13 필드 — **정본**) | 최종 envelope 조립 + OUTPUT task 로 emit |
+| `build_output.yml` | 위 모든 결과 | `_output` (envelope 13 필드 — **정본**; `schema_version` 은 site.yml 이 주입) | 최종 envelope 조립 + OUTPUT task 로 emit |
 | `build_empty_data.yml` | (없음) | `_norm_empty_data` (rescue 경로용 빈 skeleton) | rescue 시 _merged_data 대체 |
 | `build_failed_output.yml` | rescue 컨텍스트 | `_output` (status=failed envelope 13 필드) | 완전 실패 시 fallback envelope |
 

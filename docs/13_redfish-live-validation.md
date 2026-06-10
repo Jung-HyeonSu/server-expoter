@@ -334,12 +334,12 @@ ServiceRoot를 조회했으므로 chassis_uri를 함께 반환하면 HTTP 호출
 |------------|----------|-----------|----------|
 | redfish_generic | 0 | any (fallback) | 9개 전체 |
 | redfish_dell_idrac | 10 | vendor: Dell | 9개 전체 |
-| redfish_dell_idrac8 | 50 | Dell + firmware iDRAC 8 | 8개 (power 제외) |
+| redfish_dell_idrac8 | 50 | Dell + firmware iDRAC 8 | 9개 (power FB — cycle 2026-05-06 M-D3) |
 | redfish_dell_idrac9 | 100 | Dell + firmware iDRAC 9 | 9개 전체 |
 | redfish_hpe_ilo | 10 | vendor: HPE | 9개 전체 |
-| redfish_hpe_ilo4 | 50 | HPE + firmware iLO 4 | 7개 (storage, power 제외) |
+| redfish_hpe_ilo4 | 50 | HPE + firmware iLO 4 | 9개 (storage/power FB — cycle 2026-05-06 M-D3) |
 | redfish_hpe_ilo5 | 100 | HPE + firmware iLO 5 | 9개 전체 |
-| redfish_lenovo_imm2 | 50 | Lenovo + firmware IMM2 | 7개 (storage, power 제외) |
+| redfish_lenovo_imm2 | 50 | Lenovo + firmware IMM2 | 9개 (storage/power FB — cycle 2026-05-06 M-D3) |
 | redfish_lenovo_xcc | 100 | Lenovo + firmware XCC | 9개 전체 |
 | redfish_supermicro_bmc | 10 | vendor: Supermicro | 9개 전체 |
 | redfish_supermicro_x9 | 50 | Supermicro + model X9 | 6개 |

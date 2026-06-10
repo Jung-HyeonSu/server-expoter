@@ -214,7 +214,7 @@ server-exporter/
   - Supermicro X9 ~ X14
   - Cisco CIMC M4 ~ M8 + UCS X-Series
   - Huawei iBMC, Inspur ISBMC, Fujitsu iRMC, Quanta QCT BMC
-- 각 범위의 하단 세대(Dell iDRAC 8, HPE iLO 4, Lenovo IMM2, Supermicro X9)는 fallback adapter 로 연결만 되고 대부분 섹션을 `not_supported` 로 보고한다. 세대별 지원 상세는 [docs/22_compatibility-matrix.md](docs/22_compatibility-matrix.md).
+- Dell iDRAC 8 / HPE iLO 4 / Lenovo IMM2 는 fallback adapter 로 storage/power 까지 거의 모든 섹션을 수집한다 (일부 필드 `null` 가능 — FB). Supermicro X9 만 storage/firmware/power 를 `not_supported` 로 보고한다. 세대별 상세는 [docs/22_compatibility-matrix.md](docs/22_compatibility-matrix.md).
 
 (약어 풀이: BMC = Baseboard Management Controller / iDRAC = Integrated Dell Remote Access Controller / iLO = Integrated Lights-Out / XCC = Lenovo XClarity Controller / CIMC = Cisco Integrated Management Controller)
 
