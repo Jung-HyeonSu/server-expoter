@@ -321,7 +321,7 @@ _OEM_EXTRACTORS = {
 ### 회귀 검증 (PR 머지 전)
 
 ```bash
-pytest tests/regression/                       # cross-channel envelope (107 검증)
+pytest tests/regression/                       # cross-channel envelope (120 검증)
 pytest tests/redfish-probe/probe_redfish.py --vendor {vendor}
 python scripts/ai/verify_vendor_boundary.py    # vendor 경계 (rule 12)
 ansible-playbook --syntax-check redfish-gather/site.yml

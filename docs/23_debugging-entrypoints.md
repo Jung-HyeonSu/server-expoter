@@ -259,7 +259,7 @@ community.vmware 로그 → `-vvv` 출력의 `vmware_*` 모듈 응답.
 **A 고치고 B 깨지는 패턴 차단**:
 
 1. **Cross-channel envelope 회귀** (Phase A 신설): `pytest tests/regression/`
-   - 13 검증 그룹 × 8 baseline = 107 테스트
+   - 13 검증 그룹 × 9 baseline + 채널 커버리지 3 = 120 테스트
 2. **Jinja2 namespace 회귀 차단** (Phase B): `pre_commit_jinja_namespace_check.py`
 3. **Fragment skeleton sync 차단** (Phase B): `pre_commit_fragment_skeleton_sync.py`
 4. **사이트 fixture 캡처** (rule 21 R2): `capture-site-fixture` skill
