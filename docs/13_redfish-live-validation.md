@@ -387,7 +387,7 @@ ServiceRoot를 조회했으므로 chassis_uri를 함께 반환하면 HTTP 호출
 | account_service (M-B) | 9 vendor 매트릭스 25 row 정적 검증 — Gap 0, BLOCK 1 (Supermicro X9) |
 | vault 자동 반영 (M-C) | YES (다음 ansible run 부터) — cacheable 0 / fact_caching 0 / gather_facts: no |
 | 호환성 매트릭스 (M-D) | 240 cell 전수 분류 — OK 27 / OK★ 167 / FB 9 / GAP 7 / BLOCK 6 / N/A 24 |
-| Superdome 추가 (M-E) | hpe_superdome_flex.yml (priority=95, lab 부재 web sources 14건) |
+| Superdome 추가 (M-E) | hpe_superdome_flex.yml (priority=95 → 현재 101, lab 부재 web sources 14건) |
 | docs/20 신설 (M-F) | envelope 13 + sections 10 + field_dictionary 65 정본 + 3채널 비교 |
 | 학습 추출 (M-G) | (cycle 종료 시) |
 
@@ -408,7 +408,7 @@ ServiceRoot를 조회했으므로 chassis_uri를 함께 반환하면 HTTP 호출
 
 | 항목 | 내용 |
 |---|---|
-| 위치 | `adapters/redfish/hpe_superdome_flex.yml` (priority=95) |
+| 위치 | `adapters/redfish/hpe_superdome_flex.yml` (priority=95 → 현재 101) |
 | 모델 | Superdome Flex 280 (2020+) / Superdome Flex (2017+) |
 | BMC | RMC + per-node iLO 5 (dual-manager) |
 | Multi-partition | nPAR — Systems ID = `Partition<N>`. 첫 partition (Partition0) 만 수집 |
@@ -474,7 +474,7 @@ ServiceRoot를 조회했으므로 chassis_uri를 함께 반환하면 HTTP 호출
 | HPE | iLO4 | 부재 | adapter hpe_ilo4.yml + M-H2 mock | [PENDING] (SimpleStorage W2 + Power W3 검증) |
 | HPE | iLO5 | 부재 | adapter hpe_ilo5.yml + M-H2 mock | [PENDING] |
 | HPE | iLO6 | partial (Round 11 + 사이트 Gen12) | adapter hpe_ilo6.yml + M-H2 mock | [PENDING] (PowerSubsystem dual + SmartStorage fallback) |
-| HPE | Superdome Flex (Gen 1/2 + 280) | 부재 | adapter hpe_superdome_flex.yml (priority=95) + M-G1 OEM 분기 + M-G2 mock | [PENDING] (RMC + Partition0 + iLO5 dual-manager) |
+| HPE | Superdome Flex (Gen 1/2 + 280) | 부재 | adapter hpe_superdome_flex.yml (priority=95 → 현재 101, docs/10 §3.5) + M-G1 OEM 분기 + M-G2 mock | [PENDING] (RMC + Partition0 + iLO5 dual-manager) |
 | Lenovo | BMC (IBM 시기) | 부재 (Redfish 미지원) | adapter lenovo_bmc.yml | [SKIP] |
 | Lenovo | IMM (legacy) | 부재 (Redfish 미지원) | (별도 분기 없음 — lenovo_bmc fallback) | [SKIP] |
 | Lenovo | IMM2 | 부재 | adapter lenovo_imm2.yml + M-H3 mock | [PENDING] (SimpleStorage W4 + Power W5 검증) |
@@ -488,7 +488,7 @@ ServiceRoot를 조회했으므로 chassis_uri를 함께 반환하면 HTTP 호출
 | Supermicro | H11 ~ H14 (AMD) | 부재 | adapter X11~X14 model_patterns 확장 (M-B3) | [PENDING] |
 | Supermicro | **X10 (cycle 2026-05-07 신설)** | 부재 | adapter supermicro_x10.yml (priority=75 — M-B1) | [PENDING] |
 | Supermicro | **ARS (ARM, cycle 2026-05-07 신설)** | 부재 | adapter supermicro_ars.yml (priority=80 — M-B3) | [PENDING] |
-| **HPE** | **Compute Scale-up Server 3200 (CSUS 3200, cycle 2026-05-11 신설)** | **부재 (lab 도입 시 별도 cycle)** | **adapter hpe_csus_3200.yml (priority=96) + HPE OEM tasks 재사용 (regex 확장 Additive)** | **[PENDING]** |
+| **HPE** | **Compute Scale-up Server 3200 (CSUS 3200, cycle 2026-05-11 신설)** | **부재 (lab 도입 시 별도 cycle)** | **adapter hpe_csus_3200.yml (priority=96 → 현재 102, docs/10 §3.5) + HPE OEM tasks 재사용 (regex 확장 Additive)** | **[PENDING]** |
 | Huawei | iBMC 1.x ~ 5.x + Atlas | 부재 (cycle 2026-05-01 명시) | adapter huawei_ibmc.yml (M-C1) + OEM tasks (M-C2) + mock (M-C3) | [PENDING] |
 | Inspur | ISBMC | 부재 (cycle 2026-05-01) | adapter inspur_isbmc.yml + OEM tasks (M-D1) + mock (M-D2) | [PENDING] |
 | Fujitsu | iRMC S2 | 부재 (Redfish 미지원 가능성) | adapter fujitsu_irmc.yml (firmware_patterns) | [SKIP] |
@@ -515,7 +515,7 @@ cycle 2026-05-07 M-K1 검증: 30/30 adapter origin 주석 일관성 PASS (verify
 - **HPE Compute Scale-up Server 3200 (CSUS 3200)** — HPE 공식 명시 *"built on the proven HPE Superdome Flex architecture"* (HPE psnow doc/a50009596enw)
 - **관리**: RMC (Rack Management Controller) primary + PDHC (per-chassis) + RMP (redundancy)
 - **Redfish**: 표준 (RMC = API host) + HPE OneView profile 동시 지원
-- **adapter**: `adapters/redfish/hpe_csus_3200.yml` (priority=96 — Superdome Flex 95 직상)
+- **adapter**: `adapters/redfish/hpe_csus_3200.yml` (priority=96 → 현재 102 — Superdome Flex 95→101 직상, docs/10 §3.5)
 - **OEM tasks**: HPE 공통 (`redfish-gather/tasks/vendors/hpe/{collect,normalize}_oem.yml`) 재사용
 - **regex 확장**: `(?i)Superdome|Flex` → `(?i)Superdome|Flex|Compute Scale-up|CSUS` (Additive only — rule 92 R2)
 - **vault profile**: `hpe` 재사용 (사용자 명시 승인 시 향후 분리)
