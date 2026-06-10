@@ -393,7 +393,7 @@ ServiceRoot를 조회했으므로 chassis_uri를 함께 반환하면 HTTP 호출
 | status 로직 (M-A) | Case A 채택 (의도 주석 강화 only) — pytest 13건 추가 (총 294 PASS) |
 | account_service (M-B) | 9 vendor 매트릭스 25 row 정적 검증 — Gap 0, BLOCK 1 (Supermicro X9) |
 | vault 자동 반영 (M-C) | YES (다음 ansible run 부터) — cacheable 0 / fact_caching 0 / gather_facts: no |
-| 호환성 매트릭스 (M-D) | 240 cell 전수 분류 — OK 27 / OK★ 167 / FB 9 / GAP 7 / BLOCK 6 / N/A 24 |
+| 호환성 매트릭스 (M-D) | 240 cell 전수 분류 — M-D 분석 시점 OK 27 / OK★ 167 / FB 9 / GAP 7 / BLOCK 6 / N/A 24 (W1~W6 적용 후 현재 36/157/14/3/6/24 — docs/22) |
 | Superdome 추가 (M-E) | hpe_superdome_flex.yml (priority=95 → 현재 101, lab 부재 web sources 14건) |
 | docs/20 신설 (M-F) | envelope 13 + sections 10 + field_dictionary 83 정본 + 3채널 비교 |
 | 학습 추출 (M-G) | (cycle 종료 시) |

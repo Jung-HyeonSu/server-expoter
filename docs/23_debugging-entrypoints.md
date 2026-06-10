@@ -168,7 +168,7 @@ adapter_loader: 선택됨 — dell_idrac9 (score=100345) [rule 10 R5 score = pri
 | `correlation` | `build_correlation.yml` |
 | `errors` | `build_errors.yml` (`_norm_errors`) |
 | `data` | merge_fragment.yml 누적 (`_merged_data`) |
-| `schema_version` | callback 또는 build_output 후 inject |
+| `schema_version` | 각 채널 `site.yml` 이 inject |
 
 **필드 누락 사고 (rule 95 R1 #2 fragment 침범 회귀)**:
 - 회귀 테스트: `pytest tests/regression/test_cross_channel_consistency.py::test_envelope_thirteen_fields_present`

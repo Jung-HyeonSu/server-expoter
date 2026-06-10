@@ -239,7 +239,7 @@ BMC AccountService POST/PATCH → infraops 계정 생성/복구
 
 ## 6.6. adapter label naming convention (cycle 2026-05-11 — M-A7)
 
-> 본 절은 cycle 2026-05-11 M-A7 (commit `a82afc4b`) 의 29 adapter 전수 정합 결과를 정본 reference 로 고정.
+> 본 절은 cycle 2026-05-11 M-A7 (commit `a82afc4b`) 의 30 adapter 전수 정합 결과를 정본 reference 로 고정.
 
 ### 1:1 정합 의무
 
@@ -247,7 +247,7 @@ adapter (`adapters/redfish/{vendor}_*.yml`) 의 `credentials.recovery_accounts[*
 
 - **정본** = vault `accounts[*].label` (운영자 결정)
 - adapter `vault_label` 은 vault 정본을 참조만 — adapter 가 vault 에 없는 label declare 시 `account_service.yml:31-41` label 매칭 chain 에서 skip 후 username fallback 으로 우회 (기능은 동작하나 label 매칭 활성화 안 됨 + 시도 회수 증가)
-- 회귀 검증: `tests/unit/test_adapter_vault_label_consistency.py` (29 adapter × vendor 별 허용 set 정적 검증)
+- 회귀 검증: `tests/unit/test_adapter_vault_label_consistency.py` (30 adapter × vendor 별 허용 set 정적 검증)
 
 ### naming convention (cycle 2026-05-11 정착)
 
@@ -258,12 +258,12 @@ adapter (`adapters/redfish/{vendor}_*.yml`) 의 `credentials.recovery_accounts[*
 | `{vendor}_fallback` / `{vendor}_fallback_N` | 히스토리컬 fallback (이전 cycle 운영 자격 또는 다중 history 보존) | Dell (`fallback_1`, `fallback_2`) / HPE / Lenovo |
 | `lab_{vendor}_root` | lab 환경 root 자격 (사이트 외 lab 검증 전용) | Dell only (`lab_dell_root`) |
 
-### vendor 별 적용 결과 (29 adapter 정합 완료)
+### vendor 별 적용 결과 (30 adapter 정합 완료)
 
 | vendor | adapter 수 | label entries | 정본 |
 |---|---|---|---|
 | Dell | 4 (idrac/idrac8/idrac9/idrac10) | `dell_fallback_1`, `dell_fallback_2`, `dell_current`, `lab_dell_root` | §6.5 매트릭스 |
-| HPE | 6 (ilo/ilo4/ilo5/ilo6/ilo7/superdome_flex) | `hpe_fallback`, `hpe_current`, `hpe_factory` | §6.5 매트릭스 |
+| HPE | 7 (ilo/ilo4/ilo5/ilo6/ilo7/superdome_flex/csus_3200) | `hpe_fallback`, `hpe_current`, `hpe_factory` | §6.5 매트릭스 |
 | Lenovo | 4 (bmc/imm2/xcc/xcc3) | `lenovo_fallback`, `lenovo_current`, `lenovo_factory` | §6.5 매트릭스 |
 | Supermicro | 8 (bmc/x9/x10/x11/x12/x13/x14/ars) | `supermicro_factory` | §6.5 매트릭스 |
 | Cisco | 3 (bmc/cimc/ucs_xseries) | `cisco_current`, `cisco_factory` | §6.5 매트릭스 |
@@ -272,7 +272,7 @@ adapter (`adapters/redfish/{vendor}_*.yml`) 의 `credentials.recovery_accounts[*
 | Fujitsu | 1 (irmc) | `fujitsu_factory` | §6.5 매트릭스 |
 | Quanta | 1 (qct_bmc) | `quanta_factory` | §6.5 매트릭스 |
 
-총 29 adapter (`redfish_generic.yml` 제외 — generic fallback 은 vendor 미상으로 `recovery_accounts: []` 유지).
+총 30 adapter (`redfish_generic.yml` 제외 — generic fallback 은 vendor 미상으로 `recovery_accounts: []` 유지).
 
 ### 변경 원칙 (rule 13 R5 + rule 96 R1-B — Additive only)
 

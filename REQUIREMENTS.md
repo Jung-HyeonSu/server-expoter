@@ -229,10 +229,10 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
 
 | 벤더 | 지원 | 미지원 | 실장비 검증 |
 |------|------|--------|-----------|
-| Dell | iDRAC 9 (PowerEdge 14G+) | iDRAC 7/8 (PowerEdge 12G/13G) — Redfish 미성숙 | 검증 완료 |
-| HPE | iLO 5 (ProLiant Gen10+), iLO 6 (Gen11) | iLO 4 이하 — `Oem.Hp` 구조 달라 일부 수집 제한 | 검증 완료 |
-| Lenovo | ThinkSystem (X11, SR/ST/SD 시리즈) | ThinkServer — Redfish 미지원 | 검증 완료 |
-| Supermicro | X10/X11/X12/X13/H11/H12 이상 | X9 이하 — Redfish 미지원 | 미검증 (어댑터만 존재) |
+| Dell | iDRAC 9 (PowerEdge 14G+) | iDRAC 7 — Redfish 미성숙 (iDRAC 8 은 FB 제한 수집) | 검증 완료 |
+| HPE | iLO 5 (ProLiant Gen10+), iLO 6 (Gen11) | iLO 3 이하 미지원. iLO 4 는 FB 제한 수집 (`Oem.Hp`) | 검증 완료 |
+| Lenovo | ThinkSystem (X11, SR/ST/SD 시리즈) | ThinkServer — Redfish 미지원 (IMM2 는 FB 제한 수집) | 검증 완료 |
+| Supermicro | X10/X11/X12/X13/H11/H12 이상 | X8 이하 미지원. X9 는 6 섹션 부분 수집 | 미검증 (어댑터만 존재) |
 | Cisco | UCS C-Series M4+ (CIMC Redfish 지원) | UCS C-Series M3 이하 — Redfish 미지원 | M4 partial lab 검증 (M5~M8 미검증) |
 
 > 코드는 Redfish 표준 API(DSP0266)를 동적 탐색(API Discovery)하므로,
@@ -363,10 +363,10 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
 | Windows Server 2008 / 2008 R2 | WinRM NTLM 불안정, PowerShell 2.0, CIM 미지원 |
 | ESXi 6.0 이하 | community.vmware 컬렉션 호환성 부재 |
 | ESXi Free 라이선스 | vSphere API write access 없음 |
-| Dell iDRAC 7 / 8 | Redfish API 미성숙 — 일부 endpoint 자체가 응답 안 함 |
-| HPE iLO 4 이하 | OEM 영역이 옛 `Oem.Hp` 구조 (현재는 `Oem.Hpe`) |
+| Dell iDRAC 7 이하 | Redfish API 미성숙 — 일부 endpoint 자체가 응답 안 함 (iDRAC 8 은 8절 NOTE 의 FB 수집) |
+| HPE iLO 3 이하 | 옛 `Oem.Hp` 구조 (iLO 4 는 8절 NOTE 의 FB 수집) |
 | Lenovo ThinkServer | Redfish 자체 미지원 (ThinkSystem 만 지원) |
-| Supermicro X9 이하 | Redfish 미지원 |
+| Supermicro X8 이하 | Redfish 미지원 (X9 는 6 섹션 부분 수집 — 8절 NOTE) |
 | Cisco UCS C-Series M3 이하 | Redfish 미지원 |
 | Python 3.8 이하 (타겟 Linux) | ansible-core 2.20 모듈 실행 불가 |
 | Python 3.11 이하 (Agent) | 프로젝트 검증 기준 외 |
