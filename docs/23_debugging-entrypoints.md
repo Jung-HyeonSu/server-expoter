@@ -138,8 +138,8 @@ adapter_loader: 선택됨 — dell_idrac9 (score=100065) [rule 10 R5 score = pri
 1. **점수 breakdown 확인** — priority / specificity / match_score 중 어느 것 때문인지
 2. **adapter YAML priority 확인** (`adapters/{channel}/*.yml` priority 키)
 3. **rule 50 R3 priority 정책표** (`docs/10_adapter-system.md` 참조):
-   - generic = 0~10
-   - vendor 기본 = 50
+   - generic = 0
+   - vendor 기본 = 10
    - 세대별 = 80~100
    - 모델별 = 100~120
 4. **점수 동률 시** — `-vvv` 로그에 동률 경고 출력. 동률 발견 시 priority/specificity 일관성 점검

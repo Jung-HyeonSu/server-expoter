@@ -214,12 +214,12 @@ OS 채널은 `system.hosting_type` 필드를 제공한다.
 | 벤더 | 모델 | BMC | FW 버전 | Redfish Version | 매칭 Adapter |
 |------|------|-----|---------|-----------------|-------------|
 | Dell | PowerEdge R740 | iDRAC 9 | 4.00 | 1.6.0 | redfish_dell_idrac9 (P100) |
-| HPE | ProLiant DL380 Gen11 | iLO 6 | 1.73 | 1.20.0 | redfish_hpe_ilo (P10) |
+| HPE | ProLiant DL380 Gen11 | iLO 6 | 1.73 | 1.20.0 | redfish_hpe_ilo6 (P100) |
 | Lenovo | ThinkSystem SR650 V2 | XCC | 5.70 | 1.15.0 | redfish_lenovo_xcc (P100) |
 
 > 검증 기준 장비에서 확인된 Redfish Version 범위는 1.6.0 ~ 1.20.0 이다.
 > 이 범위는 지원 범위가 아니라, 실장비 검증 시점에 확인된 값이다.
-> HPE iLO 6 전용 어댑터는 없으며 hpe_ilo (P10) fallback으로 동작한다.
+> HPE iLO 6 은 전용 어댑터 `redfish_hpe_ilo6` (P100) 로 매칭된다 (`hpe_ilo` P10 은 미세대 fallback).
 
 **벤더별 지원/미지원 상세:**
 

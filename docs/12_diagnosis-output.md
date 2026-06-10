@@ -48,8 +48,7 @@ precheck 4단계 (`docs/11`) 의 결과가 그대로 들어온다.
   "failure_stage":      "protocol",
   "failure_reason":     "Redfish ServiceRoot (/redfish/v1/) 응답 없음 — iDRAC 7 등 구 세대 추정",
   "details": {
-    "channel": "redfish", "checked_ports": [443], "selected_port": 443,
-    "probe_facts": {}
+    "channel": "redfish", "checked_ports": [443], "selected_port": 443
   }
 }
 ```
@@ -147,8 +146,8 @@ precheck 4단계 (`docs/11`) 의 결과가 그대로 들어온다.
 - ESXi 채널: 같다 (vCenter 가 아니라 호스트 직접 수집 시).
 - Redfish 채널: BMC IP 가 envelope `ip` 이고, 서버 OS 가 올라간 host IP 는 별도. BMC 가 보고할 수 있으면 채워진다.
 
-**Q. `diagnosis.probe_facts` 가 비어있는데 정상인가?**
-실패 단계에서 멈췄을 때 비는 게 정상. 단계 3 (protocol) 까지는 통과해야 vendor / firmware 정보를 알 수 있다.
+**Q. `diagnosis.details` 에 vendor / firmware 가 안 보이는데 정상인가?**
+실패 단계에서 멈췄을 때 비는 게 정상. 단계 3 (protocol) 까지 통과해야 probe 가 vendor / firmware 를 `details` 에 병합한다 (별도 `probe_facts` 키는 출력에 없음 — `details` 안으로 합쳐진다).
 
 **Q. `failure_stage` 가 `null` 인데 status 가 `partial` 이다. 모순 아닌가?**
 모순 아니다. precheck 는 통과했는데 본 수집의 일부 endpoint 가 실패한 케이스. 어느 섹션이 실패인지는 `errors[]` + `sections.<섹션>: failed` 로 확인한다.
