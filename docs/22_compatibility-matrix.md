@@ -67,15 +67,15 @@ OS / ESXi 채널은 별도다. Redfish 채널은 OS 로컬 계정을 안 보기 
 
 | 기호 | 개수 | 비율 | 상태 |
 |---|---:|---:|---|
-| `OK` (lab 검증 완료) | 27 | 11% | 가장 신뢰 |
-| `OK★` (코드는 있고 baseline 만 부재) | 167 | 70% | 보통 동작 |
+| `OK` (lab 검증 완료) | 36 | 15% | 가장 신뢰 |
+| `OK★` (코드는 있고 baseline 만 부재) | 157 | 65% | 보통 동작 |
 | `FB` (옛 펌웨어 fallback) | 9 | 4% | 사용 가능 |
-| `GAP` (명시 미지원) | 7 | 3% | not_supported 응답 |
+| `GAP` (명시 미지원) | 8 | 3% | not_supported 응답 |
 | `BLOCK` (미검증) | 6 | 2.5% | 신규 추가 필요 |
 | `N/A` (Redfish 가 안 다루는 영역) | 24 | 10% | 정상 |
 | **합계** | **240** | **100%** | |
 
-baseline 을 가진 lab tested 벤더 4개 (Dell iDRAC9 / HPE iLO6 / Lenovo XCC v2 / Cisco CIMC M4) 가 27 칸을 차지한다. 나머지는 코드 / 어댑터는 있지만 실장비 검증을 못한 상태.
+baseline 을 가진 lab tested 벤더 4개 (Dell iDRAC9 / HPE iLO6 / Lenovo XCC v2 / Cisco CIMC M4) 가 36 칸 (각 9 섹션)을 차지한다. 나머지는 코드 / 어댑터는 있지만 실장비 검증을 못한 상태.
 
 ## lab 에 장비가 없는 영역
 

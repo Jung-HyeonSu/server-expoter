@@ -121,7 +121,7 @@ adapter_loader: channel=redfish, facts vendor=Dell Inc., model=PowerEdge R760, f
 adapter_loader: scanned 28 candidates from /repo/adapters/redfish
 adapter_loader: dell_idrac9 matched score=100065 (priority=100×1000 + specificity=65×10 + match=70)
 adapter_loader: dell_idrac matched score=10025 (priority=10×1000 + specificity=25×10 + match=20)
-adapter_loader: redfish_generic matched score=20 (priority=0×1000 + specificity=20×10 + match=0)
+adapter_loader: redfish_generic matched score=-20 (priority=0×1000 + specificity=20 + match=0 − generic 감점 40)
 adapter_loader: 후보 거부 — 25건
   - hpe_ilo6 (match 조건 불일치)
   - lenovo_xcc3 (match 조건 불일치)

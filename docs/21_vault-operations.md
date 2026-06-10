@@ -20,9 +20,9 @@ server-exporter 가 SSH / WinRM / vSphere / Redfish 에 접속할 때 쓰는 **�
 
 이유: server-exporter 는 vault 결과를 어디에도 캐시하지 않는다. 매 실행마다 ansible-vault 가 디스크에서 읽어서 복호화한다.
 
-### 의심될 때 직접 확인하는 3가지
+## 2. 의심될 때 직접 확인하는 3가지
 
-운영 중 "정말 반영된 게 맞나?" 가 의심되면 다음 3가지를 차례로 본다. 모두 "0 결과" 가 정상.
+운영 중 "정말 반영된 게 맞나?" 가 의심되면 아래 §4.1 의 3 단서 (include_vars `cacheable` 부재 / `set_fact` host facts 부재 / vault decrypt 캐시 부재) 를 차례로 확인한다. 모두 "0 결과" 가 정상.
 
 ---
 

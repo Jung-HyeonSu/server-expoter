@@ -144,9 +144,9 @@ server-exporter/
   "vendor":            "dell | hp | hpCsus | lenovo | supermicro | cisco | huawei | inspur | fujitsu | quanta | null",
   "status":            "success | partial | failed",
   "sections":          { "system": "success", "cpu": "success", ... },
-  "diagnosis":         { "precheck": {...}, "details": [...] },
-  "meta":              { "loc": "ich", "duration_ms": 1234, ... },
-  "correlation":       { "host_ip": "...", "request_id": "..." },
+  "diagnosis":         { "reachable": true, "auth_success": true, "failure_stage": null, "details": {...} },
+  "meta":              { "duration_ms": 1234, "adapter_id": "...", "ansible_version": "..." },
+  "correlation":       { "serial_number": "...", "host_ip": "...", "bmc_ip": "..." },
   "errors":            [ ... ],
   "data":              { "system": {...}, "cpu": {...}, ... }
 }
