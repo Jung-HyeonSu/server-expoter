@@ -358,6 +358,27 @@ main
     └─ docs/thermal-section.md
 ```
 
+### Branch 정책 (main / production)
+
+> 2026-06-11 사용자 확정.
+
+- **main** = 개발 브랜치. 하네스 + 순수 게더링 코드 전부.
+- **production** = 배포/포트폴리오 브랜치. **순수 게더링 코드만** (하네스 0개).
+
+**불변식**: 순수 프로젝트 코드/정보 → main + production 둘 다. 하네스 관련 → **main 전용**.
+
+**하네스로 분류(= production 에서 제외) 경로**:
+`.claude/`, `CLAUDE.md`, `GUIDE_FOR_AI.md`, `docs/ai/`, `docs/superpowers/`, `scripts/ai/`, `tests/reference/`, `tests/evidence/`
+
+**승격 방식 (확정)**:
+- main 에서 **하네스 커밋과 순수 코드 커밋을 별도로 분리**해서 커밋한다.
+- production 반영은 **순수 코드 커밋만 cherry-pick**. `git merge main` → production 은 **금지**(하네스가 딸려 들어옴).
+- 하네스 변경은 production 에 절대 올리지 않는다 (main 에만 commit/push).
+
+**remote / push**:
+- `origin` push URL 2개 = GitHub(`git@github.com:hshwang1994/server-exporter.git`) + 내부 GitLab(`https://10.100.64.156/root/server-expoter.git`).
+- 내부 GitLab 은 **lab 망 전용** — 외부 환경에선 연결 불가. 외부에서 `git push origin` 시 GitHub 만 반영되고 내부는 실패 → 내부 반영은 lab PC 에서 직접 push.
+
 ---
 
 ## 3-채널 지원 현황
