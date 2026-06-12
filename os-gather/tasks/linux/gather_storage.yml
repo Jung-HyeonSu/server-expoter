@@ -17,6 +17,8 @@
       failed_when: false
       no_log: true
 
+    # Round 16: lsblk 가 virtio/일부 가상 disk 에 "model": null 방출 → 'is defined' 통과 후
+    #           None|trim='None' 누설. truthy 체크로 None/''/undefined 를 none 으로 정규화.
     - name: "linux | storage | normalize physical disks"
       ansible.builtin.set_fact:
         _l_norm_physical_disks: >-
@@ -36,8 +38,6 @@
                 {%- set _ = out.append({
                   'id':         _dev_path,
                   'device':     _dev_path,
-                  {# Round 16: lsblk 가 virtio/일부 가상 disk 에 "model": null 방출 → 'is defined'
-                     통과 후 None|trim='None' 누설. truthy 체크로 None/''/undefined → none. #}
                   'model':      (dev.model | trim) if dev.model else none,
                   'total_mb':   (dev.size | int / 1048576) | round(0,'floor') | int,
                   'media_type': 'HDD' if (dev.rota | default('1') | string) in ['1','true','True'] else 'SSD',
@@ -160,6 +160,8 @@
       failed_when: false
       no_log: true
 
+    # Round 16: lsblk 가 virtio/일부 가상 disk 에 "model": null 방출 → 'is defined' 통과 후
+    #           None|trim='None' 누설. truthy 체크로 None/''/undefined 를 none 으로 정규화.
     - name: "linux | storage | normalize physical disks (raw)"
       ansible.builtin.set_fact:
         _l_norm_physical_disks_raw: >-
@@ -183,8 +185,6 @@
                 {%- set _ = out.append({
                   'id':         _dev_path,
                   'device':     _dev_path,
-                  {# Round 16: lsblk 가 virtio/일부 가상 disk 에 "model": null 방출 → 'is defined'
-                     통과 후 None|trim='None' 누설. truthy 체크로 None/''/undefined → none. #}
                   'model':      (dev.model | trim) if dev.model else none,
                   'total_mb':   (dev.size | int / 1048576) | round(0,'floor') | int,
                   'media_type': 'HDD' if (dev.rota | default('1') | string) in ['1','true','True'] else 'SSD',
