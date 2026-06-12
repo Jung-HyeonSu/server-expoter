@@ -11,6 +11,7 @@
 #               + pre_commit_jinja_namespace_check (rule 22 R7 — cycle 2026-05-07 advisory / cycle 2026-05-11 BLOCKING 격상)
 #               + pre_commit_fragment_skeleton_sync (rule 22 R7 — cycle 2026-05-07)
 #               + pre_commit_regex_search_conditional_check (rule 95 R1 #12 — cycle 2026-05-11 advisory)
+#               + pre_commit_jinja_compile_check (inline Jinja2 컴파일 — 2026-06-12 advisory, set_fact 크래시 차단)
 # - commit-msg: commit_msg_check (rule 90)
 # - post-commit: post_commit_measurement_trigger (rule 28)
 #                + post_commit_compatibility_matrix_check (rule 28 #12)
@@ -76,7 +77,8 @@ write_hook "pre-commit" \
     "pre_commit_additive_only_check.py" \
     "pre_commit_jinja_namespace_check.py" \
     "pre_commit_fragment_skeleton_sync.py" \
-    "pre_commit_regex_search_conditional_check.py"
+    "pre_commit_regex_search_conditional_check.py" \
+    "pre_commit_jinja_compile_check.py"
 
 write_hook "commit-msg" \
     "commit_msg_check.py"
@@ -110,3 +112,5 @@ echo "  JINJA_NAMESPACE_SKIP_FILE=... — 특정 파일만 skip (':' 구분)"
 echo "  SKELETON_SYNC_SKIP=1          — pre_commit_fragment_skeleton_sync skip (rule 22 R7, blocking)"
 echo "  REGEX_WHEN_SKIP=1             — pre_commit_regex_search_conditional_check skip (rule 95 R1 #12, advisory)"
 echo "  REGEX_WHEN_BLOCKING=1         — advisory → blocking 격상 (1주 안정 후 사용)"
+echo "  JINJA_COMPILE_SKIP=1          — pre_commit_jinja_compile_check skip (inline Jinja2 컴파일, advisory)"
+echo "  JINJA_COMPILE_BLOCKING=1      — advisory → blocking 격상 (false positive 불가 — 즉시 격상 안전)"
