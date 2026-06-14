@@ -50,6 +50,16 @@ os baseline 이 `up`인데 os 코드가 `linkup` emit → **baseline 또는 코�
 
 ## Track 4 — thermal 섹션 신설 (단일노드 fan/temp 수집)
 
+> **상태: 코드/스키마 offline 구현·검증 완료 (cycle 2026-06-14, 커밋 d7f91149/9571699c, ADR-2026-06-14).**
+> 완료: module 배선(`_collect_all_sections`) + sections.yml + field_dictionary(7 entry) +
+> normalize passthrough + supported_sections + docs/20 + emulator/dmtf golden 6건 thermal-only 재생성 +
+> count 참조. replay 로 Dell temps 4/fans 6 실값 검증, drift(sections=11)/validator/jinja/pytest 1097 PASS.
+> **잔여 = lab only**: redfish baseline(dell/hpe/lenovo/cisco/csus)에 thermal 섹션 추가(실장비 full 재캡처
+> — baseline 은 내 미러와 다른 device 라 미러 thermal 직접 주입 금지, rule 13 R4) + docs/22 thermal 열
+> per-vendor 실측. drift 는 baseline 섹션 누락을 informational 처리 → 미수집 baseline 으로도 offline gate 통과.
+
+> 아래 절차는 그 baseline 재캡처 기준 (코드는 이미 적용됨):
+
 ### 현 실태
 - `redfish_gather.py` 에 `gather_thermal`(2978) / `_gather_thermal_subsystem`(3033) **구현 완료**.
 - 그러나 호출처는 `gather_chassis_multi`(3561, multi-node CSUS/Superdome) **단 1곳** — 단일노드
@@ -93,4 +103,11 @@ thermal 을 독립 섹션 대신 `data.power.fans` / `data.power.temperatures` �
 ## 권장 병합 순서
 1. **이미 main 병합 완료**(Stage-4-safe, 오프라인 검증): Track 1 + Track 2.
 2. **lab Stage 3/4 확인 후 병합**: Track 3 (코드 적용 완료 — baseline 값 변경분 live 회귀 확인).
-3. **lab 구현 + 병합**: Track 4 thermal (코드 미구현 — 위 절차).
+3. **lab Stage 3/4 + baseline 재캡처 후 병합**: Track 4 thermal (코드/스키마 적용 완료 — redfish baseline
+   thermal 섹션 추가 + docs/22 thermal 열만 lab 잔여).
+
+## offline 완료 요약 (이 브랜치 main..HEAD)
+- Track 1 (firmware category) + Track 2 (field_dictionary 문서) → **main 병합 완료**.
+- Track 3 (link_status 통일) → 코드/enum/doc/baseline-link_status offline 완료. lab live 회귀만 잔여.
+- Track 4 (thermal 섹션) → 코드/스키마/normalize/golden offline 완료. lab baseline 재캡처만 잔여.
+- 잔여는 전부 **lab Ansible 실행 + 실장비 baseline 재캡처** (offline 환경 본질적 한계). 더 이상 offline 작업 없음.
