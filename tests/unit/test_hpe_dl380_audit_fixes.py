@@ -153,6 +153,57 @@ def test_fc_port_wwn_not_folded_into_adapter_mac(monkeypatch) -> None:
     monkeypatch.setattr(rg, "_get", _mk_get(seq))
     out, _ = rg.gather_network_adapters_chassis("10.1.1.1", chassis_uri, "u", "p", 30, False)
     assert out["adapters"][0]["mac"] is None  # FC WWPN 이 mac 으로 오기재되지 않음
-    assert out["ports"][0]["associated_address"] == "51:40:2E:C0:20:8F:39:30"
+    # NET-2-1 (2026-06-15): associated_address 는 소문자 정규화 (wwpn/adapters.mac 와 case 일관)
+    assert out["ports"][0]["associated_address"] == "51:40:2e:c0:20:8f:39:30"
     assert len(out["fc_hbas"]) == 1
     assert out["fc_hbas"][0]["port_type"] == "FibreChannel"
+
+
+# ── SCHEMA-02: 미연결 포트 link_speed_gbps null + NET-2-1 lowercase ────────────
+
+def test_unlinked_fc_port_speed_is_none():
+    """미연결 FC 포트(CurrentSpeedGbps=0)는 link_speed_gbps=None (계약 'null when unlinked')."""
+    gbps, mbps = rg._normalize_port_speed({"CurrentSpeedGbps": 0})
+    assert gbps is None and mbps is None
+    # 정상 링크는 보존
+    assert rg._normalize_port_speed({"CurrentSpeedGbps": 32}) == (32, 32000)
+
+
+def test_ethernet_associated_address_lowercased(monkeypatch):
+    """대문자 raw MAC → associated_address 소문자 정규화 (cross-port/cross-channel case 일관)."""
+    chassis_uri, seq = _adapter_with_port({
+        "PortType": "Ethernet",
+        "Ethernet": {"AssociatedMACAddresses": ["AA:BB:CC:DD:EE:FF"]},
+    })
+    monkeypatch.setattr(rg, "_get", _mk_get(seq))
+    out, _ = rg.gather_network_adapters_chassis("10.1.1.1", chassis_uri, "u", "p", 30, False)
+    assert out["ports"][0]["associated_address"] == "aa:bb:cc:dd:ee:ff"
+    assert out["adapters"][0]["mac"] == "aa:bb:cc:dd:ee:ff"
+
+
+# ── EXC-1: collection-level 404(미지원) vs sub-멤버 404(부분 수집) 구분 ────────
+
+def test_exc1_partial_404_marked_failed_not_unsupported():
+    """부분 수집(val 채워짐 + 404-only errs)은 collected+failed (partial) — unsupported 오분류 금지."""
+    all_errors, collected, failed, unsupported = [], [], [], []
+    run = rg._make_section_runner(all_errors, collected, failed, unsupported)
+    out = run("network", lambda: ([{"id": "1"}, {"id": "2"}],
+                                  [rg._err("network", "NIC /x 실패: 404")]))
+    assert out == [{"id": "1"}, {"id": "2"}]          # 부분 데이터 보존
+    assert "network" in collected and "network" in failed  # partial 로 잡힘
+    assert "network" not in unsupported                # capability-missing 오분류 아님
+    assert len(all_errors) == 1                        # 404 error 드롭 안 됨
+
+
+def test_exc1_collection_404_empty_val_marked_unsupported():
+    """collection GET 자체 404(val 비어있음=진짜 미지원)는 unsupported (기존 동작 보존)."""
+    all_errors, collected, failed, unsupported = [], [], [], []
+    run = rg._make_section_runner(all_errors, collected, failed, unsupported)
+    # 빈 list / 빈 dict / shaped-empty dict 모두 unsupported (회귀 방지)
+    run("thermal", lambda: ({}, [rg._err("thermal", "Thermal 실패: 404")]))
+    run("network", lambda: ([], [rg._err("network", "EthernetInterfaces 실패: 404")]))
+    run("storage", lambda: ({"controllers": [], "volumes": []},
+                            [rg._err("storage", "Storage 실패: 404")]))
+    assert set(unsupported) == {"thermal", "network", "storage"}
+    assert collected == [] and failed == []
+    assert all_errors == []                            # 404 noise 차단 유지
