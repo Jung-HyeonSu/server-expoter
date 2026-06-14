@@ -44,7 +44,7 @@
 | Redfish gather | `redfish-gather/` | site.yml (1-Play: precheck → detect → adapter → collect → normalize), library/redfish_gather.py (약 3,830줄) |
 | 공통 | `common/` | library/precheck_bundle.py (4단계 진단), tasks/normalize/init_fragments/merge_fragment/build_*.yml |
 | 어댑터 | `adapters/{redfish,os,esxi}/` | 27 YAML + registry.yml — Redfish 16 + OS 7 + ESXi 4 |
-| Schema | `schema/` | sections.yml (11), field_dictionary.yml (42 Must / 72 Nice / 6 Skip = 120), baseline_v1/ (9 baseline: redfish 5 + esxi/ubuntu/windows + rhel810_raw_fallback) |
+| Schema | `schema/` | sections.yml (11), field_dictionary.yml (42 Must / 74 Nice / 6 Skip = 122), baseline_v1/ (9 baseline: redfish 5 + esxi/ubuntu/windows + rhel810_raw_fallback) |
 | Vault | `vault/` | linux/windows/esxi.yml + redfish/{vendor}.yml |
 
 ## 테스트
