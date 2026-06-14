@@ -20,7 +20,7 @@
 
 ### Field Dictionary
 
-각 필드의 상세 의미, 단위, null 해석은 `schema/field_dictionary.yml`에 정의 (Must 42 + Nice 74 + Skip 6 = **122 entries**).
+각 필드의 상세 의미, 단위, null 해석은 `schema/field_dictionary.yml`에 정의 (Must 47 + Nice 81 + Skip 6 = **134 entries**).
 
 ```bash
 # 무결성 검사

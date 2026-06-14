@@ -30,7 +30,7 @@
 #   nice — 설명이 있으면 좋고 없어도 사용에 지장 없음
 #   skip — 의미가 자명해서 본 사전에 등록하지 않음 (예: hostname)
 #
-# 등록 현황 (2026-06-14): Must 42 / Nice 72 / Skip 6 = 총 120 entries
+# 등록 현황 (2026-06-14): Must 47 / Nice 81 / Skip 6 = 총 134 entries
 #   (cycle 2026-05-29 +9 Nice — storage.hbas[]/infiniband[] 서브필드. Additive, schema_version 유지 D3)
 #
 # 검증 (수동): tests/validate_field_dictionary.py 가 다음 5가지를 검사합니다.
@@ -228,6 +228,93 @@ fields:
       HPE=part number,
       Dell=service tag,
       Cisco=not provided (null).
+
+  # cycle 2026-06-15 (SCH-1/2, 사용자 승인): data.hardware 에 정상 emit 되나 사전 미정의이던
+  # 식별 필드 12종 등록. Must 5(vendor/model/serial/uuid/bios_version — 전 esxi+redfish baseline
+  # 보유 실측) + Nice 7. channel 은 hardware 섹션(=[esxi,redfish]) 기준, vendor OEM 전용은 [redfish].
+  hardware.vendor:
+    type: "string|null"
+    priority: must
+    channel: [esxi, redfish]
+    help_ko: "서버 제조사 (Redfish System.Manufacturer / ESXi). 예: HPE, Dell Inc., Lenovo."
+    help_en: "Server vendor (Redfish System.Manufacturer / ESXi). e.g. HPE, Dell Inc., Lenovo."
+
+  hardware.model:
+    type: "string|null"
+    priority: must
+    channel: [esxi, redfish]
+    help_ko: "서버 모델명 (Redfish System.Model). 예: HPE ProLiant Compute DL380 Gen12."
+    help_en: "Server model (Redfish System.Model). e.g. HPE ProLiant Compute DL380 Gen12."
+
+  hardware.serial:
+    type: "string|null"
+    priority: must
+    channel: [esxi, redfish]
+    help_ko: "서버 시리얼번호 (Redfish System.SerialNumber). 빈 문자열은 null 로 정규화."
+    help_en: "Server serial number (Redfish System.SerialNumber). Empty string normalized to null."
+
+  hardware.uuid:
+    type: "string|null"
+    priority: must
+    channel: [esxi, redfish]
+    help_ko: "시스템 UUID (Redfish System.UUID). BMC UUID(bmc.uuid)와 다름 — 서버 본체 식별자."
+    help_en: "System UUID (Redfish System.UUID). Differs from BMC UUID (bmc.uuid) — server chassis identifier."
+
+  hardware.bios_version:
+    type: "string|null"
+    priority: must
+    channel: [esxi, redfish]
+    help_ko: "BIOS/UEFI 펌웨어 버전 (Redfish System.BiosVersion)."
+    help_en: "BIOS/UEFI firmware version (Redfish System.BiosVersion)."
+
+  hardware.bios_date:
+    type: "string|null"
+    priority: nice
+    channel: [esxi, redfish]
+    help_ko: "BIOS 릴리스 날짜 (ISO 8601 YYYY-MM-DD 정규화). 벤더 OEM(예: HPE Oem.Hpe.Bios.Current.Date)에서 hoist. 미제공 시 null."
+    help_en: "BIOS release date (ISO 8601 YYYY-MM-DD). Hoisted from vendor OEM (e.g. HPE Oem.Hpe.Bios.Current.Date). null when absent."
+
+  hardware.asset_tag:
+    type: "string|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: "자산 태그 (Redfish System.AssetTag). 미설정 시 빈 문자열→null."
+    help_en: "Asset tag (Redfish System.AssetTag). Empty→null when unset."
+
+  hardware.system_type:
+    type: "string|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: "시스템 타입 (Redfish System.SystemType). 예: Physical."
+    help_en: "System type (Redfish System.SystemType). e.g. Physical."
+
+  hardware.part_number:
+    type: "string|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: "서버 파트 번호 (Redfish System.PartNumber). 미제공 벤더는 null."
+    help_en: "Server part number (Redfish System.PartNumber). null for vendors that omit it."
+
+  hardware.last_reset_time:
+    type: "string|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: "마지막 리셋 시각 (Redfish System.LastResetTime). 미제공 펌웨어는 null."
+    help_en: "Last reset time (Redfish System.LastResetTime). null on firmware that omits it."
+
+  hardware.boot_progress:
+    type: "string|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: "부팅 진행 상태 (Redfish System.BootProgress.LastState). 예: OSRunning / None."
+    help_en: "Boot progress (Redfish System.BootProgress.LastState). e.g. OSRunning / None."
+
+  hardware.tpm:
+    type: "object|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: "TPM 요약 {interface_type, firmware_version, state}. Redfish System.TrustedModules[0]에서 추출. 미장착/미제공 시 null."
+    help_en: "TPM summary {interface_type, firmware_version, state}. From Redfish System.TrustedModules[0]. null when absent."
 
   hardware.oem:
     type: "object"
@@ -570,14 +657,18 @@ fields:
     type: "integer|null"
     priority: must
     channel: [redfish]
+    # cycle 2026-06-15 (RJ-1, 사용자 결정): 키 이름은 _mb 이나 값은 실제로 MiB(이진, ÷2^20)다.
+    # rename/십진 MB 재계산은 호출자 계약 breaking(rule 13 R5) → 키/값 유지, 단위는 문서로만 명시.
     help_ko: >-
-      논리 볼륨 용량 (MB). CapacityBytes를 1048576으로 나눈 값.
-      RAID 레벨에 따라 물리 디스크 합산 용량과 다를 수 있음.
-      예: RAID1 2×480GB → 약 457GB 볼륨.
+      논리 볼륨 용량. **주의: 키 이름은 total_mb 이나 값은 MiB(이진)다** — CapacityBytes ÷ 2^20
+      (1048576). 십진 MB(÷10^6) 아님. physical_disks 의 capacity_gb(십진 GB)와 단위계가 달라
+      합산/비교 시 주의. RAID 레벨에 따라 물리 디스크 합산 용량과 다를 수 있음 (예: RAID1 2×480GB
+      → 약 457GiB 볼륨). 이름/값은 호출자 계약 유지 위해 의도적으로 현행 유지.
     help_en: >-
-      Logical volume capacity (MB). CapacityBytes / 1048576.
-      May differ from raw physical disk total depending on RAID level.
-      Example: RAID1 2×480GB → ~457GB volume.
+      Logical volume capacity. **NOTE: despite the _mb name, the value is in MiB (binary)** —
+      CapacityBytes / 2^20 (1048576), not decimal MB (/10^6). Differs in unit system from
+      physical_disks capacity_gb (decimal GB). May differ from raw physical disk total by RAID
+      level (e.g. RAID1 2×480GB → ~457GiB). Name/value intentionally kept for caller contract.
 
   "storage.logical_volumes[].health":
     type: "string|null"

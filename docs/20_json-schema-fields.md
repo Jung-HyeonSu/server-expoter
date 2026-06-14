@@ -67,7 +67,7 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
 }
 ```
 
-> cycle 2026-06-15 (field_dictionary 122 entries): `firmware[].category` (bios/cpld/tpm/drive/
+> cycle 2026-06-15 (field_dictionary 134 entries): `firmware[].category` (bios/cpld/tpm/drive/
 > backplane/nic/storage_controller/psu/... id·name 추론) + `firmware[].pending` (적용 보류) 정식 등록.
 > `cpu.architecture` 는 redfish 채널도 emit (channel=[redfish,os,esxi]).
 
