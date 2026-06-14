@@ -345,6 +345,10 @@
         'primary_speed_mbps': ns.primary_sp
       } }}
     # cycle-016 Phase M: firmware 의 category 분류 (id/name 기반 inference)
+    # cycle 2026-06-14 (DELL R740 FW-CAT): elif 를 specific-before-broad 로 재정렬.
+    # 광범위 substring('raid'/'drive')이 물리디스크(Disk.Bay…RAID.Slot)/backplane/driverpack 를
+    # 선점하던 오분류 정정 (driver>drive, disk>backplane, backplane>raid, service>idrac/bmc).
+    # jinja2 render 검증: Dell 7건 정정 + CSUS(실 mirror 2 + mock baseline 9) 무영향.
     _rf_firmware_categorized: >-
       {%- set out = [] -%}
       {%- for fw in (_rf_d_firmware | default([])) -%}
@@ -352,20 +356,20 @@
         {%- set fname = fw.name | default('') | string -%}
         {%- set lid = (fid ~ '|' ~ fname) | lower -%}
         {%- set cat = 'other' -%}
-        {%- if 'bios' in lid -%}{%- set cat = 'bios' -%}
         {# nosec rule12-r1: firmware id substring 매칭 (Redfish firmware naming, vendor 분기 아님) #}
+        {%- if 'bios' in lid -%}{%- set cat = 'bios' -%}
+        {%- elif 'cpld' in lid -%}{%- set cat = 'cpld' -%}
+        {%- elif 'tpm' in lid -%}{%- set cat = 'tpm' -%}
+        {%- elif 'diagnostic' in lid -%}{%- set cat = 'diagnostic' -%}
+        {%- elif 'usc' in lid or 'lifecycle' in lid -%}{%- set cat = 'lifecycle' -%}
+        {%- elif 'driver' in lid -%}{%- set cat = 'driver_pack' -%}
+        {%- elif 'disk' in lid or 'drive' in lid or 'nvme' in lid or 'ssd' in lid or 'hdd' in lid or 'boss' in lid -%}{%- set cat = 'drive' -%}
+        {%- elif 'backplane' in lid -%}{%- set cat = 'backplane' -%}
+        {%- elif 'service' in lid -%}{%- set cat = 'service_module' -%}
         {%- elif 'idrac' in lid or 'ilo' in lid or 'xcc' in lid or 'cimc' in lid or 'bmc' in lid -%}{%- set cat = 'bmc' -%}
         {%- elif 'nic' in lid or 'ethernet' in lid or 'broadcom' in lid or 'mellanox' in lid -%}{%- set cat = 'nic' -%}
         {%- elif 'raid' in lid or 'perc' in lid or 'megaraid' in lid -%}{%- set cat = 'storage_controller' -%}
-        {%- elif 'disk' in lid or 'drive' in lid or 'nvme' in lid or 'ssd' in lid or 'hdd' in lid or 'boss' in lid -%}{%- set cat = 'drive' -%}
         {%- elif 'psu' in lid or 'power supply' in lid -%}{%- set cat = 'psu' -%}
-        {%- elif 'cpld' in lid -%}{%- set cat = 'cpld' -%}
-        {%- elif 'tpm' in lid -%}{%- set cat = 'tpm' -%}
-        {%- elif 'usc' in lid or 'lifecycle' in lid -%}{%- set cat = 'lifecycle' -%}
-        {%- elif 'driver' in lid -%}{%- set cat = 'driver_pack' -%}
-        {%- elif 'diagnostic' in lid -%}{%- set cat = 'diagnostic' -%}
-        {%- elif 'backplane' in lid -%}{%- set cat = 'backplane' -%}
-        {%- elif 'service' in lid -%}{%- set cat = 'service_module' -%}
         {%- endif -%}
         {%- set _ = out.append(fw | combine({'category': cat})) -%}
       {%- endfor -%}
