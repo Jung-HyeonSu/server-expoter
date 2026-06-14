@@ -31,7 +31,7 @@
       "health": "OK",
       "ip": "127.0.0.1",
       "last_reset_time": null,
-      "mac_address": "94:40:C9:37:D3:FC",
+      "mac_address": "94:40:c9:37:d3:fc",
       "manager_type": "BMC",
       "model": "iLO 5",
       "name": "iLO",

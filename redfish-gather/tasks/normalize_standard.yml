@@ -305,8 +305,13 @@
     # 2026-04-29 lenovo-critical-review: link_type 정규화 — NetworkAdapter ports 의 PortType
     # (Ethernet/FibreChannel/InfiniBand) 을 mac 기반 매칭. 미매칭/PortType 빈값 시 'ethernet'
     # 기본값 (host EthernetInterface 는 Ethernet). 이전 코드는 항상 None 하드코딩.
+    # AT-1 (2026-06-15 HPE DL380 검수): groups[].model/manufacturer 가 항상 null 이던 버그 수정.
+    #   adp_map 은 NetworkAdapter.Id(DE0xxxxx)로 키잉되는데 adp_id 는 host EthernetInterface.Id
+    #   ('13','14'…)에서 id-regex 로 도출 → 두 id 체계가 무관해 join 이 항상 실패(0 매치).
+    #   port.associated_address(MAC)→소속 adapter 매핑(adp_mac_map)을 추가하고, id-regex 매칭
+    #   실패({}) 시 nic_mac 으로 fallback join. id-regex 가 매치하던 vendor(Dell 등)는 불변(Additive).
     _rf_summary_network: >-
-      {%- set ns = namespace(groups=[], seen={}, adp_map={}, port_lt={}, primary_sp=none) -%}
+      {%- set ns = namespace(groups=[], seen={}, adp_map={}, adp_mac_map={}, port_lt={}, primary_sp=none) -%}
       {%- for a in (_rf_d_netad.adapters | default([])) -%}
         {%- set _ = ns.adp_map.update({a.id: a}) -%}
       {%- endfor -%}
@@ -318,6 +323,8 @@
         {%- elif 'ether' in pt -%}{%- set lt = 'ethernet' -%}{%- endif -%}
         {%- set addr = (p.associated_address | default('') | string | upper | replace(':','') | replace('-','')) -%}
         {%- if addr -%}{%- set _ = ns.port_lt.update({addr: lt}) -%}{%- endif -%}
+        {%- set _padp = ns.adp_map.get(p.adapter_id | default(''), {}) -%}
+        {%- if addr and _padp -%}{%- set _ = ns.adp_mac_map.update({addr: _padp}) -%}{%- endif -%}
       {%- endfor -%}
       {%- for n in (_rf_norm_interfaces | default([])) -%}
         {%- set sp = n.speed_mbps | default(none) -%}
@@ -325,11 +332,12 @@
         {%- if link_up and ns.primary_sp is none and sp -%}
           {%- set ns.primary_sp = sp -%}
         {%- endif -%}
+        {%- set nic_mac = (n.mac | default('') | string | upper | replace(':','') | replace('-','')) -%}
         {%- set adp_id = (n.id | default('') | regex_replace('-[0-9]+-[0-9]+$','') | regex_replace('-[0-9]+$','')) -%}
         {%- set adp = ns.adp_map[adp_id] | default({}) -%}
+        {%- if not adp and nic_mac -%}{%- set adp = ns.adp_mac_map.get(nic_mac, {}) -%}{%- endif -%}
         {%- set md = adp.model | default(none) -%}
         {%- set mfr = adp.manufacturer | default(none) -%}
-        {%- set nic_mac = (n.mac | default('') | string | upper | replace(':','') | replace('-','')) -%}
         {%- set lt = ns.port_lt.get(nic_mac, 'ethernet') -%}
         {%- set key = (sp|string)~'|'~(md|string)~'|'~(mfr|string)~'|'~(lt|string) -%}
         {%- if key in ns.seen -%}

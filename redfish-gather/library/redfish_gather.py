@@ -1735,7 +1735,11 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
                         result['ip'] = nic_first_ip
                     if not result['mac_address']:
                         _mac = _safe(ndata, 'MACAddress') or _safe(ndata, 'PermanentMACAddress')
-                        result['mac_address'] = _mac if isinstance(_mac, str) else None  # Round 14 #2: 비-str MAC 방어
+                        # XC-4 (2026-06-15): MAC 소문자 정규화 — _normalize_wwn/ports[].associated_address
+                        # (NET-2-1) 와 동일 canonical case. HPE iLO 는 Manager NIC MAC 을 대문자로
+                        # 노출(7C:A6:..) 하나 System/Chassis NIC 은 소문자 → bmc.mac_address 만 case 이탈.
+                        # raw 가 colon-grouped hex 라 .lower() 무손실 (cross-channel MAC dedup/매칭 일관).
+                        result['mac_address'] = _mac.lower() if isinstance(_mac, str) else None  # Round 14 #2: 비-str MAC 방어
                     if not result['dns_name']:
                         result['dns_name'] = _safe(ndata, 'FQDN') or _safe(ndata, 'HostName')
 

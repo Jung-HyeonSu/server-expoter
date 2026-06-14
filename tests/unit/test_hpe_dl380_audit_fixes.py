@@ -195,6 +195,20 @@ def test_exc1_partial_404_marked_failed_not_unsupported():
     assert len(all_errors) == 1                        # 404 error 드롭 안 됨
 
 
+def test_bmc_mac_address_lowercased(monkeypatch):
+    """XC-4 (2026-06-15): bmc.mac_address 소문자 정규화 (HPE iLO 는 대문자 노출 →
+    network/network_adapters(소문자)와 case 일관). raw colon-hex 라 무손실."""
+    manager = {
+        "@odata.id": "/redfish/v1/Managers/1", "FirmwareVersion": "1.20",
+        "EthernetInterfaces": {"@odata.id": "/redfish/v1/Managers/1/EthernetInterfaces"},
+    }
+    nic_coll = {"Members": [{"@odata.id": "/redfish/v1/Managers/1/EthernetInterfaces/1"}]}
+    nic = {"IPv4Addresses": [{"Address": "10.0.0.9"}], "MACAddress": "7C:A6:2A:87:6F:E0"}
+    monkeypatch.setattr(rg, "_get", _mk_get([(200, manager, None), (200, nic_coll, None), (200, nic, None)]))
+    result, _ = rg.gather_bmc("10.0.0.9", "/redfish/v1/Managers/1", "hpe", "u", "p", 30, False)
+    assert result["mac_address"] == "7c:a6:2a:87:6f:e0"  # 가드 전: 7C:A6:2A:87:6F:E0 (대문자)
+
+
 def test_exc1_collection_404_empty_val_marked_unsupported():
     """collection GET 자체 404(val 비어있음=진짜 미지원)는 unsupported (기존 동작 보존)."""
     all_errors, collected, failed, unsupported = [], [], [], []
