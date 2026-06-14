@@ -12,6 +12,8 @@
     _rf_d_network: "{{ _rf_raw_collect.data.network     | default([]) }}"
     _rf_d_firmware: "{{ _rf_raw_collect.data.firmware    | default([]) }}"
     _rf_d_power:   "{{ _rf_raw_collect.data.power       | default(none) }}"
+    # cycle 2026-06-14 (Track 4): thermal (온도/팬). 미수집/미지원 시 빈 shape.
+    _rf_d_thermal: "{{ _rf_raw_collect.data.thermal     | default({'temperatures':[],'fans':[]}) }}"
     # P4 (cycle 2026-04-28): NetworkAdapters / Ports / FC HBA / InfiniBand
     _rf_d_netad:   "{{ _rf_raw_collect.data.network_adapters | default({'adapters':[],'ports':[],'fc_hbas':[],'infiniband':[]}) }}"
   no_log: true
@@ -431,6 +433,7 @@
       network_adapters:  network
       firmware:          firmware
       power:             power
+      thermal:           thermal
       system:            system
       hardware:          hardware
       bmc:               bmc
@@ -542,13 +545,17 @@
         {%- else -%}
           {{ none }}
         {%- endif -%}
+      # cycle 2026-06-14 (Track 4): thermal passthrough (온도/팬). 빈 dict 도 통일 shape 보장.
+      thermal:
+        temperatures: "{{ _rf_d_thermal.temperatures | default([]) }}"
+        fans:         "{{ _rf_d_thermal.fans         | default([]) }}"
       # cycle 2026-05-12 (ADR-2026-05-12): HPE CSUS 3200 / Superdome Flex RMC primary
       # 멀티-노드 토폴로지 수집 결과 (Additive 신 키). manager_layout 미정의 vendor 는
       # None — `data.multi_node = null` 로 envelope 에 emit (13 vendor 영향 0).
       # rule 13 R5 envelope 13 필드 shape 변경 0 + rule 92 R2 Additive only + rule 96 R1-B.
       multi_node: "{{ _rf_raw_collect.multi_node | default(none) }}"
     _sections_supported_fragment: >-
-      {{ ['hardware','bmc','cpu','memory','storage','network','firmware','power'] }}
+      {{ ['hardware','bmc','cpu','memory','storage','network','firmware','power','thermal'] }}
     _sections_collected_fragment: >-
       {%- set out = [] -%}
       {%- set pmap = _rf_proc_map -%}

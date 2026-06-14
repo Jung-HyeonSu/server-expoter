@@ -6,7 +6,8 @@
     "network",
     "power",
     "processors",
-    "system"
+    "system",
+    "thermal"
   ],
   "data": {
     "bmc": {
@@ -346,7 +347,8 @@
         "state": "Enabled"
       },
       "uuid": "38947555-7742-3448-3784-823347823834"
-    }
+    },
+    "thermal": {}
   },
   "error_count": 2,
   "failed_sections": [

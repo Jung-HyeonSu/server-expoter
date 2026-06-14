@@ -662,6 +662,66 @@ fields:
       Separate from health (OK/Warning/Critical).
 
   # ──────────────────────────────────────────────────────────────────────────
+  # thermal (cycle 2026-06-14 Track 4) — 온도 센서 + 팬 (Chassis/Thermal)
+  # ──────────────────────────────────────────────────────────────────────────
+
+  "thermal.temperatures[]":
+    type: "array of object"
+    priority: nice
+    channel: [redfish]
+    help_ko: >-
+      온도 센서 목록. Chassis/{id}/Thermal.Temperatures (또는 신 펌웨어
+      ThermalSubsystem.ThermalMetrics.TemperatureReadingsCelsius). 미노출 시 빈 [].
+    help_en: >-
+      Temperature sensor list. From Chassis/{id}/Thermal.Temperatures (or new-firmware
+      ThermalSubsystem.ThermalMetrics.TemperatureReadingsCelsius). Empty [] when unexposed.
+
+  "thermal.temperatures[].reading_celsius":
+    type: "integer|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: "현재 온도 (°C, Temperature.ReadingCelsius). 문자열 응답은 int 정규화."
+    help_en: "Current temperature (°C, Temperature.ReadingCelsius). String responses normalized to int."
+
+  "thermal.temperatures[].upper_critical":
+    type: "integer|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: "상한 critical 임계값 (°C, UpperThresholdCritical). 신 schema 경로는 null."
+    help_en: "Upper critical threshold (°C, UpperThresholdCritical). null on new-schema path."
+
+  "thermal.temperatures[].physical_context":
+    type: "string|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: "센서 물리 위치 (PhysicalContext, 예: CPU/Intake/Exhaust/SystemBoard)."
+    help_en: "Sensor physical context (PhysicalContext, e.g. CPU/Intake/Exhaust/SystemBoard)."
+
+  "thermal.fans[]":
+    type: "array of object"
+    priority: nice
+    channel: [redfish]
+    help_ko: >-
+      팬 목록. Chassis/{id}/Thermal.Fans (신 펌웨어는 ThermalSubsystem.Fans). 미노출 시 빈 [].
+    help_en: >-
+      Fan list. From Chassis/{id}/Thermal.Fans (new firmware: ThermalSubsystem.Fans). Empty [] when unexposed.
+
+  "thermal.fans[].reading":
+    type: "integer|null"
+    priority: nice
+    channel: [redfish]
+    help_ko: "팬 속도 수치 (Reading 또는 ReadingRPM; 신 schema 는 SpeedPercent). reading_units 와 함께 해석."
+    help_en: "Fan speed value (Reading or ReadingRPM; new schema SpeedPercent). Interpret with reading_units."
+
+  "thermal.fans[].reading_units":
+    type: "string|null"
+    enum: ["RPM", "Percent", null]
+    priority: nice
+    channel: [redfish]
+    help_ko: "팬 속도 단위 (RPM 또는 Percent). reading 값의 단위."
+    help_en: "Fan speed unit (RPM or Percent) for the reading value."
+
+  # ──────────────────────────────────────────────────────────────────────────
   # cpu
   # ──────────────────────────────────────────────────────────────────────────
 

@@ -387,6 +387,27 @@ PSU 한 대만 fault 여도 `hardware.health` 가 `Critical` 로 올라간다. �
 주의: `bmc.uuid` 는 **BMC 식별자**(Manager UUID)이고 `hardware.uuid` 는 **서버 식별자**(System UUID)다.
 `bmc.firmware_version` 은 Manager 가 직접 보고하는 BMC 펌웨어로, FirmwareInventory 의 BMC 항목(때로 stale)이 아니다.
 
+### 6.7 `data.thermal` (Redfish 전용)
+
+> cycle 2026-06-14 (Track 4): 단일노드 thermal 수집 — 이전엔 multi_node(CSUS/Superdome) 경로만 수집했음.
+> Chassis/{id}/Thermal (신 펌웨어는 ThermalSubsystem). 미지원/미노출 벤더는 빈 `{temperatures:[], fans:[]}` (graceful).
+
+```json
+"thermal": {
+  "temperatures": [
+    { "name": "CPU1 Temp", "reading_celsius": 47, "health": "OK",
+      "state": "Enabled", "upper_critical": 104, "physical_context": "CPU" }
+  ],
+  "fans": [
+    { "name": "System Board Fan1", "reading": 5760, "reading_units": "RPM",
+      "health": "OK", "state": "Enabled" }
+  ]
+}
+```
+
+`reading_units` 는 `RPM`(legacy /Thermal) 또는 `Percent`(신 ThermalSubsystem.SpeedPercent). 팬 속도 비교 시
+`reading_units` 를 반드시 확인. `upper_critical` 은 legacy 경로에서만 채워지고 신 schema 경로는 null.
+
 ---
 
 ## 7. 자주 묻는 질문

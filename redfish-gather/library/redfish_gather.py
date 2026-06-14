@@ -3843,11 +3843,15 @@ def _collect_all_sections(bmc_ip, vendor, system_uri, manager_uri, chassis_uri,
                           username, password, timeout, verify_ssl,
                           all_errors, collected, failed, unsupported=None,
                           manager_layout=None, product_hint=None):
-    """9개 섹션 dispatch (system / bmc / processors / memory / storage / network /
-    firmware / power / network_adapters[P4]).
+    """10개 섹션 dispatch (system / bmc / processors / memory / storage / network /
+    firmware / power / thermal / network_adapters[P4]).
 
     cycle 2026-05-01: unsupported list 추가 — 404 응답 섹션을 별도 분류
     (capability 미지원 = noise 아님).
+
+    cycle 2026-06-14 (Track 4): thermal 단일노드 배선 (이전엔 multi_node 경로만).
+    gather_power 패턴 mirror — /Thermal 404 시 /ThermalSubsystem fallback. 미지원 시
+    {} graceful (collected 이지만 빈 dict). normalize 가 data.thermal 로 passthrough.
 
     cycle 2026-05-12 (ADR-2026-05-12): `manager_layout` 옵션 인자 추가 (Additive).
     None 시 기존 동작 100% 보존. RMC primary adapter 만 `gather_bmc` 라벨 분기 활성.
@@ -3863,6 +3867,8 @@ def _collect_all_sections(bmc_ip, vendor, system_uri, manager_uri, chassis_uri,
         'network':           _run('network',    gather_network,    bmc_ip, system_uri,          *creds),
         'firmware':          _run('firmware',   gather_firmware,   bmc_ip,                      *creds),
         'power':             _run('power',      gather_power,      bmc_ip, chassis_uri,         *creds),
+        # cycle 2026-06-14 (Track 4): 단일노드 thermal (온도 센서 + 팬). 미지원 벤더는 {} graceful.
+        'thermal':           _run('thermal',    gather_thermal,    bmc_ip, chassis_uri,         *creds),
         # P4 (cycle 2026-04-28): NIC 카드 + port-level + FC HBA / InfiniBand 분류
         'network_adapters':  _run('network_adapters',
                                    gather_network_adapters_chassis,

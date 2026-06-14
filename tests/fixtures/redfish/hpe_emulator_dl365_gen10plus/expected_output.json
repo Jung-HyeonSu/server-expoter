@@ -8,7 +8,8 @@
     "power",
     "processors",
     "storage",
-    "system"
+    "system",
+    "thermal"
   ],
   "data": {
     "bmc": {
@@ -740,7 +741,8 @@
         "state": "Enabled"
       },
       "uuid": "35383350-3837-584D-5132-333730444C51"
-    }
+    },
+    "thermal": {}
   },
   "error_count": 0,
   "failed_sections": [],
