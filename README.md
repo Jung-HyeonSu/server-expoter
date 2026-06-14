@@ -87,7 +87,7 @@ server-exporter/
 │   └── esxi/                4개 (ESXi 6.x / 7.x / 8.x)
 │
 ├── schema/                  표준 JSON 스키마
-│   ├── sections.yml         10 섹션 정의
+│   ├── sections.yml         11 섹션 정의
 │   ├── field_dictionary.yml 83 필드 사전 (호출자 reference)
 │   ├── fields/              채널별 필드 정의
 │   ├── examples/            success / partial / failed 예시

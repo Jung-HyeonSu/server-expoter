@@ -59,7 +59,7 @@
 | `4단계 Precheck` | "4단계 진단 (ping → port → protocol → auth)" |
 | `Vault 2단계` | "Vault 2단계 로딩 (무인증 detect → vendor vault → 인증 수집)" |
 | `Linux 2-tier` | "Linux 2-tier (Python ok / raw fallback)" |
-| `Sections 10` | "10 섹션 (system/hardware/bmc/cpu/memory/storage/network/firmware/users/power)" |
+| `Sections 11` | "11 섹션 (system/hardware/bmc/cpu/memory/storage/network/firmware/users/power/thermal)" |
 | `Field Dictionary 39 Must` | "Field Dictionary (39 Must + 38 Nice + 6 Skip = 83 entries)" |
 | `Baseline` | "Baseline (실장비 회귀 기준선 JSON)" |
 | `loc` | "loc (운영 사이트: ich/chj/yi)" |
