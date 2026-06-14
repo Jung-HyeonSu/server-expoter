@@ -7,6 +7,25 @@
 
 ---
 
+## HPE DL380 Gen12 실 미러 검수 (2026-06-15) 후속 — 보고됨, 결정/실측 대기
+
+> 상세·근거: `tests/evidence/2026-06-15-hpe-dl380-mirror-audit.md`. 라이브러리 fix 7건 적용·수렴(Round4 NEW 0).
+> 아래는 confirmed 됐으나 보호 경로/다채널/실측/계약 결정 필요라 미수정 — 사용자/오너 결정 대기.
+
+- [ ] **[MED] thermal 섹션 배선 완성 (ATX-01/02)**: Track4 가 라이브러리·supported_sections·normalize 엔
+  thermal 추가했으나 `build_sections.yml`/`build_failed_output.yml` all_sec + `init_fragments.yml`/
+  `build_empty_data.yml` skeleton 누락 → `sections.thermal` 미emit + overall status 미반영.
+  → all_sec+skeleton 에 thermal 추가. **차단**: os/esxi 다채널 영향 + status 계약(rule 13 R8) → 사용자 승인 + 3채널 baseline 회귀.
+- [ ] **[MED] HPE baseline 재캡처 (SCHEMA-01/04/06)**: hpe_baseline.json(iLO5 구캡처)에 thermal·network.
+  adapters·ports·storage.hbas·multi_node 누락 — 라이브러리는 정상 수집(faithful), 회귀 커버리지 공백.
+  → 실장비(iLO7 DL380) 재캡처로 baseline 갱신 (rule 13 R4 — AI 임의 편집 금지). **차단**: 실장비/정규화 파이프라인 필요.
+- [ ] **[LOW] field_dictionary cpu.architecture channel**: `[os,esxi]` → redfish 도 emit 하므로 `[redfish,os,esxi]`.
+  **차단**: 보호 경로(schema/field_dictionary.yml, rule 13 R3) + docs/20 동기화.
+- [ ] **[LOW] firmware[].category 보강 (SCHEMA-07)**: normalize_standard.yml category elif 가 'UBM3 BC BP'
+  backplane 을 'nvme' substring 으로 drive 오분류 + 'System ROM' BIOS 미분류 + category field_dictionary 미정의.
+- [ ] **[LOW] hardware 6필드 + 단위명명 field_dictionary 정합**: asset_tag/system_type/part_number/
+  last_reset_time/boot_progress/tpm 미정의 / volumes.total_mb 가 MiB 값(명명 계약). **차단**: 보호 경로 + 계약 결정.
+
 ## Round 15 (2026-06-09 멀티에이전트 버그헌트) 후속
 
 > 상세: `tests/evidence/2026-06-09-round15-multiagent-bughunt.md`. 본 cycle 33 fix 적용·검증 완료.
