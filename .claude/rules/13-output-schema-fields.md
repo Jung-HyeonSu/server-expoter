@@ -8,7 +8,7 @@
 ## 현재 관찰된 현실
 
 - 11 sections (system / hardware / bmc / cpu / memory / storage / network / firmware / users / power / thermal)
-- field_dictionary.yml: **42 Must + 74 Nice + 6 Skip = 122 entries** (실측 2026-06-14, 18 section prefixes)
+- field_dictionary.yml: **47 Must + 81 Nice + 6 Skip = 134 entries** (실측 2026-06-14, 18 section prefixes)
 - baseline_v1: vendor별 회귀 기준선
 - Jenkins Stage 3 (Validate Schema) + Stage 4가 FAIL 게이트
   (Stage 4는 pipeline별 다름 — `Jenkinsfile`=E2E Regression / `Jenkinsfile_portal`=Callback, 정본은 rule 80 R1-A. cycle-015에서 `Jenkinsfile_grafana` 제거)

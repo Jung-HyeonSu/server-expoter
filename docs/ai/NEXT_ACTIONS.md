@@ -19,8 +19,12 @@
 - [x] **firmware category 오분류 (SCHEMA-07)** — 'System ROM'→bios + UBM 백플레인 'nvme' 선점 정정.
   + firmware[].category/pending field_dictionary 등록 (122 entries). (commit da215d68)
 - [x] **cpu.architecture channel (SCHEMA-05)** — `[os,esxi]`→`[redfish,os,esxi]` + docs/20 동기화. (da215d68)
+- [x] **hardware 12 식별필드 field_dictionary 등록 (SCH-1/2, 사용자 승인 — 핵심은 Must)** — vendor/model/
+  serial/uuid/bios_version = Must (전 esxi+redfish baseline 보유 실측), 나머지 7 = Nice. (120→134 entries)
+- [x] **volumes.total_mb 단위 명명 (RJ-1, 사용자 결정 — total_mb 유지)** — 키/값 유지, "값은 MiB(÷2^20)"를
+  field_dictionary + docs/20 에 문서 명시 (rename/재계산은 계약 breaking이라 회피).
 
-### 잔여 — 실측/스키마 결정 필요 (자율 수정 불가)
+### 잔여 — 실측 필요 (자율 수정 불가)
 
 - [ ] **[MED] HPE baseline 재캡처 (SCHEMA-01/04/06)**: hpe_baseline.json(iLO5 구캡처)에 thermal·network.
   adapters·ports·storage.hbas·multi_node + sections.thermal 누락 — 라이브러리는 정상(faithful), 회귀 커버리지 공백.
@@ -29,12 +33,6 @@
   → **절차**: `_serve_fixtures_as_redfish.py` (TLS 래핑) 로 미러 서빙 → `ansible-playbook redfish-gather/site.yml`
   (REPO_ROOT + vault/redfish/hpe.yml + inventory) → json_only 출력을 schema/baseline_v1/hpe_dl380_gen12_baseline.json
   (신 iLO7 baseline, 기존 iLO5 보존) + test_redfish_baseline.py 케이스 추가.
-- [ ] **[LOW] hardware 12 식별 필드 field_dictionary 등록 (SCH-1/2)**: vendor/model/serial/uuid/bios_version/
-  bios_date/asset_tag/system_type/part_number/last_reset_time/boot_progress/tpm 가 data.hardware 에 emit 되나
-  field_dictionary 미정의. **차단**: Must/Nice 분류는 스키마 설계 결정(rule 13 R2/R3 — Must 시 전 baseline 필수)
-  + count cascade. 스키마 오너 결정 필요.
-- [ ] **[LOW] volumes.total_mb 단위 명명 (RJ-1/XC-2)**: 키는 MB 인데 값은 MiB(÷2^20). drive.capacity_gb(decimal)
-  와 단위계 불일치. **차단**: rename/재계산 모두 호출자 계약 변경(rule 13 R5 — breaking) → 사용자/계약 오너 결정 필요.
 
 ## Round 15 (2026-06-09 멀티에이전트 버그헌트) 후속
 

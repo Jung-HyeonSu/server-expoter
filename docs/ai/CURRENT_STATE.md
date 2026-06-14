@@ -23,9 +23,10 @@
   오분류 / volumes total_mb=MiB 명명 / hardware 6필드 field_dictionary 미정의.
 - **후속 (사용자 승인 후 진행)**: thermal 섹션 배선(build_sections/skeleton, 10→11, docs/19·20 동반) +
   firmware category 오분류 정정(System ROM→bios, UBM 백플레인) + cpu.architecture redfish 채널 +
-  firmware category/pending field_dictionary 등록(120→122). 회귀 **1123 passed**.
-  잔여(자율 불가): HPE baseline 재캡처(Windows ansible 미지원 — Linux/lab 필요, rule 13 R4) /
-  hardware 12 식별필드 field_dictionary 등록(Must/Nice 스키마 결정) / volumes.total_mb 단위 명명(계약 결정).
+  field_dictionary 등록(firmware category/pending + hardware 12 식별필드[Must 5: vendor/model/serial/
+  uuid/bios_version + Nice 7] → **120→134 entries**) + volumes.total_mb 가 실제 MiB 값임을 문서 명시
+  (이름/값 유지 — 계약 breaking 회피). count 참조 14파일 동기화. 회귀 **1123 passed**.
+  잔여(자율 불가): HPE baseline 재캡처 — Windows ansible 미지원(`os.get_blocking` 부재) → Linux/lab 실행 필요 (rule 13 R4).
 - **상세**: `tests/evidence/2026-06-15-hpe-dl380-mirror-audit.md` + `docs/ai/NEXT_ACTIONS.md`.
 
 ---

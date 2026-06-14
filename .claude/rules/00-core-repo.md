@@ -13,7 +13,7 @@
 - Ansible 2.20.3 + Python 3.12.3 + Java 21 (Jenkins Agent)
 - 멀티벤더 9종 (Dell / HPE / Lenovo / Supermicro / Cisco + Huawei / Inspur / Fujitsu / Quanta — 후 4종 lab 부재)
 - Adapter 42개 (Redfish 31 + OS 7 + ESXi 4) + adapters/registry.yml — cycle 2026-05-11 실측 (hpe-csus-add)
-- Schema 11 sections + Field Dictionary 42 Must + 74 Nice + 6 Skip = 122 entries (2026-06-14 재실측, 18 section prefixes)
+- Schema 11 sections + Field Dictionary 47 Must + 81 Nice + 6 Skip = 134 entries (2026-06-14 재실측, 18 section prefixes)
 - tests/fixtures 398개 (실장비 380 + HPE 에뮬레이터 15 + DMTF 표준 mockup 3) + 9 baseline JSON (redfish 5: cisco/dell/hpe/hpe_csus_3200/lenovo + esxi/ubuntu/windows + rhel810_raw_fallback) — 2026-06-08 재실측
 - Jenkins multi-pipeline 2종 (Jenkinsfile / _portal) — Bitbucket 미사용 (cycle-015에서 _grafana 제거)
 - 운영: 단일 main + feature/* 브랜치

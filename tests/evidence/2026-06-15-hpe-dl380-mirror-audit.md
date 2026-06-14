@@ -82,17 +82,18 @@ by-design/needs-human 판정) → 확정 버그 수정 → replay+pytest 회귀 
 | thermal 섹션 배선 (ATX-01/02) | build_sections/build_failed_output all_sec + 3 skeleton 에 thermal 추가 (10→11) | render+skeleton-sync 5건, docs/19·20 동반(rule 13 R8 — status 4시나리오 결과 불변) | 7be8cdc0 |
 | firmware category (SCHEMA-07) | 'System ROM'→bios + UBM 백플레인 'nvme' 선점 정정 + category/pending field_dictionary 등록(122) | render 7건(Dell/CSUS 무영향) | da215d68 |
 | cpu.architecture channel (SCHEMA-05) | `[os,esxi]`→`[redfish,os,esxi]` + docs/20 | drift check PASS | da215d68 |
-| field_dictionary count 동기화 | 120→122 참조 11파일 일괄 | grep 정합 | b58f8cfe |
+| hardware 12 식별필드 등록 (SCH-1/2, 사용자: 핵심 Must) | vendor/model/serial/uuid/bios_version=Must (전 esxi+redfish baseline 보유 실측), 나머지 7=Nice | drift PASS, dup 0 | (이 commit) |
+| volumes.total_mb 단위 명명 (RJ-1, 사용자: total_mb 유지) | 키/값 유지 + "값은 MiB(÷2^20)" field_dictionary·docs/20 문서 명시 (rename=계약 breaking 회피) | — | (이 commit) |
+| field_dictionary count 동기화 | 120→**134** 참조 14파일 일괄 (무관 `120`/`122`·commit 이력 제외) | grep 정합, dup 검출 0 | b58f8cfe + (이 commit) |
 
 - 회귀: `pytest tests/ --ignore=tests/e2e_browser` = **1123 passed, 5 skipped** (1097 baseline 무회귀 + 신규 26).
+- 주: hardware total_mb 는 *기존* field_dictionary 항목(must)에 MiB 주석 추가 — 신규 추가 시도 중 중복키 검출→복구(원본 must 보존).
 
-### 잔여 — 실측/스키마 결정 필요 (자율 불가)
+### 잔여 — 실측 필요 (자율 불가)
 
 - **HPE baseline 재캡처**: 본 환경(Windows)은 ansible control node 미지원(`os.get_blocking` 부재 — 검증함).
   faithful baseline 은 Linux control node 또는 lab Jenkins 의 실 site.yml 실행 필요 (rule 13 R4 — fabrication 금지).
   절차는 `docs/ai/NEXT_ACTIONS.md` 참조.
-- **hardware 12 식별 필드 field_dictionary 등록**: Must/Nice 분류 = 스키마 설계 결정(rule 13 R2/R3).
-- **volumes.total_mb 단위 명명**: rename/재계산 = 호출자 계약 변경(rule 13 R5 breaking) → 결정 필요.
 
 ## 결론
 
