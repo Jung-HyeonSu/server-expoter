@@ -1568,7 +1568,12 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
             'core_count':              _safe_int(_safe(data, 'ProcessorSummary', 'CoreCount')),
             'logical_processor_count': _safe_int(_safe(data, 'ProcessorSummary', 'LogicalProcessorCount')),
             'model':  _safe(data, 'ProcessorSummary', 'Model'),
-            'health': _safe(data, 'ProcessorSummary', 'Status', 'Health'),
+            # HPE 등 일부 벤더는 ProcessorSummary.Status 에 Health 없이 HealthRollup 만 제공
+            # (실측 HPE DL380 Gen12 iLO7: ProcessorSummary.Status={'HealthRollup':'OK'} — Health 부재).
+            # memory_summary(line 1522-1524) / drives(2017) / volumes(2105) 와 동일한 HealthRollup fallback
+            # 으로 health=null 유실 차단. raw 에 둘 다 없으면 None 유지(faithful).
+            'health': (_safe(data, 'ProcessorSummary', 'Status', 'Health')
+                       or _safe(data, 'ProcessorSummary', 'Status', 'HealthRollup')),
         },
         'memory_summary': {
             'total_gib': _safe_int(_safe(data, 'MemorySummary', 'TotalSystemMemoryGiB')),  # Round 4 #7: int 통일
@@ -2638,6 +2643,20 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
                     assoc = _safe(pdata, 'AssociatedNetworkAddresses', default=[]) or []
                     if not isinstance(assoc, list):  # rule 95 R1 #2: 비-list 방어 (Round 2 #14)
                         assoc = []
+                    # 신 Port resource(1.6+, `Ports`)는 구 NetworkPort 의 top-level
+                    # AssociatedNetworkAddresses 대신 Ethernet.AssociatedMACAddresses /
+                    # FibreChannel.AssociatedWWNs 에 주소를 둔다 (실측 HPE DL380 Gen12 iLO7:
+                    # Port.Ethernet.AssociatedMACAddresses=["14:23:f3:b0:7a:40"], top-level
+                    # AssociatedNetworkAddresses 부재 → 기존엔 adapter.mac / port.associated_address
+                    # 전부 null 유실). 구 필드 우선(기존 동작·F48 테스트 보존) + 신 필드 fallback (Additive).
+                    if not assoc:
+                        eth_macs = _safe(pdata, 'Ethernet', 'AssociatedMACAddresses')
+                        if isinstance(eth_macs, list) and eth_macs:
+                            assoc = eth_macs
+                        else:
+                            fc_wwns = _safe(pdata, 'FibreChannel', 'AssociatedWWNs')
+                            if isinstance(fc_wwns, list) and fc_wwns:
+                                assoc = fc_wwns
                     primary_addr = assoc[0] if assoc else None
                     raw_port_type = _safe(pdata, 'PortType') or ''
                     port_protocol = _safe(pdata, 'PortProtocol')

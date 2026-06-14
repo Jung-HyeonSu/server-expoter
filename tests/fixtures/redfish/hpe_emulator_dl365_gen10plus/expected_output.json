@@ -467,7 +467,7 @@
           "firmware_version": "233.1.135.7",
           "id": "DE07A000",
           "link_status": "up",
-          "mac": null,
+          "mac": "84:16:0c:39:a1:e2",
           "manufacturer": "Broadcom",
           "model": "BCM57414",
           "name": "Network Adapter",
@@ -540,7 +540,7 @@
         {
           "adapter_id": "DE07A000",
           "adapter_model": "BCM57414",
-          "associated_address": null,
+          "associated_address": "84:16:0c:39:a1:e2",
           "current_link_speed_mbps": 25000,
           "health": "OK",
           "link_state": "Enabled",
@@ -553,7 +553,7 @@
         {
           "adapter_id": "DE07A000",
           "adapter_model": "BCM57414",
-          "associated_address": null,
+          "associated_address": "84:16:0c:39:a1:e3",
           "current_link_speed_mbps": 25000,
           "health": "OK",
           "link_state": "Enabled",
@@ -699,7 +699,7 @@
       "cpu_summary": {
         "core_count": null,
         "count": 2,
-        "health": null,
+        "health": "OK",
         "logical_processor_count": null,
         "model": "AMD EPYC 7313 16-Core Processor                "
       },

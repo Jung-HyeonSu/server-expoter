@@ -732,7 +732,7 @@
           "firmware_version": "28.44.1036",
           "id": "DE042000",
           "link_status": "up",
-          "mac": null,
+          "mac": "58:a2:e1:03:a8:e2",
           "manufacturer": "MLNX",
           "model": "HPE InfiniBand NDR200/Ethernet 200GbE 2-port QSFP112 PCIe5 x16 MCX755106AC-HEAT Adapter",
           "name": "NetworkAdapter",
@@ -800,7 +800,7 @@
         {
           "adapter_id": "DE042000",
           "adapter_model": "HPE InfiniBand NDR200/Ethernet 200GbE 2-port QSFP112 PCIe5 x16 MCX755106AC-HEAT Adapter",
-          "associated_address": null,
+          "associated_address": "58:a2:e1:03:a8:e2",
           "current_link_speed_mbps": 100000,
           "health": "OK",
           "link_state": "Enabled",
@@ -813,7 +813,7 @@
         {
           "adapter_id": "DE042000",
           "adapter_model": "HPE InfiniBand NDR200/Ethernet 200GbE 2-port QSFP112 PCIe5 x16 MCX755106AC-HEAT Adapter",
-          "associated_address": null,
+          "associated_address": "58:a2:e1:03:a8:e3",
           "current_link_speed_mbps": 100000,
           "health": "OK",
           "link_state": "Enabled",
@@ -1239,7 +1239,7 @@
       "cpu_summary": {
         "core_count": null,
         "count": 2,
-        "health": null,
+        "health": "OK",
         "logical_processor_count": null,
         "model": "Intel(R) Xeon(R) 6787P"
       },
