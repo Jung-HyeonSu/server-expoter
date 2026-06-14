@@ -73,6 +73,27 @@ by-design/needs-human 판정) → 확정 버그 수정 → replay+pytest 회귀 
 > production(post-normalize) envelope 은 `_rf_d_bmc_clean`(rejectattr) 으로 제거하고 dns_servers/
 > default_gateways 를 data.network 하위에 생성한다(normalize_standard.yml:58,114). 2-layer 설계 의도.
 
+## 후속 작업 진행 (사용자 승인 — 2026-06-15)
+
+위 "보고" 항목 중 자율 수정 가능 + 검증 가능한 것을 사용자 승인 후 진행:
+
+| 항목 | 처리 | 검증 | commit |
+|---|---|---|---|
+| thermal 섹션 배선 (ATX-01/02) | build_sections/build_failed_output all_sec + 3 skeleton 에 thermal 추가 (10→11) | render+skeleton-sync 5건, docs/19·20 동반(rule 13 R8 — status 4시나리오 결과 불변) | 7be8cdc0 |
+| firmware category (SCHEMA-07) | 'System ROM'→bios + UBM 백플레인 'nvme' 선점 정정 + category/pending field_dictionary 등록(122) | render 7건(Dell/CSUS 무영향) | da215d68 |
+| cpu.architecture channel (SCHEMA-05) | `[os,esxi]`→`[redfish,os,esxi]` + docs/20 | drift check PASS | da215d68 |
+| field_dictionary count 동기화 | 120→122 참조 11파일 일괄 | grep 정합 | b58f8cfe |
+
+- 회귀: `pytest tests/ --ignore=tests/e2e_browser` = **1123 passed, 5 skipped** (1097 baseline 무회귀 + 신규 26).
+
+### 잔여 — 실측/스키마 결정 필요 (자율 불가)
+
+- **HPE baseline 재캡처**: 본 환경(Windows)은 ansible control node 미지원(`os.get_blocking` 부재 — 검증함).
+  faithful baseline 은 Linux control node 또는 lab Jenkins 의 실 site.yml 실행 필요 (rule 13 R4 — fabrication 금지).
+  절차는 `docs/ai/NEXT_ACTIONS.md` 참조.
+- **hardware 12 식별 필드 field_dictionary 등록**: Must/Nice 분류 = 스키마 설계 결정(rule 13 R2/R3).
+- **volumes.total_mb 단위 명명**: rename/재계산 = 호출자 계약 변경(rule 13 R5 breaking) → 결정 필요.
+
 ## 결론
 
 - **라이브러리(redfish_gather.py) 데이터 정확성**: HPE DL380 Gen12 raw 2055 리소스 기준 전 leaf provenance

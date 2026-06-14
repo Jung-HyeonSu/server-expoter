@@ -7,24 +7,34 @@
 
 ---
 
-## HPE DL380 Gen12 실 미러 검수 (2026-06-15) 후속 — 보고됨, 결정/실측 대기
+## HPE DL380 Gen12 실 미러 검수 (2026-06-15) 후속
 
-> 상세·근거: `tests/evidence/2026-06-15-hpe-dl380-mirror-audit.md`. 라이브러리 fix 7건 적용·수렴(Round4 NEW 0).
-> 아래는 confirmed 됐으나 보호 경로/다채널/실측/계약 결정 필요라 미수정 — 사용자/오너 결정 대기.
+> 상세·근거: `tests/evidence/2026-06-15-hpe-dl380-mirror-audit.md`. 라이브러리 fix 7건 적용·수렴(Round4 NEW 0)
+> + 사용자 승인 후속 진행. 회귀 1123 passed.
 
-- [ ] **[MED] thermal 섹션 배선 완성 (ATX-01/02)**: Track4 가 라이브러리·supported_sections·normalize 엔
-  thermal 추가했으나 `build_sections.yml`/`build_failed_output.yml` all_sec + `init_fragments.yml`/
-  `build_empty_data.yml` skeleton 누락 → `sections.thermal` 미emit + overall status 미반영.
-  → all_sec+skeleton 에 thermal 추가. **차단**: os/esxi 다채널 영향 + status 계약(rule 13 R8) → 사용자 승인 + 3채널 baseline 회귀.
+### 완료 (사용자 승인 후 진행 — 2026-06-15)
+
+- [x] **thermal 섹션 배선 (ATX-01/02)** — `build_sections.yml`/`build_failed_output.yml` all_sec +
+  3 skeleton 에 thermal 추가 (10→11 섹션). docs/19·20 동반(rule 13 R8). status-scenario 회귀 5건. (commit 7be8cdc0)
+- [x] **firmware category 오분류 (SCHEMA-07)** — 'System ROM'→bios + UBM 백플레인 'nvme' 선점 정정.
+  + firmware[].category/pending field_dictionary 등록 (122 entries). (commit da215d68)
+- [x] **cpu.architecture channel (SCHEMA-05)** — `[os,esxi]`→`[redfish,os,esxi]` + docs/20 동기화. (da215d68)
+
+### 잔여 — 실측/스키마 결정 필요 (자율 수정 불가)
+
 - [ ] **[MED] HPE baseline 재캡처 (SCHEMA-01/04/06)**: hpe_baseline.json(iLO5 구캡처)에 thermal·network.
-  adapters·ports·storage.hbas·multi_node 누락 — 라이브러리는 정상 수집(faithful), 회귀 커버리지 공백.
-  → 실장비(iLO7 DL380) 재캡처로 baseline 갱신 (rule 13 R4 — AI 임의 편집 금지). **차단**: 실장비/정규화 파이프라인 필요.
-- [ ] **[LOW] field_dictionary cpu.architecture channel**: `[os,esxi]` → redfish 도 emit 하므로 `[redfish,os,esxi]`.
-  **차단**: 보호 경로(schema/field_dictionary.yml, rule 13 R3) + docs/20 동기화.
-- [ ] **[LOW] firmware[].category 보강 (SCHEMA-07)**: normalize_standard.yml category elif 가 'UBM3 BC BP'
-  backplane 을 'nvme' substring 으로 drive 오분류 + 'System ROM' BIOS 미분류 + category field_dictionary 미정의.
-- [ ] **[LOW] hardware 6필드 + 단위명명 field_dictionary 정합**: asset_tag/system_type/part_number/
-  last_reset_time/boot_progress/tpm 미정의 / volumes.total_mb 가 MiB 값(명명 계약). **차단**: 보호 경로 + 계약 결정.
+  adapters·ports·storage.hbas·multi_node + sections.thermal 누락 — 라이브러리는 정상(faithful), 회귀 커버리지 공백.
+  **차단**: 본 검수 환경(Windows)은 ansible control node 미지원(`os.get_blocking` 부재 — 검증함). faithful baseline 은
+  Linux control node 또는 lab Jenkins 의 실 site.yml 실행 필요 (rule 13 R4 — AI 임의 편집 금지).
+  → **절차**: `_serve_fixtures_as_redfish.py` (TLS 래핑) 로 미러 서빙 → `ansible-playbook redfish-gather/site.yml`
+  (REPO_ROOT + vault/redfish/hpe.yml + inventory) → json_only 출력을 schema/baseline_v1/hpe_dl380_gen12_baseline.json
+  (신 iLO7 baseline, 기존 iLO5 보존) + test_redfish_baseline.py 케이스 추가.
+- [ ] **[LOW] hardware 12 식별 필드 field_dictionary 등록 (SCH-1/2)**: vendor/model/serial/uuid/bios_version/
+  bios_date/asset_tag/system_type/part_number/last_reset_time/boot_progress/tpm 가 data.hardware 에 emit 되나
+  field_dictionary 미정의. **차단**: Must/Nice 분류는 스키마 설계 결정(rule 13 R2/R3 — Must 시 전 baseline 필수)
+  + count cascade. 스키마 오너 결정 필요.
+- [ ] **[LOW] volumes.total_mb 단위 명명 (RJ-1/XC-2)**: 키는 MB 인데 값은 MiB(÷2^20). drive.capacity_gb(decimal)
+  와 단위계 불일치. **차단**: rename/재계산 모두 호출자 계약 변경(rule 13 R5 — breaking) → 사용자/계약 오너 결정 필요.
 
 ## Round 15 (2026-06-09 멀티에이전트 버그헌트) 후속
 

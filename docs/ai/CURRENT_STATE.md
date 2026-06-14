@@ -21,7 +21,12 @@
   all_sec 에 thermal 누락 ATX-01/02) / HPE baseline stale(thermal·network.adapters·ports·hbas·multi_node,
   실장비 재캡처 rule 13 R4) / field_dictionary cpu.architecture channel redfish 누락 / firmware[].category
   오분류 / volumes total_mb=MiB 명명 / hardware 6필드 field_dictionary 미정의.
-- **상세**: `tests/evidence/2026-06-15-hpe-dl380-mirror-audit.md`.
+- **후속 (사용자 승인 후 진행)**: thermal 섹션 배선(build_sections/skeleton, 10→11, docs/19·20 동반) +
+  firmware category 오분류 정정(System ROM→bios, UBM 백플레인) + cpu.architecture redfish 채널 +
+  firmware category/pending field_dictionary 등록(120→122). 회귀 **1123 passed**.
+  잔여(자율 불가): HPE baseline 재캡처(Windows ansible 미지원 — Linux/lab 필요, rule 13 R4) /
+  hardware 12 식별필드 field_dictionary 등록(Must/Nice 스키마 결정) / volumes.total_mb 단위 명명(계약 결정).
+- **상세**: `tests/evidence/2026-06-15-hpe-dl380-mirror-audit.md` + `docs/ai/NEXT_ACTIONS.md`.
 
 ---
 
