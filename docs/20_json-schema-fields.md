@@ -365,6 +365,28 @@ controllers[*].id  ────┤
 
 PSU 한 대만 fault 여도 `hardware.health` 가 `Critical` 로 올라간다. 위 예시가 그 케이스.
 
+### 6.6 `data.bmc` (Redfish 전용)
+
+> cycle 2026-06-14 (DELL R740 BMC-1): bmc 하위 필드가 field_dictionary 에 문서화됨 (이전엔 `bmc.ip` 만).
+
+```json
+"bmc": {
+  "firmware_version": "7.00.00.184",   // Manager.FirmwareVersion (FirmwareInventory 아님 — 더 권위)
+  "model": "14G Monolithic",           // Manager.Model
+  "name": "iDRAC",                      // 벤더 표시 라벨 (iDRAC/iLO/XCC/CIMC)
+  "health": "OK",                       // Manager.Status.Health (BMC 자체 — 장비 health 아님)
+  "ip": "10.x.x.x",                     // BMC 관리 NIC (Manager 자체 EthernetInterface)
+  "mac_address": "f4:02:70:...",        //  "  서버 OS NIC 아님
+  "dns_name": "iDRAC-<ServiceTag>",
+  "uuid": "3330...",                    // Manager UUID — System UUID(hardware.uuid)와 다름!
+  "datetime": "2026-06-12T01:42:11-05:00", "datetime_offset": "-05:00",
+  "oem": { "idrac_url": "https://...", "idrac_ipmi_version": "2.0", ... }
+}
+```
+
+주의: `bmc.uuid` 는 **BMC 식별자**(Manager UUID)이고 `hardware.uuid` 는 **서버 식별자**(System UUID)다.
+`bmc.firmware_version` 은 Manager 가 직접 보고하는 BMC 펌웨어로, FirmwareInventory 의 BMC 항목(때로 stale)이 아니다.
+
 ---
 
 ## 7. 자주 묻는 질문
