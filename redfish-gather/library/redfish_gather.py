@@ -2037,6 +2037,14 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
     if verr or vst != 200:
         # Volumes 미지원(HBA 모드 등)은 정상 — 에러 추가하지 않음
         return volumes, errors
+    # cycle 2026-06-14 (DELL R740 실 미러 검수 STO-1): Dell 컨트롤러 OEM 이 명시하는 부팅 VD 의
+    # FQDD(=부팅 Volume.Id). R740 iDRAC9 펌웨어는 표준 Volume.BootVolume 도 Volume.Oem.Dell.
+    # DellVolume.BootVolumeSource 도 미제공 — 부팅 볼륨 정보는 *컨트롤러* 리소스의 이 키에만 존재.
+    # 이게 없으면 모든 Dell 볼륨 boot_volume 이 false 로 오보됨(실제 OS 볼륨인데도). vol_id 와 매칭.
+    # source: Systems/.../Storage/<ctrl> Oem.Dell.DellController.BootVirtualDiskFQDD, R740 실 미러.
+    _boot_vd_fqdd = _safe(sdata, 'Oem', 'Dell', 'DellController', 'BootVirtualDiskFQDD')  # nosec rule12-r1
+    if not (isinstance(_boot_vd_fqdd, str) and _boot_vd_fqdd.strip()):
+        _boot_vd_fqdd = None
     for v_member in _dicts(_safe(vcoll, 'Members')):  # Round 5: 비-list/dict 방어
         v_uri = _safe(v_member, '@odata.id')
         if not v_uri:
@@ -2075,6 +2083,10 @@ def _extract_storage_volumes(sdata, controller_id, bmc_ip, username, password, t
         std_boot = _safe(vdata, 'BootVolume')
         if std_boot is not None:
             boot_volume = bool(std_boot)
+        elif _boot_vd_fqdd is not None and vol_id is not None:                          # nosec rule12-r1
+            # Dell 컨트롤러 OEM 의 BootVirtualDiskFQDD = 부팅 VD 의 Id (권위 source).
+            # 매칭되는 볼륨만 true, 나머지는 false (정확한 단일 부팅 볼륨 식별).
+            boot_volume = (vol_id == _boot_vd_fqdd)
         elif _safe(vdata, 'Oem', 'Dell'):                                              # nosec rule12-r1
             boot_volume = _safe(vdata, 'Oem', 'Dell', 'DellVolume', 'BootVolumeSource') is not None  # nosec rule12-r1
         else:
@@ -2564,10 +2576,16 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
         # 일부 BMC (실측 Lenovo XCC SR650 V2)는 PCIe slot 자체를 NetworkAdapters 컬렉션에
         # 빈 entry 로 노출. Controllers[0].ControllerCapabilities.NetworkPortCount=0 또는
         # manufacturer/model 모두 빈 문자열이면 실제 NIC 가 아니므로 skip.
+        # cycle 2026-06-14 (DELL R740 실 미러 검수 NET-1): port_count 를 Controllers[0] 하나가
+        # 아니라 *모든* Controller 의 NetworkPortCount 합으로 산출. Dell rNDC(예: 'BRCM GbE 4P
+        # 5720-t rNDC')는 NetworkAdapter 1개가 Controller 2개(각 NetworkPortCount=2)를 노출 —
+        # Controllers[0] 만 읽으면 4포트 카드가 2로 과소 집계됨(실 미러 NetworkPorts 멤버=4 와 불일치).
+        # 단일 Controller 카드는 합=그 값 → 결과 불변(Additive). NetworkPortCount=DMTF 컨트롤러별 포트 수.
         port_count = 0
         if ctrls and isinstance(ctrls, list):
-            caps = _safe(ctrls[0], 'ControllerCapabilities') or {}
-            port_count = _safe_int(_safe(caps, 'NetworkPortCount'), default=0) or 0
+            for _ctrl in ctrls:
+                _caps = _safe(_ctrl, 'ControllerCapabilities') or {}
+                port_count += _safe_int(_safe(_caps, 'NetworkPortCount'), default=0) or 0
         mfr = _str(_safe(adata, 'Manufacturer')).strip()
         model = _str(_safe(adata, 'Model')).strip()
         if port_count == 0 and not mfr and not model:
@@ -2700,6 +2718,14 @@ def gather_firmware(bmc_ip, username, password, timeout, verify_ssl):
         return [], errors
 
     fw_list = []
+    # cycle 2026-06-14 (DELL R740 실 미러 검수 FW-1): Dell iDRAC FirmwareInventory 는 동일
+    # 구동 펌웨어를 'Current-<SoftwareId>-<ver>__<FQDD>' 와 'Installed-<...>__<FQDD>' 두 멤버로
+    # 중복 노출(같은 SoftwareId/Version/Name). dedup 없으면 호출자가 firmware 를 2배로 카운트
+    # (R740 실측 51 vs distinct 32). status-prefix 를 떼어낸 key(=<SoftwareId>-<ver>__<FQDD>)로
+    # dedup — 서로 다른 물리 컴포넌트(FC.Slot.1-1 vs FC.Slot.1-2)는 '__<FQDD>' 가 달라 보존,
+    # prefix 없는 Id(HPE 숫자/Lenovo) 는 자기 자신으로 정규화돼 dedup 무영향(Additive).
+    # source: Dell iDRAC FirmwareInventory (Members Id prefix 규약), R740 실 미러.
+    seen_fw_keys = set()                                                       # nosec rule12-r1
     for member in _capped(_safe(coll, 'Members') or [], 'firmware', errors):
         member_uri = _safe(member, '@odata.id')
         # Members 에 Name/Version 없으면 개별 URI 조회 (벤더 공통)
@@ -2727,6 +2753,17 @@ def gather_firmware(bmc_ip, username, password, timeout, verify_ssl):
         # pending 인지 모름 → pending 메타필드 추가 (정책: pending=true이고 version=null은 정상,
         # pending=false이고 version=null은 데이터 누락).
         is_pending = bool(fw_id and isinstance(fw_id, str) and 'pending' in fw_id.lower())
+        # FW-1 dedup: status-prefix 제거 key 로 Current-/Installed- 동일 펌웨어 중복 제거.
+        # prefix 없는 Id 는 key=fw_id(고유) → dedup 무영향. Previous- 는 위에서 이미 skip.
+        _dedup_key = fw_id
+        if isinstance(fw_id, str):
+            for _pref in ('Installed-', 'Current-', 'Available-', 'Rollback-'):  # nosec rule12-r1
+                if fw_id.startswith(_pref):
+                    _dedup_key = fw_id[len(_pref):]
+                    break
+        if _dedup_key in seen_fw_keys:
+            continue
+        seen_fw_keys.add(_dedup_key)
         fw_list.append({
             'id':         fw_id,
             'name':       _safe(member, 'Name'),
