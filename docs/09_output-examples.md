@@ -490,7 +490,7 @@ python3 tests/validate_field_dictionary.py
       "interfaces": [
         {"id": "NIC.Integrated.1-1-1", "name": "System Ethernet Interface", "kind": "server_nic",
          "mac": "F0:D4:E2:E6:47:0C", "mtu": null, "speed_mbps": 1000,
-         "link_status": "linkup", "is_primary": false, "addresses": []}
+         "link_status": "up", "is_primary": false, "addresses": []}
       ],
       "summary": { "groups": [
         {"speed_mbps": 1000, "link_type": null, "quantity": 2, "link_up_count": 2},
