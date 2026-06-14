@@ -1164,8 +1164,11 @@ def _extract_oem_dell(data):                                                  # 
         'storage_rollup_status':   _safe(oem, 'StorageRollupStatus'),
         'chassis_service_tag':     _safe(oem, 'ChassisServiceTag'),
         'express_service_code':    _safe(oem, 'ExpressServiceCode'),
+        # cycle 2026-06-14 (DELL R740 SYS-5): `or` 는 정상 값 0(0°C 배기온)을 falsy 로
+        # 흘려 두 번째 키/None 로 오기재. 명시 None 비교로 genuine 0 보존.
         'estimated_exhaust_temp':  (_safe(oem, 'EstimatedExhaustTemperatureCelsius')
-                                    or _safe(oem, 'EstimatedExhaustTemperatureCel')),
+                                    if _safe(oem, 'EstimatedExhaustTemperatureCelsius') is not None
+                                    else _safe(oem, 'EstimatedExhaustTemperatureCel')),
     }
 
 
