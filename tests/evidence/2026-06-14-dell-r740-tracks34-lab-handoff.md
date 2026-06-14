@@ -16,7 +16,14 @@
 
 ## Track 3 — link_status enum 3-채널 통일
 
-### 현 실태 (검증된 불일치)
+> **상태: 대부분 offline 구현·검증 완료 (cycle 2026-06-14, 커밋 c8b3f38e/6ce66bc8/867fe29b/a2be1b28).**
+> 완료: field_dictionary enum→up/down/unknown + os-linux/os-windows/esxi(interfaces+adapters+hbas)
+> 코드 통일 + os/redfish HBA raw-leak fallback 제거 + dell/hpe/lenovo/esxi baseline 결정론적
+> 마이그레이션(hpe/lenovo 미러 replay 로 코드 일치 검증) + docs/20+09+예시/fixture + render-test.
+> **잔여 = lab only**: 전 baseline 의 link_status 외 필드 stale 가능성 → 실장비 full 재캡처 + Jenkins
+> Stage 3/4 전 벤더 통과 후 main 병합. (아래 절차는 그 full 재캡처 기준 — 코드는 이미 적용됨.)
+
+### 현 실태 (검증된 불일치 — 코드 fix 전 기준)
 | 채널 | 코드 emit | baseline 실제값 |
 |---|---|---|
 | redfish | `up/down/unknown` (`redfish_gather.py` `_normalize_link_status` 1326-) | dell/hpe/lenovo=`linkup/linkdown/none`(stale), cisco=`unknown`, csus=`up/down`(최신, 코드 일치) |
@@ -69,14 +76,21 @@ thermal 을 독립 섹션 대신 `data.power.fans` / `data.power.temperatures` �
 
 ---
 
-## 이 브랜치에서 검증 완료(오프라인) — Track 1 / 2
+## 이 브랜치에서 검증 완료(오프라인) — Track 1 / 2 / 3
+
 - **Track 1 (firmware category)**: `normalize_standard.yml` elif specific-before-broad 재정렬.
   `tests/unit/test_firmware_category.py`(실 템플릿 추출 렌더, 16 pass)로 Dell 7건 정정 + CSUS 무영향 고정.
-  jinja2 compile PASS. pytest 1097 pass. CSUS/Dell baseline 무영향(Stage-4-safe) → main 병합 가능.
+  jinja2 compile PASS. pytest 1097 pass. CSUS/Dell baseline 무영향(Stage-4-safe). **→ main 병합 완료.**
 - **Track 2 (field_dictionary 문서)**: bmc.* 15 + memory.total_mb/slots[] 15 = +30 entry(83→113),
   network.summary 보강(NETAD-1), docs/20 `data.bmc` 절 추가. validator PASS, pytest 1097 pass,
-  baseline 무영향 → main 병합 가능.
+  baseline 무영향. **→ main 병합 완료.**
+- **Track 3 (link_status 통일)**: enum→up/down/unknown + os-linux/os-windows/esxi 코드 통일 +
+  os/redfish HBA raw-leak fallback 제거 + dell/hpe/lenovo/esxi baseline 마이그레이션 + docs/20+09+
+  예시/fixture + B13/R18-4 tracking 갱신. render-test + jinja compile + validator + drift + pytest 1097
+  전부 PASS. **잔여 = lab full 재캡처(link_status 외 stale)만.** Stage-4 영향 가능(baseline 값 변경)이라
+  **lab Stage 3/4 전 벤더 통과 확인 후 main 병합 권장.**
 
 ## 권장 병합 순서
-1. **즉시 main 병합 가능**(Stage-4-safe, 오프라인 검증 완료): Track 1 + Track 2.
-2. **lab 검증 후 병합**: Track 3 + Track 4 (위 절차 + 전 벤더 baseline 재캡처 통과 후).
+1. **이미 main 병합 완료**(Stage-4-safe, 오프라인 검증): Track 1 + Track 2.
+2. **lab Stage 3/4 확인 후 병합**: Track 3 (코드 적용 완료 — baseline 값 변경분 live 회귀 확인).
+3. **lab 구현 + 병합**: Track 4 thermal (코드 미구현 — 위 절차).

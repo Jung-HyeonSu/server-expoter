@@ -48,7 +48,7 @@
 | 우선 | 항목 | 분류 | 결정 주체 |
 |---|---|---|---|
 | LOW | **runtime dual-collector success-path clobber (R18-3)** — gather_runtime(Linux+Windows) 가 success 경로에서도 gather_system 의 더 견고한 runtime(chronyd loop / nftables / systemctl firewall / become:true)을 inferior 값으로 덮음. 선재(F5 commit f2ccea36). 근본 fix = gather_runtime 의 runtime 생산 제거(gather_system 단일 정본화) — site.yml include 제거 + 파일 삭제. 구조 변경이라 실 ansible smoke 후 적용 권장 | `[ANSIBLE][LAB]` | 사용자+lab |
-| LOW | **network.interfaces[].link_status enum drift (R18-4)** — field_dictionary enum `[linkup/linkdown/none]` 이 redfish 코드 출력 `up/down/unknown` 와 불일치 + dell/hpe/lenovo baseline 은 옛 값(linkup), hpe_csus/cisco 등은 신 값. unenforced(런타임 무영향). fix = enum→up/down/unknown 통일 + dell/hpe/lenovo baseline 실장비 재생성(rule 13 R4) + docs/20. baseline 재생성 lab 필요 | `[SCHEMA][LAB]` | 사용자+lab |
+| DONE | ~~**network.interfaces[].link_status enum drift (R18-4)**~~ — **해결 cycle 2026-06-14** (branch feature/r740-audit-fixes). field_dictionary enum→`up/down/unknown` 통일 + 3채널 코드 통일(os-linux/os-windows/esxi-interfaces+adapters+hbas; redfish 기존 canonical) + dell/hpe/lenovo baseline `network.interfaces[].link_status` 결정론적 마이그레이션(linkup→up 등; hpe/lenovo 미러 replay 로 코드 출력 일치 검증) + docs/20+docs/09+예시/fixture. **잔여(lab)**: 전 baseline 의 link_status 외 필드 stale 가능 → 실장비 full 재캡처 권장(rule 13 R4) | `[SCHEMA][LAB]` | 사용자+lab |
 
 ## 0. 2026-05-29 audit-cleanup 후속 (전수 audit 결과 — 미적용 backlog)
 
