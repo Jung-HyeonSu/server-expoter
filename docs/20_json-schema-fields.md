@@ -58,15 +58,18 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
     "memory":   { "total_mb": 655360, "total_basis": "physical_installed", ... },
     "storage":  { "physical_disks": [...], "logical_volumes": [...], ... },
     "network":  { "interfaces": [...], "summary": {...} },
-    "firmware": [ { "name": "BIOS", "version": "2.21.2", ... }, ... ],
+    "firmware": [ { "name": "BIOS", "version": "2.21.2", "component": "...", "updateable": true, "category": "bios", "pending": false }, ... ],
     "power":    { "power_supplies": [...], "power_control": {...} },
     "users":    [],
     "system":   { "fqdn": "LENOVO01", ... }
   },
-
   "schema_version": "1"
 }
 ```
+
+> cycle 2026-06-15 (field_dictionary 122 entries): `firmware[].category` (bios/cpld/tpm/drive/
+> backplane/nic/storage_controller/psu/... id·name 추론) + `firmware[].pending` (적용 보류) 정식 등록.
+> `cpu.architecture` 는 redfish 채널도 emit (channel=[redfish,os,esxi]).
 
 이 JSON 한 통이 보내는 메시지를 한 줄씩 풀면 이렇다.
 

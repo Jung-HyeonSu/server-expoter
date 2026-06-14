@@ -744,6 +744,30 @@ fields:
   # firmware
   # ──────────────────────────────────────────────────────────────────────────
 
+  "firmware[].category":
+    type: "string"
+    priority: nice
+    channel: [redfish]
+    # cycle 2026-06-15 (SCHEMA-07): normalize_standard.yml _rf_firmware_categorized 가 id/name
+    # substring 으로 추론. hpe_csus_3200 baseline 이 이미 emit (정본). enum 은 help 참조.
+    help_ko: >-
+      펌웨어 컴포넌트 분류 (id/name 추론). 값:
+      bios/cpld/tpm/diagnostic/lifecycle/driver_pack/backplane/drive/
+      service_module/bmc/nic/storage_controller/psu/other 중 하나.
+    help_en: >-
+      Inferred firmware component category (from id/name). One of:
+      bios/cpld/tpm/diagnostic/lifecycle/driver_pack/backplane/drive/
+      service_module/bmc/nic/storage_controller/psu/other.
+
+  "firmware[].pending":
+    type: "boolean"
+    priority: nice
+    channel: [redfish]
+    # cycle 2026-06-15: gather_firmware 가 id 에 'pending' 포함 시 true (Lenovo XCC pending fw).
+    # pending=true + version=null 은 정상(의도된 보류), pending=false + version=null 은 데이터 누락.
+    help_ko: "펌웨어 적용 보류 여부 (Redfish id 에 'Pending' 포함 시 true)."
+    help_en: "Whether the firmware is pending application (id contains 'Pending')."
+
   "firmware[].component":
     type: "string|null"
     priority: must
@@ -1112,7 +1136,9 @@ fields:
   cpu.architecture:
     type: "string|null"
     priority: skip
-    channel: [os, esxi]
+    # cycle 2026-06-15 (SCHEMA-05): redfish 도 cpu.architecture emit — normalize_standard.yml:503
+    # (ProcessorArchitecture) + 5 redfish baseline 이 정본. channel 에 redfish 누락이던 것 정정.
+    channel: [redfish, os, esxi]
     help_ko: "CPU 아키텍처 (예: x86_64)."
     help_en: "CPU architecture (e.g., x86_64)."
 

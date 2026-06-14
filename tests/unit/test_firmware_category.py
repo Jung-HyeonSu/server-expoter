@@ -82,6 +82,25 @@ CSUS_REAL_CASES = [
     ("Partition0_FW", "Npar 0 Current Firmware", "other"),
 ]
 
+# HPE DL380 Gen12 실 미러 firmware (cycle 2026-06-15 SCHEMA-07 정정 대상 + 무영향 표본)
+HPE_DL380_CASES = [
+    # 정정: UBM 백플레인이 'nvme' substring 으로 drive 오분류되던 것 → backplane
+    ("21", "8 SFF 24G x1NVMe/SAS UBM3 BC BP", "backplane"),
+    ("22", "8 SFF 24G x1NVMe/SAS UBM3 BC BP", "backplane"),
+    # 정정: HPE BIOS 'System ROM' 이 'other' → bios
+    ("2", "System ROM", "bios"),
+    # 무영향(over-reach 검증): 실 SAS SSD 는 여전히 drive (ubm/bc bp 없음)
+    ("19", "1.60TB 22.5G SAS SSD", "drive"),
+    ("1", "iLO 7", "bmc"),
+    ("13", "Broadcom P225p NetXtreme-E Dual-port 10Gb/25Gb Ethernet PCIe Adapter - NIC", "nic"),
+    ("11", "TPM Firmware", "tpm"),
+]
+
+
+@pytest.mark.parametrize("fw_id,name,expected", HPE_DL380_CASES)
+def test_hpe_dl380_firmware_category(fw_id, name, expected):
+    assert cat(fw_id, name) == expected, f"{name!r} -> {cat(fw_id, name)} (expected {expected})"
+
 
 @pytest.mark.parametrize("fw_id,name,expected", DELL_CASES)
 def test_dell_firmware_category(fw_id, name, expected):
