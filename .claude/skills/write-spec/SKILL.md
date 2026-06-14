@@ -20,7 +20,7 @@ description: 구조화된 server-exporter 기능 명세서 작성. 사용자가 
 
 ## 3. 출력 / Envelope
 - status / sections / data / errors / meta / diagnosis 6 필드
-- 영향 섹션 list (10 sections 중)
+- 영향 섹션 list (11 sections 중)
 - field_dictionary Must/Nice/Skip
 
 ## 4. 영향 영역
