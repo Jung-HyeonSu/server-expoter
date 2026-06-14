@@ -6,7 +6,30 @@
 > 검증 라운드(Round) 결과, 사용자 의심 분석, 정책 변경 같은 큰 결정은 모두 이 문서에 시간순으로 추가된다.
 > 코드만 읽고는 알 수 없는 맥락(왜 이 fallback 이 있는지 등)이 여기 있다.
 
-> 최종 갱신: 2026-06-04
+> 최종 갱신: 2026-06-15
+
+## 2026-06-15 — HPE DL380 Gen12 실 미러 검수: thermal 섹션 배선 + 라이브러리 fix 7건
+
+### 사용자 의심 / 요청
+
+- "redfish_full_mirror.py 로 실장비(HPE DL380 Gen12) 데이터 기준 개더링 전체 검수 — 잘못 수집된 데이터/필드 매핑/타입/OEM/병합/실패처리 오류를 0 까지 반복 수정". 이후 "thermal 배선 + HPE baseline 재캡처 + 이후 작업 모두 진행" 승인.
+
+### 분석 (4-Round 다관점 수렴 검수 — 실 raw 2055 리소스 provenance 대조)
+
+- 라이브러리(redfish_gather.py) 데이터 정확성 버그 6건 + normalize join 1건 확정 (round 별 confirmed 2→3→2→0 수렴).
+- **thermal status 미반영 (ATX-01/02)**: Track4(2026-06-14)가 thermal 을 schema/sections.yml + field_dictionary + 라이브러리 + supported_sections.yml + normalize_standard.yml(_sections_supported_fragment) 엔 추가했으나, 공통 builder `build_sections.yml` 의 하드코딩 `all_sec` (10) + 3 skeleton(init_fragments/build_empty_data/build_failed_output) 에는 누락 → `data.thermal` 은 채워지나 `sections.thermal` 키가 envelope 에서 사라지고 overall status 에도 미반영.
+
+### 결정
+
+- `build_sections.yml` + `build_failed_output.yml` `all_sec` 에 `thermal` 추가 (10→11 섹션). 3 skeleton 에 `thermal:{temperatures:[],fans:[]}` 동기화 (rule 13 R1 skeleton 3종 정합).
+- **status 4 시나리오 매트릭스(A/B/C/D) 결과 불변** (rule 13 R8): thermal 은 기존 섹션과 동일 로직으로 _norm_sections 에 참여할 뿐, status 판정 *규칙* 자체(supported∋s → collected→success / failed→failed / 그 외 not_supported)는 변경 없음. 입력 섹션 집합만 10→11. cosmetic 아님(envelope `sections` 에 키 1개 추가)이라 docs/19·20 동반 갱신.
+- 라이브러리 fix 6: cpu_summary.health HealthRollup fallback / NIC MAC(`Ethernet.AssociatedMACAddresses`·`FibreChannel.AssociatedWWNs`) / 미연결 link_speed_gbps null / associated_address·bmc.mac_address 소문자 정규화 / 부분-404 partial 분류. normalize fix 1: network.summary MAC-join.
+
+### 영향
+
+- redfish envelope `sections` 가 11 키 (thermal 포함, 수집 성공 시 success). os/esxi 는 `thermal: not_supported`. 호출자가 sections 로 thermal 수집 성공/실패 판정 가능 + thermal 실패가 overall status 에 반영.
+- 회귀: `pytest tests/ --ignore=tests/e2e_browser` 1116 passed (검수 전 baseline 1097 무회귀 + 신규 회귀 19). 상세: `tests/evidence/2026-06-15-hpe-dl380-mirror-audit.md`.
+- 후속: redfish baseline 에 `sections.thermal` + `data.thermal` 반영(실장비 재캡처, rule 13 R4) — 본 결정과 별도 진행.
 
 ## 2026-05-29 — CSUS 3200 전 공통 섹션 수집 + HBA/InfiniBand 전 채널 (lab 부재 — web sources)
 

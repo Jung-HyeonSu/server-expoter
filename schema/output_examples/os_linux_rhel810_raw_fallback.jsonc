@@ -105,7 +105,7 @@
           "mac": "00:50:56:84:00:b4",                      // MAC address (대소문자 정규화 안 함 — 원본 그대로)
           "mtu": 1500,                                     // MTU (bytes)
           "speed_mbps": 10000,                             // 링크 속도 (Mbps)
-          "link_status": "linkup",                         // 링크 상태 — "linkup" | "down" | "unknown"
+          "link_status": "up",                         // 링크 상태 — "linkup" | "down" | "unknown"
           "is_primary": true,                              // 기본 NIC 여부 (default route 매칭)
           "addresses": [                                   // 할당된 IP 주소 list
             {
@@ -125,7 +125,7 @@
             }
           ]
         },
-        {"id": "ens224", "name": "ens224", "kind": "os_nic", "mac": "00:50:56:84:2a:2a", "mtu": 1500, "speed_mbps": 10000, "link_status": "linkup", "is_primary": false, "addresses": [{"family": "ipv4", "address": "10.100.64.162", "prefix_length": 24, "subnet_mask": "255.255.255.0", "gateway": null}, {"family": "ipv6", "address": "fe80::250:56ff:fe84:2a2a", "prefix_length": 64, "subnet_mask": null, "gateway": null, "scope": "link"}]}
+        {"id": "ens224", "name": "ens224", "kind": "os_nic", "mac": "00:50:56:84:2a:2a", "mtu": 1500, "speed_mbps": 10000, "link_status": "up", "is_primary": false, "addresses": [{"family": "ipv4", "address": "10.100.64.162", "prefix_length": 24, "subnet_mask": "255.255.255.0", "gateway": null}, {"family": "ipv6", "address": "fe80::250:56ff:fe84:2a2a", "prefix_length": 64, "subnet_mask": null, "gateway": null, "scope": "link"}]}
       ],
       "portgroups": [],                                    // ESXi portgroup (OS 채널은 빈 list)
       "driver_map": [                                      // interface ↔ driver / VLAN / bond master 매핑

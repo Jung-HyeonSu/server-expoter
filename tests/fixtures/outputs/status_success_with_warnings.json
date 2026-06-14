@@ -123,7 +123,7 @@
     },
     "network": {
       "interfaces": [
-        {"id": "ens192", "name": "ens192", "kind": "host_nic", "mac": "00:50:56:ab:cd:ef", "mtu": 1500, "speed_mbps": 10000, "link_status": "linkup", "is_primary": true, "addresses": ["10.100.15.99/24"]}
+        {"id": "ens192", "name": "ens192", "kind": "host_nic", "mac": "00:50:56:ab:cd:ef", "mtu": 1500, "speed_mbps": 10000, "link_status": "up", "is_primary": true, "addresses": ["10.100.15.99/24"]}
       ],
       "default_gateways": ["10.100.15.1"],
       "dns_servers": ["10.100.0.1"]

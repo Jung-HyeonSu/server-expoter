@@ -1,5 +1,36 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-15 (HPE DL380 Gen12 실 미러 전수 검수 — 4-Round 수렴 루프 [CONVERGED])
+
+- **대상/방법**: HPE ProLiant DL380 Gen12 (iLO7, RedfishVersion 1.22.1) 를 `redfish_full_mirror.py` 로 전수
+  미러(2055 리소스) → `replay_full_mirror.py` 오프라인 재생 → 10 section + 7 perspective finder 가
+  `mirror_lookup.py` 로 전 leaf provenance 를 raw 와 1:1 대조 → 적대적 검증(독립 raw 재대조) → 수정 →
+  회귀 → 반복. confirmed(fix) 추세 **2 → 3 → 2 → 0** (Round 4 NEW 0 = 수렴).
+- **라이브러리 fix 6 (redfish_gather.py)**: (1) cpu_summary.health HealthRollup fallback (2) NIC MAC
+  `Port.Ethernet.AssociatedMACAddresses`/`FibreChannel.AssociatedWWNs` fallback (3) 미연결 포트
+  link_speed_gbps 0→null (4) ports[].associated_address 소문자 (5) `_run` 부분-404 → partial(`_is_empty_result`)
+  (6) bmc.mac_address 소문자. **normalize fix 1**: network.summary.groups model/manufacturer MAC-join(AT-1).
+- **수정 부작용 자가검출**: Round 2 가 Round 1 NIC-MAC fix 의 case side-effect(associated_address 대문자)를
+  포착해 교정 — 반복 검수의 효용 입증. Round 4 의 RJ-1(`_network_meta` 노출)은 replay 가 pre-normalize
+  레이어를 캡처한 것일 뿐(normalize_standard.yml:58 `_rf_d_bmc_clean` 가 production 에서 strip) — by-design.
+- **검증 (✅)**: `pytest tests/ --ignore=tests/e2e_browser` = **1111 passed, 5 skipped** (검수 전 baseline 1097
+  무회귀 + 신규 회귀 14: test_hpe_dl380_audit_fixes 11 / test_network_summary_join_at1 3). golden 재생성
+  faithful(blast-radius diff 가 정확히 수정 필드만): hpe_emulator 5 + dmtf_rackmount1. e2e_browser 2건 FAIL =
+  live Jenkins(10.100.64.152) 미도달, 코드 무관(검수 전부터 FAIL).
+- **보고(미수정 — 보호 경로/다채널/실측/계약 결정 필요, rule 13)**: thermal 섹션 배선(build_sections·skeleton
+  all_sec 에 thermal 누락 ATX-01/02) / HPE baseline stale(thermal·network.adapters·ports·hbas·multi_node,
+  실장비 재캡처 rule 13 R4) / field_dictionary cpu.architecture channel redfish 누락 / firmware[].category
+  오분류 / volumes total_mb=MiB 명명 / hardware 6필드 field_dictionary 미정의.
+- **후속 (사용자 승인 후 진행)**: thermal 섹션 배선(build_sections/skeleton, 10→11, docs/19·20 동반) +
+  firmware category 오분류 정정(System ROM→bios, UBM 백플레인) + cpu.architecture redfish 채널 +
+  field_dictionary 등록(firmware category/pending + hardware 12 식별필드[Must 5: vendor/model/serial/
+  uuid/bios_version + Nice 7] → **120→134 entries**) + volumes.total_mb 가 실제 MiB 값임을 문서 명시
+  (이름/값 유지 — 계약 breaking 회피). count 참조 14파일 동기화. 회귀 **1123 passed**.
+  잔여(자율 불가): HPE baseline 재캡처 — Windows ansible 미지원(`os.get_blocking` 부재) → Linux/lab 실행 필요 (rule 13 R4).
+- **상세**: `tests/evidence/2026-06-15-hpe-dl380-mirror-audit.md` + `docs/ai/NEXT_ACTIONS.md`.
+
+---
+
 ## 일자: 2026-06-10 (Round 17~20 — 멀티에이전트 적대적 버그헌트 수렴 루프 [CONVERGED])
 
 - **4 Round 수렴 루프**(영역별 finder → 독립 skeptic refute → 메인 재검증 rule 95 R2 + Jinja2 렌더/Python 실행).

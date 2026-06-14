@@ -151,8 +151,8 @@
     },
     "network": {
       "interfaces": [                                   // OS 또는 서버 NIC interface (논리 / 물리)
-        {"id": "eno8303", "name": "eno8303", "kind": "os_nic", "mac": "c4:cb:e1:dc:bc:4a", "mtu": 1500, "speed_mbps": 1000, "link_status": "linkup", "is_primary": true, "addresses": [{"family": "ipv4", "address": "172.17.100.210", "prefix_length": 24, "subnet_mask": "255.255.255.0", "gateway": "172.17.100.254"}, {"family": "ipv6", "address": "fe80::c6cb:e1ff:fedc:bc4a", "prefix_length": 64, "subnet_mask": null, "gateway": null, "scope": "link"}]},
-        {"id": "bond0.64", "name": "bond0.64", "kind": "os_nic", "mac": "7e:f6:44:87:78:d4", "mtu": 1500, "speed_mbps": 10000, "link_status": "linkup", "is_primary": false, "addresses": [{"family": "ipv4", "address": "10.100.64.96", "prefix_length": 24, "subnet_mask": "255.255.255.0", "gateway": null}, {"family": "ipv6", "address": "fe80::7cf6:44ff:fe87:78d4", "prefix_length": 64, "subnet_mask": null, "gateway": null, "scope": "link"}]}
+        {"id": "eno8303", "name": "eno8303", "kind": "os_nic", "mac": "c4:cb:e1:dc:bc:4a", "mtu": 1500, "speed_mbps": 1000, "link_status": "up", "is_primary": true, "addresses": [{"family": "ipv4", "address": "172.17.100.210", "prefix_length": 24, "subnet_mask": "255.255.255.0", "gateway": "172.17.100.254"}, {"family": "ipv6", "address": "fe80::c6cb:e1ff:fedc:bc4a", "prefix_length": 64, "subnet_mask": null, "gateway": null, "scope": "link"}]},
+        {"id": "bond0.64", "name": "bond0.64", "kind": "os_nic", "mac": "7e:f6:44:87:78:d4", "mtu": 1500, "speed_mbps": 10000, "link_status": "up", "is_primary": false, "addresses": [{"family": "ipv4", "address": "10.100.64.96", "prefix_length": 24, "subnet_mask": "255.255.255.0", "gateway": null}, {"family": "ipv6", "address": "fe80::7cf6:44ff:fe87:78d4", "prefix_length": 64, "subnet_mask": null, "gateway": null, "scope": "link"}]}
       ],
       "driver_map": [                                      // 베어메탈 — 다양한 NIC type (1G + 25G + bond + docker)
         {"name": "bond0", "driver": null, "vlan_id": null, "bond_master": null},

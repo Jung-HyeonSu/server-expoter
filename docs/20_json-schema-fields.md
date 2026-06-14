@@ -38,7 +38,8 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
     "network": "success",
     "firmware":"success",
     "users":   "not_supported",
-    "power":   "success"
+    "power":   "success",
+    "thermal": "success"
   },
 
   "diagnosis": {
@@ -57,15 +58,18 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
     "memory":   { "total_mb": 655360, "total_basis": "physical_installed", ... },
     "storage":  { "physical_disks": [...], "logical_volumes": [...], ... },
     "network":  { "interfaces": [...], "summary": {...} },
-    "firmware": [ { "name": "BIOS", "version": "2.21.2", ... }, ... ],
+    "firmware": [ { "name": "BIOS", "version": "2.21.2", "component": "...", "updateable": true, "category": "bios", "pending": false }, ... ],
     "power":    { "power_supplies": [...], "power_control": {...} },
     "users":    [],
     "system":   { "fqdn": "LENOVO01", ... }
   },
-
   "schema_version": "1"
 }
 ```
+
+> cycle 2026-06-15 (field_dictionary 134 entries): `firmware[].category` (bios/cpld/tpm/drive/
+> backplane/nic/storage_controller/psu/... id·name 추론) + `firmware[].pending` (적용 보류) 정식 등록.
+> `cpu.architecture` 는 redfish 채널도 emit (channel=[redfish,os,esxi]).
 
 이 JSON 한 통이 보내는 메시지를 한 줄씩 풀면 이렇다.
 
@@ -99,7 +103,7 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
 | 키 | 무슨 값 | 의미 |
 |---|---|---|
 | `status` | `success` / `partial` / `failed` | **수집 결과**. 장비 상태 아님 |
-| `sections` | 섹션 10개 각각 `success` / `failed` / `not_supported` | 섹션별 결과 |
+| `sections` | 섹션 11개 각각 `success` / `failed` / `not_supported` | 섹션별 결과 |
 
 `status` 가 어떻게 결정되는지는 4절에서 따로 정리.
 
@@ -121,9 +125,9 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
 
 ---
 
-## 3. 섹션 10개 — 어떤 채널이 뭘 채우나
+## 3. 섹션 11개 — 어떤 채널이 뭘 채우나
 
-JSON 의 `sections` 와 `data` 는 같은 10개 키를 갖는다. 각 채널이 채울 수 있는 영역이 다르다.
+JSON 의 `sections` 와 `data` 는 같은 11개 키를 갖는다. 각 채널이 채울 수 있는 영역이 다르다.
 
 | 섹션 | 무엇 | OS | ESXi | Redfish |
 |---|---|:-:|:-:|:-:|
@@ -137,8 +141,10 @@ JSON 의 `sections` 와 `data` 는 같은 10개 키를 갖는다. 각 채널이 
 | `firmware` | 펌웨어 인벤토리 | | | O |
 | `users` | OS 로컬 계정 | O | | |
 | `power` | PSU / 전력 사용 | | | O |
+| `thermal` | 온도 센서 / 팬 (Chassis/Thermal) | | | O |
 
 (X) = `not_supported`. 그 채널 특성상 원래 못 가져오는 영역이다. 수집 실패와 다른 의미다.
+cycle 2026-06-15: `thermal` 을 `sections` 맵에 정식 배선 (이전엔 `data.thermal` 만 채워지고 `sections.thermal` 누락 — Track4 미완. 이제 redfish 는 수집 성공 시 `success`, os/esxi 는 `not_supported`).
 
 같은 서버라도 채널별로 채워지는 영역이 다르다는 게 핵심. 예를 들어:
 - Dell 서버를 **Redfish** 로 보면 `bmc` / `firmware` / `power` 가 풍부하고 OS 정보는 없다.
@@ -331,7 +337,7 @@ controllers[*].id  ────┤
 "network": {
   "interfaces": [
     { "id": "...", "kind": "server_nic", "mac": "...", "speed_mbps": 10240,
-      "link_status": "linkup", "addresses": [...] },
+      "link_status": "up", "addresses": [...] },
     ...
   ],
   "dns_servers":      [],
@@ -340,9 +346,9 @@ controllers[*].id  ────┤
 }
 ```
 
-`link_status` 값:
-- `linkup` / `linkdown` — 정상 보고
-- `none` — BMC 가 link 상태 정보 자체를 안 줌 (HPE iLO / Cisco System NIC 등에서 종종 발생)
+`link_status` 값 (cycle 2026-06-14 전 채널 통일 canonical — 이전 linkup/linkdown/none 폐기):
+- `up` / `down` — 링크 활성 / 비활성(미연결·disabled·offline 포함)
+- `unknown` — 상태 미제공/판별 불가 (HPE iLO / Cisco System NIC 등에서 종종 발생)
 - `null` — 응답에 필드 자체가 없음
 
 ### 6.5 `data.power` (Redfish 전용)
@@ -386,6 +392,27 @@ PSU 한 대만 fault 여도 `hardware.health` 가 `Critical` 로 올라간다. �
 
 주의: `bmc.uuid` 는 **BMC 식별자**(Manager UUID)이고 `hardware.uuid` 는 **서버 식별자**(System UUID)다.
 `bmc.firmware_version` 은 Manager 가 직접 보고하는 BMC 펌웨어로, FirmwareInventory 의 BMC 항목(때로 stale)이 아니다.
+
+### 6.7 `data.thermal` (Redfish 전용)
+
+> cycle 2026-06-14 (Track 4): 단일노드 thermal 수집 — 이전엔 multi_node(CSUS/Superdome) 경로만 수집했음.
+> Chassis/{id}/Thermal (신 펌웨어는 ThermalSubsystem). 미지원/미노출 벤더는 빈 `{temperatures:[], fans:[]}` (graceful).
+
+```json
+"thermal": {
+  "temperatures": [
+    { "name": "CPU1 Temp", "reading_celsius": 47, "health": "OK",
+      "state": "Enabled", "upper_critical": 104, "physical_context": "CPU" }
+  ],
+  "fans": [
+    { "name": "System Board Fan1", "reading": 5760, "reading_units": "RPM",
+      "health": "OK", "state": "Enabled" }
+  ]
+}
+```
+
+`reading_units` 는 `RPM`(legacy /Thermal) 또는 `Percent`(신 ThermalSubsystem.SpeedPercent). 팬 속도 비교 시
+`reading_units` 를 반드시 확인. `upper_critical` 은 legacy 경로에서만 채워지고 신 schema 경로는 null.
 
 ---
 

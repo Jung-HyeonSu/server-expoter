@@ -31,8 +31,8 @@ server-exporter/
 │   ├── library/redfish_gather.py    (stdlib only — cycle-017 B5 _endpoint_with_fallback helper 도입)
 │   └── tasks/vendors/{vendor}/      (OEM tasks — dell/hpe/lenovo/supermicro)
 ├── schema/
-│   ├── sections.yml         # 10 섹션 정의
-│   ├── field_dictionary.yml # 39 Must + 38 Nice + 6 Skip = 83 entries (2026-05-29 재실측, 16 section prefixes)
+│   ├── sections.yml         # 11 섹션 정의
+│   ├── field_dictionary.yml # 47 Must + 81 Nice + 6 Skip = 134 entries (2026-06-14 재실측, 18 section prefixes)
 │   ├── fields/              # 섹션별 상세
 │   ├── baseline_v1/         # 9 baseline JSON (redfish 5 + esxi/ubuntu/windows + rhel810_raw_fallback)
 │   ├── examples/            # success/partial/failed

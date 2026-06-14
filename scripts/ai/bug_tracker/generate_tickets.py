@@ -59,6 +59,9 @@ TICKETS = [
      "Dell ID 숫자, HPE 인덱스, Lenovo 'BMC-AFBT-10', Cisco 'slot-L'. 호출자가 cross-vendor 매칭 어려움. component_id + component_kind 분리 필요.",
      "각 vendor firmware 응답의 Id/Name 형식",
      "redfish-gather/library + adapter normalize.firmware"),
+    # RESOLVED 2026-06-14 (branch feature/r740-audit-fixes): link_status 전 채널 canonical
+    # up/down/unknown 통일 — field_dictionary enum + os-linux/os-windows/esxi 코드 + dell/hpe/lenovo
+    # baseline 마이그레이션 + docs. redfish 는 _normalize_link_status 로 기존부터 canonical.
     ("B13", "interfaces.link_status 표기 비일관", "redfish", "all", None, "med",
      "Dell linkup/linkdown vs HPE/Cisco none. 표준 enum {up, down, unknown} 정규화 필요.",
      "각 vendor EthernetInterface.LinkStatus / LinkState 응답값",

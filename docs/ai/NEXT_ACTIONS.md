@@ -7,6 +7,33 @@
 
 ---
 
+## HPE DL380 Gen12 실 미러 검수 (2026-06-15) 후속
+
+> 상세·근거: `tests/evidence/2026-06-15-hpe-dl380-mirror-audit.md`. 라이브러리 fix 7건 적용·수렴(Round4 NEW 0)
+> + 사용자 승인 후속 진행. 회귀 1123 passed.
+
+### 완료 (사용자 승인 후 진행 — 2026-06-15)
+
+- [x] **thermal 섹션 배선 (ATX-01/02)** — `build_sections.yml`/`build_failed_output.yml` all_sec +
+  3 skeleton 에 thermal 추가 (10→11 섹션). docs/19·20 동반(rule 13 R8). status-scenario 회귀 5건. (commit 7be8cdc0)
+- [x] **firmware category 오분류 (SCHEMA-07)** — 'System ROM'→bios + UBM 백플레인 'nvme' 선점 정정.
+  + firmware[].category/pending field_dictionary 등록 (122 entries). (commit da215d68)
+- [x] **cpu.architecture channel (SCHEMA-05)** — `[os,esxi]`→`[redfish,os,esxi]` + docs/20 동기화. (da215d68)
+- [x] **hardware 12 식별필드 field_dictionary 등록 (SCH-1/2, 사용자 승인 — 핵심은 Must)** — vendor/model/
+  serial/uuid/bios_version = Must (전 esxi+redfish baseline 보유 실측), 나머지 7 = Nice. (120→134 entries)
+- [x] **volumes.total_mb 단위 명명 (RJ-1, 사용자 결정 — total_mb 유지)** — 키/값 유지, "값은 MiB(÷2^20)"를
+  field_dictionary + docs/20 에 문서 명시 (rename/재계산은 계약 breaking이라 회피).
+
+### 잔여 — 실측 필요 (자율 수정 불가)
+
+- [ ] **[MED] HPE baseline 재캡처 (SCHEMA-01/04/06)**: hpe_baseline.json(iLO5 구캡처)에 thermal·network.
+  adapters·ports·storage.hbas·multi_node + sections.thermal 누락 — 라이브러리는 정상(faithful), 회귀 커버리지 공백.
+  **차단**: 본 검수 환경(Windows)은 ansible control node 미지원(`os.get_blocking` 부재 — 검증함). faithful baseline 은
+  Linux control node 또는 lab Jenkins 의 실 site.yml 실행 필요 (rule 13 R4 — AI 임의 편집 금지).
+  → **절차**: `_serve_fixtures_as_redfish.py` (TLS 래핑) 로 미러 서빙 → `ansible-playbook redfish-gather/site.yml`
+  (REPO_ROOT + vault/redfish/hpe.yml + inventory) → json_only 출력을 schema/baseline_v1/hpe_dl380_gen12_baseline.json
+  (신 iLO7 baseline, 기존 iLO5 보존) + test_redfish_baseline.py 케이스 추가.
+
 ## Round 15 (2026-06-09 멀티에이전트 버그헌트) 후속
 
 > 상세: `tests/evidence/2026-06-09-round15-multiagent-bughunt.md`. 본 cycle 33 fix 적용·검증 완료.
@@ -48,7 +75,7 @@
 | 우선 | 항목 | 분류 | 결정 주체 |
 |---|---|---|---|
 | LOW | **runtime dual-collector success-path clobber (R18-3)** — gather_runtime(Linux+Windows) 가 success 경로에서도 gather_system 의 더 견고한 runtime(chronyd loop / nftables / systemctl firewall / become:true)을 inferior 값으로 덮음. 선재(F5 commit f2ccea36). 근본 fix = gather_runtime 의 runtime 생산 제거(gather_system 단일 정본화) — site.yml include 제거 + 파일 삭제. 구조 변경이라 실 ansible smoke 후 적용 권장 | `[ANSIBLE][LAB]` | 사용자+lab |
-| LOW | **network.interfaces[].link_status enum drift (R18-4)** — field_dictionary enum `[linkup/linkdown/none]` 이 redfish 코드 출력 `up/down/unknown` 와 불일치 + dell/hpe/lenovo baseline 은 옛 값(linkup), hpe_csus/cisco 등은 신 값. unenforced(런타임 무영향). fix = enum→up/down/unknown 통일 + dell/hpe/lenovo baseline 실장비 재생성(rule 13 R4) + docs/20. baseline 재생성 lab 필요 | `[SCHEMA][LAB]` | 사용자+lab |
+| DONE | ~~**network.interfaces[].link_status enum drift (R18-4)**~~ — **해결 cycle 2026-06-14** (branch feature/r740-audit-fixes). field_dictionary enum→`up/down/unknown` 통일 + 3채널 코드 통일(os-linux/os-windows/esxi-interfaces+adapters+hbas; redfish 기존 canonical) + dell/hpe/lenovo baseline `network.interfaces[].link_status` 결정론적 마이그레이션(linkup→up 등; hpe/lenovo 미러 replay 로 코드 출력 일치 검증) + docs/20+docs/09+예시/fixture. **잔여(lab)**: 전 baseline 의 link_status 외 필드 stale 가능 → 실장비 full 재캡처 권장(rule 13 R4) | `[SCHEMA][LAB]` | 사용자+lab |
 
 ## 0. 2026-05-29 audit-cleanup 후속 (전수 audit 결과 — 미적용 backlog)
 

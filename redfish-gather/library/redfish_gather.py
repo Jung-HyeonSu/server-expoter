@@ -113,9 +113,14 @@ def _normalize_port_speed(pdata):
     if speed_mbps is None and cur_gbps_num:
         # round: fractional Gbps(2.5→2500) 정확 변환 + float 정밀도 truncation 방지
         speed_mbps = _safe_int(round(cur_gbps_num * MBPS_PER_GBPS))
-    if cur_gbps_num is not None:
+    # SCHEMA-02 (2026-06-15 HPE DL380 검수): 미연결(LinkDown) FC/Ethernet 포트는
+    # CurrentSpeedGbps=0 / CurrentLinkSpeedMbps 부재로 노출된다. 0 은 '0Gbps 협상'이
+    # 아니라 '링크 없음' → speed_gbps 도 None 으로 정규화 (truthy 분기). field_dictionary
+    # (hbas link_speed_gbps 'null when unlinked') 계약 + 동일 포트 current_link_speed_mbps
+    # (미연결 시 None) 와 내부 일관성 확보. 양수 속도(2.5/25/32 등)는 truthy 라 영향 없음.
+    if cur_gbps_num:
         speed_gbps = cur_gbps_num
-    elif speed_mbps is not None:
+    elif speed_mbps:
         speed_gbps = speed_mbps / MBPS_PER_GBPS
     else:
         speed_gbps = None
@@ -1568,7 +1573,12 @@ def gather_system(bmc_ip, system_uri, vendor, username, password, timeout, verif
             'core_count':              _safe_int(_safe(data, 'ProcessorSummary', 'CoreCount')),
             'logical_processor_count': _safe_int(_safe(data, 'ProcessorSummary', 'LogicalProcessorCount')),
             'model':  _safe(data, 'ProcessorSummary', 'Model'),
-            'health': _safe(data, 'ProcessorSummary', 'Status', 'Health'),
+            # HPE 등 일부 벤더는 ProcessorSummary.Status 에 Health 없이 HealthRollup 만 제공
+            # (실측 HPE DL380 Gen12 iLO7: ProcessorSummary.Status={'HealthRollup':'OK'} — Health 부재).
+            # memory_summary(line 1522-1524) / drives(2017) / volumes(2105) 와 동일한 HealthRollup fallback
+            # 으로 health=null 유실 차단. raw 에 둘 다 없으면 None 유지(faithful).
+            'health': (_safe(data, 'ProcessorSummary', 'Status', 'Health')
+                       or _safe(data, 'ProcessorSummary', 'Status', 'HealthRollup')),
         },
         'memory_summary': {
             'total_gib': _safe_int(_safe(data, 'MemorySummary', 'TotalSystemMemoryGiB')),  # Round 4 #7: int 통일
@@ -1725,7 +1735,11 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
                         result['ip'] = nic_first_ip
                     if not result['mac_address']:
                         _mac = _safe(ndata, 'MACAddress') or _safe(ndata, 'PermanentMACAddress')
-                        result['mac_address'] = _mac if isinstance(_mac, str) else None  # Round 14 #2: 비-str MAC 방어
+                        # XC-4 (2026-06-15): MAC 소문자 정규화 — _normalize_wwn/ports[].associated_address
+                        # (NET-2-1) 와 동일 canonical case. HPE iLO 는 Manager NIC MAC 을 대문자로
+                        # 노출(7C:A6:..) 하나 System/Chassis NIC 은 소문자 → bmc.mac_address 만 case 이탈.
+                        # raw 가 colon-grouped hex 라 .lower() 무손실 (cross-channel MAC dedup/매칭 일관).
+                        result['mac_address'] = _mac.lower() if isinstance(_mac, str) else None  # Round 14 #2: 비-str MAC 방어
                     if not result['dns_name']:
                         result['dns_name'] = _safe(ndata, 'FQDN') or _safe(ndata, 'HostName')
 
@@ -2638,7 +2652,28 @@ def gather_network_adapters_chassis(bmc_ip, chassis_uri, username, password, tim
                     assoc = _safe(pdata, 'AssociatedNetworkAddresses', default=[]) or []
                     if not isinstance(assoc, list):  # rule 95 R1 #2: 비-list 방어 (Round 2 #14)
                         assoc = []
+                    # 신 Port resource(1.6+, `Ports`)는 구 NetworkPort 의 top-level
+                    # AssociatedNetworkAddresses 대신 Ethernet.AssociatedMACAddresses /
+                    # FibreChannel.AssociatedWWNs 에 주소를 둔다 (실측 HPE DL380 Gen12 iLO7:
+                    # Port.Ethernet.AssociatedMACAddresses=["14:23:f3:b0:7a:40"], top-level
+                    # AssociatedNetworkAddresses 부재 → 기존엔 adapter.mac / port.associated_address
+                    # 전부 null 유실). 구 필드 우선(기존 동작·F48 테스트 보존) + 신 필드 fallback (Additive).
+                    if not assoc:
+                        eth_macs = _safe(pdata, 'Ethernet', 'AssociatedMACAddresses')
+                        if isinstance(eth_macs, list) and eth_macs:
+                            assoc = eth_macs
+                        else:
+                            fc_wwns = _safe(pdata, 'FibreChannel', 'AssociatedWWNs')
+                            if isinstance(fc_wwns, list) and fc_wwns:
+                                assoc = fc_wwns
+                    # NET-2-1 (2026-06-15): MAC/WWN 을 소문자 정규화해 adapters[].mac /
+                    # fc_hbas[].wwpn(_normalize_wwn 소문자) 와 case 일관성 확보. HPE iLO7 은 FC
+                    # WWPN 을 Ethernet.AssociatedMACAddresses 에 대문자로 노출 → 정규화 없이는 같은
+                    # 주소가 associated_address(대문자) vs wwpn(소문자) 로 갈려 호출자 join mismatch.
+                    # raw 가 이미 colon-grouped hex 라 .lower() 로 wwpn 정규화 결과와 동일.
                     primary_addr = assoc[0] if assoc else None
+                    if isinstance(primary_addr, str):
+                        primary_addr = primary_addr.lower()
                     raw_port_type = _safe(pdata, 'PortType') or ''
                     port_protocol = _safe(pdata, 'PortProtocol')
                     link_tech = (_safe(pdata, 'LinkNetworkTechnology')
@@ -3144,6 +3179,25 @@ def _is_404_only_error(errs):
     return True
 
 
+def _is_empty_result(val):
+    """섹션 수집 결과가 '데이터 없음'인지 — collection-level 404(미지원) vs sub-멤버 404(부분 수집) 구분.
+
+    EXC-1 (2026-06-15 HPE DL380 검수): _run 의 404-only 분기가 val 유무와 무관하게 unsupported
+    로 분류하면, collection GET 은 200 인데 일부 멤버만 404 인 '부분 수집'(예: NIC 6개 중 5개
+    수집 + 1개 404)이 unsupported 로 오분류되고 부분 데이터가 silent 하게 남으며 404 error 가
+    드롭돼 false success 로 이어진다. 진짜 미지원(collection GET 자체 404 → shaped-empty 반환)
+    만 unsupported 로 분류하도록 val 이 의미상 비었는지 판정한다.
+
+    빈 것: None / [] / {} / 모든 value 가 비어있는 dict (예: {'controllers':[],'volumes':[]},
+    {'total_mib':None,'slots':[]}, {'adapters':[],'ports':[],'fc_hbas':[],'infiniband':[]}).
+    """
+    if not val:
+        return True
+    if isinstance(val, dict):
+        return all(not v for v in val.values())
+    return False
+
+
 def _make_section_runner(all_errors, collected, failed, unsupported=None):
     """섹션 collector wrapper — 예외/errors 누적 + collected/failed/unsupported 추적.
 
@@ -3155,7 +3209,11 @@ def _make_section_runner(all_errors, collected, failed, unsupported=None):
         try:
             val, errs = fn(*args)
             # 404 only면 unsupported로 분류, errors[]에서 제외 (호출자 noise 차단)
-            if unsupported is not None and _is_404_only_error(errs):
+            # EXC-1: 단, collection-level 404(val 비어있음=진짜 미지원)만 unsupported.
+            # collection 200 + sub-멤버 404 로 *부분 수집*된 경우(val 채워짐)는 아래 일반 경로로
+            # 흘려보내 collected+failed 로 잡는다 — 부분 데이터 손실이 'unsupported+success' 로
+            # 은폐(누락이 정상처럼 보임)되는 것 차단.
+            if unsupported is not None and _is_404_only_error(errs) and _is_empty_result(val):
                 unsupported.append(section)
                 return val
             all_errors.extend(errs)
@@ -3843,11 +3901,15 @@ def _collect_all_sections(bmc_ip, vendor, system_uri, manager_uri, chassis_uri,
                           username, password, timeout, verify_ssl,
                           all_errors, collected, failed, unsupported=None,
                           manager_layout=None, product_hint=None):
-    """9개 섹션 dispatch (system / bmc / processors / memory / storage / network /
-    firmware / power / network_adapters[P4]).
+    """10개 섹션 dispatch (system / bmc / processors / memory / storage / network /
+    firmware / power / thermal / network_adapters[P4]).
 
     cycle 2026-05-01: unsupported list 추가 — 404 응답 섹션을 별도 분류
     (capability 미지원 = noise 아님).
+
+    cycle 2026-06-14 (Track 4): thermal 단일노드 배선 (이전엔 multi_node 경로만).
+    gather_power 패턴 mirror — /Thermal 404 시 /ThermalSubsystem fallback. 미지원 시
+    {} graceful (collected 이지만 빈 dict). normalize 가 data.thermal 로 passthrough.
 
     cycle 2026-05-12 (ADR-2026-05-12): `manager_layout` 옵션 인자 추가 (Additive).
     None 시 기존 동작 100% 보존. RMC primary adapter 만 `gather_bmc` 라벨 분기 활성.
@@ -3863,6 +3925,8 @@ def _collect_all_sections(bmc_ip, vendor, system_uri, manager_uri, chassis_uri,
         'network':           _run('network',    gather_network,    bmc_ip, system_uri,          *creds),
         'firmware':          _run('firmware',   gather_firmware,   bmc_ip,                      *creds),
         'power':             _run('power',      gather_power,      bmc_ip, chassis_uri,         *creds),
+        # cycle 2026-06-14 (Track 4): 단일노드 thermal (온도 센서 + 팬). 미지원 벤더는 {} graceful.
+        'thermal':           _run('thermal',    gather_thermal,    bmc_ip, chassis_uri,         *creds),
         # P4 (cycle 2026-04-28): NIC 카드 + port-level + FC HBA / InfiniBand 분류
         'network_adapters':  _run('network_adapters',
                                    gather_network_adapters_chassis,

@@ -12,6 +12,8 @@
     _rf_d_network: "{{ _rf_raw_collect.data.network     | default([]) }}"
     _rf_d_firmware: "{{ _rf_raw_collect.data.firmware    | default([]) }}"
     _rf_d_power:   "{{ _rf_raw_collect.data.power       | default(none) }}"
+    # cycle 2026-06-14 (Track 4): thermal (온도/팬). 미수집/미지원 시 빈 shape.
+    _rf_d_thermal: "{{ _rf_raw_collect.data.thermal     | default({'temperatures':[],'fans':[]}) }}"
     # P4 (cycle 2026-04-28): NetworkAdapters / Ports / FC HBA / InfiniBand
     _rf_d_netad:   "{{ _rf_raw_collect.data.network_adapters | default({'adapters':[],'ports':[],'fc_hbas':[],'infiniband':[]}) }}"
   no_log: true
@@ -303,8 +305,13 @@
     # 2026-04-29 lenovo-critical-review: link_type 정규화 — NetworkAdapter ports 의 PortType
     # (Ethernet/FibreChannel/InfiniBand) 을 mac 기반 매칭. 미매칭/PortType 빈값 시 'ethernet'
     # 기본값 (host EthernetInterface 는 Ethernet). 이전 코드는 항상 None 하드코딩.
+    # AT-1 (2026-06-15 HPE DL380 검수): groups[].model/manufacturer 가 항상 null 이던 버그 수정.
+    #   adp_map 은 NetworkAdapter.Id(DE0xxxxx)로 키잉되는데 adp_id 는 host EthernetInterface.Id
+    #   ('13','14'…)에서 id-regex 로 도출 → 두 id 체계가 무관해 join 이 항상 실패(0 매치).
+    #   port.associated_address(MAC)→소속 adapter 매핑(adp_mac_map)을 추가하고, id-regex 매칭
+    #   실패({}) 시 nic_mac 으로 fallback join. id-regex 가 매치하던 vendor(Dell 등)는 불변(Additive).
     _rf_summary_network: >-
-      {%- set ns = namespace(groups=[], seen={}, adp_map={}, port_lt={}, primary_sp=none) -%}
+      {%- set ns = namespace(groups=[], seen={}, adp_map={}, adp_mac_map={}, port_lt={}, primary_sp=none) -%}
       {%- for a in (_rf_d_netad.adapters | default([])) -%}
         {%- set _ = ns.adp_map.update({a.id: a}) -%}
       {%- endfor -%}
@@ -316,6 +323,8 @@
         {%- elif 'ether' in pt -%}{%- set lt = 'ethernet' -%}{%- endif -%}
         {%- set addr = (p.associated_address | default('') | string | upper | replace(':','') | replace('-','')) -%}
         {%- if addr -%}{%- set _ = ns.port_lt.update({addr: lt}) -%}{%- endif -%}
+        {%- set _padp = ns.adp_map.get(p.adapter_id | default(''), {}) -%}
+        {%- if addr and _padp -%}{%- set _ = ns.adp_mac_map.update({addr: _padp}) -%}{%- endif -%}
       {%- endfor -%}
       {%- for n in (_rf_norm_interfaces | default([])) -%}
         {%- set sp = n.speed_mbps | default(none) -%}
@@ -323,11 +332,12 @@
         {%- if link_up and ns.primary_sp is none and sp -%}
           {%- set ns.primary_sp = sp -%}
         {%- endif -%}
+        {%- set nic_mac = (n.mac | default('') | string | upper | replace(':','') | replace('-','')) -%}
         {%- set adp_id = (n.id | default('') | regex_replace('-[0-9]+-[0-9]+$','') | regex_replace('-[0-9]+$','')) -%}
         {%- set adp = ns.adp_map[adp_id] | default({}) -%}
+        {%- if not adp and nic_mac -%}{%- set adp = ns.adp_mac_map.get(nic_mac, {}) -%}{%- endif -%}
         {%- set md = adp.model | default(none) -%}
         {%- set mfr = adp.manufacturer | default(none) -%}
-        {%- set nic_mac = (n.mac | default('') | string | upper | replace(':','') | replace('-','')) -%}
         {%- set lt = ns.port_lt.get(nic_mac, 'ethernet') -%}
         {%- set key = (sp|string)~'|'~(md|string)~'|'~(mfr|string)~'|'~(lt|string) -%}
         {%- if key in ns.seen -%}
@@ -349,6 +359,9 @@
     # 광범위 substring('raid'/'drive')이 물리디스크(Disk.Bay…RAID.Slot)/backplane/driverpack 를
     # 선점하던 오분류 정정 (driver>drive, disk>backplane, backplane>raid, service>idrac/bmc).
     # jinja2 render 검증: Dell 7건 정정 + CSUS(실 mirror 2 + mock baseline 9) 무영향.
+    # cycle 2026-06-15 (SCHEMA-07, HPE DL380 검수): 'System ROM'(HPE BIOS) → bios 분류 +
+    # UBM 백플레인('8 SFF 24G x1NVMe/SAS UBM3 BC BP')이 'nvme' substring 으로 drive 오분류되던 것 정정.
+    # 고특이 'ubm'/'bc bp' 를 drive 앞에서 선점, 일반 'backplane' 은 drive 뒤 유지(Dell disk>backplane 보존).
     _rf_firmware_categorized: >-
       {%- set out = [] -%}
       {%- for fw in (_rf_d_firmware | default([])) -%}
@@ -357,12 +370,13 @@
         {%- set lid = (fid ~ '|' ~ fname) | lower -%}
         {%- set cat = 'other' -%}
         {# nosec rule12-r1: firmware id substring 매칭 (Redfish firmware naming, vendor 분기 아님) #}
-        {%- if 'bios' in lid -%}{%- set cat = 'bios' -%}
+        {%- if 'bios' in lid or 'system rom' in lid -%}{%- set cat = 'bios' -%}
         {%- elif 'cpld' in lid -%}{%- set cat = 'cpld' -%}
         {%- elif 'tpm' in lid -%}{%- set cat = 'tpm' -%}
         {%- elif 'diagnostic' in lid -%}{%- set cat = 'diagnostic' -%}
         {%- elif 'usc' in lid or 'lifecycle' in lid -%}{%- set cat = 'lifecycle' -%}
         {%- elif 'driver' in lid -%}{%- set cat = 'driver_pack' -%}
+        {%- elif 'ubm' in lid or 'bc bp' in lid -%}{%- set cat = 'backplane' -%}
         {%- elif 'disk' in lid or 'drive' in lid or 'nvme' in lid or 'ssd' in lid or 'hdd' in lid or 'boss' in lid -%}{%- set cat = 'drive' -%}
         {%- elif 'backplane' in lid -%}{%- set cat = 'backplane' -%}
         {%- elif 'service' in lid -%}{%- set cat = 'service_module' -%}
@@ -431,6 +445,7 @@
       network_adapters:  network
       firmware:          firmware
       power:             power
+      thermal:           thermal
       system:            system
       hardware:          hardware
       bmc:               bmc
@@ -542,13 +557,17 @@
         {%- else -%}
           {{ none }}
         {%- endif -%}
+      # cycle 2026-06-14 (Track 4): thermal passthrough (온도/팬). 빈 dict 도 통일 shape 보장.
+      thermal:
+        temperatures: "{{ _rf_d_thermal.temperatures | default([]) }}"
+        fans:         "{{ _rf_d_thermal.fans         | default([]) }}"
       # cycle 2026-05-12 (ADR-2026-05-12): HPE CSUS 3200 / Superdome Flex RMC primary
       # 멀티-노드 토폴로지 수집 결과 (Additive 신 키). manager_layout 미정의 vendor 는
       # None — `data.multi_node = null` 로 envelope 에 emit (13 vendor 영향 0).
       # rule 13 R5 envelope 13 필드 shape 변경 0 + rule 92 R2 Additive only + rule 96 R1-B.
       multi_node: "{{ _rf_raw_collect.multi_node | default(none) }}"
     _sections_supported_fragment: >-
-      {{ ['hardware','bmc','cpu','memory','storage','network','firmware','power'] }}
+      {{ ['hardware','bmc','cpu','memory','storage','network','firmware','power','thermal'] }}
     _sections_collected_fragment: >-
       {%- set out = [] -%}
       {%- set pmap = _rf_proc_map -%}

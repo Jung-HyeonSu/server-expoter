@@ -55,7 +55,7 @@
 **위치**: `tests/validate_field_dictionary.py` (Jenkinsfile 193~203, Stage 'Validate Schema')
 **실패 시 확인**:
 - `schema/field_dictionary.yml` 갱신 누락 (rule 13 R1 3종 동반)
-- `schema/sections.yml` 의 sections 10 정의 누락
+- `schema/sections.yml` 의 sections 11 정의 누락
 - `common/tasks/normalize/build_output.yml` envelope 13 필드 (rule 13 R5)
 
 ### Stage 4 — E2E Regression / Callback (pipeline 별)
@@ -162,7 +162,7 @@ adapter_loader: 선택됨 — dell_idrac9 (score=100345) [rule 10 R5 score = pri
 | `hostname` | `build_output.yml:31-33` fallback chain (system.hostname OR system.fqdn OR _out_ip) |
 | `vendor` | site.yml 의 vendor 정규화 (vendor_aliases.yml) |
 | `status` | `build_status.yml` 4 시나리오 (rule 13 R8) |
-| `sections` | `build_sections.yml` (10 sections × success/not_supported/failed) |
+| `sections` | `build_sections.yml` (11 sections × success/not_supported/failed) |
 | `diagnosis` | site.yml success/rescue 에서 set (`_diagnosis`) |
 | `meta` | `build_meta.yml` |
 | `correlation` | `build_correlation.yml` |

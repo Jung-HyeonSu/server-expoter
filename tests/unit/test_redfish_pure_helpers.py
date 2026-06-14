@@ -242,10 +242,13 @@ def test_port_speed_bool_gbps_ignored(rfg):
     assert gbps == 1.0   # Mbps(1000)/1000 — bool Gbps 는 무시
 
 
-def test_port_speed_zero_gbps_no_phantom_mbps(rfg):
-    """CurrentSpeedGbps=0(link down) → mbps 0 역산 안 함(기존 동작 보존: gbps=0, mbps=None)."""
+def test_port_speed_zero_gbps_unlinked_is_none(rfg):
+    """CurrentSpeedGbps=0(link down) → (None, None). SCHEMA-02(2026-06-15 HPE DL380):
+    0 은 '0Gbps 협상'이 아니라 '링크 없음' → gbps 도 None 으로 정규화해야 field_dictionary
+    (hbas link_speed_gbps 'null when unlinked') 계약 + 동일 포트 mbps(None)와 일관. mbps 도 0
+    역산 안 함(phantom mbps 방지 — 기존 의도 보존)."""
     gbps, mbps = rfg._normalize_port_speed({"CurrentSpeedGbps": 0})
-    assert gbps == 0
+    assert gbps is None   # SCHEMA-02 수정 전: 0 (계약 위반 + mbps=None 과 내부모순)
     assert mbps is None
 
 

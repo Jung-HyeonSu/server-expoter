@@ -296,7 +296,7 @@
           'port':        a.name | default(none),
           'node_guid':   none,
           'port_guid':   none,
-          'link_status': ('up' if ls in ['up', 'ok'] else ('down' if ls in ['disconnected', 'down'] else (a.link_status | default(none)))),
+          'link_status': ('up' if ls in ['up', 'ok'] else ('down' if ls in ['disconnected', 'down'] else 'unknown')),
           'rate':        raw_rate,
           'rate_gbps':   rate_gbps,
           'vendor':      'Mellanox',

@@ -155,8 +155,8 @@ server-exporter/ (프로젝트 루트)
 
 [4] Schema & 데이터
    ├── schema/
-   │   ├── sections.yml (10개: system, hardware, bmc, cpu, memory, storage, network, firmware, users, power)
-   │   ├── field_dictionary.yml (39 Must + 38 Nice + 6 Skip = 83 entries — 2026-05-29 재실측, 16 section prefixes)
+   │   ├── sections.yml (11개: system, hardware, bmc, cpu, memory, storage, network, firmware, users, power, thermal)
+   │   ├── field_dictionary.yml (47 Must + 81 Nice + 6 Skip = 134 entries — 2026-06-14 재실측, 18 section prefixes)
    │   ├── baseline_v1/ (9 baseline JSON: redfish 5 [cisco/dell/hpe/lenovo 실측 4 + hpe_csus_3200 **MOCK**] + esxi/ubuntu/windows + rhel810_raw_fallback)
    │   └── examples/ (success/partial/failed 예시)
    └── vault/ (linux.yml, windows.yml, esxi.yml, redfish/{vendor}.yml)
