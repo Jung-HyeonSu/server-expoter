@@ -624,23 +624,23 @@ fields:
 
   "network.interfaces[].link_status":
     type: "string|null"
-    enum: ["linkup", "linkdown", "none", null]
+    enum: ["up", "down", "unknown", null]
     priority: must
     channel: [redfish, os, esxi]
+    # cycle 2026-06-14 (link_status 통일): 전 채널 canonical up/down/unknown.
+    # redfish(_normalize_link_status)/os-linux/os-windows/esxi-interfaces 코드 일치.
+    # 이전 enum ["linkup","linkdown","none"]은 코드/baseline 어느 쪽과도 불일치였음(정본=코드).
+    # redfish dell/hpe/lenovo baseline 의 linkup/linkdown/none 은 stale → 실장비 재캡처 의무.
     help_ko: >-
-      NIC 링크 상태.
-      linkup=케이블 연결됨 및 링크 활성,
-      linkdown=케이블 미연결 또는 링크 비활성,
-      none=BMC가 상태를 제공하지 않음 (HPE/Cisco System NIC에서 발생),
-      null=필드 자체 미제공.
+      NIC 링크 상태 (전 채널 통일 canonical).
+      up=링크 활성, down=링크 비활성(미연결/disabled/offline 포함),
+      unknown=상태 미제공/판별 불가 (HPE/Cisco System NIC 등), null=필드 자체 미제공.
       Redfish의 System EthernetInterfaces는 서버 NIC 하드웨어 정보이며,
       IP 주소/게이트웨이는 일반적으로 비어 있음 (OS 수준 정보이므로).
     help_en: >-
-      NIC link state.
-      linkup=cable connected and link active,
-      linkdown=no cable or link inactive,
-      none=BMC does not report status (HPE/Cisco System NICs),
-      null=field not provided.
+      NIC link state (canonical, unified across all channels).
+      up=link active, down=link inactive (incl. unplugged/disabled/offline),
+      unknown=status not reported/undeterminable (HPE/Cisco System NICs), null=field absent.
 
   # ──────────────────────────────────────────────────────────────────────────
   # power

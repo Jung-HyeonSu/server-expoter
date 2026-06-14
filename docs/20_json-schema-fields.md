@@ -331,7 +331,7 @@ controllers[*].id  ────┤
 "network": {
   "interfaces": [
     { "id": "...", "kind": "server_nic", "mac": "...", "speed_mbps": 10240,
-      "link_status": "linkup", "addresses": [...] },
+      "link_status": "up", "addresses": [...] },
     ...
   ],
   "dns_servers":      [],
@@ -340,9 +340,9 @@ controllers[*].id  ────┤
 }
 ```
 
-`link_status` 값:
-- `linkup` / `linkdown` — 정상 보고
-- `none` — BMC 가 link 상태 정보 자체를 안 줌 (HPE iLO / Cisco System NIC 등에서 종종 발생)
+`link_status` 값 (cycle 2026-06-14 전 채널 통일 canonical — 이전 linkup/linkdown/none 폐기):
+- `up` / `down` — 링크 활성 / 비활성(미연결·disabled·offline 포함)
+- `unknown` — 상태 미제공/판별 불가 (HPE iLO / Cisco System NIC 등에서 종종 발생)
 - `null` — 응답에 필드 자체가 없음
 
 ### 6.5 `data.power` (Redfish 전용)

@@ -137,7 +137,7 @@
                   'mac':         d.macaddress | default(none),
                   'mtu':         d.mtu   | default(none),
                   'speed_mbps':  _speed_int if _speed_int > 0 else none,
-                  'link_status': 'linkup' if d.get('active',false) else 'linkdown',
+                  'link_status': 'up' if d.get('active',false) else 'down',
                   'is_primary':  is_primary,
                   'addresses':   [ipv4_addr] + ipv6_addrs
                 }) -%}
@@ -385,7 +385,7 @@
                   {%- endfor -%}
                   {%- set mask = octets | join('.') -%}
                 {%- endif -%}
-                {%- set ls = 'linkup' if state_str == 'up' else ('linkdown' if state_str == 'down' else none) -%}
+                {%- set ls = 'up' if state_str == 'up' else ('down' if state_str == 'down' else 'unknown') -%}
                 {%- set addrs = [] -%}
                 {%- if ip_addr -%}
                   {%- set _ = addrs.append({

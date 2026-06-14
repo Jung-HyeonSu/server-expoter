@@ -98,7 +98,7 @@
               'mac':         n.mac  | default(none),
               'mtu':         n.mtu  | default(none),
               'speed_mbps':  n.speed_mbps | default(none),
-              'link_status': (n.status | lower) if n.status else 'unknown',
+              'link_status': ('up' if (n.status | default('') | lower) in ['up','connected','linkup','active'] else ('down' if (n.status | default('') | lower) in ['down','disconnected','disabled','offline','linkdown','not present','notpresent'] else 'unknown')),
               'is_primary':  n.is_primary | default(false),
               'addresses':   [addr]
             }}) -%}
