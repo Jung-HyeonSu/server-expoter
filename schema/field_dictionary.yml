@@ -30,7 +30,7 @@
 #   nice — 설명이 있으면 좋고 없어도 사용에 지장 없음
 #   skip — 의미가 자명해서 본 사전에 등록하지 않음 (예: hostname)
 #
-# 등록 현황 (2026-05-29 hba-ib-csus): Must 39 / Nice 38 / Skip 6 = 총 83 entries
+# 등록 현황 (2026-06-14): Must 42 / Nice 72 / Skip 6 = 총 120 entries
 #   (cycle 2026-05-29 +9 Nice — storage.hbas[]/infiniband[] 서브필드. Additive, schema_version 유지 D3)
 #
 # 검증 (수동): tests/validate_field_dictionary.py 가 다음 5가지를 검사합니다.

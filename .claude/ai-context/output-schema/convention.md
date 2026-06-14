@@ -22,7 +22,7 @@ callback_plugins/json_only.py가 OUTPUT 태스크에만 JSON 직렬화. 표준 6
 }
 ```
 
-## 2. Sections (10) — schema/sections.yml
+## 2. Sections (11) — schema/sections.yml
 
 | 섹션 | 용도 |
 |---|---|
