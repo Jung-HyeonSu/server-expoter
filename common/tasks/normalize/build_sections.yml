@@ -21,7 +21,7 @@
   ansible.builtin.set_fact:
     _norm_sections: >-
       {%- set all_sec = ['system','hardware','bmc','cpu','memory',
-                         'storage','network','firmware','users','power'] -%}
+                         'storage','network','firmware','users','power','thermal'] -%}
       {%- set supported    = _all_sec_supported   | default([]) -%}
       {%- set collected    = _all_sec_collected   | default([]) -%}
       {%- set failed       = _all_sec_failed      | default([]) -%}

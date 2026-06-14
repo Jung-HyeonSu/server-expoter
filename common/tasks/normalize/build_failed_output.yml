@@ -25,7 +25,7 @@
   ansible.builtin.set_fact:
     _norm_sections: >-
       {%- set all_sec = ['system','hardware','bmc','cpu','memory',
-                         'storage','network','firmware','users','power'] -%}
+                         'storage','network','firmware','users','power','thermal'] -%}
       {%- set supported = _fail_sec_supported | default([]) -%}
       {%- set out = {} -%}
       {%- for s in all_sec -%}
@@ -91,6 +91,7 @@
                      'adapters':[], 'ports':[], 'virtual_switches':[],
                      'portgroups':[], 'driver_map':[],
                      'summary': {'groups': []}},
-        'users':    [], 'firmware': [], 'power': none
+        'users':    [], 'firmware': [], 'power': none,
+        'thermal':  {'temperatures': [], 'fans': []}
       })
     } }}"

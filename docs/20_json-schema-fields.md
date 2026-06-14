@@ -38,7 +38,8 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
     "network": "success",
     "firmware":"success",
     "users":   "not_supported",
-    "power":   "success"
+    "power":   "success",
+    "thermal": "success"
   },
 
   "diagnosis": {
@@ -99,7 +100,7 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
 | 키 | 무슨 값 | 의미 |
 |---|---|---|
 | `status` | `success` / `partial` / `failed` | **수집 결과**. 장비 상태 아님 |
-| `sections` | 섹션 10개 각각 `success` / `failed` / `not_supported` | 섹션별 결과 |
+| `sections` | 섹션 11개 각각 `success` / `failed` / `not_supported` | 섹션별 결과 |
 
 `status` 가 어떻게 결정되는지는 4절에서 따로 정리.
 
@@ -121,9 +122,9 @@ Dell PowerEdge R740 한 대를 Redfish 로 수집한 결과 (요약). 실물 전
 
 ---
 
-## 3. 섹션 10개 — 어떤 채널이 뭘 채우나
+## 3. 섹션 11개 — 어떤 채널이 뭘 채우나
 
-JSON 의 `sections` 와 `data` 는 같은 10개 키를 갖는다. 각 채널이 채울 수 있는 영역이 다르다.
+JSON 의 `sections` 와 `data` 는 같은 11개 키를 갖는다. 각 채널이 채울 수 있는 영역이 다르다.
 
 | 섹션 | 무엇 | OS | ESXi | Redfish |
 |---|---|:-:|:-:|:-:|
@@ -137,8 +138,10 @@ JSON 의 `sections` 와 `data` 는 같은 10개 키를 갖는다. 각 채널이 
 | `firmware` | 펌웨어 인벤토리 | | | O |
 | `users` | OS 로컬 계정 | O | | |
 | `power` | PSU / 전력 사용 | | | O |
+| `thermal` | 온도 센서 / 팬 (Chassis/Thermal) | | | O |
 
 (X) = `not_supported`. 그 채널 특성상 원래 못 가져오는 영역이다. 수집 실패와 다른 의미다.
+cycle 2026-06-15: `thermal` 을 `sections` 맵에 정식 배선 (이전엔 `data.thermal` 만 채워지고 `sections.thermal` 누락 — Track4 미완. 이제 redfish 는 수집 성공 시 `success`, os/esxi 는 `not_supported`).
 
 같은 서버라도 채널별로 채워지는 영역이 다르다는 게 핵심. 예를 들어:
 - Dell 서버를 **Redfish** 로 보면 `bmc` / `firmware` / `power` 가 풍부하고 OS 정보는 없다.
