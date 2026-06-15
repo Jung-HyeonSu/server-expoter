@@ -72,13 +72,32 @@ data.network.bridges = [{name:virbr0, members:[]}]
 bond1=10.100.64.167, bond2=10.100.64.168. bond 메타/슬레이브 = rhel810 과 동일 구조 [OK].
 → **Ansible 모듈 경로와 raw 경로의 bond 수집 결과 동일** (collector+filter 경로 독립).
 
-### 802.3ad 실커널 검증 (rhel810, dummy 인터페이스 — SSH NIC 미접촉, 검증 후 삭제)
+### 전 bond 모드 실커널 검증 (rhel810, dummy 인터페이스 — SSH NIC 미접촉, 검증 후 삭제)
+7개 모드 전부 실커널에서 생성 → collector → 파싱 확인. `/sys/.../bonding/mode` 파일은
+"<이름> <숫자>" 형식이며 collector 가 첫 토큰 추출:
+
+| mode 파일값(실커널) | 파싱 mode |
+|---|---|
+| `balance-rr 0` | balance-rr |
+| `active-backup 1` | active-backup |
+| `balance-xor 2` | balance-xor |
+| `broadcast 3` | broadcast |
+| `802.3ad 4` (lacp_rate=fast, xmit=layer3+4) | 802.3ad |
+| `balance-tlb 5` | balance-tlb |
+| `balance-alb 6` | balance-alb |
+
+회귀: `test_real_kernel_all_bond_modes`. dummy NIC 라 Speed "Unknown" → speed_mbps:None (graceful).
+
+### VLAN-on-bond 실커널 검증 (rhel810, dummy)
 ```
-/sys/class/net/bondtest/bonding/{mode,lacp_rate,xmit_hash_policy} = 802.3ad / fast / layer3+4
-collector → BOND|bondtest|802.3ad||100|fast|layer3+4||stable|dmy0 dmy1
-parsed → mode=802.3ad lacp_rate=fast xmit=layer3+4 (Speed Unknown → speed_mbps:None graceful)
-cleanup → bondtest 삭제 확인
+btest(active-backup, IP 192.0.2.10) + bvlan100(VLAN id 100, parent btest, IP 198.51.100.10)
+/proc/net/vlan/config → Permission denied (비root) 였으나 ip -d link 소스로 VLANIF 정상 emit
+collector → VLANIF|bvlan100|btest|100
+parsed → VLAN vlan_id=100 vlan_parent=btest IP=198.51.100.10 / bond btest IP=192.0.2.10 /
+         물리 slave bd0·bd1 IP 없음
 ```
+회귀 fixture: `tests/fixtures/os/net/bond_vlan_realkernel_topo.txt` + `test_real_kernel_vlan_on_bond_fixture`.
+→ "bond 아래 VLAN" + "물리 NIC 무IP, bond/VLAN 에 IP" 구조 실커널 확인. 모두 검증 후 삭제(CLEANED).
 
 ## 4. 검증 방법 (재현 절차)
 

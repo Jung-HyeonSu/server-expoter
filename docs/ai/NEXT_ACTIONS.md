@@ -18,9 +18,13 @@
 - [ ] **[MED] bonded OS baseline (full envelope) 생성**: 현재 회귀는 `tests/fixtures/os/net/*` (data.network
   레벨) + 실 YAML 렌더 테스트로 고정. 전체 envelope baseline(`schema/baseline_v1/`)은 lab 호스트에 ansible
   미설치로 미생성 → Jenkins 실 빌드로 RHEL 8.10/9.6 bonded envelope 캡처 후 baseline 추가 권장(rule 13 R4).
-- [ ] **[LOW] 추가 bond 모드 실장비 검증**: balance-rr / balance-xor / balance-tlb / balance-alb 는
-  단위테스트만. 사이트에 해당 모드 존재 시 capture-site-fixture 로 회귀 fixture 추가.
-- [ ] **[LOW] VLAN/teamd 실장비 검증**: VLAN(bond 하위) + Linux teamd 는 코드+단위테스트만(테스트 lab 미구성).
+- [x] **[LOW] 추가 bond 모드 실커널 검증 (2026-06-15 완료)**: 7개 모드 전부(balance-rr/active-backup/
+  balance-xor/broadcast/802.3ad/balance-tlb/balance-alb) RHEL 8.10 dummy 인터페이스로 실커널 mode 파일값
+  → 정확 파싱 확인. `test_real_kernel_all_bond_modes` 회귀 고정. (사이트 실 NIC 본딩은 사이트 존재 시 추가 권장)
+- [x] **[LOW] VLAN-on-bond 실커널 검증 (2026-06-15 완료)**: bond 하위 VLAN(id/parent/IP) + 물리 slave 무IP
+  실커널 캡처 → `tests/fixtures/os/net/bond_vlan_realkernel_topo.txt` + `test_real_kernel_vlan_on_bond_fixture`.
+  /proc/net/vlan 권한거부 시에도 ip -d link 소스로 graceful 확인.
+- [ ] **[LOW] Linux teamd 실장비 검증**: teamd 팀은 코드+단위테스트만(실커널 미검증 — teamd 데몬 구성 필요).
 
 ## HPE Compute Scale-up Server 3200 (CSUS 3200) 실 미러 검수 (2026-06-15) 후속
 
