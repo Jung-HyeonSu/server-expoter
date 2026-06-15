@@ -1,5 +1,29 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-15 (OS 네트워크 본딩/티밍 수집 보강 — 실장비 검증 [CONVERGED])
+
+- **대상/방법**: OS-gather 네트워크 수집에 Linux 본딩 + Windows 티밍 토폴로지 추가(Additive).
+  실장비 2대(RHEL 8.10 raw / RHEL 9.6 python_ok, 각 active-backup bond×2)에서 실 명령 캡처 →
+  실제 YAML 템플릿 체인 렌더 → 원본 명령과 최종 JSON 1:1 대조 → 4-관점 적대적 리뷰 → 수정 → 회귀 → 수렴.
+- **신규 정본**: `filter_plugins/network_topology.py` (stdlib only — bond/vlan/bridge/team 파서 +
+  interface enrich). python_ok(shell)·raw(raw) 두 경로가 동일 collector(POSIX sh)+filter 사용 →
+  bond 수집 결과 동일. 다중 소스(/sys/class/net/*/bonding + /proc/net/bonding + ip -d link) 병합,
+  일부 부재해도 graceful.
+- **수집 신규 필드(Additive)**: `data.network.bonds[]`(mode/active_slave/miimon/lacp_rate/
+  xmit_hash_policy/slaves[].state·perm_hwaddr·speed) / `bridges[]` / `teams[]`(Windows LBFO·SET) +
+  interfaces[] 에 bond_role/bond_master/slave_state/vlan_id/vlan_parent/team_role 등. 물리 slave NIC
+  (IP 없음)도 interfaces 에 추가, bond master 에 IP 표현. 기존 일반 NIC dict 불변, summary 카운트 불변.
+- **검증(실장비)**: RHEL 8.10 raw fallback bond 수집 [OK] / RHEL 9.6 python 경로 bond 수집 [OK] /
+  802.3ad 실커널(dummy NIC, SSH 미접촉, 검증후 삭제) lacp_rate=fast·xmit=layer3+4 [OK] /
+  raw↔python bond 결과 동일 [OK]. 라이브 재캡처 ↔ 커밋 fixture byte-identical (수렴).
+- **회귀/게이트**: pytest 1193 passed(+39 신규 — 17 시나리오 매트릭스 + 실 fixture + 실 YAML 렌더) /
+  output_schema_drift OK(fd_paths 149) / vendor_boundary OK / harness_consistency OK.
+- **한계(NEXT_ACTIONS 등재)**: Windows 실장비 미제공(코드+단위테스트만) / 전체 ansible-playbook bonded
+  baseline 은 lab ansible 미설치로 미생성(Jenkins 실빌드 권장).
+- **증거**: `tests/evidence/2026-06-15-os-network-bond.md`.
+
+---
+
 ## 일자: 2026-06-15 (HPE Compute Scale-up Server 3200 실 미러 전수 검수 — 5-Round 수렴 [CONVERGED])
 
 - **대상/방법**: HPE CSUS 3200 실 4 노드(RMC, ServiceRoot 1.19.0, 490~637 리소스) `redfish_full_mirror.py`

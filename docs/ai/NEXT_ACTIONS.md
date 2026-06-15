@@ -7,6 +7,21 @@
 
 ---
 
+## OS 네트워크 본딩/티밍 수집 보강 (2026-06-15) 후속
+
+> 상세·근거: `tests/evidence/2026-06-15-os-network-bond.md`. Linux bond 는 실장비 2대(RHEL 8.10 raw /
+> RHEL 9.6 python) 검증 완료·수렴. 아래는 환경 제약으로 미수행한 후속.
+
+- [ ] **[HIGH] Windows Teaming 실장비 검증**: LBFO(Get-NetLbfoTeam)/SET(Get-NetSwitchTeam) 수집은
+  코드 + 단위테스트(realistic fixture)만 검증, 실 Windows 호스트 미제공 → 미검증. Windows Server +
+  LBFO/SET 구성 호스트에서 `os-gather` 실행 후 `data.network.teams[]` + interfaces team_role 대조 필요.
+- [ ] **[MED] bonded OS baseline (full envelope) 생성**: 현재 회귀는 `tests/fixtures/os/net/*` (data.network
+  레벨) + 실 YAML 렌더 테스트로 고정. 전체 envelope baseline(`schema/baseline_v1/`)은 lab 호스트에 ansible
+  미설치로 미생성 → Jenkins 실 빌드로 RHEL 8.10/9.6 bonded envelope 캡처 후 baseline 추가 권장(rule 13 R4).
+- [ ] **[LOW] 추가 bond 모드 실장비 검증**: balance-rr / balance-xor / balance-tlb / balance-alb 는
+  단위테스트만. 사이트에 해당 모드 존재 시 capture-site-fixture 로 회귀 fixture 추가.
+- [ ] **[LOW] VLAN/teamd 실장비 검증**: VLAN(bond 하위) + Linux teamd 는 코드+단위테스트만(테스트 lab 미구성).
+
 ## HPE Compute Scale-up Server 3200 (CSUS 3200) 실 미러 검수 (2026-06-15) 후속
 
 > 상세·근거: `tests/evidence/2026-06-15-hpe-csus3200-mirror-audit.md`. 라이브러리 fix **16건** 적용·수렴
