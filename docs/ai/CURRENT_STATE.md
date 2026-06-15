@@ -33,10 +33,11 @@
   (2) **CSUS-R18**(F2, chassis.oem #HpeH3Chassis) — `gather_chassis_multi` 에 `_extract_chassis_oem` 추가(물리위치/
   프로세서 호환성), multi_node.chassis[].oem. (3) **MEM-01** — `gather_memory` `CapacityMiB or 0` → None 보존(누락↔0 혼동 제거).
   전부 OEM @odata.type/None-가드 gated, iLO·타 벤더 불변(Additive, rule 12). SYS-OEM gated 해소.
-- **수렴**: R1 확정 1(R17)+1(F2)/반증 6 → R2 확정 0/반증 8 → R3 확정 0/후보 12 전부 비-결함
-  (replay-vs-production 혼동 또는 baseline MOCK — 검증자 529 overload 사망분은 오케스트레이터가 `normalize_standard.yml`
-  직접 정독으로 자체검증: network list→dict / processors→cpu / system→hardware / sections vs collected). 16 prior intact.
-  F2·MEM-01 은 사용자 "필요한 건 진행" 지시로 후속 구현(R18/MEM-01).
+- **수렴 (4-round, code/data 결함 1→0→0→0)**: R1 확정 1(R17)+1(F2)/반증 6 → R2 0/반증 8 → R3 0/후보 12 비-결함
+  → **R4(R18·MEM-01 후) 0 bug / 반증 19 + 1 non-issue(CSUS-NET-META-01)**. R4 는 529 사망 0 clean full run —
+  R17/R18/MEM-01/R16/FC-WWPN 등 전 fix 재검증 PASS. 16 prior intact. 오케스트레이터 독립 4노드 provenance 도 R17/R18/MEM-01 1:1 PASS.
+  CSUS-NET-META-01 = replay 도구 한정 `_network_meta` 누설(value raw 충실·production normalize 가 strip — baseline grep 0).
+  라이브러리 수정 금지(전 벤더 default_gateways 손실 회귀) → by-design 비-결함. F2·MEM-01 은 사용자 지시로 후속 구현(R18/MEM-01).
 - **회귀**: pytest **1206 passed**(신규 회귀 8 + 동시 세션 OS-bond). 4노드 replay status=success·전 섹션·chassis.oem raw 1:1.
 - **gated 잔여 3(자율 미수정)**: BASE-01 baseline 실측 교체(Ansible/Linux 환경) · FD-01 field_dictionary multi_node drift
   (schema 거버넌스 승인) · OEM-01 collect_oem dead(무해·Ansible 검증 불가) → NEXT_ACTIONS.

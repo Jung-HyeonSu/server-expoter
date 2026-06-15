@@ -64,7 +64,11 @@
   부재 케이스만 0→None. 범용(전 벤더) 코드. 회귀 2. (CSUS 미발동이나 wrong-default 안티패턴 자체 제거.)
 - [ ] **[LOW] network shape (NET-SHAPE) — 재검수: 비-결함 확인**: top-level `data.network`(라이브러리 intermediate)=list 이나
   `normalize_standard.yml`(:444-445,:545-552)가 dict 로 재조립 → **호출자는 dict 수신**. replay(라이브러리 단독) 산출물을
-  최종 envelope 로 오인한 finding. 코드 변경 불필요(재검수 3-round 확인). 잔존 시 doc/tooling 주석만.
+  최종 envelope 로 오인한 finding. 코드 변경 불필요(재검수 4-round 확인). 잔존 시 doc/tooling 주석만.
+- [INFO] **CSUS-NET-META-01 (round 4) — 비-결함 확정**: replay `data.bmc._network_meta`(RMC gateway, 4노드 raw 1:1)는
+  replay 도구 한정 누설. 라이브러리 `gather_bmc` 정상(normalize 가 소비→default_gateways/dns_servers 생성 후 strip,
+  baseline grep 0). 라이브러리 pop 시 전 벤더 회귀 → **수정 금지**. single(normalize strip) vs multi_node(라이브러리 strip,
+  CSUS-R15) 비대칭은 정규화 경로 의존 의도된 설계. code/data bug 아님. (NET-SHAPE 와 동류 — replay≠production.)
 - [ ] **[LOW] network 섹션 매핑 충돌 (NET-SEC-MAP)**: normalize `_rf_proc_map` 가 network/network_adapters 를 같은
   'network' 로 collapse + build_sections unsupported 우선 → host network 성공이 network_adapters 404 에 가려질 latent
   충돌 (CSUS 수정 후 미발동). build_sections 충돌해소 규칙 명시 (다채널 영향 — 승인).

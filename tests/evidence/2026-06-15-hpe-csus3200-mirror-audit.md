@@ -88,6 +88,13 @@
 - `data.network`(EthernetInterfaces)=[] : Partition0/EthernetInterfaces Members=0 (host NIC 은 Chassis NetworkAdapters 에 노출). 충실.
 - thermal `temperatures` 의 `*_THROT_OFFSET` 음수값 : 장비가 ThermalMetrics.TemperatureReadingsCelsius 안에 throttle-offset 을 넣음 — raw 충실 passthrough(DeviceName 으로 구분 가능). 강제 수정 시 정상 sub-zero 판독 손실 위험 → 미수정.
 - `power.power_supplies[].power_capacity_w`=null : raw PowerCapacityWatts 부재. 충실.
+- **CSUS-NET-META-01 (round 4 confirmed-improvement, 조치 불필요)** : replay envelope `data.bmc._network_meta`(RMC gateway
+  10.173.22.1 등 — 4노드 raw 1:1 충실)는 **replay 도구 한정 산출물**. 라이브러리 `gather_bmc` 가 `_network_meta` 를 정상 emit
+  (production 의 `normalize_standard.yml:48-62` 가 이를 소비해 `bmc.default_gateways`/`dns_servers` 를 만들고 `_rf_d_bmc_clean`
+  으로 strip — baseline grep 0건 확인). **라이브러리 수정 금지**(pop 시 전 벤더 default_gateways/dns_servers silent 손실 —
+  production 회귀). `gather_bmc`(single, normalize 경유 → normalize 가 strip) vs `gather_bmc_multi`(multi_node, normalize 미경유
+  → 라이브러리가 strip, CSUS-R15)의 strip 위치 비대칭은 **정규화 경로 의존 — 의도된 설계**. replay 부분 strip 은 비정합(list→dict
+  등 다른 변환 미수행)이라 미적용. → code/data bug 아님(value 정확·production 정상).
 
 ## 수렴 (round 별)
 
@@ -145,6 +152,9 @@ CSUS-R1·R3·R4·R5·R6·R8·R9·R10·R11·R12·R13·R14·R15·R16 + FC1·FC2 �
 | 1 (수정 전) | 확정 1(CSUS-R17 bug) + 1(F2 enrichment) / 적대 검증 반증 6 | 11 finder × verify × 종합 |
 | 2 (R17 수정 후) | 확정 0 / 반증 8 (전부 faithful-by-design·false-positive) | 독립 재감사, 회귀 0 |
 | 3 (재확인) | 확정 0 / 후보 12 전부 비-결함 | 검증자 12건 API 529 overload 사망 → **오케스트레이터가 normalize_standard.yml 직접 정독으로 12건 자체 검증** |
+| 4 (R18·MEM-01 수정 후) | **확정 0 (code/data bug) / 1 non-issue + 반증 19** | 529 사망 0(clean full run). R17/R18/MEM-01/R16/FC-WWPN 등 전 fix 재검증 PASS. 유일 confirmed = CSUS-NET-META-01(아래 by-design) |
+
+오케스트레이터 독립 4노드 provenance 재확인(round 4 병행): R17 system.oem ↔ #HpeH3Npar / R18 multi_node.chassis[r001u01].oem ↔ #HpeH3Chassis(RackGroup·Rack={}) / MEM-01 memory.slots[].capacity_mb ↔ raw CapacityMiB — **전 4노드 1:1 PASS**(DIMM 16/16/32/32 전부 CapacityMiB 보유 → 날조 0).
 
 ### round 3 후보 12건 — 오케스트레이터 자체 검증 (전부 비-결함)
 
@@ -174,8 +184,9 @@ CSUS-R1·R3·R4·R5·R6·R8·R9·R10·R11·R12·R13·R14·R15·R16 + FC1·FC2 �
 
 - **라이브러리 데이터 정확성(4 노드 raw 기준)**: 신규 **3건 수정**(CSUS-R17 system.oem #HpeH3Npar / CSUS-R18 chassis.oem
   #HpeH3Chassis / MEM-01 CapacityMiB 누락→None) — 전부 raw 충실 + Additive + 회귀 테스트. 직전 16건 전부 intact.
-  3-round 수렴(신규 결함 1→0→0). round 3 의 12 후보는 전부 replay-vs-production 혼동 또는 baseline(BASE-01) 문제로, 오케스트레이터가 normalize_standard.yml 직접 정독으로 비-결함 확정.
-  (R17 은 round 1 발견 → 즉시 수정, R18[=round1 F2]·MEM-01[=round3 latent]은 사용자 "필요한 건 진행" 지시로 후속 구현.)
+  4-round 수렴(code/data 결함 1→0→0→0). round 3·4 후보는 전부 replay-vs-production 혼동 / baseline(BASE-01) / 내부키 누설
+  (CSUS-NET-META-01 — replay 한정, production 정상)로 비-결함. round 4 는 529 사망 0 의 clean full run 으로 전 fix 재검증 PASS.
+  (R17 은 round 1 발견 → 즉시 수정, R18[=round1 F2]·MEM-01[=round3 latent]은 사용자 "필요한 건 진행" 지시로 후속 구현·재수렴.)
 - **회귀**: pytest **1206 passed**(=1151 + 신규 회귀 8 + 동시 세션 OS-bond 테스트). 4노드 replay status=success·전 섹션 수집·chassis.oem raw 1:1.
 - **검증 한계 명시**: replay 는 라이브러리만 구동(Ansible normalize 미경유). normalize 층은 코드 정독 + raw 입력 증명으로 검증.
   round 3 검증자 일부가 API 529 overload 로 사망 → 해당 후보는 오케스트레이터가 직접 코드/ raw 대조로 검증(에이전트 미신뢰 원칙).
