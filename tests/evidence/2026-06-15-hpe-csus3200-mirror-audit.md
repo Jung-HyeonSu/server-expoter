@@ -122,13 +122,15 @@
 > 직전 16건 수정 후 사용자 재요청으로 **독립 재검수**. 동일 4 노드 raw + replay_full_mirror.py + mirror_lookup.py.
 > 검수 방식: Workflow 11 finder(7 관점 + 섹션 deep-dive + 교차노드) × 적대적 raw-provenance verify × 종합 — 3 round.
 
-### 신규 수정 1건 (CSUS-R17)
+### 신규 수정 3건 (CSUS-R17 / CSUS-R18 / MEM-01)
 
 | # | ID | sev | 내용 | raw 증거 |
 |---|---|---|---|---|
 | 17 | CSUS-R17 | MED | `_extract_oem_hpe` 가 vendor=hpe 전체에 iLO 전용 경로(AggregateHealthStatus/Bios.Current/PostState/ServerSignature)만 읽어, CSUS(#HpeH3Npar)에서 **모든 값 null 인 iLO 스켈레톤을 날조**(missing-looks-valid)하고 실 OEM 을 silent drop. OEM `@odata.type` 가 `#HpeH3Npar` 면 CSUS 전용 키(product_id/console_routing/console_routing_current_boot/dcd_version/host_os_name/version/description) 추출하도록 분기. iLO 는 default 분기 불변(Additive, rule 92 R2). | Systems/Partition0.Oem.Hpe.@odata.type=#HpeH3Npar.v1_3_0.HpeH3Npar; ProductId="1590PID03030201"·ConsoleRouting="default"(4노드), DCD.DCDVersion="5.0-7.1"·HostOS(RHEL 8.10)(03/04만). AggregateHealthStatus/Bios.Current/PostState/ServerSignature 4노드 전부 부재 |
+| 18 | CSUS-R18 (F2) | MED | `gather_chassis_multi` 가 compute chassis OEM(#HpeH3Chassis)을 미수집 → 물리위치/프로세서 호환성 영구 손실. `_extract_chassis_oem`(OEM @odata.type gated)으로 `multi_node.chassis[].oem`(oem_chassis_type/physical_location/physloc/processors_compatibility_key/processors_compatible) 보존. RackGroup/Rack/타 벤더 {} (Additive, rule 12 R1). | Chassis/r001u01.Oem.Hpe.@odata.type=#HpeH3Chassis; OemChassisType="Base", PhysicalLocationString="rack1/chassis_u1", Physloc="FFFF010101FFFF62", ProcessorsCompatibilityKey="PK8071305121001"(01/02)/"PK8071305075101"(03/04), ProcessorsCompatible=true. RackGroup.Oem.Hpe.@odata.type 부재 |
+| — | MEM-01 | LOW | `gather_memory` `_safe(mdata,'CapacityMiB') or 0` — CapacityMiB 부재(None)를 0(유효 용량)으로 날조(wrong-default, 누락↔0 혼동). `_safe_int(_safe(...))` 로 None 보존. 범용(전 벤더) 코드. **실데이터 회귀 0**(present DIMM 불변, present 0 도 0 보존), 부재 케이스만 0→None. | CSUS 4노드 전 DIMM(16/16/32/32) CapacityMiB=32768 보유 → 미발동(faithful 유지). 안티패턴 자체 제거 |
 
-- 회귀 테스트: `tests/unit/test_csus_mirror_audit_fixes.py` +3 (R17 #HpeH3Npar 추출 / 빈 DCD·HostOS→null / iLO 분기 보존). pytest 1151→1154 passed.
+- 회귀 테스트: `tests/unit/test_csus_mirror_audit_fixes.py` +8 (R17 #HpeH3Npar 추출/빈값 null/iLO 보존 ×3 · R18 chassis OEM 추출/비-CSUS {}/Compatible=False 보존 ×3 · MEM-01 부재→None/present 불변 ×2). pytest 1151→**1206 passed**.
 - 4노드 재생 검증: data.system.oem 이 raw Oem.Hpe(#HpeH3Npar)와 1:1 (01/02 dcd_version·host_os=null[raw 부재], 03/04 채움). top-level == multi_node.partitions[0].system.oem (병합 일관).
 - field_dictionary `hardware.oem` 은 벤더 가변 object("키 구조가 벤더마다 완전히 다름")라 CSUS 키 추가는 계약 변경 아님(rule 96 R1-B 위반 아님, envelope 13필드 불변).
 
@@ -156,21 +158,25 @@ CSUS-R1·R3·R4·R5·R6·R8·R9·R10·R11·R12·R13·R14·R15·R16 + FC1·FC2 �
 | MEM-01 (`CapacityMiB or 0`) | latent / 비-CSUS | CSUS DIMM 전부 CapacityMiB 보유 → 미발동. 범용(전 벤더) 코드, 실측 trigger 부재 → 보고만(아래) |
 | csus-r17-stale-envelope | 아티팩트 | 검수 중 한 agent 가 구코드로 만든 `_check.json` stale 파일. 코드는 이미 정상(finder 자인) |
 
-### 보고 — gated / 결정·환경 필요 (자율 미수정)
+### 사용자 승인 후 추가 진행 (2026-06-15, "필요한 건 진행" 지시)
+
+- F2 → **CSUS-R18 로 구현 완료** (위 표). MEM-01 → **구현 완료** (위 표).
+
+### 보고 — gated / 결정·환경 필요 (자율 미수정 잔여 3건)
 
 | ID | sev | 내용 | 사유 |
 |---|---|---|---|
-| F2 | IMPROVEMENT | Chassis #HpeH3Chassis OEM(Physloc/OemChassisType/PhysicalLocationString/ProcessorsCompatibilityKey) 미수집. CSUS/Superdome 전용 multi_node.chassis 에 한정(타 13벤더 무영향) | enrichment(틀린 값 아님) + multi_node.chassis 비-schema 신키 추가 = scope/계약 결정 |
-| MEM-01 | LOW(latent) | `gather_memory`:1942 `_safe(mdata,'CapacityMiB') or 0` — 누락 시 0 날조(누락↔0 혼동). 범용 코드 | CSUS 미발동(전 DIMM CapacityMiB 보유). 실측 trigger 부재 → rule 25 R7-B(가설 수정 자제). 안전 수정案: `or 0` 제거 + `_safe_int(cap) if cap is not None else None` |
 | BASE-01 | HIGH | baseline `data.system` 이 OS-게더 키(kernel/selinux/distribution) + 전 섹션 MOCK — 실 4노드와 불일치 | 실 baseline 재생성 = Ansible normalize 파이프라인 필요(본 Windows 환경 미지원) + 보호 경로(승인) |
-| FD-01 | MED | field_dictionary 가 multi_node 신필드(boot/thermal/composition/fabrics/summary) 미문서 | 보호 경로 + Must/Nice 카운트 동기화 = schema 변경 승인(rule 13 R3) |
-| OEM-01 | LOW | Ansible `collect_oem.yml` 이 실재 안 하는 OEM 필드(PartitionInfo/FlexNodeInfo/GlobalConfiguration) 추출 + 추출값 미사용(항상 `_data_fragment:{}`) = dead/no-op | 무해(라이브러리 CSUS-R17 이 system OEM 직접 수집). Ansible 환경 미보유로 검증 불가 → 정리 권장 |
+| FD-01 | MED | field_dictionary 가 multi_node 신필드(boot/thermal/composition/fabrics/summary + R18 chassis.oem) 미문서 | 보호 경로 + Must/Nice 카운트 동기화 = schema 변경 승인(rule 13 R3, 교차 cycle 의도적 보류) |
+| OEM-01 | LOW | Ansible `collect_oem.yml` 이 실재 안 하는 OEM 필드(PartitionInfo/FlexNodeInfo/GlobalConfiguration) 추출 + 추출값 미사용(항상 `_data_fragment:{}`) = dead/no-op | **무해**(라이브러리 CSUS-R17 이 system OEM 직접 수집). Ansible 환경 미보유로 검증 불가 → 정리 권장 |
 
 ### 결론
 
-- **라이브러리 데이터 정확성(4 노드 raw 기준)**: 신규 결함 CSUS-R17 **1건 수정**(raw 충실 + Additive + 회귀 테스트). 직전 16건 전부 intact.
+- **라이브러리 데이터 정확성(4 노드 raw 기준)**: 신규 **3건 수정**(CSUS-R17 system.oem #HpeH3Npar / CSUS-R18 chassis.oem
+  #HpeH3Chassis / MEM-01 CapacityMiB 누락→None) — 전부 raw 충실 + Additive + 회귀 테스트. 직전 16건 전부 intact.
   3-round 수렴(신규 결함 1→0→0). round 3 의 12 후보는 전부 replay-vs-production 혼동 또는 baseline(BASE-01) 문제로, 오케스트레이터가 normalize_standard.yml 직접 정독으로 비-결함 확정.
-- **회귀**: pytest 1154 passed(=1151+R17 3). 4노드 replay status=success·전 섹션 수집.
+  (R17 은 round 1 발견 → 즉시 수정, R18[=round1 F2]·MEM-01[=round3 latent]은 사용자 "필요한 건 진행" 지시로 후속 구현.)
+- **회귀**: pytest **1206 passed**(=1151 + 신규 회귀 8 + 동시 세션 OS-bond 테스트). 4노드 replay status=success·전 섹션 수집·chassis.oem raw 1:1.
 - **검증 한계 명시**: replay 는 라이브러리만 구동(Ansible normalize 미경유). normalize 층은 코드 정독 + raw 입력 증명으로 검증.
   round 3 검증자 일부가 API 529 overload 로 사망 → 해당 후보는 오케스트레이터가 직접 코드/ raw 대조로 검증(에이전트 미신뢰 원칙).
-- **남은 항목**: 위 gated 5건은 보호 경로/Ansible 환경/scope 결정 필요로 자율 미수정 — 사용자 결정 대상.
+- **남은 항목(3)**: BASE-01(Ansible/Linux 환경)·FD-01(schema 거버넌스 승인)·OEM-01(Ansible 검증 불가, 무해) — 환경/승인 필요로 자율 미수정. F2·MEM-01 은 사용자 지시로 구현 완료.

@@ -55,13 +55,13 @@
   system OEM 직접 수집. Ansible 환경 미보유로 검증 불가 → 정리(또는 CSUS-R17 정합 재작성) 권장. lab/실 raw 로 HpeH3* 필드명 확인 후 교정.
 - [x] ~~**[LOW] system.oem iLO-shaped (SYS-OEM)**~~ — **해소** (재검수 CSUS-R17, 커밋 1167e01a). all-null iLO 스켈레톤 →
   #HpeH3Npar 분기로 실 OEM 추출. 4노드 raw 1:1 검증.
-- [ ] **[IMPROVEMENT] Chassis OEM 미수집 (F2)**: `gather_chassis_multi` 가 Chassis #HpeH3Chassis OEM(Physloc /
-  OemChassisType / PhysicalLocationString / ProcessorsCompatibilityKey·Compatible) 미보존. enrichment(틀린 값 아님 —
-  현재 faithful). multi_node.chassis 는 CSUS/Superdome 전용이라 타 13벤더 무영향. 단 비-schema 신키 추가 = scope/계약 결정
-  (multi_node.chassis shape + FD-01 동반). 사용자 결정 대상.
-- [ ] **[LOW/latent] memory CapacityMiB 누락→0 (MEM-01)**: `gather_memory`(redfish_gather.py:1942) `_safe(mdata,'CapacityMiB') or 0`
-  — 누락 시 0 날조(누락↔0 혼동). **CSUS 미발동**(전 DIMM CapacityMiB 보유) + 범용(전 벤더) 코드 + 실측 trigger 부재라
-  rule 25 R7-B 로 자율 미수정. 안전 수정案: `or 0` 제거 + `_safe_int(cap) if cap is not None else None` (실데이터 회귀 0 — 누락 케이스만 변경).
+- [x] **R18 (재검수 2026-06-15, F2)**: `gather_chassis_multi` 에 chassis-level OEM 수집 추가 — `_extract_chassis_oem`
+  (#HpeH3Chassis: oem_chassis_type/physical_location/physloc/processors_compatibility_key/processors_compatible).
+  multi_node.chassis[r001u01].oem 에 노출(RackGroup/Rack/타 벤더 {} — Additive, OEM @odata.type gated, rule 12 R1).
+  4노드 raw 1:1 검증 + 회귀 3. (multi_node 신필드라 field_dictionary 문서화는 FD-01 과 함께 — 아래)
+- [x] **MEM-01 (재검수 2026-06-15)**: `gather_memory` `_safe(...,'CapacityMiB') or 0` → `_safe_int(_safe(...,'CapacityMiB'))`
+  — CapacityMiB 부재 시 0 날조 제거(누락↔0 혼동 해소, None 보존). 실데이터 회귀 0(present DIMM 불변, present 0 도 0 보존),
+  부재 케이스만 0→None. 범용(전 벤더) 코드. 회귀 2. (CSUS 미발동이나 wrong-default 안티패턴 자체 제거.)
 - [ ] **[LOW] network shape (NET-SHAPE) — 재검수: 비-결함 확인**: top-level `data.network`(라이브러리 intermediate)=list 이나
   `normalize_standard.yml`(:444-445,:545-552)가 dict 로 재조립 → **호출자는 dict 수신**. replay(라이브러리 단독) 산출물을
   최종 envelope 로 오인한 finding. 코드 변경 불필요(재검수 3-round 확인). 잔존 시 doc/tooling 주석만.

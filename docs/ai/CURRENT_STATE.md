@@ -28,15 +28,18 @@
 
 - **대상/방법**: 직전 16건 후 사용자 재요청 독립 재검수. 동일 4 노드 raw + Workflow 11 finder(7 관점 + 섹션
   deep-dive + 교차노드) × 적대적 raw-provenance verify × 종합 — 3 round.
-- **신규 fix 1 (CSUS-R17, 커밋 1167e01a)**: `_extract_oem_hpe` 가 vendor=hpe 전체에 iLO 경로만 읽어 CSUS(#HpeH3Npar)에서
-  **all-null iLO 스켈레톤 날조(missing-looks-valid) + 실 OEM drop** → OEM `@odata.type` 분기로 product_id/console_routing/
-  dcd_version/host_os_* 추출(iLO default 불변, Additive). 4노드 raw 1:1 + top-level==partition 일관. SYS-OEM gated 해소.
-- **수렴**: R1 확정 1(R17)+1(F2 enrichment)/반증 6 → R2 확정 0/반증 8 → R3 확정 0/후보 12 전부 비-결함
+- **신규 fix 3**: (1) **CSUS-R17**(system.oem #HpeH3Npar) — `_extract_oem_hpe` 가 CSUS 에 all-null iLO 스켈레톤 날조
+  (missing-looks-valid) + 실 OEM drop → OEM `@odata.type` 분기로 product_id/console_routing/dcd_version/host_os_* 추출.
+  (2) **CSUS-R18**(F2, chassis.oem #HpeH3Chassis) — `gather_chassis_multi` 에 `_extract_chassis_oem` 추가(물리위치/
+  프로세서 호환성), multi_node.chassis[].oem. (3) **MEM-01** — `gather_memory` `CapacityMiB or 0` → None 보존(누락↔0 혼동 제거).
+  전부 OEM @odata.type/None-가드 gated, iLO·타 벤더 불변(Additive, rule 12). SYS-OEM gated 해소.
+- **수렴**: R1 확정 1(R17)+1(F2)/반증 6 → R2 확정 0/반증 8 → R3 확정 0/후보 12 전부 비-결함
   (replay-vs-production 혼동 또는 baseline MOCK — 검증자 529 overload 사망분은 오케스트레이터가 `normalize_standard.yml`
   직접 정독으로 자체검증: network list→dict / processors→cpu / system→hardware / sections vs collected). 16 prior intact.
-- **회귀**: pytest **1154 passed**(+3 R17). 4노드 replay status=success·전 섹션 수집.
-- **gated 잔여(자율 미수정)**: F2 chassis OEM(enrichment·scope 결정) · MEM-01 memory 누락→0(latent·비-CSUS) ·
-  BASE-01 baseline 실측 교체(Ansible/Linux) · FD-01 field_dictionary drift · OEM-01 collect_oem dead(무해) → NEXT_ACTIONS.
+  F2·MEM-01 은 사용자 "필요한 건 진행" 지시로 후속 구현(R18/MEM-01).
+- **회귀**: pytest **1206 passed**(신규 회귀 8 + 동시 세션 OS-bond). 4노드 replay status=success·전 섹션·chassis.oem raw 1:1.
+- **gated 잔여 3(자율 미수정)**: BASE-01 baseline 실측 교체(Ansible/Linux 환경) · FD-01 field_dictionary multi_node drift
+  (schema 거버넌스 승인) · OEM-01 collect_oem dead(무해·Ansible 검증 불가) → NEXT_ACTIONS.
 - **증거**: `tests/evidence/2026-06-15-hpe-csus3200-mirror-audit.md` (재검수 절).
 
 ---
