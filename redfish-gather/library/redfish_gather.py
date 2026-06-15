@@ -1951,6 +1951,7 @@ def gather_memory(bmc_ip, system_uri, username, password, timeout, verify_ssl):
         # 2026-04-29 fix B90: Cisco CIMC가 Manufacturer를 raw JEDEC ID '0xCExx'로 emit.
         # _normalize_jedec()로 vendor 이름 정규화 (Samsung/SK hynix/Micron 등).
         # 2026-04-29 fix B09: locator (DIMM 물리 위치) 추가 — 교체 작업 시 식별용.
+        _mloc_slot = _safe(mdata, 'MemoryLocation', 'Slot')  # locator Slot 폴백용 (str cast — 아래 LOCATOR-STR)
         slots.append({
             'id':              _safe(mdata, 'Id'),
             'name':            _strip_or_none(_safe(mdata, 'Name')),
@@ -1959,10 +1960,13 @@ def gather_memory(bmc_ip, system_uri, username, password, timeout, verify_ssl):
             # CSUS-R12 (2026-06-15 실미러 검수): HPE CSUS 는 DeviceLocator 부재 + MemoryLocation.Slot=0
             # (16 DIMM 전부 0, 식별 불가). Slot 이 falsy(0/None)일 때만 Location.PartLocation.ServiceLabel
             # (예: 'rack1/chassis_u1/cpu0/dimmA0')로 보정. Slot 이 truthy 인 vendor 는 불변(Additive 회귀안전).
+            # LOCATOR-STR (2026-06-15 cross-device 일관성): field_dictionary 계약 = "string|null".
+            # Lenovo(DeviceLocator 부재 + Slot=32 truthy int)는 구 코드가 int 32 누출(같은 slot id 는 str '32' 와 불일치).
+            # truthy Slot 만 str cast → Lenovo 32→'32', CSUS Slot=0 은 falsy 유지(ServiceLabel 폴백 보존), Dell/DL380 DeviceLocator 불변.
             'locator':         (_safe(mdata, 'DeviceLocator')
-                                or (_safe(mdata, 'MemoryLocation', 'Slot') or None)
+                                or (str(_mloc_slot) if _mloc_slot else None)
                                 or _safe(mdata, 'Location', 'PartLocation', 'ServiceLabel')
-                                or _safe(mdata, 'MemoryLocation', 'Slot')),
+                                or (str(_mloc_slot) if _mloc_slot is not None else None)),
             'capacity_mb':     cap_int,
             'type':            _safe(mdata, 'MemoryDeviceType'),
             'base_module_type': _safe(mdata, 'BaseModuleType'),
