@@ -7,6 +7,39 @@
 
 ---
 
+## HPE Compute Scale-up Server 3200 (CSUS 3200) 실 미러 검수 (2026-06-15) 후속
+
+> 상세·근거: `tests/evidence/2026-06-15-hpe-csus3200-mirror-audit.md`. 라이브러리 fix **16건** 적용·수렴
+> (5-round, NEW 0). 회귀 1151 passed. 4 노드(실 RMC) raw 기준.
+
+### 완료 (라이브러리 — 자율 수정, raw 충실 + Additive)
+
+- [x] R1 chassis=System.Links.Chassis / FC1·FC2 FC WWPN / R3 multi_node system / R4 ilo_version / R5 chassis kind
+- [x] R6 port_count / R9 PSU fw / R10·R14 power(telemetry 권위) / R11 fan RPM / R12 memory locator
+- [x] R8 Ethernet 분류 / R13 FC associated_address=WWPN(전벤더) / R15 _network_meta strip / R16 adapter firmware(PCIeDevice)
+
+### 잔여 — gated (보호 경로 / Ansible(Linux) / lab 실측 / envelope 계약 — 자율 미수정)
+
+- [ ] **[HIGH] CSUS baseline 실측 교체 (BASE-01)**: `schema/baseline_v1/hpe_csus_3200_baseline.json` 이 구 MOCK
+  (가상 3-partition/4-manager, 날조 PSU/WWPN/토폴로지) — 실 4노드와 전면 불일치. 라이브러리는 정상(faithful),
+  회귀 기준선 무력. **Ansible control node(Linux) 필요 — 본 Windows 환경 미지원**(DL380 과 동일 제약). 실 site.yml
+  실행으로 정규화 envelope 생성 후 교체 (rule 13 R4 — AI 임의 편집 금지). 교체 시 `test_csus_mock_consistency.py` MOCK 가드 동반 갱신.
+- [ ] **[MED] field_dictionary drift (FD-01)**: `multi_node.partitions[].boot` / `chassis[].thermal` / `composition` /
+  `fabrics` / summary 신필드(resource_block_count/fabric_count) 미문서 (엔진은 이미 emit). 보호 경로 — 사용자 승인.
+- [ ] **[MED] collect_oem.yml CSUS 실 OEM 필드명 (OEM-01)**: `tasks/vendors/hpe/collect_oem.yml` 이 Superdome Flex
+  추정 필드명(PartitionInfo/FlexNodeInfo)을 읽어 CSUS 실 OEM(#HpeH3Npar: ProductId/ConsoleRouting/Physloc)과 불일치
+  → OEM fragment 영구 미생성(라이브러리 replay 미노출, 실 파이프라인 silent 누락). lab/실 raw 로 HpeH3* 실 필드명 확인 후 교정.
+- [ ] **[LOW] system.oem iLO-shaped (SYS-OEM)**: `_extract_oem_hpe` 가 iLO 필드만 알아 CSUS HpeH3Npar 는 all-null dict.
+  현재 faithful(신규 키 추가 금지). @odata.type HpeH3* 시 vendor-적합 shape 검토 (보호 경로).
+- [ ] **[LOW] network shape (NET-SHAPE)**: top-level `data.network`=list vs `multi_node.partitions[].network`=dict.
+  빈값 자체는 raw 충실. shape 통일은 envelope 계약 변경 (rule 13 R5/R7 + 승인 + baseline 동반).
+- [ ] **[LOW] network 섹션 매핑 충돌 (NET-SEC-MAP)**: normalize `_rf_proc_map` 가 network/network_adapters 를 같은
+  'network' 로 collapse + build_sections unsupported 우선 → host network 성공이 network_adapters 404 에 가려질 latent
+  충돌 (CSUS 수정 후 미발동). build_sections 충돌해소 규칙 명시 (다채널 영향 — 승인).
+- [ ] **[LOW] Rmp 관리어댑터 / multi_node.chassis name / ResourceBlock count**: Rmp(관리 NIC, MAC 은 bmc.mac_address 존재)
+  placeholder 필터 drop / chassis name 미emit(envelope shape) / ResourceBlock proc·mem count=0(ComputerSystem-type 충실).
+- [ ] **[INFO] lab 도입 후 별도 cycle**: `hpe-csus-3200-lab-validation` round — 실 capture-site-fixture + baseline + vault 결정.
+
 ## HPE DL380 Gen12 실 미러 검수 (2026-06-15) 후속
 
 > 상세·근거: `tests/evidence/2026-06-15-hpe-dl380-mirror-audit.md`. 라이브러리 fix 7건 적용·수렴(Round4 NEW 0)

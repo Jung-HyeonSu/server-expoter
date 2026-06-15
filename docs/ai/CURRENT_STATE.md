@@ -1,5 +1,24 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-15 (HPE Compute Scale-up Server 3200 실 미러 전수 검수 — 5-Round 수렴 [CONVERGED])
+
+- **대상/방법**: HPE CSUS 3200 실 4 노드(RMC, ServiceRoot 1.19.0, 490~637 리소스) `redfish_full_mirror.py`
+  전수 미러 → `replay_full_mirror.py` 오프라인 재생(`--layout rmc_primary`) → 전 섹션 leaf 를 `mirror_lookup.py`
+  로 raw `@odata.id` 속성과 1:1 provenance 대조 → 7-perspective 자가검증 다관점 검수 → 수정 → 회귀 → 반복.
+  신규 confirmed(fix) 추세 **6 → 5 → 3 → 2 → 0** (Round 5 NEW 0 = 수렴).
+- **라이브러리 fix 16 (redfish_gather.py, 전부 raw 충실 + Additive)**: chassis 오선택(R1, RackGroup→
+  System.Links.Chassis=r001u01 — power/thermal/network_adapters false-success·FC HBA 소실 해소) / FC HBA WWPN
+  (FC1 NDF↔Port ID매칭·FC2 AssociatedWorldWideNames·R13 assoc=WWPN) / multi_node system(R3) / ilo_version(R4) /
+  chassis kind(R5) / port_count(R6) / PSU fw·소비전력(R9·R10·R14 telemetry 권위) / fan RPM(R11) / memory locator(R12) /
+  Ethernet 분류(R8) / _network_meta 누설(R15) / adapter firmware PCIeDevice(R16).
+- **회귀**: pytest 1151 passed (+25 `test_csus_mirror_audit_fixes.py`). 타 벤더(Dell/HPE/Lenovo) 실미러 byte-identical
+  (Dell FC associated_address 만 R13 의도 교정). HPE emulator golden 2종 faithful 재생성. 부작용 0.
+- **gated(8)**: CSUS baseline 실측 교체(Ansible/Linux 필요) · field_dictionary drift · collect_oem CSUS 필드명(lab) ·
+  system.oem shape · network list/dict · Rmp · ResourceBlock count · multi_node.chassis name → NEXT_ACTIONS 등재.
+- **증거**: `tests/evidence/2026-06-15-hpe-csus3200-mirror-audit.md`, `docs/19_decision-log.md`.
+
+---
+
 ## 일자: 2026-06-15 (Lenovo SR650 V4 실 미러 전수 검수 — 2-Round 수렴 [CONVERGED])
 
 - **대상/방법**: Lenovo ThinkSystem SR650 V4 (BMC=XCC3, XCC fw `IHX414J 1.22 20250402`, ServiceRoot
