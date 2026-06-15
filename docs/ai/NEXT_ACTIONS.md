@@ -24,14 +24,17 @@
 
 ## HPE Compute Scale-up Server 3200 (CSUS 3200) 실 미러 검수 (2026-06-15) 후속
 
-> 상세·근거: `tests/evidence/2026-06-15-hpe-csus3200-mirror-audit.md`. 라이브러리 fix **16건** 적용·수렴
-> (5-round, NEW 0). 회귀 1151 passed. 4 노드(실 RMC) raw 기준.
+> 상세·근거: `tests/evidence/2026-06-15-hpe-csus3200-mirror-audit.md`. 라이브러리 fix **17건** 적용·수렴.
+> 1차 16건(5-round) + 후속 재검수 1건(CSUS-R17, 3-round 재수렴 NEW 0). 회귀 1154 passed. 4 노드(실 RMC) raw 기준.
 
 ### 완료 (라이브러리 — 자율 수정, raw 충실 + Additive)
 
 - [x] R1 chassis=System.Links.Chassis / FC1·FC2 FC WWPN / R3 multi_node system / R4 ilo_version / R5 chassis kind
 - [x] R6 port_count / R9 PSU fw / R10·R14 power(telemetry 권위) / R11 fan RPM / R12 memory locator
 - [x] R8 Ethernet 분류 / R13 FC associated_address=WWPN(전벤더) / R15 _network_meta strip / R16 adapter firmware(PCIeDevice)
+- [x] **R17 (재검수 2026-06-15, 커밋 1167e01a)**: `_extract_oem_hpe` 를 OEM `@odata.type` 로 분기 — #HpeH3Npar 면 CSUS
+  전용 키(product_id/console_routing/console_routing_current_boot/dcd_version/host_os_*) 추출. 구: all-null iLO 스켈레톤
+  날조(missing-looks-valid) + 실 OEM drop. iLO default 불변(Additive). **SYS-OEM gated 항목 해소**. 회귀 +3.
 
 ### 잔여 — gated (보호 경로 / Ansible(Linux) / lab 실측 / envelope 계약 — 자율 미수정)
 
@@ -43,11 +46,21 @@
   `fabrics` / summary 신필드(resource_block_count/fabric_count) 미문서 (엔진은 이미 emit). 보호 경로 — 사용자 승인.
 - [ ] **[MED] collect_oem.yml CSUS 실 OEM 필드명 (OEM-01)**: `tasks/vendors/hpe/collect_oem.yml` 이 Superdome Flex
   추정 필드명(PartitionInfo/FlexNodeInfo)을 읽어 CSUS 실 OEM(#HpeH3Npar: ProductId/ConsoleRouting/Physloc)과 불일치
-  → OEM fragment 영구 미생성(라이브러리 replay 미노출, 실 파이프라인 silent 누락). lab/실 raw 로 HpeH3* 실 필드명 확인 후 교정.
-- [ ] **[LOW] system.oem iLO-shaped (SYS-OEM)**: `_extract_oem_hpe` 가 iLO 필드만 알아 CSUS HpeH3Npar 는 all-null dict.
-  현재 faithful(신규 키 추가 금지). @odata.type HpeH3* 시 vendor-적합 shape 검토 (보호 경로).
-- [ ] **[LOW] network shape (NET-SHAPE)**: top-level `data.network`=list vs `multi_node.partitions[].network`=dict.
-  빈값 자체는 raw 충실. shape 통일은 envelope 계약 변경 (rule 13 R5/R7 + 승인 + baseline 동반).
+  → OEM fragment 영구 미생성(라이브러리 replay 미노출, 실 파이프라인 silent 누락). 재검수(2026-06-15) 추가 확인: 추출한
+  `_hpe_superdome_*` 변수도 step 3 에서 미사용(항상 `_data_fragment:{}`) = dead/no-op. **단 무해** — 라이브러리 CSUS-R17 이
+  system OEM 직접 수집. Ansible 환경 미보유로 검증 불가 → 정리(또는 CSUS-R17 정합 재작성) 권장. lab/실 raw 로 HpeH3* 필드명 확인 후 교정.
+- [x] ~~**[LOW] system.oem iLO-shaped (SYS-OEM)**~~ — **해소** (재검수 CSUS-R17, 커밋 1167e01a). all-null iLO 스켈레톤 →
+  #HpeH3Npar 분기로 실 OEM 추출. 4노드 raw 1:1 검증.
+- [ ] **[IMPROVEMENT] Chassis OEM 미수집 (F2)**: `gather_chassis_multi` 가 Chassis #HpeH3Chassis OEM(Physloc /
+  OemChassisType / PhysicalLocationString / ProcessorsCompatibilityKey·Compatible) 미보존. enrichment(틀린 값 아님 —
+  현재 faithful). multi_node.chassis 는 CSUS/Superdome 전용이라 타 13벤더 무영향. 단 비-schema 신키 추가 = scope/계약 결정
+  (multi_node.chassis shape + FD-01 동반). 사용자 결정 대상.
+- [ ] **[LOW/latent] memory CapacityMiB 누락→0 (MEM-01)**: `gather_memory`(redfish_gather.py:1942) `_safe(mdata,'CapacityMiB') or 0`
+  — 누락 시 0 날조(누락↔0 혼동). **CSUS 미발동**(전 DIMM CapacityMiB 보유) + 범용(전 벤더) 코드 + 실측 trigger 부재라
+  rule 25 R7-B 로 자율 미수정. 안전 수정案: `or 0` 제거 + `_safe_int(cap) if cap is not None else None` (실데이터 회귀 0 — 누락 케이스만 변경).
+- [ ] **[LOW] network shape (NET-SHAPE) — 재검수: 비-결함 확인**: top-level `data.network`(라이브러리 intermediate)=list 이나
+  `normalize_standard.yml`(:444-445,:545-552)가 dict 로 재조립 → **호출자는 dict 수신**. replay(라이브러리 단독) 산출물을
+  최종 envelope 로 오인한 finding. 코드 변경 불필요(재검수 3-round 확인). 잔존 시 doc/tooling 주석만.
 - [ ] **[LOW] network 섹션 매핑 충돌 (NET-SEC-MAP)**: normalize `_rf_proc_map` 가 network/network_adapters 를 같은
   'network' 로 collapse + build_sections unsupported 우선 → host network 성공이 network_adapters 404 에 가려질 latent
   충돌 (CSUS 수정 후 미발동). build_sections 충돌해소 규칙 명시 (다채널 영향 — 승인).

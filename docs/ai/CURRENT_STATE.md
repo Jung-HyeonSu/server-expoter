@@ -24,6 +24,23 @@
 
 ---
 
+## 일자: 2026-06-15 (HPE CSUS 3200 실 미러 재검수 — CSUS-R17 + 3-Round 재수렴 [CONVERGED])
+
+- **대상/방법**: 직전 16건 후 사용자 재요청 독립 재검수. 동일 4 노드 raw + Workflow 11 finder(7 관점 + 섹션
+  deep-dive + 교차노드) × 적대적 raw-provenance verify × 종합 — 3 round.
+- **신규 fix 1 (CSUS-R17, 커밋 1167e01a)**: `_extract_oem_hpe` 가 vendor=hpe 전체에 iLO 경로만 읽어 CSUS(#HpeH3Npar)에서
+  **all-null iLO 스켈레톤 날조(missing-looks-valid) + 실 OEM drop** → OEM `@odata.type` 분기로 product_id/console_routing/
+  dcd_version/host_os_* 추출(iLO default 불변, Additive). 4노드 raw 1:1 + top-level==partition 일관. SYS-OEM gated 해소.
+- **수렴**: R1 확정 1(R17)+1(F2 enrichment)/반증 6 → R2 확정 0/반증 8 → R3 확정 0/후보 12 전부 비-결함
+  (replay-vs-production 혼동 또는 baseline MOCK — 검증자 529 overload 사망분은 오케스트레이터가 `normalize_standard.yml`
+  직접 정독으로 자체검증: network list→dict / processors→cpu / system→hardware / sections vs collected). 16 prior intact.
+- **회귀**: pytest **1154 passed**(+3 R17). 4노드 replay status=success·전 섹션 수집.
+- **gated 잔여(자율 미수정)**: F2 chassis OEM(enrichment·scope 결정) · MEM-01 memory 누락→0(latent·비-CSUS) ·
+  BASE-01 baseline 실측 교체(Ansible/Linux) · FD-01 field_dictionary drift · OEM-01 collect_oem dead(무해) → NEXT_ACTIONS.
+- **증거**: `tests/evidence/2026-06-15-hpe-csus3200-mirror-audit.md` (재검수 절).
+
+---
+
 ## 일자: 2026-06-15 (HPE Compute Scale-up Server 3200 실 미러 전수 검수 — 5-Round 수렴 [CONVERGED])
 
 - **대상/방법**: HPE CSUS 3200 실 4 노드(RMC, ServiceRoot 1.19.0, 490~637 리소스) `redfish_full_mirror.py`
