@@ -26,6 +26,20 @@
   /proc/net/vlan 권한거부 시에도 ip -d link 소스로 graceful 확인.
 - [ ] **[LOW] Linux teamd 실장비 검증**: teamd 팀은 코드+단위테스트만(실커널 미검증 — teamd 데몬 구성 필요).
 
+## Redfish adapter origin 최신화 + 세대 선택 (2026-06-15) 후속
+
+> 상세: 본 cycle adapter origin diff + `tests/redfish-probe/verify_adapter_selection.py`. 4 device 실 미러로 adapter 선택 실측.
+
+- [x] **adapter origin 최신화 (2026-06-15 완료)**: hpe_csus_3200 / hpe_ilo7 / lenovo_xcc3 "lab 부재/추정" → 실 캡처
+  검증 승격, dell_idrac9 R740 보강, VENDOR_ADAPTERS priority(96/95→102/101)·count(83→134) 정정. 동작 로직 불변
+  (선택 점수 실측 동일), pytest 1204 passed.
+- [ ] **[LOW / gated] Dell·Lenovo 세대 adapter 가 priority 로만 선택 (cosmetic)**: 무인증 ServiceRoot 에 server model
+  부재(Dell=BMC명 "Integrated Dell Remote Access Controller" / Lenovo=None) → facts.model·firmware 빈값 → 세대 구분
+  불가, priority 최상위만 선택 (Dell→idrac10 / Lenovo→xcc3 항상, 실측 2026-06-15 R740·SR650 V4). collect/normalize
+  tasks 가 세대 무관 동일(dell/lenovo OEM)이라 **수집 데이터는 정확** — `diagnosis.not_supported_message` 세대 라벨만
+  부정확(cosmetic). HPE 는 `_extract_probe_facts` 가 ServiceRoot.Product/Oem.Hpe.Manager 로 model/firmware 채워
+  세대 구분됨. 개선하려면 인증 후 model 재평가 또는 vendor별 ServiceRoot semantic 확장(설계 결정 — 사용자 승인). 현재 무해라 보류.
+
 ## HPE Compute Scale-up Server 3200 (CSUS 3200) 실 미러 검수 (2026-06-15) 후속
 
 > 상세·근거: `tests/evidence/2026-06-15-hpe-csus3200-mirror-audit.md`. 라이브러리 fix **17건** 적용·수렴.

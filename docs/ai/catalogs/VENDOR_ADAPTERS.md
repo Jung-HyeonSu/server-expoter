@@ -3,6 +3,16 @@
 > 9 vendor x 채널별 adapter 매트릭스 (rule 28 #3 측정 대상, TTL 14일).
 > 실측 (`ls adapters/redfish/*.yml | wc -l`) — 2026-05-12 (cycle hpe-csus-rmc-multi-node).
 >
+> **cycle 2026-06-15 변경** (실 미러 캡처 검수 — adapter 카운트 변경 없음, 31 그대로):
+>   - **4 device 실 미러 캡처 + replay 검증**: HPE CSUS 3200(실 4노드) / Dell R740 / HPE DL380 Gen12 / Lenovo SR650 V4.
+>     라이브러리(redfish_gather.py) 데이터 fix — CSUS 19 / Dell R740 4 / HPE DL380 7 / Lenovo 2, 전부 raw 1:1 + Additive (pytest 1204 passed).
+>   - **adapter origin 최신화**: hpe_csus_3200 / hpe_ilo7 / lenovo_xcc3 = "lab 부재/추정" → "1회 실 캡처 검증" 승격.
+>     dell_idrac9 = R740 14G 캡처 보강. CSUS firmware_patterns 에 실 1.x Additive (휴면 — 선택 시 facts.firmware 빈값, 실측 확인).
+>   - **priority 정정**: 본 표가 구 96/95(csus/superdome) 표기였으나 실제 adapter 는 **102/101** (2026-06-04 ADR-csus-adapter-priority).
+>   - **field_dictionary**: 83 → **134 entries** (47 Must / 81 Nice / 6 Skip — 2026-06-14 재실측, HPE DL380 cycle).
+>   - **발견(gated)**: Dell/Lenovo 는 무인증 ServiceRoot 에 model 부재 → 세대 adapter 가 priority 로만 선택
+>     (Dell→idrac10, Lenovo→xcc3 가 항상). collect/normalize tasks 동일이라 수집 데이터 무영향, diagnosis 라벨만 cosmetic. NEXT_ACTIONS 등재.
+>
 > **cycle 2026-05-12 변경**: adapter 카운트 변경 없음 (31 그대로). `vendor_notes` 보강만:
 >   - `hpe_csus_3200.yml` / `hpe_superdome_flex.yml` 에 `multi_node_support: true` Additive (ADR-2026-05-12).
 >   - `data.multi_node` Additive envelope 컨테이너 — RMC primary 시스템 (manager_layout=rmc_*) 전수 수집.
@@ -37,7 +47,7 @@
 | Adapter | adapter_id | priority | Vendor / Generation | lab |
 |---|---|---|---|---|
 | `dell_idrac10.yml` | redfish_dell_idrac10 | **120** | iDRAC10 (R770/Gen17, 사이트 5대) | **PASS** |
-| `dell_idrac9.yml` | redfish_dell_idrac9 | 100 | iDRAC9 (5.x / 6.x / 7.x) | 부재 |
+| `dell_idrac9.yml` | redfish_dell_idrac9 | 100 | iDRAC9 (5.x / 6.x / 7.x) | **R760 16G(Round11) + R740 14G 미러(2026-06-14)** — 단 실선택은 idrac10(아래) |
 | `dell_idrac8.yml` | redfish_dell_idrac8 | 50 | iDRAC8 (2.40+) | 부재 |
 | `dell_idrac.yml` | redfish_dell_idrac | 10 | generic Dell fallback (iDRAC7 legacy cover) | 부재 |
 
@@ -45,10 +55,10 @@
 
 | Adapter | adapter_id | priority | Vendor / Generation | lab |
 |---|---|---|---|---|
-| `hpe_ilo7.yml` | redfish_hpe_ilo7 | **120** | iLO7 (Gen12, 1대) — cycle 2026-05-11 `hpe-ilo7-gen12-match-fix`: 2-part firmware "1.10" 매치 보강 (Additive `^1\.1[0-9]`) | **PASS** |
+| `hpe_ilo7.yml` | redfish_hpe_ilo7 | **120** | iLO7 (Gen12) — DL380 Gen12 실 미러 fw 1.20.00 / Redfish 1.22.1 | **실 미러 캡처 2026-06-15 (replay 7 fix)** |
 | `hpe_ilo6.yml` | redfish_hpe_ilo6 | 100 | iLO6 (Gen11 + 사이트 Gen12) | Round 11 부분 |
-| `hpe_csus_3200.yml` | redfish_hpe_csus_3200 | 96 | **Compute Scale-up Server 3200 (CSUS, RMC + PDHC, DDR5, 2023+) — cycle 2026-05-11 신설 / cycle 2026-05-12 multi_node_support 활성 (ADR-2026-05-12)** | 부재 (web sources 8건 — sd00002765en_us 보강) |
-| `hpe_superdome_flex.yml` | redfish_hpe_superdome_flex | 95 | Superdome Flex (RMC + iLO5 dual-manager) — cycle 2026-05-12 multi_node_support 활성 | 부재 |
+| `hpe_csus_3200.yml` | redfish_hpe_csus_3200 | **102** | **Compute Scale-up Server 3200 (CSUS, RMC + PDHC, DDR5) — RMC fw 1.75.108 / Redfish 1.19.0 / Oem #HpeH3Npar·#HpeH3Chassis (실측)** | **실 4노드 미러 캡처 2026-06-15 (replay 19 fix)** |
+| `hpe_superdome_flex.yml` | redfish_hpe_superdome_flex | **101** | Superdome Flex (RMC + iLO5 dual-manager) — cycle 2026-05-12 multi_node_support 활성 | 부재 (web sources only — 미캡처) |
 | `hpe_ilo5.yml` | redfish_hpe_ilo5 | 90 | iLO5 (Gen10/10+) | 부재 |
 | `hpe_ilo4.yml` | redfish_hpe_ilo4 | 50 | iLO4 (Gen9, 2.30+) | 부재 |
 | `hpe_ilo.yml` | redfish_hpe_ilo | 10 | generic HPE fallback (iLO 1/2/3 legacy) | 부재 |
@@ -57,7 +67,7 @@
 
 | Adapter | adapter_id | priority | Vendor / Generation | lab |
 |---|---|---|---|---|
-| `lenovo_xcc3.yml` | redfish_lenovo_xcc3 | **120** | XCC3 (1.17+, 사이트 1대 — Accept-only header 정책) | **PASS** |
+| `lenovo_xcc3.yml` | redfish_lenovo_xcc3 | **120** | XCC3 (ThinkSystem V4) — SR650 V4 실 미러 fw IHX414J 1.22 / Redfish 1.15.0 | **실 미러 캡처 2026-06-15 (replay 2 fix)** |
 | `lenovo_xcc.yml` | redfish_lenovo_xcc | 100 | XCC + XCC2 (firmware_patterns 분기) | 부재 |
 | `lenovo_imm2.yml` | redfish_lenovo_imm2 | 50 | IMM2 (구 IMM2, IBM 인수 전) | 부재 |
 | `lenovo_bmc.yml` | redfish_lenovo_bmc | 10 | generic Lenovo fallback (IBM legacy BMC) | 부재 |
@@ -124,7 +134,7 @@
 | Vendor | priority 순서 |
 |---|---|
 | Dell | 10 < 50 < 100 < 120 (generic < idrac8 < idrac9 < idrac10) [PASS] |
-| HPE | 10 < 50 < 90 < 95 < 96 < 100 < 120 (generic < ilo4 < ilo5 < superdome_flex < csus_3200 < ilo6 < ilo7) [PASS] |
+| HPE | 10 < 50 < 90 < 100 < 101 < 102 < 120 (generic < ilo4 < ilo5 < ilo6 < superdome_flex < csus_3200 < ilo7) [PASS] (2026-06-04 ADR — csus/superdome 를 ilo6 catch-all 위로) |
 | Lenovo | 10 < 50 < 100 < 120 (bmc < imm2 < xcc < xcc3) [PASS] |
 | Cisco | 10 < 100 < 110 (bmc < cimc < ucs_xseries) [PASS] |
 | Supermicro | 10 < 50 < 75 < 80 < 90 < 100 < 100 < 110 (bmc < x9 < x10 < ars < x12 < x11/x13 < x14) [PASS — model_patterns tie-break] |

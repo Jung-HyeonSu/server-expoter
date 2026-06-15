@@ -1,5 +1,26 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-15 (Redfish adapter origin 최신화 — 4 device 실 미러 캡처 반영)
+
+- **대상/방법**: 사용자 지적 — 실 raw 로 라이브러리는 개선했으나 adapter origin 주석이 "lab 부재/추정" 으로 stale.
+  4 device 실 미러(`C:\github\서버mock데이터\{HPE_CSUS3200,DELL_R740,HPE_DL380,Lenovo_SR650}`)로 adapter 선택을
+  실측 재현(`tests/redfish-probe/verify_adapter_selection.py`) 후 origin 정정. 편집 전/후 검증 루프(선택 점수·pytest·replay).
+- **정정(adapter origin/주석 — 동작 로직 보존, Additive)**:
+  - `hpe_csus_3200.yml`: Firmware 3.x/4.x → 실측 RMC 1.75.108 / Lab 부재·미확인 → 1회 실 4노드 캡처 검증 /
+    OEM 추정(Superdome PartitionInfo) → 실측 #HpeH3Npar·#HpeH3Chassis / firmware_patterns 에 실 1.x Additive(휴면).
+  - `hpe_ilo7.yml` / `lenovo_xcc3.yml`: "lab 부재 web sources" → 실 DL380 Gen12 / SR650 V4 미러 캡처 검증 승격.
+  - `dell_idrac9.yml`: R740 14G 미러 캡처 보강 + Dell 세대 선택 cosmetic 주의 주석.
+  - `VENDOR_ADAPTERS.md`: priority 96/95→102/101 정정 / field_dictionary 83→134 / 4 device lab 상태 갱신.
+- **실측 검증 (편집 전후 동일)**: 4 device adapter 선택 점수 불변 — CSUS 102545(×4) / Dell idrac10 120520 /
+  iLO7 120570 / Lenovo xcc3 120520. CSUS firmware fact 빈값 확정 → firmware_patterns 휴면(오실격 위험 없음).
+- **발견(gated)**: Dell/Lenovo 는 무인증 ServiceRoot 에 server model 부재 → 세대 adapter 가 priority 로만 선택
+  (Dell→idrac10, Lenovo→xcc3 항상). tasks 동일이라 데이터 무영향, diagnosis 라벨만 cosmetic. NEXT_ACTIONS 등재.
+- **회귀/게이트**: pytest **1204 passed**(baseline 1203 + 신규 회귀 1 `test_csus_real_rmc_firmware_175_selects_csus`) /
+  4 device replay status=success·10섹션 불변(라이브러리 미수정) / adapter 선택 점수 불변.
+- **증거**: 4 tests/evidence/2026-06-1{4,5}-*-mirror-audit.md + 본 cycle adapter origin diff.
+
+---
+
 ## 일자: 2026-06-15 (OS 네트워크 본딩/티밍 수집 보강 — 실장비 검증 [CONVERGED])
 
 - **대상/방법**: OS-gather 네트워크 수집에 Linux 본딩 + Windows 티밍 토폴로지 추가(Additive).
