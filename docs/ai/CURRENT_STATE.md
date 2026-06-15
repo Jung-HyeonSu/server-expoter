@@ -1,5 +1,24 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-15 (Lenovo SR650 V4 실 미러 전수 검수 — 2-Round 수렴 [CONVERGED])
+
+- **대상/방법**: Lenovo ThinkSystem SR650 V4 (BMC=XCC3, XCC fw `IHX414J 1.22 20250402`, ServiceRoot
+  1.15.0) 를 `redfish_full_mirror.py` 전수 미러(2901 리소스) → `replay_full_mirror.py` 오프라인 재생 →
+  10 section 전 필드를 `mirror_lookup.py` 로 raw `@odata.id` 속성과 1:1 provenance 대조 → 4-perspective
+  적대적 교차검증 → 수정 → 회귀 → 반복. confirmed(fix) 추세 **2 → 0** (Round 2 NEW 0 = 수렴).
+- **라이브러리 fix 2 (redfish_gather.py)**: (1) **firmware pending 유실** — XCC3 pending(`Version=""`,
+  `BMC-Primary-Pending`/`UEFI-Pending`)이 Cisco 빈슬롯 노이즈 필터에 먼저 드롭되던 회귀. `is_pending`
+  를 필터 앞으로 이동 + 예외(version=""→null). B43 의도/`lenovo_baseline.json` 보존과 일치. firmware
+  24→26 복원. (2) **network MAC 대소문자** — `gather_network` 이 raw 대문자 MAC verbatim 노출 →
+  같은 물리 NIC 이 `network[].mac`(대문자) vs `network_adapters`(소문자)로 갈림. `.lower()` 정규화
+  (round3 XC-4 적용 누락분). raw colon-hex 무손실.
+- **수정 부작용/회귀**: `pytest tests/ --deselect e2e_browser` = **1123 passed, 6 skipped, 0 fail**
+  (검수 전 baseline 무회귀). dmtf_rackmount1 golden = MAC-case 단독 diff 확인 후 emulator_harness.run_gather
+  로 재생성. output_schema_drift / harness_consistency / vendor_boundary PASS. e2e_browser 2건 FAIL =
+  live Jenkins(10.100.64.152) lab 망 미도달, 코드 무관.
+- **나머지 10 섹션**: raw 충실 반영 확인 (cpu_summary null·system.oem null[V4 OEM 미노출]·power 386>max·
+  thermal TMargin·part_number "UNKNOWN" 등 전부 device-limitation). 상세 `tests/evidence/2026-06-15-lenovo-sr650-v4-audit.md`.
+
 ## 일자: 2026-06-15 (HPE DL380 Gen12 실 미러 전수 검수 — 4-Round 수렴 루프 [CONVERGED])
 
 - **대상/방법**: HPE ProLiant DL380 Gen12 (iLO7, RedfishVersion 1.22.1) 를 `redfish_full_mirror.py` 로 전수

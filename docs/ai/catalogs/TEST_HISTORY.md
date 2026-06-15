@@ -2,6 +2,22 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-06-15 (Lenovo SR650 V4 실 미러 검수 — 2-Round 수렴)
+
+Lenovo ThinkSystem SR650 V4 (XCC3, fw IHX414J 1.22) 전수 미러(2901 리소스) `replay_full_mirror.py`
+오프라인 재생 → 10 섹션 raw 1:1 provenance 대조 + 4-perspective 적대적 교차검증. 추세 **2 → 0** (수렴).
+
+- production fix 2 (redfish_gather.py): (1) `gather_firmware` pending 보존 — `is_pending` 를 Cisco
+  빈슬롯(`N/A`/`''`) 필터 앞으로 이동 + version=""→null (XCC3 pending 2건 24→26 복원). (2) `gather_network`
+  MAC `.lower()` — network_adapters/bmc/ports 와 case 일관 (round3 XC-4 적용 누락분).
+- golden 재생성: `dmtf_rackmount1/expected_output.json` — diff 가 network MAC case 단독임을 확인 후
+  `emulator_harness.run_gather` 동일 경로로 재생(faithful).
+- 검증: `pytest tests/ --deselect tests/e2e_browser/test_jenkins_master.py` = **1123 passed, 6 skipped**
+  (검수 전 baseline 무회귀). output_schema_drift / verify_harness_consistency / verify_vendor_boundary /
+  py_compile PASS. e2e_browser 2건 = live Jenkins lab 망 미도달(코드 무관, 검수 전부터 FAIL).
+- Baseline 갱신: 없음 (lenovo_baseline 은 XCC1 V2 — 구조 테스트 통과, 실측 미러 부재로 무수정 rule 13 R4).
+- Evidence: tests/evidence/2026-06-15-lenovo-sr650-v4-audit.md
+
 ## 2026-06-09 (Round 16 — 멀티에이전트 적대적 버그헌트 루프, 수렴)
 
 5 pass 멀티에이전트 루프(finder → skeptic refute → 메인 재검증 + Jinja2 렌더/Python 실행). confirmed **15 fix**.
