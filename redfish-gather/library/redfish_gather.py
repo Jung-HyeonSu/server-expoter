@@ -77,6 +77,25 @@ def _safe_int(x, default=None):
         return default
 
 
+def _safe_round_int(x, default=None):
+    """소수 측정값(온도 등)을 반올림 정수로. _safe_int 의 int() 절삭과 달리 round() 사용.
+
+    2026-06-16 감사 G1: 온도 reading 을 _safe_int 로 받으면 44.7031→44 / 38.86→38 /
+    -68.75→-68 처럼 소수점 절삭(≤1° 오차)이 발생. round() 로 44.7→45 / 38.86→39 / -68.75→-69.
+    int 계약은 유지(타입 불변) — 절삭 대신 반올림만 교체. _safe_int 는 watt/capacity 등 다른
+    호출부에서 그대로 사용(회귀 0). 비-숫자/None/inf/nan → default.
+    """
+    if x is None:
+        return default
+    try:
+        f = float(x)
+    except (ValueError, TypeError, OverflowError):
+        return default
+    if f != f or f in (float('inf'), float('-inf')):  # nan/inf 흡수
+        return default
+    return int(round(f))
+
+
 def _safe_num(x, default=None):
     """유한 숫자 정규화 — int 는 int, **유한 float 는 float 로 보존**; bool/비-숫자/None/inf/nan → default.
 
@@ -1738,6 +1757,12 @@ def gather_bmc(bmc_ip, manager_uri, vendor, username, password, timeout, verify_
         'state':            _safe(data, 'Status', 'State'),
         'power_state':      _safe(data, 'PowerState'),
         'uuid':             _safe(data, 'UUID'),
+        # 2026-06-16 감사 G4: Manager 식별 메타 (Additive). CSUS RMC raw 는 SerialNumber=
+        # SGHD3TLNDD / PartNumber=R9N70A / Manufacturer=HPE 보유했으나 미수집이었다. Manager 가
+        # 해당 필드 미제공인 vendor(대다수 iDRAC/iLO/XCC)는 None — shape 통일, 회귀 안전.
+        'serial':           _strip_or_none(_safe(data, 'SerialNumber')),
+        'part_number':      _strip_or_none(_safe(data, 'PartNumber')),
+        'manufacturer':     _strip_or_none(_safe(data, 'Manufacturer')),
         'last_reset_time':  _safe(data, 'LastResetTime'),
         'timezone':         _safe(data, 'TimeZoneName'),
         'ip':               None,
@@ -3025,6 +3050,8 @@ def _gather_power_subsystem(bmc_ip, chassis_uri, username, password, timeout, ve
                     'model':            _safe(mdata, 'Model'),
                     'serial':           _safe(mdata, 'SerialNumber'),
                     'manufacturer':     _safe(mdata, 'Manufacturer'),
+                    # 2026-06-16 감사 G4 (Additive): CSUS PSU raw PartNumber=CSU2400AP-3-500 미수집이었음.
+                    'part_number':      _safe(mdata, 'PartNumber'),
                     'power_capacity_w': _safe_int(_safe(mdata, 'PowerCapacityWatts')),
                     # CSUS-R9 (2026-06-15 실미러 검수): HPE CSUS PSU 는 FirmwareVersion 부재 +
                     # DMTF PowerSupply.Version("Release -0005")에 버전 → Version fallback (Additive).
@@ -3178,6 +3205,7 @@ def gather_power(bmc_ip, chassis_uri, username, password, timeout, verify_ssl):
             'model':            _safe(psu, 'Model'),
             'serial':           _safe(psu, 'SerialNumber'),
             'manufacturer':     _safe(psu, 'Manufacturer'),
+            'part_number':      _safe(psu, 'PartNumber'),  # 2026-06-16 감사 G4 (Additive)
             'power_capacity_w': psu_capacity,
             'firmware_version': _safe(psu, 'FirmwareVersion'),
             'health':           _safe(psu, 'Status', 'Health'),
@@ -3247,10 +3275,11 @@ def gather_thermal(bmc_ip, chassis_uri, username, password, timeout, verify_ssl)
     for t in _dicts(_safe(tdata, 'Temperatures')):  # 비-list/dict 방어 (rule 95 R1 #2)
         temps.append({
             'name':             _safe(t, 'Name'),
-            'reading_celsius':  _safe_int(_safe(t, 'ReadingCelsius')),  # str '42' 방어
+            # 2026-06-16 감사 G1: 절삭(_safe_int) → 반올림(_safe_round_int). 44.7→45.
+            'reading_celsius':  _safe_round_int(_safe(t, 'ReadingCelsius')),  # str '42' 방어
             'health':           _safe(t, 'Status', 'Health'),
             'state':            _safe(t, 'Status', 'State'),
-            'upper_critical':   _safe_int(_safe(t, 'UpperThresholdCritical')),
+            'upper_critical':   _safe_round_int(_safe(t, 'UpperThresholdCritical')),
             'physical_context': _safe(t, 'PhysicalContext'),
         })
     fans = []
@@ -3332,7 +3361,8 @@ def _gather_thermal_subsystem(bmc_ip, chassis_uri, username, password, timeout, 
             for tr in _dicts(_safe(tm, 'TemperatureReadingsCelsius')):
                 temps.append({
                     'name':             _safe(tr, 'DeviceName') or _safe(tr, 'Name'),
-                    'reading_celsius':  _safe_int(_safe(tr, 'Reading')),
+                    # 2026-06-16 감사 G1: 절삭 → 반올림. ThermalMetrics.Reading 은 float (39.3906).
+                    'reading_celsius':  _safe_round_int(_safe(tr, 'Reading')),
                     'health':           _safe(tr, 'Status', 'Health'),
                     'state':            _safe(tr, 'Status', 'State'),
                     'upper_critical':   None,
@@ -3921,6 +3951,11 @@ def gather_chassis_multi(bmc_ip, chassis_coll_uri, username, password,
             'model':         _safe(cdata, 'Model'),
             'serial_number': _safe(cdata, 'SerialNumber'),
             'part_number':   _safe(cdata, 'PartNumber'),
+            # 2026-06-16 감사 G4 (Additive): chassis 식별/상태 메타. CSUS r001u01 raw 는
+            # UUID(System UUID 와 다른 chassis 고유)/AssetTag/PowerState 보유했으나 미수집이었음.
+            'uuid':          _safe(cdata, 'UUID'),
+            'asset_tag':     _strip_or_none(_safe(cdata, 'AssetTag')),
+            'power_state':   _safe(cdata, 'PowerState'),
             'power':         pwr_data,
             # cycle 2026-06-09: thermal (Additive — Thermal 미노출 시 {}).
             'thermal':       thm_data,

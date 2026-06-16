@@ -30,10 +30,13 @@
       "last_reset_time": null,
       "mac_address": "23:11:8a:33:cf:ea",
       "manager_type": "BMC",
+      "manufacturer": null,
       "model": "Joo Janta 200",
       "name": "BMC",
       "oem": {},
+      "part_number": null,
       "power_state": "On",
+      "serial": null,
       "state": "Enabled",
       "timezone": null,
       "uuid": "58893887-8974-2487-2389-841168418919"
@@ -212,6 +215,7 @@
           "manufacturer": "ManufacturerName",
           "model": "499253-B21",
           "name": "Power Supply Bay",
+          "part_number": "0000001A3A",
           "power_capacity_w": 800,
           "serial": "1Z0000001",
           "state": "Enabled"
