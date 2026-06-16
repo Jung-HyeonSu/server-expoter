@@ -7,6 +7,17 @@
 
 ---
 
+## OEM cascade graceful degradation — os/esxi 확장 + 라이브 검증 (2026-06-16)
+
+> 상세·근거: `docs/19_decision-log.md` 2026-06-16 항목. CSUS 실 게더링에서 HPE OEM dict conditional(Bug A)
+> + `site.yml` 단일 block/rescue cascade(Bug B) 발견. Bug A 전면 수정 / Bug B 는 redfish 만 적용(사용자 승인 2026-06-16).
+
+- [ ] **[HIGH / lab] 라이브 검증**: 실 CSUS 3200(4노드) 또는 오프라인 replay 로 게더링 재실행 → `status=success`(9 섹션) + OEM 경고 `errors[]` 확인. ansible 필요(Windows 미지원이라 정적 검증만 완료).
+- [ ] **[MED] 배포 동기화 확인**: lab Jenkins 배포 코드가 본 `normalize_oem.yml`/`site.yml` 수정을 포함하는지 확인. 에러가 가리킨 `collect_oem.yml:101` 은 HEAD 에 부재 — 내부 GitLab stale 또는 다른 세션 미커밋 가능.
+- [ ] **[MED] Bug B os/esxi 확장**: 동일 단일 block/rescue cascade 가 os-gather(Linux PLAY2 :266/:270, Windows PLAY3 :445/:464) / esxi-gather(:123/:136/:140) 에 존재. 보조 단계(hba_ib/runtime/network_extended/dns) local block/rescue 화. status 의미 변경 → 승인 + 전 baseline 회귀 필요.
+- [ ] **[MED] 회귀 가드**: vendor OEM `when` 조건 boolean-safety lint(dict `or` 체인 / unguarded regex_search 검출) — ansible 불요 정적 검사로 재발 차단. 기존 `pre_commit_regex_search_conditional_check.py` 의 sister.
+- [ ] **[LOW] collect_oem.yml dead-code 정리**: 실 CSUS OEM 은 라이브러리(`redfish_gather.py`)가 직접 수집(#HpeH3Npar/#HpeH3Chassis). `collect_oem.yml` 의 구식 PartitionInfo/FlexNodeInfo 추출 블록 제거 또는 adapter `oem_tasks` 해제(adapter 주석 71-72 기등재).
+
 ## hostname BMC fallback — baseline 갱신 + cross-vendor 실측 (2026-06-16)
 
 > 상세: `tests/evidence/2026-06-16-real-capture-audit.md` + `docs/20 §8`. hostname 우선순위에
