@@ -7,6 +7,23 @@
 
 ---
 
+## thermal 섹션 baseline staleness — lab 재생성 (2026-06-16)
+
+> 상세·근거: `tests/evidence/2026-06-16-real-capture-audit.md`. thermal 은 cycle 2026-06-14
+> (Track 4)에 11번째 섹션으로 추가됐으나 `schema/baseline_v1/` 9종 전부 thermal 누락(2026-06-14
+> 이전 생성). 코드는 thermal 정상 수집(real_* fixture 4종이 검증). baseline 만 뒤처짐(stale).
+
+- [ ] **[HIGH / lab] baseline 9종 thermal 포함 재생성**: redfish 5종(dell/hpe/lenovo/cisco/csus)은
+  각 원본 장비 + ansible 정규화로 `sections.thermal` + `data.thermal`(temperatures/fans) 포함 재생성.
+  os/esxi 4종(ubuntu/windows/rhel810/esxi)은 thermal=`not_supported`(redfish 전용 섹션). **ansible
+  필요 → lab(Jenkins 실 빌드 또는 agent)에서 수행** (rule 13 R4 실측 기반). 외부 Windows 환경은 ansible
+  실행 불가.
+- [ ] **[자동] 재생성 후 `KNOWN_STALE_SECTIONS` 비우기**: `tests/regression/test_cross_channel_consistency.py`
+  의 `test_sections_has_all_canonical` 가 현재 9 baseline XFAIL(thermal). baseline 재생성 후 각
+  baseline 이 PASS 로 전환 → 전부 PASS 되면 `KNOWN_STALE_SECTIONS = frozenset()` 로 비워 가드 완성.
+- **참고**: 신규 `tests/fixtures/redfish/real_*` 4종(모듈 golden)은 thermal 포함 — thermal 수집 회귀는
+  이미 커버됨. 본 항목은 **최종 envelope baseline** 의 thermal 반영(호출자 계약 reference)만 남은 것.
+
 ## OS 네트워크 본딩/티밍 수집 보강 (2026-06-15) 후속
 
 > 상세·근거: `tests/evidence/2026-06-15-os-network-bond.md`. Linux bond 는 실장비 2대(RHEL 8.10 raw /

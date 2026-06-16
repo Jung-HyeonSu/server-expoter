@@ -16,7 +16,25 @@ Test groups:
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
+import yaml
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _canonical_sections() -> set[str]:
+    """schema/sections.yml 의 canonical 섹션 집합 (정본). 현재 11종."""
+    with open(_PROJECT_ROOT / "schema" / "sections.yml", encoding="utf-8") as f:
+        doc = yaml.safe_load(f)
+    return set((doc.get("sections") or {}).keys())
+
+
+# 알려진 stale 섹션 — 코드는 수집하나 baseline 미반영 (lab 재생성 대기).
+#   thermal: cycle 2026-06-14 (Track 4) 추가. baseline 9종이 그 이전이라 누락.
+#            lab 재생성 후 본 set 에서 제거 → xfail 이 xpass 로 뒤집혀 알림 (NEXT_ACTIONS 2026-06-16).
+KNOWN_STALE_SECTIONS: frozenset[str] = frozenset({"thermal"})
 
 # rule 13 R5 — 13-field envelope
 ENVELOPE_FIELDS: tuple[str, ...] = (
@@ -169,6 +187,8 @@ def test_status_enum(baseline_envelope: dict) -> None:
 # ---------------------------------------------------------------------------
 # T6 — sections values enum
 # ---------------------------------------------------------------------------
+# (T11 — sections 완전성: schema/sections.yml 11종 전부 present — 아래 정의)
+# ---------------------------------------------------------------------------
 def test_sections_values_enum(baseline_envelope: dict) -> None:
     label = baseline_envelope["__label"]
     sections = baseline_envelope.get("sections", {})
@@ -178,6 +198,35 @@ def test_sections_values_enum(baseline_envelope: dict) -> None:
     for section_name, section_status in sections.items():
         assert section_status in VALID_SECTION_STATUS, (
             f"[{label}] sections.{section_name} invalid: {section_status!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# T11 — sections 완전성 (schema/sections.yml 11종 전부 present)
+# ---------------------------------------------------------------------------
+# 2026-06-16: thermal(2026-06-14 추가) 이 baseline 9종에 전부 누락된 stale 발견.
+# 코드는 thermal 을 정상 수집(real_* fixture 가 검증)하나 baseline 이 뒤처짐.
+# 본 테스트는 (1) 향후 새 섹션 누락 = hard fail (코드 회귀 조기 경보),
+#           (2) 알려진 stale(thermal) = xfail (가시화, suite green 유지, lab 재생성 추적).
+
+
+def test_sections_has_all_canonical(baseline_envelope: dict) -> None:
+    """모든 baseline 의 sections 는 schema/sections.yml 의 canonical 섹션을 전부 포함해야
+    한다. 누락이 KNOWN_STALE 밖이면 hard fail(코드/baseline 회귀). KNOWN_STALE(thermal)
+    누락은 xfail — lab baseline 재생성 대기 (NEXT_ACTIONS 2026-06-16)."""
+    label = baseline_envelope["__label"]
+    canonical = _canonical_sections()
+    present = set((baseline_envelope.get("sections") or {}).keys())
+    missing = canonical - present
+    hard_missing = missing - KNOWN_STALE_SECTIONS
+    assert not hard_missing, (
+        f"[{label}] sections 누락(stale 아님 — 코드/baseline 회귀 의심): {sorted(hard_missing)} "
+        f"(canonical={sorted(canonical)})"
+    )
+    if missing:
+        pytest.xfail(
+            f"[{label}] 알려진 stale 섹션 누락: {sorted(missing)} — "
+            f"lab baseline 재생성 대기 (NEXT_ACTIONS 2026-06-16 thermal staleness)"
         )
 
 
