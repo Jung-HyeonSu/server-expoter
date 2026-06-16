@@ -7,6 +7,23 @@
 
 ---
 
+## hostname BMC fallback — baseline 갱신 + cross-vendor 실측 (2026-06-16)
+
+> 상세: `tests/evidence/2026-06-16-real-capture-audit.md` + `docs/20 §8`. hostname 우선순위에
+> BMC NetworkProtocol.HostName fallback 추가(System.HostName 부재 시). 코드는 vendor-agnostic
+> graceful. 실측: Dell iDRAC9 / HPE iLO7·RMC / Lenovo XCC3 = populate, Cisco CIMC = null.
+
+- [ ] **[MED / lab] baseline hostname BMC-fallback 값 갱신**: `hpe_baseline`(System.HostName="")·
+  `lenovo_baseline`(System.HostName 부재)는 현재 `hostname=null`. 신 정책상 live 는 BMC
+  NetworkProtocol.HostName(ILOSGHD3KHHRP / XCC-...) 을 줄 것. 단 baseline 원본 장비의 BMC명을
+  안 갖고 있어(=내 4대 캡처와 다른 IP) 추측 금지 → lab 재수집 시 정확값 + `data.bmc.network_hostname`
+  + `diagnosis.details.hostname_source` 반영. (real_* fixture 4종은 신 코드로 정확값 보유 — 회귀 커버됨.)
+- [ ] **[MED / lab] cross-vendor NetworkProtocol.HostName 실측**: Supermicro / Huawei / Inspur /
+  Fujitsu / Quanta + 구세대(iDRAC8 / iLO4~6 / XCC2 / CIMC v2~v3)에서 NetworkProtocol.HostName
+  populate 여부 실측 미확인(lab 부재 — 부분 합성 fixture 만). 매트릭스:
+  `tests/evidence/2026-06-16-hostname-source-matrix.md` (DMTF 표준 + web sources, confidence=likely).
+  graceful 구현이라 동작은 안전하나 "어느 벤더가 BMC명을 주나" 의 실측 확정은 lab 후.
+
 ## thermal 섹션 baseline staleness — lab 재생성 (2026-06-16)
 
 > 상세·근거: `tests/evidence/2026-06-16-real-capture-audit.md`. thermal 은 cycle 2026-06-14
