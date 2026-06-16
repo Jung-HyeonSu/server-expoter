@@ -110,22 +110,27 @@ def test_collection_method_matches_target_type(baseline_envelope: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
-# T3 — hostname fallback chain non-null (concern 7 invariant)
+# T3 — hostname 은 절대 ip 와 같지 않다 (2026-06-16 strict-null 정책)
 # ---------------------------------------------------------------------------
-# cycle 2026-05-07-post: cisco_baseline.json hostname=null drift 보정 완료.
-# build_output.yml fallback chain (system.hostname OR system.fqdn OR ip) 의도대로
-# hostname 을 ip ("10.100.15.2") 로 보정 + evidence 기록. xfail 제거.
-# 실 lab Cisco UCS 검증은 별도 cycle (rule 13 R4).
+# 2026-06-16 (사용자 지시): hostname IP fallback 폐지 — "없는 건 없는 것".
+# 장비가 hostname 미제공 시 hostname=null (이전 cycle 2026-05-07 의 ip fallback 폐지).
+# 따라서 hostname 은 null 일 수 있고, ip 와 같은 값이면 옛 fallback 잔재(정책 위반)다.
+# 정본: common/tasks/normalize/build_output.yml:31-33 / docs/20 §8.
 
 
-def test_hostname_never_null(baseline_envelope: dict) -> None:
-    """build_output.yml fallback chain (system.hostname OR system.fqdn OR ip)
-    guarantees non-null hostname. Concern 7: if hostname == ip that is the
-    intentional ip_fallback path, not a bug."""
+def test_hostname_not_ip_fallback(baseline_envelope: dict) -> None:
+    """hostname 은 ip 와 같으면 안 된다 (옛 ip-fallback 잔재 차단). null 은 허용 —
+    장비가 hostname 미제공 시 정상적으로 null (2026-06-16 strict-null 정책)."""
     label = baseline_envelope["__label"]
     hostname = baseline_envelope.get("hostname")
-    assert hostname is not None and hostname != "", (
-        f"[{label}] hostname is empty — fallback chain broken"
+    ip = baseline_envelope.get("ip")
+    assert hostname != ip, (
+        f"[{label}] hostname=={ip!r} (ip 와 동일) — IP fallback 잔재. "
+        f"장비가 hostname 미제공이면 null 이어야 함 (2026-06-16 정책)"
+    )
+    # 빈 문자열도 금지 (null 로 정규화돼야 함 — '' 는 미정규화 잔재)
+    assert hostname != "", (
+        f"[{label}] hostname='' — '' 는 null 로 정규화돼야 함 (build_output `or none`)"
     )
 
 
