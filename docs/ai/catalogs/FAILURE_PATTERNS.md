@@ -405,3 +405,14 @@
 - 수정: cycle 2026-06-04 — `fingerprint_dir`을 `git ls-files -s -- <dir>`의 **경로 집합(정렬된 파일 목록)** 해싱으로 변경. 추적 파일 경로만 보므로 CRLF/pyc/local untracked + **파일 내용 편집**까지 전부 무관 — 파일/디렉터리 추가·삭제·이름변경(= 진짜 구조 변경)에만 반응 (rule 28 R1 #2 목적 정합). baseline 재측정. git 불가 환경 disk rglob 경로 fallback. 검증: ① .pyc 추가 ② 디스크 줄바꿈 토글 → fingerprint 불변(exit 0) 실증. (초기안은 blob OID 해싱이었으나 내용 편집마다 drift → 경로 집합으로 정밀화해 content-only commit churn 까지 제거.)
 - 재발 방지: 이 사례 기록 + 스크립트 결정론화 (구조 변경만 추적). (`.gitattributes` 줄바꿈 정규화는 저장소 전반 영향이라 별도 검토 — 본 수정으로 fingerprint는 무관해짐.)
 - 관련 rule: rule 28 R1 #2 (PROJECT_MAP 측정 대상), rule 70 R2
+
+## 2026-06-17 — OS gather SSH unreachable가 rescue 우회 → host silent drop
+
+- 카테고리: ansible-unreachable-escapes-rescue
+- 발견 위치: `os-gather/tasks/try_one_credential.yml` (linux ssh / windows winrm probe)
+- 증상: gatherOS #27~#29 FAILURE, `gather_output.json` 0바이트(Stashed 0), 콘솔엔 무해 경고 2줄(`_os_failed` could not match + `reset_connection when`)만. #26은 53 host 중 27개가 envelope 없이 증발(나머지 26개만 status:failed).
+- 원인: SSH 인증 실패는 ansible에서 `failed`가 아니라 `unreachable`로 분류됨. probe에 `failed_when:false`만 있고 `ignore_unreachable:true` 누락 → 첫 후보(`infra/infra1234`)에서 unreachable 발생 시 host가 block/rescue/always(OUTPUT)를 **우회**하고 play에서 제거 → 2번째 후보(`cloviradmin/Goodmit0802!`) 미시도 → 0 envelope + 비정상 exit. `json_only` 콜백이 `v2_runner_on_unreachable`/`on_failed`를 OUTPUT task 외 전부 suppress → 사유 비가시.
+- 영향: 인증 실패 host가 graceful failed envelope 없이 전량 증발 + fallback 후보 미시도. 모든 host가 unreachable이면 빌드 FAILURE(callback 빈 파일).
+- 수정: probe 2종에 `ignore_unreachable:true` 추가 (commit `abe94783`) → unreachable host 보존 → 후보 loop 계속 → 정상 fallback 또는 graceful failed envelope. 검증: 빌드 #30 SUCCESS, 161/165 `status:success`, `auth.fallback_used:true`(infra 실패→cloviradmin 성공).
+- 재발 방지: SSH/WinRM 연결성 probe·gather task에는 `ignore_unreachable:true` 필수. json_only가 unreachable/failed를 stderr로 표면화하도록 개선은 후속(NEXT_ACTIONS).
+- 관련 rule: rule 95 R1 (의심패턴), rule 27 (precheck), rule 22 (rescue/always)

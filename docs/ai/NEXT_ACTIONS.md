@@ -424,6 +424,16 @@
 
 ---
 
+## 2026-06-17 — OS gather 후속 (빌드 #30 SUCCESS 후)
+
+| 우선 | 항목 | 사유 | 결정 주체 |
+|---|---|---|---|
+| HIGH | `vault/linux.yml` primary 계정 교정 | 현재 primary=`infra/infra1234` (161/165에서 인증 실패 → 매 host가 secondary fallback에 의존). 실 동작 계정은 `cloviradmin/Goodmit0802!`(secondary). primary를 실 계정으로 교체하면 host당 1차 인증실패 지연 제거. 사용자가 기대한 `admin` 계정은 vault에 부재 | **사용자** (vault 보호경로 + rule 50/27, "적용하지말고" 지시) |
+| MED | `json_only` unreachable/failed stderr 표면화 | 현재 OUTPUT 외 실패 전부 suppress → 사고 시 콘솔 무정보(이번 진단 난항의 근본). non-OUTPUT failed/unreachable을 stderr 구조화 출력(no_log 존중, stdout 계약 불변) | AI 가능(additive) — 승인 시 진행 |
+| LOW | `accounts` 빈 배열 edge case | accounts 비면 `abort if all credentials failed` skip → 본 gather task에서 unreachable 재발 가능 | AI 가능 — 별도 검토 |
+
+---
+
 ## 관련
 
 - rule: `70-docs-and-evidence-policy` R5 / R6 / R7 (보존 / archive / cycle 자문)
