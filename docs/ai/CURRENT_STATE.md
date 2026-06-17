@@ -1,5 +1,22 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-17 (OS 네트워크 bond alias / secondary IP 수집 — 실장비 검증)
+
+- **대상/방법**: OS Linux 네트워크 개더링에 bond alias IP(`bond1:1`) 수집 추가. 공유 collector `_l_net_collector` 에
+  주소 블록(`ip -j addr show`→`ip -o`→`ifconfig -a` 다중 소스, nmcli/ifcfg 비의존) + 신규 필터
+  `parse_linux_addresses`/`merge_linux_addresses`(`filter_plugins/network_topology.py`, `build_linux_network` 불변).
+- **스키마(Additive)**: `interfaces[].addresses[]`·`bonds[].addresses[]` 에 `label`/`parent_interface`/`is_alias`/`scope`/`is_secondary` 5 키 추가.
+  alias 는 신규 인터페이스가 아니라 parent bond 의 추가 IP → parent `addresses[]` 에 병합, bond master 면 `bonds[].addresses` mirror.
+  field_dictionary +10 entries(`channel:[os]` nice).
+- **실장비 검증(live SSH)**: 10.100.64.161(RHEL 8.10 raw) / 10.100.64.165(RHEL 9.6 python) — bond1:1/bond2:1 alias 수집,
+  label/parent/is_alias 정확, 기존 bond IP·slave·active_slave 불변, alias 별도 iface 미생성. alias 없는 NIC 결과 불변(Additive).
+- **회귀/게이트**: pytest unit+regression+e2e **1093 passed**, 0 failed / validate_field_dictionary PASS / drift exit 0 /
+  vendor-boundary·harness-consistency exit 0.
+- **남은 한계**: Windows/ESXi/Redfish 미적용(Linux 범위), alias per-route GW 미수집, baseline_v1 ubuntu/rhel810 차기 recapture 시 반영.
+- **증거**: `tests/evidence/2026-06-17-bond-alias-collection.md`, docs/16·docs/20 갱신.
+
+---
+
 ## 일자: 2026-06-15 (Redfish adapter origin 최신화 — 4 device 실 미러 캡처 반영)
 
 - **대상/방법**: 사용자 지적 — 실 raw 로 라이브러리는 개선했으나 adapter origin 주석이 "lab 부재/추정" 으로 stale.
