@@ -7,6 +7,17 @@
 
 ---
 
+## Jenkinsfile_portal vault → Credentials 전환 후속 (2026-06-18)
+
+> 상세: `docs/ai/CURRENT_STATE.md` 2026-06-18 항목. portal Gather 하드코딩 패스워드 제거 + Jenkins
+> Credentials(`server-gather-vault-password`) 통일 (commit `fed68ef2`, main).
+
+- [ ] **[MED / 사용자] production 반영**: `Jenkinsfile_portal` 은 순수 코드 → production 브랜치에도 같은
+  변경 필요. cherry-pick `fed68ef2`(순수 코드 커밋)는 rule 93 R2 로 **사용자 승인** 필요. production 에는
+  여전히 하드코딩 평문이 남아 있음.
+- [ ] **[LOW / lab] 실 Jenkins 빌드 확인**: portal 파이프라인 1회 빌드로 `server-gather-vault-password`
+  주입 → ansible-vault 복호화 정상 동작 확인 (로컬 환경에선 Groovy/Jenkins 미검증).
+
 ## OEM cascade graceful degradation — os/esxi 확장 + 라이브 검증 (2026-06-16)
 
 > 상세·근거: `docs/19_decision-log.md` 2026-06-16 항목. CSUS 실 게더링에서 HPE OEM dict conditional(Bug A)
