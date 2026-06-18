@@ -35,21 +35,27 @@
 
 `Callback`(Portal)은 망 분리 정책에 따라 **master에서 실행**.
 
-## vault binding (cycle-012 추가)
+## vault binding (cycle-012 / 2026-06-18 갱신)
 
-Jenkins credential `server-gather-vault-password` (type: **Secret File**) 사용 — ansible-vault password 파일을 안전하게 주입.
+Jenkins credential `server-gather-vault-password` (type: **Secret text**) 사용 — 메인 `Jenkinsfile` 과
+`Jenkinsfile_portal` **둘 다 동일** credential. `withCredentials` 가 `$VAULT_PASSWORD` 를 주입(콘솔 마스킹),
+Pipeline 이 런타임 임시파일(chmod 600)에 써서 `--vault-password-file` 로 ansible-playbook 에 넘기고 종료 시 삭제.
 
 | 항목 | 값 |
 |---|---|
 | credential ID | `server-gather-vault-password` |
-| credential type | Secret File |
-| Jenkinsfile 패턴 | `withCredentials([file(credentialsId: 'server-gather-vault-password', variable: 'VAULT_PASSWORD_FILE')]) { ... }` |
-| ansible-playbook 인자 | `--vault-password-file=${VAULT_PASSWORD_FILE}` |
+| credential type | Secret text |
+| 패턴 | `withCredentials([string(credentialsId: 'server-gather-vault-password', variable: 'VAULT_PASSWORD')]) { ... }` |
+| ansible-playbook 인자 | `--vault-password-file=<임시파일>` (VAULT_PASSWORD → mktemp/chmod 600 → 종료 시 삭제) |
 | 적용 stage | Stage 2 (Gather) — 2종 Jenkinsfile 모두 |
 
-**위치 실측 (2026-04-29 cycle-012)**:
-- `Jenkinsfile:148-161` (Stage 2 Gather, ansiblePlaybook extras 인자)
-- `Jenkinsfile_portal:164-176` (Stage 2 Gather, sh ansible-playbook)
+**위치 실측 (2026-06-18)**:
+- `Jenkinsfile:157-184` (Stage 2 Gather — ansiblePlaybook step, extras 로 `--vault-password-file`)
+- `Jenkinsfile_portal:152-177` (Stage 2 Gather — sh ansible-playbook, `withCredentials` 래핑)
+
+> **2026-06-18 변경**: `Jenkinsfile_portal` 의 임시 하드코딩 패스워드(`24677f57`)를 제거하고 메인 `Jenkinsfile`
+> 과 동일 Secret text credential 로 통일. 이전 catalog 의 "Secret File / `file()`" 표기는 stale 였음(실제는
+> Secret text / `string()`).
 
 **vault encrypt 상태 (cycle-012)**: 8 vault 파일 (linux/windows/esxi + redfish/{dell,hpe,lenovo,supermicro,cisco}) 모두 ansible-vault AES256 encrypt 완료. 평문 password 더 이상 commit 안 됨.
 

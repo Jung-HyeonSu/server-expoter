@@ -1,5 +1,23 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-18 (Jenkinsfile_portal vault → Jenkins Credentials 플러그인 방식)
+
+- **대상/방법**: `Jenkinsfile_portal` Gather 단계의 임시 하드코딩 vault 패스워드(`24677f57`, 평문 `'Goodmit0802!'`)
+  를 제거하고, 메인 `Jenkinsfile` 과 동일한 **Jenkins Credentials Binding 플러그인** 방식으로 교체.
+  `withCredentials([string(credentialsId: 'server-gather-vault-password', variable: 'VAULT_PASSWORD')])` 로
+  주입(콘솔 마스킹) → `sh` 내 런타임 임시파일(`mktemp`/chmod 600/`trap` 삭제) → `--vault-password-file`.
+  포털의 plugin-free gather(raw `ansible-playbook`)는 유지 — credential 주입만 플러그인 사용.
+- **영향**: vendor-agnostic(CI). envelope/callback 계약 무영향. portal 빌드가 더 이상 agent 로컬
+  `VAULT_PASS_FILE`(`/opt/ansible-env/.vault_pass`) 파일에 의존하지 않음 → agent 별도 배치 작업 불필요.
+- **문서 동기화**: `docs/03_agent-setup.md` §5(VAULT_PASS_FILE/임시 하드코딩 절 폐기 → credential 통일 안내),
+  `docs/ai/catalogs/JENKINS_PIPELINES.md`(vault binding 정정 — 기존 "Secret File/`file()`" stale → 실제
+  "Secret text/`string()`"). `docs/01_jenkins-setup.md` §7 무변경(credential 이미 등록·문서화).
+- **검증**: 메인 `Jenkinsfile:157-184` 검증된 동일 패턴 이식 + Groovy 구조 정합성 대조(❌ 실 Jenkins 빌드는
+  로컬 환경 제약으로 미확인). 사용자 결정(2026-06-18): 마스터 패스워드 회전 불필요.
+- **후속(사용자 몫)**: `Jenkinsfile_portal` 은 순수 코드 → production 반영(cherry-pick)은 rule 93 R2 사용자 승인 필요.
+
+---
+
 ## 일자: 2026-06-17 (OS 네트워크 bond alias / secondary IP 수집 — 실장비 검증)
 
 - **대상/방법**: OS Linux 네트워크 개더링에 bond alias IP(`bond1:1`) 수집 추가. 공유 collector `_l_net_collector` 에
