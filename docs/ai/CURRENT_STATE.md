@@ -1,5 +1,19 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-22 (Tier 1+2 미수집 필드 구현 — controllers/NIC firmware/listening_ports)
+
+- **사용자 지시**: 전수조사 Tier 1(무의존)+Tier 2(channel drift) 다 구현.
+- **T2 (schema only)**: `physical_disks[].health` 등록(Windows 이미 emit) + `memory.slots[]` 7서브필드 channel os 추가(Win/Linux 이미 수집). commit `03dbebc6`.
+- **T1 (실측 검증)**: commit `dcdf32e8` / esxi_baseline `8aa06f18`.
+  - **Linux** (gatherOS 96 baremetal ✅): `storage.controllers[]`(lspci, python+raw — PERC H965i/mpi3mr 등 4개) +
+    `network.adapters[].firmware_version`(ethtool — tg3/bnxt_en/i40e 실펌웨어).
+  - **ESXi** (gatherESXi esxi02 ✅): `storage.controllers[]`(hostBusAdapter+pciDevice — 5개, esxi_disks 모듈 확장) baseline 반영.
+  - **ESXi listening_ports ⚠️**: root=13개 동작, gather(vault) 유저=[] (firewall 읽기 권한 부족 — ops grant 후속).
+- **검증**: pytest 1254 passed, field_dictionary validator PASS, vendor boundary 통과. evidence `tests/evidence/2026-06-22-tier1-2-defined-not-collected.md`.
+- **후속**: ESXi vault 계정 firewall 권한 grant / Linux ubuntu·rhel810 baseline 재캡처(VM controllers·firmware 키) / Tier 3(smartctl·thermal·power·firmware) 의존성·섹션 결정.
+
+---
+
 ## 일자: 2026-06-22 (ESXi physical_disks serial/wwn 신규 수집 + 미수집 전수조사)
 
 - **ESXi disk 신규 feature (사용자 승인)**: esxi-gather 가 디스크를 안 모으던 것(`physical_disks: []`)을

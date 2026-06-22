@@ -30,11 +30,12 @@
 
 > 상세: `docs/ai/tickets/2026-06-22-os-disk-serial-wwn/AUDIT-defined-not-collected.md` (ESXi/OS 3 agent 실측 audit).
 
-- [ ] **[MED] Tier1 무의존 구현** (physical_disks 와 동일 유형 — 권장):
-  - ESXi `system.listening_ports`(firewall.ruleset, schema 무변경) / `storage.controllers[]`(hostBusAdapter+pciDevice)
-  - OS Linux `network.adapters[].firmware_version`(`ethtool -i`, sudo 불필요, 96 실측) / `storage.controllers[]`(`lspci -nnk`, 96=PERC H965i 실측)
-- [ ] **[LOW] Tier2 channel drift 정정**: Windows `physical_disks[].health` field_dictionary 등록(코드 이미 emit) /
-  `memory.slots[]` 서브필드 channel 에 os 추가(Win/Linux 이미 수집).
+- [x] **[DONE 2026-06-22] Tier1 무의존 구현** (commit `dcdf32e8`/`8aa06f18`):
+  - ESXi `storage.controllers[]`(hostBusAdapter, 5개 esxi02 실측) / Linux `storage.controllers[]`(lspci, 96 PERC H965i 실측) /
+    Linux `network.adapters[].firmware_version`(ethtool, 96 tg3/bnxt_en/i40e 실측).
+  - **잔여**: ESXi `listening_ports` — root 동작하나 gather(vault) 유저 firewall 권한 부족 → `[]`. **ops: vault 계정 Host.Config 읽기 권한 grant 필요**.
+  - **잔여**: Linux ubuntu/rhel810 baseline 재캡처 (신규 controllers[]/adapters.firmware_version 키 — VM 값. pytest 영향 없음, 96 baremetal 검증 완료).
+- [x] **[DONE 2026-06-22] Tier2 channel drift 정정** (commit `03dbebc6`): Windows `physical_disks[].health` 등록 / `memory.slots[]` channel os 추가.
 - [ ] **[MED / 사용자] Tier3 의존성·섹션 결정**:
   - `physical_disks[].health`/`predicted_life_percent` — **smartmontools 설치**(rule 92 R1 의존성 승인) + VM SMART 미지원 graceful
   - `thermal` 섹션(OS sysfs hwmon[96 실측] + ESXi numericSensorInfo[실측]) — sections.yml 확장(schema 결정)
