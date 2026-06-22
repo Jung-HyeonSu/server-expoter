@@ -37,6 +37,28 @@
       failed_when: false
       no_log: true
 
+    # 2026-06-22 T1: storage 컨트롤러 (RAID/SAS/SATA/NVMe) — lspci. root 불필요.
+    #   CTRL|<pci>|<class>|<chip name>|<driver>|<subsystem> 라인.
+    - name: "linux | storage | lspci controllers"
+      ansible.builtin.shell: |
+        lspci -Dnnk 2>/dev/null | awk '
+          /^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\./ {
+            if (addr!="" && st) printf "CTRL|%s|%s|%s|%s|%s\n", addr, cls, name, drv, subsys
+            addr=$1; rest=substr($0, index($0," ")+1)
+            st = (rest ~ /RAID bus controller|SATA controller|SAS controller|Serial Attached SCSI|Non-Volatile memory controller|SCSI storage controller|Mass storage controller/)
+            cls=rest; sub(/ \[[0-9a-f]+\]:.*/,"",cls)
+            name=rest; sub(/^[^:]*: /,"",name); sub(/ \[[0-9a-f]+:[0-9a-f]+\]( \(rev [0-9a-f]+\))?$/,"",name)
+            drv=""; subsys=""; next
+          }
+          /Kernel driver in use:/ { drv=$NF }
+          /Subsystem:/ { s=$0; sub(/^[ \t]*Subsystem: /,"",s); sub(/ \[[0-9a-f]+:[0-9a-f]+\]$/,"",s); subsys=s }
+          END { if (addr!="" && st) printf "CTRL|%s|%s|%s|%s|%s\n", addr, cls, name, drv, subsys }
+        '
+      register: _l_lspci_ctrl
+      changed_when: false
+      failed_when: false
+      no_log: true
+
     # Round 16: lsblk 가 virtio/일부 가상 disk 에 "model": null 방출 → 'is defined' 통과 후
     #           None|trim='None' 누설. truthy 체크로 None/''/undefined 를 none 으로 정규화.
     - name: "linux | storage | normalize physical disks"
@@ -150,6 +172,34 @@
           {{ {'groups': ns.groups, 'grand_total_gb': ns.total} }}
       no_log: true
 
+    # 2026-06-22 T1: CTRL| 라인 → controllers[] (ESXi/Redfish 와 동일 shape)
+    - name: "linux | storage | normalize controllers"
+      ansible.builtin.set_fact:
+        _l_norm_controllers: >-
+          {%- set out = [] -%}
+          {%- for line in (_l_lspci_ctrl.stdout_lines | default([])) -%}
+            {%- if line.startswith('CTRL|') -%}
+              {%- set p = line.split('|') -%}
+              {%- if p | length >= 6 -%}
+                {%- set cl = (p[2] | default('')) | lower -%}
+                {%- set ct = 'RAID' if 'raid' in cl else ('NVMe' if 'non-volatile' in cl else ('SAS' if ('sas' in cl or 'serial attached' in cl) else ('SATA' if 'sata' in cl else ('SCSI' if 'scsi' in cl else none)))) -%}
+                {%- set _ = out.append({
+                  'id': p[1],
+                  'name': (p[5] | trim) if (p[5] | trim) else ((p[3] | trim) or none),
+                  'controller_model': (p[3] | trim) or none,
+                  'controller_manufacturer': none,
+                  'driver': (p[4] | trim) or none,
+                  'controller_type': ct,
+                  'pci': p[1],
+                  'health': none,
+                  'drives': []
+                }) -%}
+              {%- endif -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ out }}
+      no_log: true
+
     - name: "linux | storage | build fragment"
       ansible.builtin.set_fact:
         _data_fragment:
@@ -157,7 +207,7 @@
             filesystems:     "{{ _l_norm_filesystems }}"
             physical_disks:  "{{ _l_norm_physical_disks }}"
             datastores:      []
-            controllers:     []
+            controllers:     "{{ _l_norm_controllers | default([]) }}"
             logical_volumes: []
             summary:         "{{ _l_stor_summary | default({'groups': [], 'grand_total_gb': 0}) }}"
         _sections_supported_fragment: ['storage']
@@ -189,6 +239,27 @@
           echo "UDEV|/dev/$d|$s|$w"
         done
       register: _l_udev_idmap_raw
+      changed_when: false
+      failed_when: false
+      no_log: true
+
+    # 2026-06-22 T1: storage 컨트롤러 (raw) — lspci CTRL| 라인
+    - name: "linux | storage | raw lspci controllers"
+      ansible.builtin.raw: |
+        lspci -Dnnk 2>/dev/null | awk '
+          /^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\./ {
+            if (addr!="" && st) printf "CTRL|%s|%s|%s|%s|%s\n", addr, cls, name, drv, subsys
+            addr=$1; rest=substr($0, index($0," ")+1)
+            st = (rest ~ /RAID bus controller|SATA controller|SAS controller|Serial Attached SCSI|Non-Volatile memory controller|SCSI storage controller|Mass storage controller/)
+            cls=rest; sub(/ \[[0-9a-f]+\]:.*/,"",cls)
+            name=rest; sub(/^[^:]*: /,"",name); sub(/ \[[0-9a-f]+:[0-9a-f]+\]( \(rev [0-9a-f]+\))?$/,"",name)
+            drv=""; subsys=""; next
+          }
+          /Kernel driver in use:/ { drv=$NF }
+          /Subsystem:/ { s=$0; sub(/^[ \t]*Subsystem: /,"",s); sub(/ \[[0-9a-f]+:[0-9a-f]+\]$/,"",s); subsys=s }
+          END { if (addr!="" && st) printf "CTRL|%s|%s|%s|%s|%s\n", addr, cls, name, drv, subsys }
+        '
+      register: _l_lspci_ctrl_raw
       changed_when: false
       failed_when: false
       no_log: true
@@ -316,6 +387,33 @@
           {{ {'groups': ns.groups, 'grand_total_gb': ns.total} }}
       no_log: true
 
+    - name: "linux | storage | normalize controllers (raw)"
+      ansible.builtin.set_fact:
+        _l_norm_controllers_raw: >-
+          {%- set out = [] -%}
+          {%- for line in (_l_lspci_ctrl_raw.stdout_lines | default([])) -%}
+            {%- if line.startswith('CTRL|') -%}
+              {%- set p = line.split('|') -%}
+              {%- if p | length >= 6 -%}
+                {%- set cl = (p[2] | default('')) | lower -%}
+                {%- set ct = 'RAID' if 'raid' in cl else ('NVMe' if 'non-volatile' in cl else ('SAS' if ('sas' in cl or 'serial attached' in cl) else ('SATA' if 'sata' in cl else ('SCSI' if 'scsi' in cl else none)))) -%}
+                {%- set _ = out.append({
+                  'id': p[1],
+                  'name': (p[5] | trim) if (p[5] | trim) else ((p[3] | trim) or none),
+                  'controller_model': (p[3] | trim) or none,
+                  'controller_manufacturer': none,
+                  'driver': (p[4] | trim) or none,
+                  'controller_type': ct,
+                  'pci': p[1],
+                  'health': none,
+                  'drives': []
+                }) -%}
+              {%- endif -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ out }}
+      no_log: true
+
     - name: "linux | storage | build fragment (raw)"
       ansible.builtin.set_fact:
         _data_fragment:
@@ -323,7 +421,7 @@
             filesystems:     "{{ _l_norm_filesystems_raw }}"
             physical_disks:  "{{ _l_norm_physical_disks_raw }}"
             datastores:      []
-            controllers:     []
+            controllers:     "{{ _l_norm_controllers_raw | default([]) }}"
             logical_volumes: []
             summary:         "{{ _l_stor_summary_r | default({'groups': [], 'grand_total_gb': 0}) }}"
         _sections_supported_fragment: ['storage']

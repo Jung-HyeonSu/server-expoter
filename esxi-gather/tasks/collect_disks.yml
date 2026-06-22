@@ -14,9 +14,12 @@
   failed_when: false
   no_log: true
 
-- name: "esxi | collect | store raw disks"
+- name: "esxi | collect | store raw disks/controllers/ports"
   ansible.builtin.set_fact:
     _e_raw_disks: "{{ _e_disks_result.physical_disks | default([]) }}"
+    # 2026-06-22 T1: storage controllers + listening_ports (firewall) 도 동일 모듈에서 수집
+    _e_raw_controllers:     "{{ _e_disks_result.controllers | default([]) }}"
+    _e_raw_listening_ports: "{{ _e_disks_result.listening_ports | default([]) }}"
     _e_disks_ok:  "{{ (_e_disks_result is not failed)
                       and (_e_disks_result.physical_disks is defined)
                       and (_e_disks_result.error is not defined) }}"

@@ -613,6 +613,45 @@ fields:
       null for HDD.
       HPE returns float, normalized to int (e.g., 100.0 → 100).
 
+  "storage.controllers[]":
+    type: "array of object"
+    priority: nice
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      스토리지 컨트롤러 (RAID/SAS/SATA/NVMe/HBA) 목록.
+      Redfish: StorageControllers (model/firmware/health/drives).
+      OS(Linux): lspci (id=pci, controller_model=칩, driver, controller_type).
+      OS(Windows): 현재 미수집([]) — Storage Spaces 도입 시 (NEXT_ACTIONS).
+      ESXi: hostBusAdapter + pciDevice vendor (id=vmhba, driver, controller_type).
+    help_en: >-
+      Storage controllers (RAID/SAS/SATA/NVMe/HBA).
+      Redfish: StorageControllers (model/firmware/health/drives).
+      OS(Linux): lspci (id=pci, controller_model=chip, driver, controller_type).
+      OS(Windows): not collected yet ([]) — pending Storage Spaces (NEXT_ACTIONS).
+      ESXi: hostBusAdapter + pciDevice vendor (id=vmhba, driver, controller_type).
+
+  "storage.controllers[].controller_type":
+    type: "string|null"
+    priority: nice
+    channel: [os, esxi]
+    help_ko: >-
+      컨트롤러 종류. RAID/SAS/SATA/NVMe/SCSI/FC.
+      OS(Linux): lspci 클래스. ESXi: hostBusAdapter 타입(Block=SATA/Serial=SAS/FibreChannel=FC).
+    help_en: >-
+      Controller type. RAID/SAS/SATA/NVMe/SCSI/FC.
+      OS(Linux): lspci class. ESXi: hostBusAdapter type (Block=SATA/Serial=SAS/FibreChannel=FC).
+
+  "storage.controllers[].driver":
+    type: "string|null"
+    priority: nice
+    channel: [redfish, os, esxi]
+    help_ko: >-
+      컨트롤러 커널 드라이버. OS(Linux): lspci 'Kernel driver in use' (예: mpi3mr/ahci/nvme).
+      ESXi: hostBusAdapter.driver (예: lsi_mr3/vmw_ahci/nfnic).
+    help_en: >-
+      Controller kernel driver. OS(Linux): lspci 'Kernel driver in use' (e.g., mpi3mr/ahci/nvme).
+      ESXi: hostBusAdapter.driver (e.g., lsi_mr3/vmw_ahci/nfnic).
+
   "storage.controllers[].drives[]":
     type: "array of object"
     priority: must
@@ -1388,6 +1427,21 @@ fields:
     help_en: >-
       NIC card (NetworkAdapters) info. id/name/manufacturer/model/part_number/
       serial_number/firmware_version. Includes ESXi vmnic.
+
+  "network.adapters[].firmware_version":
+    type: "string|null"
+    priority: nice
+    channel: [redfish, os]
+    help_ko: >-
+      NIC 펌웨어 버전.
+      Redfish: NetworkAdapter.Controllers.FirmwarePackageVersion.
+      OS(Linux): ethtool -i firmware-version (pci 매칭, 예: bnxt_en 229.2.52.0).
+      가상 NIC / 미노출 드라이버는 null.
+    help_en: >-
+      NIC firmware version.
+      Redfish: NetworkAdapter.Controllers.FirmwarePackageVersion.
+      OS(Linux): ethtool -i firmware-version (matched by pci, e.g., bnxt_en 229.2.52.0).
+      Null for virtual NICs / drivers not exposing it.
 
   "network.ports[]":
     type: "object[]"

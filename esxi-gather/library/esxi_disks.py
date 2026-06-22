@@ -2,7 +2,12 @@
 # -*- coding: utf-8 -*-
 # esxi-gather/library/esxi_disks.py
 #
-# ESXi 물리 디스크(serial/wwn) 수집 — vSphere API (pyvmomi).
+# ESXi 호스트 하드웨어/설정 수집 — vSphere API (pyvmomi).
+#   - physical_disks (serial/wwn)   ← ScsiDisk
+#   - controllers (storage HBA/RAID) ← hostBusAdapter + pciDevice vendor (2026-06-22 T1)
+#   - listening_ports (str[])        ← firewall.ruleset enabled inbound (2026-06-22 T1)
+#
+# (구) 물리 디스크 전용 → 호스트 정보 수집기로 확장. 연결 1회 재사용.
 #
 # 배경: community.vmware.vmware_host_disk_info 는 canonical_name + size 만 반환 →
 #       serial / vendor / model / ssd 부재. 본 모듈은
@@ -86,6 +91,75 @@ def _build_disks(content):
     return sorted(out, key=lambda d: d.get('id') or '')
 
 
+def _build_controllers(content):
+    """storage HBA/RAID 컨트롤러 — hostBusAdapter + pciDevice vendor 보강."""
+    out = []
+    view = content.viewManager.CreateContainerView(content.rootFolder, [vim.HostSystem], True)
+    try:
+        for hs in view.view:
+            # pci(addr) → vendorName 맵
+            pci_vendor = {}
+            try:
+                for pd in (hs.hardware.pciDevice or []):
+                    if getattr(pd, 'id', None):
+                        pci_vendor[pd.id] = (getattr(pd, 'vendorName', '') or '').strip() or None
+            except Exception:
+                pass
+            sd = getattr(hs.config, 'storageDevice', None)
+            if sd is None:
+                continue
+            for hba in (sd.hostBusAdapter or []):
+                model = (getattr(hba, 'model', '') or '').strip() or None
+                pci = getattr(hba, 'pci', None)
+                # type: BlockHba/FibreChannelHba/SerialAttachedHba → SATA/FC/SAS
+                tname = type(hba).__name__
+                ctype = ('SATA' if 'BlockHba' in tname
+                         else 'FC' if 'FibreChannel' in tname
+                         else 'SAS' if 'SerialAttached' in tname
+                         else 'iSCSI' if 'InternetScsi' in tname
+                         else None)
+                out.append({
+                    'id': getattr(hba, 'device', None),
+                    'name': model,
+                    'controller_model': model,
+                    'controller_manufacturer': pci_vendor.get(pci),
+                    'driver': getattr(hba, 'driver', None),
+                    'controller_type': ctype,
+                    'pci': pci,
+                    'health': None,
+                    'drives': [],
+                })
+    finally:
+        view.Destroy()
+    return sorted(out, key=lambda c: c.get('id') or '')
+
+
+def _build_listening_ports(content):
+    """firewall.ruleset enabled inbound 포트 → str[] (OS 채널 system.runtime.listening_ports 계약과 동일)."""
+    ports = set()
+    view = content.viewManager.CreateContainerView(content.rootFolder, [vim.HostSystem], True)
+    try:
+        for hs in view.view:
+            fw = getattr(hs.config, 'firewall', None)
+            if fw is None:
+                continue
+            for rs in (fw.ruleset or []):
+                if not getattr(rs, 'enabled', False):
+                    continue
+                for rule in (rs.rule or []):
+                    if getattr(rule, 'direction', None) != 'inbound':
+                        continue
+                    p = getattr(rule, 'port', None)
+                    if p:
+                        ports.add(int(p))
+                    pr = getattr(rule, 'portRange', None)
+                    if pr is not None and getattr(pr, 'start', None):
+                        ports.add(int(pr.start))
+    finally:
+        view.Destroy()
+    return [str(p) for p in sorted(ports)]
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -109,10 +183,14 @@ def main():
                           port=p['port'], sslContext=ctx)
         content = si.RetrieveContent()
         disks = _build_disks(content)
-        module.exit_json(changed=False, physical_disks=disks, disk_count=len(disks))
+        controllers = _build_controllers(content)
+        listening_ports = _build_listening_ports(content)
+        module.exit_json(changed=False, physical_disks=disks, disk_count=len(disks),
+                         controllers=controllers, listening_ports=listening_ports)
     except Exception as e:
         # 수집 실패는 graceful — 빈 list + error (호출 task 가 failed_when:false 로 흡수, rule 27 R4)
-        module.exit_json(changed=False, physical_disks=[], disk_count=0, error=str(e))
+        module.exit_json(changed=False, physical_disks=[], disk_count=0,
+                         controllers=[], listening_ports=[], error=str(e))
     finally:
         if si is not None:
             try:
