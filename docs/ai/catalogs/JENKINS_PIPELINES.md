@@ -68,9 +68,11 @@ Pipeline 이 런타임 임시파일(chmod 600)에 써서 `--vault-password-file`
 ## callback URL (rule 31)
 
 Jenkinsfile_portal의 Stage 4 Callback이 호출자에게 결과 통지:
+- 전송: **HTTP Request 플러그인 `httpRequest()` 스텝** (curl/셸 미사용 — 2026-06-22 전환). `validResponseCodes:'100:599'` 로 비-2xx 에도 예외 미발생 → status 직접 판정 (graceful, rule 31 R2). `ignoreSslErrors` 미설정 → SSL 검증 유지.
 - 정규화: `url.strip().rstrip('/')` (commit 4ccc1d7 fix)
-- Method: POST
-- Body: callback_plugins/json_only.py JSON envelope (rule 20)
+- Method: POST (`Content-Type: application/json`)
+- Body: `{loc, deploymentEnvironmentId, gatherInfoJson:[...]}` — gatherInfoJson 은 callback_plugins/json_only.py JSON envelope (rule 20) 라인 배열
+- 재시도: 3회 + backoff(attempt*10s), 최종 실패 시 unstable (빌드 fail 아님 — rule 31 R2)
 - 보안 권장: URL에 user:pass 형식 금지 (path/token만 — cycle-011 rule 60 해제 후 운영 권장 수준)
 
 ## 갱신 trigger (rule 28 #4 / #5)

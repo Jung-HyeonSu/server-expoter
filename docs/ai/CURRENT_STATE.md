@@ -1,5 +1,23 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-22 (Jenkinsfile_portal Callback: curl → HTTP Request 플러그인)
+
+- **대상/방법**: `Jenkinsfile_portal` Stage 4 Callback 의 포털 POST 를 `sh` + `curl` 에서 **HTTP Request
+  플러그인 `httpRequest()` 스텝**으로 교체. `withEnv(CALLBACK_ENDPOINT)` + `writeFile callback_body.json`
+  제거 — `requestBody` 로 직접 전달. `docs/01_jenkins-setup.md` §필수 플러그인에 HTTP Request 가 이미
+  "외부 시스템 콜백/알림" 용도로 등재돼 있어 신규 의존 아님(문서-코드 불일치 해소).
+- **동작 보존**: 재시도 3회 + backoff(attempt*10s), 최종 실패 시 `unstable`(빌드 fail 아님 — rule 31 R2),
+  URL 정규화(`strip`/`rstrip('/')`), callback body/endpoint(`/api/jenkins/gather/<type>`) 계약 불변(rule 31 R3).
+  `validResponseCodes:'100:599'` 로 비-2xx 예외 미발생 → status 직접 판정. `ignoreSslErrors` 미설정 →
+  SSL 검증 유지(curl `-k` 미사용과 동일). 셸 미경유로 endpoint shell 주입 위험 제거(추가 이득).
+- **영향**: vendor-agnostic(CI). envelope/callback 계약 무영향. Stage 1~3 무관.
+- **문서 동기화**: `docs/ai/catalogs/JENKINS_PIPELINES.md` callback 절(httpRequest 전송 방식 명시).
+- **검증**: Groovy 구조/브레이스 정합성 + curl/withEnv/callback_body stale 참조 0건 확인. ⚠️ 실 Jenkins
+  빌드(httpRequest 런타임)는 로컬 환경 제약으로 **미확인** — Jenkins Replay 또는 pipeline linter 필요.
+- **후속(사용자 몫)**: `Jenkinsfile_portal` 은 순수 코드 → production 반영(cherry-pick)은 rule 93 R2 사용자 승인 필요.
+
+---
+
 ## 일자: 2026-06-18 (Jenkinsfile_portal vault → Jenkins Credentials 플러그인 방식)
 
 - **대상/방법**: `Jenkinsfile_portal` Gather 단계의 임시 하드코딩 vault 패스워드(`24677f57`, 평문 `'Goodmit0802!'`)
