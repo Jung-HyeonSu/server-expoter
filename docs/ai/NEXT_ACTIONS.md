@@ -12,11 +12,12 @@
 > 상세: `docs/ai/CURRENT_STATE.md` 2026-06-18 항목. portal Gather 하드코딩 패스워드 제거 + Jenkins
 > Credentials(`server-gather-vault-password`) 통일 (commit `fed68ef2`, main).
 
-- [ ] **[MED / 사용자] production 반영**: `Jenkinsfile_portal` 은 순수 코드 → production 브랜치에도 같은
-  변경 필요. cherry-pick `fed68ef2`(순수 코드 커밋)는 rule 93 R2 로 **사용자 승인** 필요. production 에는
-  여전히 하드코딩 평문이 남아 있음.
-- [ ] **[LOW / lab] 실 Jenkins 빌드 확인**: portal 파이프라인 1회 빌드로 `server-gather-vault-password`
-  주입 → ansible-vault 복호화 정상 동작 확인 (로컬 환경에선 Groovy/Jenkins 미검증).
+- [x] **[MED / 사용자] production 반영 (2026-06-22 완료)**: 사용자 승인(rule 93 R2) 후 production 에
+  순수 코드만 반영 — vault→Credentials(`efdb4c28`) + Callback curl→httpRequest(`c8f901f0`). production
+  `Jenkinsfile_portal` == main (diff 0), 하드코딩 평문 제거 확인, docs/ai 하네스 미유입. github+gitlab push.
+  (production 커밋은 하네스 pre-commit 훅 부재로 `--no-verify` 사용 — 사용자 명시 승인 2026-06-22.)
+- [ ] **[LOW / lab] 실 Jenkins 빌드 확인**: portal 파이프라인 1회 빌드로 (1) `server-gather-vault-password`
+  주입 → ansible-vault 복호화, (2) Callback `httpRequest()` POST 정상 동작 확인 (로컬 환경에선 Groovy/Jenkins 미검증).
 
 ## OEM cascade graceful degradation — os/esxi 확장 + 라이브 검증 (2026-06-16)
 
