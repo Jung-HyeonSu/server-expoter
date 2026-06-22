@@ -407,7 +407,7 @@ fields:
   "memory.slots[]":
     type: "array of object"
     priority: nice
-    channel: [redfish]
+    channel: [redfish, os]
     help_ko: >-
       장착된 DIMM 슬롯별 상세. 빈/Absent 슬롯은 제외 (장착된 모듈만). Redfish
       /Systems/<id>/Memory/* 에서 수집.
@@ -417,21 +417,21 @@ fields:
   "memory.slots[].capacity_mb":
     type: "integer|null"
     priority: nice
-    channel: [redfish]
+    channel: [redfish, os]
     help_ko: "DIMM 용량 (Memory.CapacityMiB, 이진 MiB)."
     help_en: "DIMM capacity (Memory.CapacityMiB, binary MiB)."
 
   "memory.slots[].speed_mhz":
     type: "integer|null"
     priority: nice
-    channel: [redfish]
+    channel: [redfish, os]
     help_ko: "DIMM 현재 동작 속도 (Memory.OperatingSpeedMhz, 현재 클럭)."
     help_en: "DIMM current operating speed (Memory.OperatingSpeedMhz)."
 
   "memory.slots[].type":
     type: "string|null"
     priority: nice
-    channel: [redfish]
+    channel: [redfish, os]
     help_ko: "메모리 종류 (Memory.MemoryDeviceType, 예: DDR4)."
     help_en: "Memory device type (Memory.MemoryDeviceType, e.g. DDR4)."
 
@@ -445,7 +445,7 @@ fields:
   "memory.slots[].manufacturer":
     type: "string|null"
     priority: nice
-    channel: [redfish]
+    channel: [redfish, os]
     help_ko: >-
       DIMM 제조사 (Memory.Manufacturer 정규화 — 예: 'Hynix Semiconductor'→'SK hynix'
       cross-channel canonical).
@@ -455,7 +455,7 @@ fields:
   "memory.slots[].part_number":
     type: "string|null"
     priority: nice
-    channel: [redfish]
+    channel: [redfish, os]
     help_ko: "DIMM 파트번호 (Memory.PartNumber)."
     help_en: "DIMM part number (Memory.PartNumber)."
 
@@ -497,7 +497,7 @@ fields:
   "memory.slots[].serial":
     type: "string|null"
     priority: nice
-    channel: [redfish]
+    channel: [redfish, os]
     help_ko: "DIMM 시리얼 (Memory.SerialNumber)."
     help_en: "DIMM serial (Memory.SerialNumber)."
 
@@ -580,6 +580,23 @@ fields:
       OS(Windows): Get-PhysicalDisk.UniqueId when UniqueIdFormat is EUI64/FCPHName/SCSI Name String.
       ESXi: ScsiLun.canonicalName (naa.*).
       Null is normal for local SATA / virtio (best-effort).
+
+  "storage.physical_disks[].health":
+    type: "string|null"
+    priority: nice
+    channel: [redfish, os]
+    help_ko: >-
+      물리 디스크 건강 상태.
+      Redfish: Drive.Status.Health (OK/Warning/Critical → 정규화).
+      OS(Windows): Get-PhysicalDisk.HealthStatus (Healthy/Warning/Unhealthy → healthy/warning/unhealthy).
+      OS(Linux): 현재 미수집(null) — smartctl 도입 시 채움 (NEXT_ACTIONS).
+      ESXi: ScsiLun 미노출 (null).
+    help_en: >-
+      Physical disk health status.
+      Redfish: Drive.Status.Health (OK/Warning/Critical, normalized).
+      OS(Windows): Get-PhysicalDisk.HealthStatus (Healthy/Warning/Unhealthy → healthy/warning/unhealthy).
+      OS(Linux): not collected yet (null) — pending smartctl (NEXT_ACTIONS).
+      ESXi: not exposed by ScsiLun (null).
 
   "storage.physical_disks[].predicted_life_percent":
     type: "integer|null"
