@@ -504,3 +504,16 @@
   "OS channel can be null vendor-agnostic") + 기존 baseline 은 `None`. → OS vendor 를 None 으로 둘지 vmware 식별 유지할지 결정.
 - [ ] **[발견/cleanup] rhel810 baseline gather_mode="raw_only" 는 stale**: 코드 실 값은 `python_incompatible`
   (preflight.yml: python_ok/python_missing/python_incompatible/raw_forced — "raw_only" 부재). baseline + test 가 가짜 값 단정 중.
+
+## OS vendor canonical 정정 + 후속 발견 (2026-06-22)
+
+- [x] **[DONE] OS 하이퍼바이저 vendor canonical 인정**: CANONICAL_VENDORS 에 vmware/qemu/microsoft/xen 추가
+  (os-gather _out_vendor 가 DMI sys_vendor 를 매핑하는 정상값). rhel810 baseline 161 full 재캡처(vendor=vmware,
+  gather_mode=python_incompatible — stale raw_only/None 제거). commit `3245004a`.
+- [ ] **[BUG/조사] Ubuntu 어댑터 미선택**: 119(Ubuntu 24.04)가 `adapter_id=os_linux_rhel` 로 잡힘.
+  `adapters/os/linux_ubuntu.yml`(distribution_patterns ["Ubuntu","Debian"], priority=50)가 존재하는데 미선택.
+  옛 ubuntu_baseline(166)은 os_linux_generic 이었음 → **Ubuntu 가 linux_ubuntu 로 매칭된 적 없음**.
+  adapter_loader 의 distribution_patterns 매칭 또는 OS distribution 값 비교 로직 조사 필요. (gather 자체는 success — adapter_id 라벨만 오선택.)
+- [ ] **[보류] ubuntu_baseline 재캡처**: 166(원 host) 이 RHEL 9.6 로 OS 변경 + 119 는 os_linux_rhel 로 잡혀
+  os_linux_generic Ubuntu 캡처 불가. 위 Ubuntu 어댑터 버그 해결 후 재캡처 가능. (현 ubuntu_baseline vendor=None 은
+  canonical 유효라 회귀는 통과 — 우선순위 낮음.)
