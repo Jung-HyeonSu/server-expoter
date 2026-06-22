@@ -1,5 +1,20 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-22 (ESXi physical_disks serial/wwn 신규 수집 + 미수집 전수조사)
+
+- **ESXi disk 신규 feature (사용자 승인)**: esxi-gather 가 디스크를 안 모으던 것(`physical_disks: []`)을
+  pyvmomi 모듈(`esxi-gather/library/esxi_disks.py`)로 수집. wwn=`canonicalName`(naa), serial=`alternateName[SERIALNUM]`,
+  model=vendor+model, media=ssd flag. field_dictionary serial/wwn channel 에 esxi 추가, id help 갱신.
+  - **검증 (✅)**: 로컬 pyvmomi(esxi01/02) + **gatherESXi #3 SUCCESS**(esxi02, 2 disks serial/wwn naa) 정확 일치.
+    pytest 1254 passed. esxi_baseline 실측 반영. commit `583dc293`(코드)/`82926268`(baseline).
+- **전수조사 (사용자 요청)**: "schema 정의 + 수집가능 + 코드 미수집" 필드를 ESXi/OS 전수조사 (3 agent 병렬,
+  실 장비 검증). 결과 `docs/ai/tickets/2026-06-22-os-disk-serial-wwn/AUDIT-defined-not-collected.md`.
+  - Tier1(무의존, 실측확인): ESXi listening_ports/controllers, Linux NIC firmware(ethtool)/controllers(lspci).
+  - Tier2(channel drift): Windows physical_disks.health 미등록, memory.slots channel redfish-only.
+  - Tier3(의존성/섹션 결정): smartctl health/wear, thermal/power 섹션, OS firmware. 불가: ESXi logical_volumes, OS power(PSU).
+
+---
+
 ## 일자: 2026-06-22 (OS physical_disks serial/wwn 수집 — Linux+Windows)
 
 - **대상/방법**: OS 개더링 `data.storage.physical_disks[]` 에 `serial`/`wwn` 추가(요구: 디스크 식별자 수집).

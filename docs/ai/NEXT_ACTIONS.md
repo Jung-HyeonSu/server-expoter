@@ -23,9 +23,24 @@
   실측에서 swap 필요 드라이브 확인 시 `Normalize-DiskSerial` 보강.
 - [ ] **[LOW / 선택] redfish 디스크 wwn 확장**: redfish 는 현재 serial 만 emit(5 vendor baseline 실값 확인).
   `Drive.Identifiers`(NAA/EUI) 기반 wwn 추가 시 cross-channel 일관 (별도 cycle).
-- [ ] **[MED / 선택] ESXi 디스크 수집 신규 feature**: esxi-gather 는 현재 datastore 만 수집(`physical_disks: []`).
-  pyvmomi `HostScsiDisk`(canonicalName/uuid/serialNumber) 로 physical_disks + serial/wwn 추가 가능 — 별도 feature
-  (esxi normalize + field channel [esxi] + esxi_baseline + ESXi 실 타깃 검증 필요).
+- [x] **[DONE 2026-06-22] ESXi 디스크 수집 신규 feature**: `esxi_disks.py`(pyvmomi) 로 physical_disks serial/wwn
+  수집. gatherESXi #3 SUCCESS(esxi02 2 disks naa). commit `583dc293`/`82926268`.
+
+## 미수집 필드 전수조사 후속 (2026-06-22)
+
+> 상세: `docs/ai/tickets/2026-06-22-os-disk-serial-wwn/AUDIT-defined-not-collected.md` (ESXi/OS 3 agent 실측 audit).
+
+- [ ] **[MED] Tier1 무의존 구현** (physical_disks 와 동일 유형 — 권장):
+  - ESXi `system.listening_ports`(firewall.ruleset, schema 무변경) / `storage.controllers[]`(hostBusAdapter+pciDevice)
+  - OS Linux `network.adapters[].firmware_version`(`ethtool -i`, sudo 불필요, 96 실측) / `storage.controllers[]`(`lspci -nnk`, 96=PERC H965i 실측)
+- [ ] **[LOW] Tier2 channel drift 정정**: Windows `physical_disks[].health` field_dictionary 등록(코드 이미 emit) /
+  `memory.slots[]` 서브필드 channel 에 os 추가(Win/Linux 이미 수집).
+- [ ] **[MED / 사용자] Tier3 의존성·섹션 결정**:
+  - `physical_disks[].health`/`predicted_life_percent` — **smartmontools 설치**(rule 92 R1 의존성 승인) + VM SMART 미지원 graceful
+  - `thermal` 섹션(OS sysfs hwmon[96 실측] + ESXi numericSensorInfo[실측]) — sections.yml 확장(schema 결정)
+  - `power` 섹션 ESXi(numericSensorInfo PSU) — sections.yml 확장
+  - OS `firmware[]`(dmidecode BIOS + ethtool/fwupd) — sections.yml 확장 + dmidecode sudo
+- **불가 확정**: ESXi `logical_volumes[]`/per-DIMM 용량(BMC 영역), OS Linux/Windows `power`(PSU OS 미노출), Windows `thermal`(VM 미지원).
 
 ---
 
