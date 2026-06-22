@@ -494,3 +494,13 @@
 - archive: `docs/ai/archive/NEXT_ACTIONS-history-2026-04-to-05.md`
 - handoff: `docs/ai/handoff/2026-05-21-os-baseline-expansion.md` (F6), `docs/ai/handoff/2026-05-11-next-cycles.md` (4 후보)
 - ADR: `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md`
+
+## Linux baseline 재캡처 발견 (2026-06-22, 161/166 접속)
+
+- [x] **[DONE] rhel810 baseline controllers/adapters 반영** (161 실측, commit `a0e29cff`).
+- [ ] **[발견/사용자] ubuntu_baseline host(166) OS 변경**: 166 이 Ubuntu 24.04 → **RHEL 9.6 으로 재설치됨**.
+  ubuntu_baseline 출처 호스트가 OS 가 바뀌어 166 에서 ubuntu 재캡처 불가. 다른 Ubuntu 호스트(119=virtio VM / 96=baremetal) 결정 필요.
+- [ ] **[발견/설계] OS-on-VM vendor 불일치**: 실 gather 가 `vendor="vmware"`(161/120) 산출하나, 설계 의도(CANONICAL_VENDORS 주석
+  "OS channel can be null vendor-agnostic") + 기존 baseline 은 `None`. → OS vendor 를 None 으로 둘지 vmware 식별 유지할지 결정.
+- [ ] **[발견/cleanup] rhel810 baseline gather_mode="raw_only" 는 stale**: 코드 실 값은 `python_incompatible`
+  (preflight.yml: python_ok/python_missing/python_incompatible/raw_forced — "raw_only" 부재). baseline + test 가 가짜 값 단정 중.
