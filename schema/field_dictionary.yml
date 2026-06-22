@@ -537,44 +537,48 @@ fields:
       Redfish: Drive의 Id (예: Disk.Bay.0:Enclosure.Internal.0-1:RAID.Slot.6-1).
       OS(Linux): device path (예: /dev/sda).
       OS(Windows): DeviceID (예: \\.\PhysicalDrive0).
-      ESXi: 수집하지 않음 (null).
+      ESXi: ScsiLun.canonicalName (예: naa.6f80...) — 2026-06-22부터 수집.
     help_en: >-
       Physical disk identifier. Referenced by logical_volumes[].member_drive_ids.
       Redfish: Drive Id (e.g., Disk.Bay.0:Enclosure.Internal.0-1:RAID.Slot.6-1).
       OS(Linux): device path (e.g., /dev/sda).
       OS(Windows): DeviceID (e.g., \\.\PhysicalDrive0).
-      ESXi: not collected (null).
+      ESXi: ScsiLun.canonicalName (e.g., naa.6f80...) — collected since 2026-06-22.
 
   "storage.physical_disks[].serial":
     type: "string|null"
     priority: nice
-    channel: [redfish, os]
+    channel: [redfish, os, esxi]
     help_ko: >-
       물리 디스크 시리얼 번호.
       Redfish: Drive.SerialNumber.
       OS(Linux): lsblk SERIAL (udev ID_SERIAL_SHORT) → 빈 값이면 udevadm 보강.
       OS(Windows): Get-PhysicalDisk.SerialNumber → 빈 값이면 Win32_DiskDrive.SerialNumber (hex/공백 정규화).
+      ESXi: ScsiLun.alternateName[SERIALNUM] (없으면 serialNumber).
       virtio 가상디스크 / 일부 SATA 는 null 가능 (best-effort).
     help_en: >-
       Physical disk serial number.
       Redfish: Drive.SerialNumber.
       OS(Linux): lsblk SERIAL (udev ID_SERIAL_SHORT), udevadm fallback.
       OS(Windows): Get-PhysicalDisk.SerialNumber, Win32_DiskDrive.SerialNumber fallback (hex/space normalized).
+      ESXi: ScsiLun.alternateName[SERIALNUM] (serialNumber fallback).
       May be null for virtio virtual disks / some SATA (best-effort).
 
   "storage.physical_disks[].wwn":
     type: "string|null"
     priority: nice
-    channel: [os]
+    channel: [os, esxi]
     help_ko: >-
       물리 디스크 WWN (World Wide Name).
       OS(Linux): lsblk WWN (udev ID_WWN; SATA/SAS=NAA `0x...`, NVMe=`eui.`).
       OS(Windows): Get-PhysicalDisk.UniqueId (UniqueIdFormat 이 EUI64/FCPHName/SCSI Name String 일 때만).
+      ESXi: ScsiLun.canonicalName (naa.*).
       로컬 SATA · virtio 는 null 정상 (best-effort).
     help_en: >-
       Physical disk WWN (World Wide Name).
       OS(Linux): lsblk WWN (udev ID_WWN; SATA/SAS NAA `0x...`, NVMe `eui.`).
       OS(Windows): Get-PhysicalDisk.UniqueId when UniqueIdFormat is EUI64/FCPHName/SCSI Name String.
+      ESXi: ScsiLun.canonicalName (naa.*).
       Null is normal for local SATA / virtio (best-effort).
 
   "storage.physical_disks[].predicted_life_percent":
