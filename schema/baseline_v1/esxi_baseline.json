@@ -295,7 +295,30 @@
           "source": "esxi"
         }
       ],
-      "physical_disks": [],
+      "physical_disks": [
+        {
+          "id": "naa.6f80bcbeac326eb02f7f66c81ba3c352",
+          "device": "naa.6f80bcbeac326eb02f7f66c81ba3c352",
+          "model": "Cisco UCSC-MRAID12G",
+          "serial": "0052c3a31bc8667f2fb06e32acbebc80",
+          "wwn": "naa.6f80bcbeac326eb02f7f66c81ba3c352",
+          "total_mb": 6099700,
+          "media_type": "HDD",
+          "protocol": null,
+          "health": null
+        },
+        {
+          "id": "naa.6f80bcbeac326eb02f7f66fd1ece98e3",
+          "device": "naa.6f80bcbeac326eb02f7f66fd1ece98e3",
+          "model": "Cisco UCSC-MRAID12G",
+          "serial": "00e398ce1efd667f2fb06e32acbebc80",
+          "wwn": "naa.6f80bcbeac326eb02f7f66fd1ece98e3",
+          "total_mb": 10986327,
+          "media_type": "HDD",
+          "protocol": null,
+          "health": null
+        }
+      ],
       "summary": {
         "groups": [],
         "grand_total_gb": 16556
