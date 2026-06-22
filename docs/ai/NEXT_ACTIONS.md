@@ -7,6 +7,25 @@
 
 ---
 
+## OS physical_disks serial/wwn 후속 (2026-06-22)
+
+> 상세: `docs/ai/CURRENT_STATE.md` 2026-06-22 + `tests/evidence/2026-06-22-os-disk-serial-wwn.md`.
+> 코드/검증 완료(gatherOS #41/#42 SUCCESS). lab 전부 VM → 아래는 실값 확정용 후속.
+
+- [ ] **[MED / lab] baremetal Linux 실 디스크 serial/wwn 실측**: lab Linux 3대(119/161/165)가 전부 VMware
+  가상디스크 → serial/wwn `null` 만 확인. **물리 디스크 보유 baremetal Linux** 에서 lsblk SERIAL/WWN +
+  udevadm 보강이 실값(SATA/SAS NAA, NVMe eui.) 채우는지 재검증 + baseline 추가.
+- [ ] **[MED / lab+사용자] Windows live 실측**: gatherOS 에 Windows 타깃 미제공 → Windows 경로 미실행.
+  실 Windows(가능하면 baremetal + VMware 둘 다)에서 (1) `Win32_DiskDrive.SerialNumber` hex/swap 정규화 실값,
+  (2) `Get-PhysicalDisk.UniqueId`/`UniqueIdFormat` WWN 실문자열 확인 → windows_baseline 실측 교체.
+  (현재 windows_baseline serial/wwn=null 은 VMware 가상디스크 클래스 추론값.)
+- [ ] **[LOW] Windows serial 니블-swap 보정**: 현재 hex→ASCII 디코딩만, 2글자 swap 미적용(드라이브별 상이).
+  실측에서 swap 필요 드라이브 확인 시 `Normalize-DiskSerial` 보강.
+- [ ] **[LOW / 선택] redfish 디스크 wwn 확장**: redfish 는 현재 serial 만 emit. `Drive.Identifiers`(NAA/EUI)
+  기반 wwn 추가 시 cross-channel 일관 (별도 cycle).
+
+---
+
 ## Jenkinsfile_portal vault → Credentials 전환 후속 (2026-06-18)
 
 > 상세: `docs/ai/CURRENT_STATE.md` 2026-06-18 항목. portal Gather 하드코딩 패스워드 제거 + Jenkins

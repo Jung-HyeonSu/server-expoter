@@ -1,5 +1,22 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-06-22 (OS physical_disks serial/wwn 수집 — Linux+Windows)
+
+- **대상/방법**: OS 개더링 `data.storage.physical_disks[]` 에 `serial`/`wwn` 추가(요구: 디스크 식별자 수집).
+  - **Linux**: `lsblk -o ...,SERIAL,WWN`(util-linux 2.23.2/RHEL7부터 컬럼 존재 → 지원 전 배포판 안전) +
+    빈값 시 `udevadm info`(ID_SERIAL_SHORT/ID_WWN) 보강. **python_ok + raw fallback 2경로** 동일 적용.
+  - **Windows**: `Get-PhysicalDisk.SerialNumber`/`UniqueId`(+`UniqueIdFormat` EUI64/FCPHName/SCSIName 일 때만 wwn) →
+    `Win32_DiskDrive.SerialNumber` fallback + hex/공백 정규화 함수.
+  - field_dictionary +2 **Nice**(serial=[redfish,os] / wwn=[os]). schema_version "1" 유지(Additive). 사용자 승인 2026-06-22.
+- **실측 검증 (✅)**: Jenkins gatherOS(GitLab main 빌드) 3대 — #41 Ubuntu24.04(python), #42 RHEL8.10(**raw**)+RHEL9.6(python)
+  전부 SUCCESS, serial/wwn 키 emit. lab Linux 3대 모두 VMware 가상디스크 → serial/wwn `null`(정상). pytest 1254 passed.
+- **미확인 (⚠️)**: baremetal 실 디스크 non-null 값(lab 전부 VM), Windows live(타깃 미제공). evidence 명시.
+- **영향**: vendor-agnostic(OS). redfish 는 이미 디스크 serial emit(문서화만). 호환성 Additive(기존 키 불변).
+- **문서**: `docs/16`/`docs/20` 동기화, `tests/evidence/2026-06-22-os-disk-serial-wwn.md`, baseline 3종(ubuntu/rhel810/windows).
+- **commit**: 순수코드 `8e0aed95`(gather+field_dictionary+docs16/20) / 하네스 `9c28338b`(SPEC).
+
+---
+
 ## 일자: 2026-06-22 (Jenkinsfile_portal Callback: curl → HTTP Request 플러그인)
 
 - **대상/방법**: `Jenkinsfile_portal` Stage 4 Callback 의 포털 POST 를 `sh` + `curl` 에서 **HTTP Request
