@@ -18,9 +18,10 @@
 - [x] **[DONE 2026-06-22] Windows live 실측** (10.100.64.120, Win Server 2022): gatherOS status=success, 전 섹션 정상.
   disk **serial/wwn 실값 populate**(`6000c29...`/`6000C29...`, Get-PhysicalDisk) + health="healthy" + memory.slots 실측.
   evidence: `tests/evidence/2026-06-22-windows-120-verification.md` + envelope json.
-- [ ] **[MED / 사용자] windows_baseline serial/wwn 재캡처**: 현재 baseline serial/wwn=null 은 부정확(추론값) —
-  실 VMware Windows 는 populate 확인됨. windows_baseline host(os_windows_generic)의 실값으로 재캡처 필요.
-  (120 은 os_windows_2022 라 adapter_id 단정 충돌 → 통째 교체 불가. generic host 재캡처 또는 별도 2022 baseline 신설.)
+- [x] **[DONE 2026-06-22] windows_2022 baseline 신설**: 10.100.64.120 실측으로 `windows_2022_baseline.json` +
+  TestWindows2022Baseline(serial/wwn/health populate 단정) 추가. commit `ec543f9e`.
+- [ ] **[LOW] windows_baseline(generic) serial/wwn 정정**: 기존 generic baseline 의 serial/wwn=null 은 부정확
+  (추론값) — generic host 재캡처 시 실값 반영. (windows_2022 가 실 회귀 커버하므로 우선순위 낮음.)
 - [ ] **[LOW] Windows serial 니블-swap 보정**: 현재 hex→ASCII 디코딩만, 2글자 swap 미적용(드라이브별 상이).
   실측에서 swap 필요 드라이브 확인 시 `Normalize-DiskSerial` 보강.
 - [ ] **[LOW / 선택] redfish 디스크 wwn 확장**: redfish 는 현재 serial 만 emit(5 vendor baseline 실값 확인).
