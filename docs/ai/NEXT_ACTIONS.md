@@ -510,10 +510,13 @@
 - [x] **[DONE] OS 하이퍼바이저 vendor canonical 인정**: CANONICAL_VENDORS 에 vmware/qemu/microsoft/xen 추가
   (os-gather _out_vendor 가 DMI sys_vendor 를 매핑하는 정상값). rhel810 baseline 161 full 재캡처(vendor=vmware,
   gather_mode=python_incompatible — stale raw_only/None 제거). commit `3245004a`.
-- [ ] **[BUG/조사] Ubuntu 어댑터 미선택**: 119(Ubuntu 24.04)가 `adapter_id=os_linux_rhel` 로 잡힘.
+- [x] **[DONE 2026-06-22] Ubuntu 어댑터 미선택 버그 수정** (commit `826c6513`): 원인=어댑터 선택이 distribution 감지 전
+  실행 → ansible_distribution='' → priority 50 동률 rhel tie-break. 수정=preflight 가 /etc/os-release NAME 감지(_l_distro_name)
+  → 167 실측 os_linux_ubuntu 정상. **(구)조사 메모:** 119(Ubuntu 24.04)가 `adapter_id=os_linux_rhel` 로 잡힘.
   `adapters/os/linux_ubuntu.yml`(distribution_patterns ["Ubuntu","Debian"], priority=50)가 존재하는데 미선택.
   옛 ubuntu_baseline(166)은 os_linux_generic 이었음 → **Ubuntu 가 linux_ubuntu 로 매칭된 적 없음**.
   adapter_loader 의 distribution_patterns 매칭 또는 OS distribution 값 비교 로직 조사 필요. (gather 자체는 success — adapter_id 라벨만 오선택.)
-- [ ] **[보류] ubuntu_baseline 재캡처**: 166(원 host) 이 RHEL 9.6 로 OS 변경 + 119 는 os_linux_rhel 로 잡혀
+- [x] **[DONE 2026-06-22] ubuntu_baseline 167 재캡처** (commit `c90e784a`): 167(새 Ubuntu VM) os_linux_ubuntu/vendor=vmware/
+  controllers/adapters 실값. test_adapter_id os_linux_generic→os_linux_ubuntu. **(구)보류 메모:** 166(원 host) 이 RHEL 9.6 로 OS 변경 + 119 는 os_linux_rhel 로 잡혀
   os_linux_generic Ubuntu 캡처 불가. 위 Ubuntu 어댑터 버그 해결 후 재캡처 가능. (현 ubuntu_baseline vendor=None 은
   canonical 유효라 회귀는 통과 — 우선순위 낮음.)
