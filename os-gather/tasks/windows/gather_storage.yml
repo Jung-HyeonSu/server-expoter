@@ -386,7 +386,7 @@
               'mount_point':   v.drive ~ ':\\',
               'filesystem':    v.fs,
               'total_mb':      total_mb,
-              'used_mb':       total_mb - free_mb,
+              'used_mb':       (total_mb - free_mb) | round(1),
               'available_mb':  free_mb,
               'usage_percent': ((total_mb - free_mb) / total_mb * 100) | round(1) if total_mb > 0 else 0,
               'status':        'mounted'
