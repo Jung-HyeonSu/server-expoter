@@ -720,8 +720,34 @@ def parse_windows_teams(lines):
     return teams
 
 
-def enrich_windows_interfaces(interfaces, teams):
-    """base interfaces + teams → enriched (team_role/team_master 추가, member NIC 추가)."""
+def parse_windows_team_nics(lines):
+    """LBFOTEAMNIC 라인 → 팀 VLAN tNIC 목록 [{name, team, vlan_id}].
+
+    팀 위 VLAN(예: 'LabTeam1 - VLAN 100')은 Linux 의 bond0.100 에 대응한다.
+    default tNIC(VlanID 없음 = 팀 자체)는 vlan_id=None 으로 들어와 enrich 시 무시된다.
+    """
+    out = []
+    for ln in (lines or []):
+        d = _wjson(ln, "LBFOTEAMNIC")
+        if not d:
+            continue
+        name = _clean(d.get("name"))
+        if not name:
+            continue
+        out.append({
+            "name": name,
+            "team": _clean(d.get("team")),
+            "vlan_id": _to_int(d.get("vlan_id")),
+        })
+    return out
+
+
+def enrich_windows_interfaces(interfaces, teams, team_nics=None):
+    """base interfaces + teams → enriched (team_role/team_master 추가, member NIC 추가).
+
+    team_nics(LBFOTEAMNIC) 가 주어지면 팀 위 VLAN tNIC 인터페이스에 vlan_id/vlan_parent 를
+    추가한다 (Linux bond0.100 의 vlan_id/vlan_parent 와 동일 키 — 채널 일관, Additive).
+    """
     base = list(interfaces or [])
     teams = teams or []
     team_by_name = {t["name"]: t for t in teams}
@@ -730,6 +756,11 @@ def enrich_windows_interfaces(interfaces, teams):
         for m in t.get("members", []):
             member_owner[m["name"]] = t["name"]
             member_detail[m["name"]] = m
+    # VLAN tNIC 만 (vlan_id 보유). default tNIC(=팀 자체, vlan_id None)는 제외.
+    vlan_by_name = {}
+    for tn in (team_nics or []):
+        if tn.get("vlan_id") is not None:
+            vlan_by_name[tn["name"]] = tn
 
     out, present = [], set()
     for iface in base:
@@ -742,6 +773,10 @@ def enrich_windows_interfaces(interfaces, teams):
             new["team_type"] = t.get("team_type")
             new["teaming_mode"] = t.get("teaming_mode")
             new["team_members"] = [m["name"] for m in t.get("members", [])]
+        if name in vlan_by_name:
+            tn = vlan_by_name[name]
+            new["vlan_id"] = tn.get("vlan_id")
+            new["vlan_parent"] = tn.get("team")
         out.append(new)
 
     for name, owner in member_owner.items():
@@ -767,9 +802,11 @@ def build_windows_network(interfaces, lines):
     """단일 진입점: base interfaces + PS 라인 → {interfaces, teams, bonds, bridges}.
 
     bonds/bridges 는 Windows 에 없지만 3채널 키 일관성 위해 빈 [] 노출.
+    팀 위 VLAN tNIC(LBFOTEAMNIC)은 interfaces[] 에 vlan_id/vlan_parent 로 enrich (Linux 일관).
     """
     teams = parse_windows_teams(lines)
-    enriched = enrich_windows_interfaces(interfaces, teams)
+    team_nics = parse_windows_team_nics(lines)
+    enriched = enrich_windows_interfaces(interfaces, teams, team_nics)
     return {"interfaces": enriched, "teams": teams, "bonds": [], "bridges": []}
 
 
@@ -784,6 +821,7 @@ class FilterModule:
             "parse_linux_addresses": parse_linux_addresses,
             "merge_linux_addresses": merge_linux_addresses,
             "parse_windows_teams": parse_windows_teams,
+            "parse_windows_team_nics": parse_windows_team_nics,
             "enrich_windows_interfaces": enrich_windows_interfaces,
             "build_windows_network": build_windows_network,
         }

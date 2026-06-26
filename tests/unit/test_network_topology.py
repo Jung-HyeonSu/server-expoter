@@ -26,6 +26,7 @@ from network_topology import (  # noqa: E402
     parse_linux_addresses,
     merge_linux_addresses,
     parse_windows_teams,
+    parse_windows_team_nics,
     build_windows_network,
 )
 
@@ -496,6 +497,52 @@ def test_vlan_without_ip_synthesized():
     assert vlan["vlan_parent"] == "eth0"
     assert vlan["addresses"] == []
     assert vlan["mac"] is None
+
+
+# 18. Windows 팀 위 VLAN tNIC (LBFOTEAMNIC) — Linux bond0.100 대응
+#     실장비 캡처: site 10.100.64.120 (LabTeam1 + 'LabTeam1 - VLAN 100' VlanID=100)
+LBFO_VLAN_LINES = LBFO_LINES + [
+    'LBFOTEAMNIC {"name":"Team1","team":"Team1","vlan_id":null,"default":true}',
+    'LBFOTEAMNIC {"name":"Team1 - VLAN 100","team":"Team1","vlan_id":100,"default":false}',
+]
+
+
+def test_windows_parse_team_nics():
+    nics = parse_windows_team_nics(LBFO_VLAN_LINES)
+    # default tNIC + VLAN tNIC 둘 다 파싱 (enrich 단계에서 vlan_id 유무로 분기)
+    assert {n["name"] for n in nics} == {"Team1", "Team1 - VLAN 100"}
+    vlan = next(n for n in nics if n["name"] == "Team1 - VLAN 100")
+    assert vlan["vlan_id"] == 100 and vlan["team"] == "Team1"
+    default = next(n for n in nics if n["name"] == "Team1")
+    assert default["vlan_id"] is None  # default tNIC = 팀 자체 (VLAN 아님)
+
+
+def test_windows_team_vlan_enriches_interface():
+    # 'Team1 - VLAN 100' 가 자체 IP 보유한 별도 인터페이스 (Multiplexor #2)
+    base = [
+        _iface("Team1", "10.0.0.10", "00-11-22-33-44-00", speed=20000),
+        _iface("Team1 - VLAN 100", "10.0.100.10", "00-11-22-33-44-00", speed=20000),
+    ]
+    net = build_windows_network(base, LBFO_VLAN_LINES)
+    by = {i["name"]: i for i in net["interfaces"]}
+    # 팀 master 는 team_role master, VLAN 키 없음
+    assert by["Team1"]["team_role"] == "master"
+    assert "vlan_id" not in by["Team1"]
+    # VLAN tNIC: vlan_id/vlan_parent enrich (Linux bond0.100 일관)
+    assert by["Team1 - VLAN 100"]["vlan_id"] == 100
+    assert by["Team1 - VLAN 100"]["vlan_parent"] == "Team1"
+    # VLAN tNIC 는 team master/member 아님 (자체 역할 없음)
+    assert "team_role" not in by["Team1 - VLAN 100"]
+    # 자체 IP 보존
+    assert by["Team1 - VLAN 100"]["addresses"][0]["address"] == "10.0.100.10"
+
+
+def test_windows_no_team_nic_lines_is_additive_only():
+    """LBFOTEAMNIC 라인 없는 호스트(구 동작): vlan_id/vlan_parent 키 미추가 (back-compat)."""
+    base = [_iface("Team1", "10.0.0.10", "00-11-22-33-44-00")]
+    net = build_windows_network(base, LBFO_LINES)  # LBFOTEAMNIC 없음
+    master = next(i for i in net["interfaces"] if i["name"] == "Team1")
+    assert "vlan_id" not in master and "vlan_parent" not in master
 
 
 def test_windows_member_already_in_base():

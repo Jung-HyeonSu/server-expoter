@@ -140,7 +140,10 @@
         name           = $_.Name
         driver         = $_.DriverDescription
         driver_version = $_.DriverVersion
-        driver_date    = if ($_.DriverDate) { $_.DriverDate.ToString('yyyy-MM-dd') } else { $null }
+        # DriverDate 는 환경에 따라 [datetime] 또는 [string]("yyyy-MM-dd") 으로 옴.
+        # string 일 때 .ToString('yyyy-MM-dd') 는 오버로드 없음 → .NET 터미네이팅 예외로
+        # ForEach 전체 중단 → driver_map 통째 [] (LBFO 멀티플렉서가 string 반환, 2026-06-26 실측).
+        driver_date    = $(if ($_.DriverDate -is [datetime]) { $_.DriverDate.ToString('yyyy-MM-dd') } elseif ($_.DriverDate) { try { (Get-Date ([datetime]$_.DriverDate) -Format 'yyyy-MM-dd') } catch { $null } } else { $null })
         vlan_id        = $_.VlanID
         bond_master    = $null
       } | ConvertTo-Json -Compress
@@ -195,6 +198,13 @@
       foreach($m in @(Get-NetLbfoTeamMember)){
         Emit 'LBFOMEMBER' ([PSCustomObject]@{ name=$m.Name; team=[string]$m.Team;
           admin_mode=[string]$m.AdministrativeMode })
+      }
+    }
+    # 팀 tNIC (Get-NetLbfoTeamNic) — 팀 위 VLAN(Linux bond0.100 대응). default tNIC 는 VlanID 없음(=팀 자체).
+    if (Has 'Get-NetLbfoTeamNic') {
+      foreach($tn in @(Get-NetLbfoTeamNic)){
+        Emit 'LBFOTEAMNIC' ([PSCustomObject]@{ name=$tn.Name; team=[string]$tn.Team;
+          vlan_id=$tn.VlanID; default=[bool]$tn.Default })
       }
     }
     # Switch Embedded Teaming (Get-NetSwitchTeam / Get-NetSwitchTeamMember)
