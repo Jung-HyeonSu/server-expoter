@@ -140,10 +140,10 @@
         name           = $_.Name
         driver         = $_.DriverDescription
         driver_version = $_.DriverVersion
-        # DriverDate 는 환경에 따라 [datetime] 또는 [string]("yyyy-MM-dd") 으로 옴.
-        # string 일 때 .ToString('yyyy-MM-dd') 는 오버로드 없음 → .NET 터미네이팅 예외로
-        # ForEach 전체 중단 → driver_map 통째 [] (LBFO 멀티플렉서가 string 반환, 2026-06-26 실측).
-        driver_date    = $(if ($_.DriverDate -is [datetime]) { $_.DriverDate.ToString('yyyy-MM-dd') } elseif ($_.DriverDate) { try { (Get-Date ([datetime]$_.DriverDate) -Format 'yyyy-MM-dd') } catch { $null } } else { $null })
+        # driver_date 는 parse(_w_driver_map)에서 미사용(폐기) 필드였고, 값이 [string] 으로 올 때
+        # String.ToString('yyyy-MM-dd') 오버로드 예외 → ForEach 전체 중단 → driver_map 통째 []
+        # 였음 (LBFO 멀티플렉서가 string 반환, 2026-06-26 site 실측). canonical driver_map
+        # (=Linux: name/driver/vlan_id/bond_master)에 없는 필드라 수집 제거 (root cause 제거).
         vlan_id        = $_.VlanID
         bond_master    = $null
       } | ConvertTo-Json -Compress
