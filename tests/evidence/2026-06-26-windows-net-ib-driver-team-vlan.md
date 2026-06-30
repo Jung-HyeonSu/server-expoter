@@ -93,6 +93,26 @@ Linux 는 is_alias=false/is_secondary=true 라 **Linux 와 값이 정반대** �
 한계(문서화됨): "어느 IP 가 primary 인가"는 수집 순서 기반(best-effort) — Windows 는 커널 primary 플래그
 API 가 없어 first-in-collection 을 primary 로. "같은 서브넷에 정확히 1 primary" 불변식은 보장.
 
+## 라운드 5 — diagnosis selected_port 타입 + network.summary 이중카운트 (build #159)
+
+전체 envelope 전수 스캔(사용자 지시: 일부만 보지 말 것)에서 추가 2건:
+- **selected_port 타입**: Windows 경로(`site.yml`)가 `"{{ ansible_port | default(5986) }}"` → 문자열 `"5986"`.
+  checked_ports(`[5985,5986]` 정수) / Linux SSH 경로(`22` 정수) / precheck 모듈(int) 과 불일치 → `| int`.
+  검증: #159 `selected_port=5986` (Int64).
+- **network.summary 이중카운트**: 팀 VLAN tNIC(`LabTeam1 - VLAN 100`, 20G)을 부모 팀(`LabTeam1`, 20G)과
+  별도 NIC 로 세서 같은 물리 대역 이중 카운트(site 실측: 둘 다 같은 팀 LabTeam1/2×10G). field_dictionary
+  정의 = "NIC 그룹" → enriched 기준 + VLAN tNIC(vlan_id)/team member 제외. summary 태스크를 teaming 정규화
+  이후로 이동. 검증: #159 `20000 qty=3→2`, `10000 qty=2` (LabTeam1+LabTeam2 + Ethernet0+4).
+
+연관 회귀 점검(#158 대비): ib=0 / driver_map=9 / Ethernet4 is_secondary=1 / l2=null / teams=2 / errors=0 유지,
+전 섹션 status 동일 → **연쇄 문제 0**. system.runtime 호스트 대조(tz Asia/Seoul 정규화, swap 1280/515,
+방화벽 3 active) 일치.
+
+## 수렴 — 비-버그 관찰 (코드 수정 아님, 운영 참고)
+- `diagnosis.auth.fallback_used=true / used_role=secondary`: 매 빌드 primary Windows vault 자격증명이
+  실패하고 secondary(cloviradmin)로 fallback. **gather 코드 버그 아님 — vault 설정 점검 필요(운영)**.
+- `system.runtime.ntp_last_sync=null` / `meta.adapter_version=null`: 미수집(정직한 null, 날조 아님).
+
 ## 미확인 / 후속
 
 - 실 ansible os-gather 전체 파이프라인(Jenkins Stage 1~4) 미실행 — 컨트롤러(Linux agent) 필요.
