@@ -58,7 +58,17 @@ internal remote는 별도 명시적 push용 (선택적).
   - 승인 없는 git merge
   - "로컬 merge만 하니까" — push 직전 추가 승인 필요
   - `git pull origin <다른브랜치>` (실질적 merge)
-- **Allowed (예외)**: 같은 브랜치 동기화 `git pull origin main` (현재 main에서 origin/main fetch+ff)는 자율 진행
+  - `git merge main` → production (하네스 누출 — 아래 예외 2 의 production 승격은 **파일 sync 방식만**)
+- **Allowed (예외 1)**: 같은 브랜치 동기화 `git pull origin main` (현재 main에서 origin/main fetch+ff)는 자율 진행
+- **Allowed (예외 2 — production 자동 승격, 2026-06-30 사용자 명시)**: main → production 으로
+  **순수 게더링 코드(하네스 제외)** 승격은 **사용자 per-instance 승인 불요 — 자동 진행** (R6 승인 포맷 면제).
+  - 사용자 명시: "production 에 넣는건 자동이여야 한다" → 매번 묻지 말고 작업 완료 시 자동 승격.
+  - 방식: `scripts/ai/promote_to_production.sh` (파일 state sync — `git merge` 아님). 하네스 경로
+    (`.claude/, CLAUDE.md, GUIDE_FOR_AI.md, docs/ai/, docs/superpowers/, scripts/ai/,
+    tests/reference/, tests/evidence/`)는 절대 production 에 올리지 않는다.
+  - production 은 하네스-free 라 pre-commit 훅(`scripts/ai/hooks/*`)이 물리 부재 → 본 sync 커밋은
+    `--no-verify` 정당 (rule 90 R5 "--no-verify 금지" 의 예외 — 하네스-free 브랜치 한정. 품질
+    게이트는 이미 main 에서 통과). force push 는 여전히 금지 (R1).
 
 ### R3. 현재 브랜치 확인 의무
 
@@ -71,12 +81,18 @@ internal remote는 별도 명시적 push용 (선택적).
   1. 변경 파일 add (pathspec — `git add .` 금지, rule 26 R3)
   2. commit (rule 90 type prefix)
   3. push (현재 브랜치 → origin)
-- **Allowed**: 사용자 명시 "push 보류" / "commit만" 시 push skip
+  4. **production 자동 승격** (순수 게더링 코드 변경이 있을 때) — `bash scripts/ai/promote_to_production.sh`
+     실행. main 의 순수 코드(하네스 제외)를 production 으로 sync + github/gitlab push. **사용자 승인
+     불요** (R2 예외 2, 2026-06-30 사용자 명시). 순수 코드 변경이 없으면 스크립트가 자동 skip.
+- **Allowed**: 사용자 명시 "push 보류" / "commit만" / "production 보류" 시 해당 단계 skip
 - **Forbidden**:
   - 변경 후 commit/push 없이 세션 종료 (사용자가 명시 보류 한 경우 외)
   - rule 24 6 체크 미통과 + push 강행
-- **Why**: 사용자 명시 (2026-05-01) — 작업 끝나면 무조건 commit + push. 분산 협업에서 origin 동기화 보장
-- **재검토**: 자동 push hook 도입 시 본 R4 자동화로 위임
+  - **순수 코드 변경 후 production 승격 누락** (사용자 명시 보류 외) — 본 누락이 "자꾸 말을
+    해줘야 하는" 사용자 불만의 원인 (2026-06-30)
+- **Why**: 사용자 명시 (2026-05-01) commit+push 자동 + (2026-06-30) production 승격 자동. 분산
+  협업 + 배포 브랜치 동기화 보장
+- **재검토**: 자동 push/promote hook(예: post-push) 도입 시 본 R4 를 hook 책임으로 위임
 
 ### R5. 머지 전략 (default: squash)
 

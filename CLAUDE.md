@@ -370,10 +370,14 @@ main
 **하네스로 분류(= production 에서 제외) 경로**:
 `.claude/`, `CLAUDE.md`, `GUIDE_FOR_AI.md`, `docs/ai/`, `docs/superpowers/`, `scripts/ai/`, `tests/reference/`, `tests/evidence/`
 
-**승격 방식 (확정)**:
+**승격 방식 (확정 — 2026-06-30 자동화)**:
 - main 에서 **하네스 커밋과 순수 코드 커밋을 별도로 분리**해서 커밋한다.
-- production 반영은 **순수 코드 커밋만 cherry-pick**. `git merge main` → production 은 **금지**(하네스가 딸려 들어옴).
-- 하네스 변경은 production 에 절대 올리지 않는다 (main 에만 commit/push).
+- production 반영은 **자동** — 작업 완료 시 `bash scripts/ai/promote_to_production.sh` 자율 실행
+  (순수 게더링 코드만 파일 sync + github/gitlab push). **사용자 per-instance 승인 불요** (사용자
+  명시 "production 에 넣는건 자동이여야 한다"). rule 93 R2 예외 2 / rule 24 R5.
+- `git merge main` → production 은 **금지**(하네스 누출). 승격은 파일 state sync 방식만.
+- 하네스 변경(하네스 경로)은 production 에 절대 올리지 않는다 (main 에만 commit/push). 스크립트가
+  하네스 경로를 자동 제외 + 누출 시 롤백.
 
 **remote / push**:
 - `origin` push URL 2개 = GitHub(`git@github.com:hshwang1994/server-exporter.git`) + 내부 GitLab(`https://10.100.64.156/root/server-expoter.git`).
@@ -508,6 +512,7 @@ server-exporter — 기능 작업 (huawei-vendor) (브랜치: feature/huawei-ven
 - 이미 승인받은 범위 내 세부 선택
 - 검증 (ansible-playbook --syntax-check / pytest / verify_*)
 - 문서 갱신, commit, **push (main 포함 — 2026-05-01 사용자 명시, rule 93 R1+R4)**
+- **production 자동 승격** (순수 코드 변경 시 — `scripts/ai/promote_to_production.sh`, 2026-06-30 사용자 명시, rule 93 R2 예외 2)
 
 **R2. 명시 승인 필요**:
 1. 보호 경로 변경 (vault / Jenkinsfile / schema/baseline_v1)
@@ -516,7 +521,7 @@ server-exporter — 기능 작업 (huawei-vendor) (브랜치: feature/huawei-ven
 4. schema 버전 결정 (rule 92 R5)
 5. cron 변경 (rule 80)
 6. 새 Vendor 추가 (rule 50)
-7. branch 간 merge / cherry-pick (rule 93 R2)
+7. branch 간 merge / cherry-pick (rule 93 R2) — **단, main → production 순수코드 자동 승격은 예외(승인 불요, rule 93 R2 예외 2)**
 
 **R3. "완료" 직전 체크**: rule 24 6체크 모두 PASS여야 완료 선언.
 

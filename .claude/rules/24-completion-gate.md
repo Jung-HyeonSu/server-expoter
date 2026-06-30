@@ -66,11 +66,14 @@
 
 ### R5. Git 태그/push 완료 의무
 
-- **Default** (rule 93 R1+R4 — 2026-05-01 사용자 명시):
+- **Default** (rule 93 R1+R4 — 2026-05-01 + 2026-06-30 사용자 명시):
   - 태그 (해당 시): `v{영역}-{상태}-{YYYYMMDD}` 포맷
   - **모든 브랜치 push 자율 진행** (main 포함 — github + gitlab 동시)
   - 작업 종료 시 commit + push 무조건 (사용자 "보류" 명시 시 skip)
-- **Forbidden**: force push / `--all` / 다른 브랜치 push (rule 93 R1)
+  - **순수 게더링 코드 변경 시 production 자동 승격** — `bash scripts/ai/promote_to_production.sh`
+    (하네스 제외 sync + github/gitlab push). **사용자 승인 불요** (2026-06-30 사용자 명시
+    "production 에 넣는건 자동이여야 한다"). 완료 보고(R9)에 production 승격 여부 명시.
+- **Forbidden**: force push / `--all` / 다른 브랜치 push (rule 93 R1) / 순수 코드 변경 후 production 승격 누락
 - **Why**: 사용자 명시 (2026-05-01) — 작업 끝나면 자율 commit + push, github + gitlab 동기화
 - **재검토**: force push 사고 발생 시 강화
 
