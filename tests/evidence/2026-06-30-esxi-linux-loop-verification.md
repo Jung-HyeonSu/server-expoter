@@ -33,6 +33,14 @@
 | selinux | Enforcing | enabled |
 | bonds | bond1,bond2 | 2 |
 
+### 10.100.64.165 (RHEL 9.6) SSH 실측 대조 — 전부 일치
+| 값 | 호스트(SSH) | envelope |
+|---|---|---|
+| CPU sockets/cores/threads | 4 / 1×4 / 1 | 4/4/4 |
+| L2/L3 캐시 | 1 MiB / 220 MiB | 1024 / 225280 (KB) |
+| selinux | Enforcing | enabled |
+| bond IP | bond1=10.100.64.167 / bond2=10.100.64.168 | 동일 |
+
 ### hostname=localhost 확인 (버그 아님)
 두 호스트 SSH `hostname` → `localhost.localdomain` (161 설정됨 / 165 /etc/hostname unset → 런타임 기본값).
 게더가 실 OS 값을 충실 반영. (#160 fqdn 이 `localhost` 로 약간 truncate 되나 localhost 라 무의미.)
