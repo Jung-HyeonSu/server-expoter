@@ -71,6 +71,28 @@ inventory_json=[{service_ip:10.100.64.120}]) 로 실 4-Stage 파이프라인 반
 검증 안 된 것(=호스트가 실제로 그렇게 보고): disk media_type=HDD (Get-PhysicalDisk 가 HDD 반환),
 L3 cache=0 (WMI 가 0 반환) — 둘 다 OS 값 충실 반영이라 수정 대상 아님.
 
+## 라운드 4 — Windows 주소 5키 parity (is_secondary 등, build #158)
+
+배경: `addresses[]` 5키(scope/label/parent_interface/is_alias/is_secondary)가 `channel:[os]` 로
+field_dictionary 에 등록(2026-06-17 커밋 70eb541a)됐으나 **Linux 만 구현**되고 Windows 는 미구현이었음
+(같은 커밋에 windows 파일 없음 — 암묵적 parity 갭). 사용자 질의("2 IP 면 Windows 도 맞추자")로 완성.
+
+설계: is_alias 로 다중 IP 를 표현하면 (a) field_dictionary 정의(label 기반) 위반 + (b) 같은 상황에서
+Linux 는 is_alias=false/is_secondary=true 라 **Linux 와 값이 정반대** → 목적 자체 깨짐. 정답은 is_secondary.
+
+구현(`filter_plugins/network_topology.py` `enrich_windows_addresses`):
+- is_secondary = 같은 인터페이스+같은 서브넷 2번째+ IPv4 → true (Linux 커널 동작 controller-side 모사, best-effort)
+- is_alias = 항상 false (Windows 라벨 개념 부재 — 날조 금지)
+- label/parent_interface = 인터페이스명, scope = best-effort(fe80→link/127.→host/그외 global)
+
+검증(build #158, 전 스테이지 SUCCESS):
+- Ethernet4 (192.168.50.40 + .41, 같은 /24): 한 주소 is_secondary=true, 다른 하나 false (정확히 1 primary)
+- 전 주소 6개 5키 보유, is_secondary 누락 0, is_alias=true 0 (날조 0)
+- 단위 787 passed (신규 6), field_dictionary + docs/20 §6.4.2 Windows 반영 동기화
+
+한계(문서화됨): "어느 IP 가 primary 인가"는 수집 순서 기반(best-effort) — Windows 는 커널 primary 플래그
+API 가 없어 first-in-collection 을 primary 로. "같은 서브넷에 정확히 1 primary" 불변식은 보장.
+
 ## 미확인 / 후속
 
 - 실 ansible os-gather 전체 파이프라인(Jenkins Stage 1~4) 미실행 — 컨트롤러(Linux agent) 필요.
