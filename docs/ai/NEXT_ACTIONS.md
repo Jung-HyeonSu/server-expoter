@@ -7,19 +7,14 @@
 
 ---
 
-## is_os_disk 실장비 검증 후속 (2026-07-02)
+## is_os_disk 실장비 검증 (2026-07-02) — 표준 토폴로지 [DONE]
 
-> 상세: `tests/evidence/2026-07-02-is-os-disk.md`. 코드/스키마/baseline/테스트/문서 완료 + validator PASS + pytest 31(test_os_output).
-> baseline 값은 **토폴로지 기반**(단일 OS 디스크 VM 가정) — 실장비 gather 로 실값 확정 필요.
+> 상세: `tests/evidence/2026-07-02-is-os-disk.md` (라이브 검증 절). Jenkins build #165(Linux 4대)/#166(Windows .120) SUCCESS + SSH/winrm ground truth 3자 일치. 배포 커밋 c4696c87.
 
-- [ ] **[MED] 실장비 is_os_disk 실측**: gatherOS 실행(Linux+Windows)으로 is_os_disk true/false 실값 확인.
-  Linux `findmnt`/`lsblk -s`, Windows `Get-Partition` 경로가 실환경에서 OS 디스크를 정확히 표시하는지.
-  (이 세션 Windows dev 는 ansible 미설치 → syntax-check/실행 미수행.)
-- [ ] **[MED] baremetal BOSS/LVM/RAID 실측**: Dell BOSS-N1 부팅(예: 10.100.64.96)에서 `nvme0n1`=true, 대용량 RAID `sda`=false 확인 (예시 `os_linux_baremetal_dell.jsonc` 시연값 실측 대조).
-- [ ] **[LOW] SAN/iSCSI/NFS 루트 null 케이스 실측**: 로컬 물리 디스크 매핑 불가 시 null 반환 확인.
-- [ ] **[LOW] ansible syntax-check**: 실장비 Agent 에서 `ansible-playbook --syntax-check os-gather/site.yml` (Windows dev 미수행분).
-- [ ] **[MED] 감사 후속 — 토폴로지 실측**: `-l`(글리프 fix) 반영 후 LVM/mdraid/multipath 실 host 에서 `lsblk -s -l` 출력 확인 + 멤버 all-true. btrfs(`${src%%\[*}` strip) 실측. Windows Storage Spaces/동적미러 = null 확인.
-- [ ] **[LOW] null-case 회귀 fixture**: SAN/iSCSI/NFS 루트(빈 osdisks) → 전 디스크 is_os_disk=null 단정 fixture 추가 ('거짓 false 금지' 불변식 고정 — 현재 null 케이스 test 부재).
+- [x] **[DONE 2026-07-02] 실장비 is_os_disk 실측 (Linux 4대 + Windows)**: SSH/winrm 직접 + Jenkins #165/#166 envelope 교차 대조 전부 일치 (Linux OS=sda true, Windows PHYSICALDRIVE0 true). `lsblk -s` 글리프 버그 실증 + `-s -l` fix 검증.
+- [x] **[DONE 2026-07-02] 실 Agent ansible 실행**: Jenkins #165/#166 4-Stage SUCCESS (syntax-check 이상 — 실 gather + schema validate + E2E 통과).
+- [ ] **[LOW] 예외 토폴로지 실측 (테스트 서버에 부재)**: btrfs root(`${src%%\[*}` strip) / mdraid·multipath 멤버 all-true / Dell BOSS-N1 부팅(예 10.100.64.96 → nvme0n1=true) / Windows Storage Spaces·동적미러=null — 해당 장비 확보 시.
+- [ ] **[LOW] SAN/iSCSI/NFS 루트 null 케이스 + 회귀 fixture**: 로컬 매핑 불가 시 null 실측 + 빈 osdisks fixture 추가 ('거짓 false 금지' 불변식 고정).
 
 ## OS physical_disks serial/wwn 후속 (2026-06-22)
 

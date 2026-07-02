@@ -8,6 +8,7 @@
 - **검증**: `validate_field_dictionary.py` PASS, `pytest tests/e2e/test_os_output.py` 31 passed, baseline JSON valid, gather YAML parse OK. **ansible syntax-check 미수행(Windows dev 미설치) + 실장비 실측 미수행 → NEXT_ACTIONS 등재**.
 - **부수 정정 (DRIFT-018)**: field_dictionary 카운트 문서 drift 정정 — "134 / Nice 81" → 실측 "**168 / Nice 115**" (must·skip 일치, nice 만 34 누락분; 2026-06-22 cycle 미반영). 13곳 + 감사 추가 5곳 일괄.
 - **감사 (2026-07-02, is-os-disk-audit workflow 4관점·27 findings)**: 실장비 전 코드/영향 검수 → **HIGH 1(Linux `lsblk -s` 트리 글리프 → is_os_disk 항상 false)** + MED(btrfs strip / Windows 2회열거·WQL 가드 / `schema/fields/os.yml` 누락 / 카탈로그 stale) + 테스트갭(windows_2022·rhel810 semantic) fix. Windows Storage Spaces=null 비대칭 문서화. 재검증 pytest 820 passed. 상세: `tests/evidence/2026-07-02-is-os-disk.md`.
+- **실장비 라이브 검증 (2026-07-02)**: 사용자 제공 서버 end-to-end — Linux 4대(RHEL8.10/9.6×2/Ubuntu24.04) SSH 직접 실측 + Jenkins **build #165** envelope, Windows(.120) winrm + **build #166** envelope. **직접 실측 = Jenkins 파이프라인 = baseline 3자 일치** (Linux OS=sda true, Windows PHYSICALDRIVE0 true). 글리프 버그 실증(옛 명령 `/dev/└─sda`). 배포 커밋 c4696c87 확인.
 
 ---
 
