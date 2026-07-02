@@ -18,6 +18,8 @@
 - [ ] **[MED] baremetal BOSS/LVM/RAID 실측**: Dell BOSS-N1 부팅(예: 10.100.64.96)에서 `nvme0n1`=true, 대용량 RAID `sda`=false 확인 (예시 `os_linux_baremetal_dell.jsonc` 시연값 실측 대조).
 - [ ] **[LOW] SAN/iSCSI/NFS 루트 null 케이스 실측**: 로컬 물리 디스크 매핑 불가 시 null 반환 확인.
 - [ ] **[LOW] ansible syntax-check**: 실장비 Agent 에서 `ansible-playbook --syntax-check os-gather/site.yml` (Windows dev 미수행분).
+- [ ] **[MED] 감사 후속 — 토폴로지 실측**: `-l`(글리프 fix) 반영 후 LVM/mdraid/multipath 실 host 에서 `lsblk -s -l` 출력 확인 + 멤버 all-true. btrfs(`${src%%\[*}` strip) 실측. Windows Storage Spaces/동적미러 = null 확인.
+- [ ] **[LOW] null-case 회귀 fixture**: SAN/iSCSI/NFS 루트(빈 osdisks) → 전 디스크 is_os_disk=null 단정 fixture 추가 ('거짓 false 금지' 불변식 고정 — 현재 null 케이스 test 부재).
 
 ## OS physical_disks serial/wwn 후속 (2026-06-22)
 

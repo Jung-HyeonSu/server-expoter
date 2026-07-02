@@ -109,33 +109,99 @@ Phase 2 cycle 안에서 즉시 fix 대상 코드 버그 — **0건 확정**.
 
 # Field Usage Matrix — 측정 결과
 
-- field_dictionary entries: 74
-- baselines: 9
-- 총 cells: 666
+- field_dictionary entries: 168
+- baselines: 10
+- 총 cells: 1680
 
 ## 4 상태 카운트 (channel × state)
 
 | Channel | present | null | empty | not_supported | missing | total |
 |---|---|---|---|---|---|---|
-| redfish | 174 | 11 | 11 | 36 | 64 | 296 |
-| os | 104 | 10 | 33 | 24 | 51 | 222 |
-| esxi | 29 | 1 | 18 | 10 | 16 | 74 |
+| redfish | 257 | 37 | 14 | 36 | 328 | 672 |
+| os | 160 | 22 | 109 | 111 | 102 | 504 |
+| esxi | 48 | 5 | 29 | 27 | 59 | 168 |
 
-## 분류 1 후보 (수집 불가 — channel 제거): 22
+## 분류 1 후보 (수집 불가 — channel 제거): 90
 
-- `vendor` × os
-- `storage.physical_disks[]` × esxi
+- `hardware.bios_date` × redfish
+- `hardware.asset_tag` × redfish
+- `hardware.system_type` × redfish
+- `hardware.part_number` × redfish
+- `hardware.last_reset_time` × redfish
+- `hardware.boot_progress` × redfish
+- `hardware.tpm` × redfish
+- `memory.slots[].capacity_mb` × redfish
+- `memory.slots[].speed_mhz` × os
+- `memory.slots[].base_module_type` × redfish
+- `memory.slots[].rank_count` × redfish
+- `memory.slots[].data_width_bits` × redfish
+- `memory.slots[].bus_width_bits` × redfish
+- `memory.slots[].error_correction` × redfish
+- `memory.slots[].locator` × redfish
+- `memory.slots[].serial` × os
+- `storage.physical_disks[].serial` × os
+- `storage.physical_disks[].wwn` × os
+- `storage.physical_disks[].health` × os
+- `storage.controllers[].driver` × redfish
+- `thermal.temperatures[]` × redfish
+- `thermal.temperatures[].reading_celsius` × redfish
+- `thermal.temperatures[].upper_critical` × redfish
+- `thermal.temperatures[].physical_context` × redfish
+- `thermal.fans[]` × redfish
+- `thermal.fans[].reading` × redfish
+- `thermal.fans[].reading_units` × redfish
+- `firmware[].category` × redfish
+- `firmware[].pending` × redfish
+- `bmc.state` × redfish
+- `bmc.power_state` × redfish
+- `bmc.uuid` × redfish
+- `bmc.mac_address` × redfish
+- `bmc.dns_name` × redfish
+- `bmc.datetime` × redfish
+- `bmc.datetime_offset` × redfish
+- `bmc.timezone` × redfish
+- `bmc.last_reset_time` × redfish
 - `diagnosis.failure_stage` × redfish
 - `diagnosis.failure_stage` × os
 - `diagnosis.failure_stage` × esxi
+- `cpu.architecture` × redfish
 - `network.adapters[]` × redfish
+- `network.adapters[].firmware_version` × redfish
+- `network.adapters[].firmware_version` × os
 - `network.ports[]` × redfish
-- `network.driver_map[]` × os
+- `network.teams[]` × os
+- `network.interfaces[].vlan_id` × os
+- `network.interfaces[].vlan_parent` × os
+- `network.interfaces[].team_role` × os
+- `network.interfaces[].team_master` × os
 - `storage.hbas[]` × redfish
 - `storage.hbas[]` × os
 - `storage.infiniband[]` × redfish
 - `storage.infiniband[]` × os
 - `storage.infiniband[]` × esxi
+- `storage.hbas[].wwpn` × redfish
+- `storage.hbas[].wwpn` × os
+- `storage.hbas[].wwnn` × redfish
+- `storage.hbas[].wwnn` × os
+- `storage.hbas[].port_type` × redfish
+- `storage.hbas[].port_type` × os
+- `storage.hbas[].link_speed_gbps` × redfish
+- `storage.hbas[].link_speed_gbps` × os
+- `storage.hbas[].link_speed_gbps` × esxi
+- `storage.hbas[].source` × redfish
+- `storage.hbas[].source` × os
+- `storage.infiniband[].node_guid` × redfish
+- `storage.infiniband[].node_guid` × os
+- `storage.infiniband[].node_guid` × esxi
+- `storage.infiniband[].rate` × redfish
+- `storage.infiniband[].rate` × os
+- `storage.infiniband[].rate` × esxi
+- `storage.infiniband[].rate_gbps` × redfish
+- `storage.infiniband[].rate_gbps` × os
+- `storage.infiniband[].rate_gbps` × esxi
+- `storage.infiniband[].source` × redfish
+- `storage.infiniband[].source` × os
+- `storage.infiniband[].source` × esxi
 - `multi_node` × redfish
 - `multi_node.enabled` × redfish
 - `multi_node.layout` × redfish
@@ -143,14 +209,25 @@ Phase 2 cycle 안에서 즉시 fix 대상 코드 버그 — **0건 확정**.
 - `multi_node.partitions[]` × redfish
 - `multi_node.managers[]` × redfish
 - `multi_node.chassis[]` × redfish
+- `diagnosis.details.hostname_source` × redfish
+- `diagnosis.details.hostname_source` × esxi
 - `diagnosis.details.multi_node_layout` × redfish
 - `diagnosis.details.rmc_activation_check` × redfish
 
-## 분류 2 후보 (서버 미지원 — help_ko 명시): 12
+## 분류 2 후보 (서버 미지원 — help_ko 명시): 29
 
+- `hostname` × redfish
+- `vendor` × os
 - `hardware.sku` × redfish
 - `hardware.oem` × redfish
-- `memory.installed_mb` × os
+- `memory.slots[]` × os
+- `memory.slots[].capacity_mb` × os
+- `memory.slots[].type` × os
+- `memory.slots[].manufacturer` × os
+- `memory.slots[].part_number` × os
+- `storage.controllers[]` × os
+- `storage.controllers[].controller_type` × os
+- `storage.controllers[].driver` × os
 - `storage.logical_volumes[]` × redfish
 - `storage.logical_volumes[].raid_level` × redfish
 - `storage.logical_volumes[].member_drive_ids` × redfish
@@ -160,14 +237,61 @@ Phase 2 cycle 안에서 즉시 fix 대상 코드 버그 — **0건 확정**.
 - `storage.logical_volumes[].total_mb` × redfish
 - `storage.logical_volumes[].health` × redfish
 - `storage.logical_volumes[].state` × redfish
+- `bmc.health` × redfish
+- `network.driver_map[]` × os
+- `network.interfaces[].addresses[].label` × os
+- `network.interfaces[].addresses[].parent_interface` × os
+- `network.interfaces[].addresses[].is_alias` × os
+- `network.interfaces[].addresses[].scope` × os
+- `network.interfaces[].addresses[].is_secondary` × os
+- `diagnosis.details.hostname_source` × os
 
-## 분류 3? 후보 (코드 버그 의심 — Phase 2 검증): 1
+## 분류 3? 후보 (코드 버그 의심 — Phase 2 검증): 17
 
 - `storage.logical_volumes[].boot_volume` × redfish
+- `bmc.oem` × redfish
+- `network.bonds[]` × os
+- `network.bonds[].mode` × os
+- `network.bonds[].slaves[]` × os
+- `network.bridges[]` × os
+- `network.interfaces[].bond_role` × os
+- `network.interfaces[].bond_master` × os
+- `network.interfaces[].slave_state` × os
+- `network.interfaces[].bond_mode` × os
+- `network.interfaces[].active_slave` × os
+- `network.interfaces[].bond_slaves` × os
+- `network.bonds[].addresses[].label` × os
+- `network.bonds[].addresses[].parent_interface` × os
+- `network.bonds[].addresses[].is_alias` × os
+- `network.bonds[].addresses[].scope` × os
+- `network.bonds[].addresses[].is_secondary` × os
 
 
-## Drift 검출 (17 entries)
+## Drift 검출 (69 entries)
 
+- `bmc.datetime`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `bmc.datetime_offset`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `bmc.dns_name`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `bmc.last_reset_time`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `bmc.mac_address`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `bmc.power_state`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `bmc.state`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `bmc.timezone`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `bmc.uuid`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `cpu.architecture`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `diagnosis.details.hostname_source`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(esxi): 선언했지만 모든 baseline null/missing → channel 제거 후보
 - `diagnosis.details.multi_node_layout`:
   - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
 - `diagnosis.details.rmc_activation_check`:
@@ -176,6 +300,42 @@ Phase 2 cycle 안에서 즉시 fix 대상 코드 버그 — **0건 확정**.
   - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
   - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
   - DRIFT-A(esxi): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `firmware[].category`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `firmware[].pending`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `hardware.asset_tag`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `hardware.bios_date`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `hardware.boot_progress`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `hardware.last_reset_time`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `hardware.part_number`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `hardware.system_type`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `hardware.tpm`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `memory.slots[].base_module_type`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `memory.slots[].bus_width_bits`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `memory.slots[].capacity_mb`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `memory.slots[].data_width_bits`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `memory.slots[].error_correction`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `memory.slots[].locator`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `memory.slots[].rank_count`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `memory.slots[].serial`:
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `memory.slots[].speed_mhz`:
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
 - `multi_node`:
   - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
 - `multi_node.chassis[]`:
@@ -192,100 +352,255 @@ Phase 2 cycle 안에서 즉시 fix 대상 코드 버그 — **0건 확정**.
   - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
 - `network.adapters[]`:
   - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
-- `network.driver_map[]`:
+- `network.adapters[].firmware_version`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `network.interfaces[].team_master`:
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `network.interfaces[].team_role`:
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `network.interfaces[].vlan_id`:
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `network.interfaces[].vlan_parent`:
   - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
 - `network.ports[]`:
   - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `network.teams[]`:
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.controllers[].driver`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
 - `storage.hbas[]`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.hbas[].link_speed_gbps`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(esxi): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.hbas[].port_type`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.hbas[].source`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.hbas[].wwnn`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.hbas[].wwpn`:
   - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
   - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
 - `storage.infiniband[]`:
   - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
   - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
   - DRIFT-A(esxi): 선언했지만 모든 baseline null/missing → channel 제거 후보
-- `storage.physical_disks[]`:
-  - DRIFT-A(esxi): 선언했지만 모든 baseline null/missing → channel 제거 후보
-- `vendor`:
+- `storage.infiniband[].node_guid`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
   - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(esxi): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.infiniband[].rate`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(esxi): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.infiniband[].rate_gbps`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(esxi): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.infiniband[].source`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+  - DRIFT-A(esxi): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.physical_disks[].health`:
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.physical_disks[].serial`:
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `storage.physical_disks[].wwn`:
+  - DRIFT-A(os): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `thermal.fans[]`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `thermal.fans[].reading`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `thermal.fans[].reading_units`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `thermal.temperatures[]`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `thermal.temperatures[].physical_context`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `thermal.temperatures[].reading_celsius`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
+- `thermal.temperatures[].upper_critical`:
+  - DRIFT-A(redfish): 선언했지만 모든 baseline null/missing → channel 제거 후보
 
 ## 전수 매트릭스 (65 × 8)
 
-| Field | Channel 선언 | cisco | dell | esxi | hpe | hpe_csus_3 | lenovo | rhel810_ra | ubuntu | windows | 분류 |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| `schema_version` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `target_type` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `collection_method` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `ip` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `hostname` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `vendor` | redfish,os,esxi | O | O | O | O | O | O | n | n | n | os:1 |
-| `meta` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `correlation` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `status` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `sections.*` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `hardware.health` | redfish | O | O | _ | O | O | O | - | - | - | OK |
-| `hardware.sku` | redfish | n | O | _ | O | O | O | - | - | - | redfish:2 |
-| `hardware.oem` | redfish | e | O | _ | O | e | O | - | - | - | redfish:2 |
-| `memory.total_basis` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `memory.installed_mb` | redfish,os | O | O | _ | O | O | O | O | n | O | os:2 |
-| `memory.visible_mb` | os,esxi | _ | _ | O | _ | n | _ | O | O | O | OK |
-| `storage.physical_disks[]` | redfish,os,esxi | O | O | e | O | e | O | O | O | O | esxi:1 |
-| `storage.physical_disks[].id` | redfish,os | O | O | e | O | e | O | O | O | O | OK |
-| `storage.physical_disks[].predicted_life_percent` | redfish | O | O | e | O | e | O | _ | _ | _ | OK |
-| `storage.controllers[].drives[]` | redfish | O | O | e | O | e | O | e | e | e | OK |
-| `storage.logical_volumes[]` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].raid_level` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].member_drive_ids` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].controller_id` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].id` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].name` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].total_mb` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].health` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].state` | redfish | O | O | e | O | e | e | e | e | e | redfish:2 |
-| `storage.logical_volumes[].boot_volume` | redfish | n | O | e | n | e | e | e | e | e | redfish:3? |
-| `network.interfaces[].link_status` | redfish,os,esxi | O | O | O | O | e | O | O | O | O | OK |
-| `power.power_supplies[].state` | redfish | O | O | - | O | n | O | - | - | - | OK |
-| `cpu.cores_physical` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `firmware[].component` | redfish | O | O | - | O | e | O | - | - | - | OK |
-| `users[]` | os | - | - | - | - | - | - | O | O | O | OK |
-| `users[].name` | os | - | - | - | - | - | - | O | O | O | OK |
-| `users[].uid` | os | - | - | - | - | - | - | O | O | O | OK |
-| `users[].groups` | os | - | - | - | - | - | - | O | O | O | OK |
-| `users[].home` | os | - | - | - | - | - | - | O | O | O | OK |
-| `users[].last_access_time` | os | - | - | - | - | - | - | O | O | O | OK |
-| `bmc.ip` | redfish | O | O | - | O | n | O | - | - | - | OK |
-| `correlation.host_ip` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `diagnosis.auth_success` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `hardware.power_state` | redfish | O | O | _ | O | O | O | - | - | - | OK |
-| `storage.physical_disks[].failure_predicted` | redfish | O | O | e | O | e | O | _ | _ | _ | OK |
-| `network.interfaces[].kind` | redfish,os,esxi | O | O | O | O | e | O | O | O | O | OK |
-| `meta.duration_ms` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `diagnosis.failure_stage` | redfish,os,esxi | n | n | n | n | n | n | n | n | n | redfish:1,os:1,esxi:1 |
-| `storage.physical_disks[].media_type` | redfish,os | O | O | e | O | e | O | O | O | O | OK |
-| `storage.physical_disks[].protocol` | redfish | O | O | e | O | e | O | n | n | n | OK |
-| `cpu.architecture` | os,esxi | n | n | O | n | n | n | O | O | O | OK |
-| `system.hosting_type` | os | - | - | O | - | - | - | O | O | O | esxi:DRIFT-B? |
-| `system.uptime_seconds` | os,esxi | - | - | O | - | - | - | O | O | O | OK |
-| `firmware[].updateable` | redfish | O | O | - | O | e | O | - | - | - | OK |
-| `cpu.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `memory.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `storage.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `network.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | OK |
-| `network.adapters[]` | redfish,esxi | _ | _ | O | _ | e | _ | _ | _ | _ | redfish:1 |
-| `network.ports[]` | redfish | _ | _ | _ | _ | e | _ | _ | _ | _ | redfish:1 |
-| `network.virtual_switches[]` | esxi | _ | _ | O | _ | _ | _ | _ | _ | _ | OK |
-| `network.driver_map[]` | os | _ | _ | _ | _ | _ | _ | _ | _ | _ | os:1 |
-| `storage.hbas[]` | redfish,os,esxi | _ | _ | O | _ | e | _ | _ | _ | _ | redfish:1,os:1 |
-| `storage.infiniband[]` | redfish,os,esxi | _ | _ | e | _ | e | _ | _ | _ | _ | redfish:1,os:1,esxi:1 |
-| `system.runtime` | os,esxi | - | - | O | - | - | - | O | O | O | OK |
-| `multi_node` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
-| `multi_node.enabled` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
-| `multi_node.layout` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
-| `multi_node.summary` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
-| `multi_node.partitions[]` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
-| `multi_node.managers[]` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
-| `multi_node.chassis[]` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
-| `diagnosis.details.multi_node_layout` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
-| `diagnosis.details.rmc_activation_check` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | redfish:1 |
+| Field | Channel 선언 | cisco | dell | esxi | hpe | hpe_csus_3 | lenovo | rhel810_ra | ubuntu | windows_20 | windows | 분류 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `schema_version` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `target_type` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `collection_method` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `ip` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `hostname` | redfish,os,esxi | O | O | O | n | O | O | O | O | O | O | redfish:2 |
+| `vendor` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | n | os:2 |
+| `meta` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `correlation` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `status` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `sections.*` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `hardware.health` | redfish | O | O | _ | O | O | O | - | - | _ | - | OK |
+| `hardware.sku` | redfish | n | O | _ | O | O | O | - | - | n | - | redfish:2 |
+| `hardware.vendor` | esxi,redfish | O | O | O | O | O | O | - | - | O | - | OK |
+| `hardware.model` | esxi,redfish | O | O | O | O | O | O | - | - | O | - | OK |
+| `hardware.serial` | esxi,redfish | O | O | O | O | O | O | - | - | O | - | OK |
+| `hardware.uuid` | esxi,redfish | O | O | O | O | O | O | - | - | O | - | OK |
+| `hardware.bios_version` | esxi,redfish | O | O | O | O | O | O | - | - | O | - | OK |
+| `hardware.bios_date` | esxi,redfish | n | n | O | n | n | n | - | - | O | - | redfish:1 |
+| `hardware.asset_tag` | redfish | _ | _ | _ | _ | O | _ | - | - | n | - | redfish:1 |
+| `hardware.system_type` | redfish | _ | _ | _ | _ | O | _ | - | - | _ | - | redfish:1 |
+| `hardware.part_number` | redfish | _ | _ | _ | _ | O | _ | - | - | _ | - | redfish:1 |
+| `hardware.last_reset_time` | redfish | _ | _ | _ | _ | n | _ | - | - | _ | - | redfish:1 |
+| `hardware.boot_progress` | redfish | _ | _ | _ | _ | O | _ | - | - | _ | - | redfish:1 |
+| `hardware.tpm` | redfish | _ | _ | _ | _ | O | _ | - | - | _ | - | redfish:1 |
+| `hardware.oem` | redfish | e | O | _ | O | e | O | - | - | e | - | redfish:2 |
+| `memory.total_basis` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `memory.installed_mb` | redfish,os | O | O | _ | O | O | O | O | O | O | O | OK |
+| `memory.visible_mb` | os,esxi | _ | _ | O | _ | n | _ | O | O | O | O | OK |
+| `memory.total_mb` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `memory.slots[]` | redfish,os | O | O | e | O | O | O | O | O | O | e | os:2 |
+| `memory.slots[].capacity_mb` | redfish,os | _ | _ | e | _ | O | _ | O | O | O | e | redfish:1,os:2 |
+| `memory.slots[].speed_mhz` | redfish,os | O | O | e | O | O | O | n | n | n | e | os:1 |
+| `memory.slots[].type` | redfish,os | O | O | e | O | O | O | O | O | n | e | os:2 |
+| `memory.slots[].base_module_type` | redfish | _ | _ | e | _ | O | _ | _ | _ | _ | e | redfish:1 |
+| `memory.slots[].manufacturer` | redfish,os | O | O | e | O | O | O | O | O | O | e | os:2 |
+| `memory.slots[].part_number` | redfish,os | O | O | e | O | O | O | O | O | O | e | os:2 |
+| `memory.slots[].rank_count` | redfish | _ | _ | e | _ | O | _ | _ | _ | _ | e | redfish:1 |
+| `memory.slots[].data_width_bits` | redfish | _ | _ | e | _ | O | _ | _ | _ | _ | e | redfish:1 |
+| `memory.slots[].bus_width_bits` | redfish | _ | _ | e | _ | O | _ | _ | _ | _ | e | redfish:1 |
+| `memory.slots[].error_correction` | redfish | _ | _ | e | _ | O | _ | _ | _ | _ | e | redfish:1 |
+| `memory.slots[].locator` | redfish | _ | _ | e | _ | O | _ | _ | _ | _ | e | redfish:1 |
+| `memory.slots[].serial` | redfish,os | O | O | e | O | O | O | _ | _ | n | e | os:1 |
+| `memory.slots[].health` | redfish | O | O | e | O | O | O | _ | _ | _ | e | OK |
+| `storage.physical_disks[]` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `storage.physical_disks[].id` | redfish,os | O | O | O | O | O | O | O | O | O | O | esxi:DRIFT-B? |
+| `storage.physical_disks[].serial` | redfish,os,esxi | O | O | O | O | O | O | n | n | O | n | os:1 |
+| `storage.physical_disks[].wwn` | os,esxi | _ | _ | O | _ | _ | _ | n | n | O | n | os:1 |
+| `storage.physical_disks[].health` | redfish,os | O | O | n | O | O | O | n | n | O | n | os:1 |
+| `storage.physical_disks[].predicted_life_percent` | redfish | O | O | _ | O | O | O | _ | _ | _ | _ | OK |
+| `storage.physical_disks[].is_os_disk` | os | _ | _ | _ | _ | _ | _ | O | O | O | O | OK |
+| `storage.controllers[]` | redfish,os,esxi | O | O | O | O | O | O | O | O | e | e | os:2 |
+| `storage.controllers[].controller_type` | os,esxi | _ | _ | O | _ | _ | _ | O | O | e | e | os:2 |
+| `storage.controllers[].driver` | redfish,os,esxi | _ | _ | O | _ | _ | _ | O | O | e | e | redfish:1,os:2 |
+| `storage.controllers[].drives[]` | redfish | O | O | n | O | O | O | n | n | e | e | OK |
+| `storage.logical_volumes[]` | redfish | O | O | e | O | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].raid_level` | redfish | O | O | e | O | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].member_drive_ids` | redfish | O | O | e | O | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].controller_id` | redfish | O | O | e | O | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].id` | redfish | O | O | e | O | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].name` | redfish | O | O | e | O | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].total_mb` | redfish | O | O | e | O | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].health` | redfish | O | O | e | O | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].state` | redfish | O | O | e | O | O | e | e | e | e | e | redfish:2 |
+| `storage.logical_volumes[].boot_volume` | redfish | n | O | e | n | O | e | e | e | e | e | redfish:3? |
+| `network.interfaces[].link_status` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `power.power_supplies[].state` | redfish | O | O | - | O | O | O | - | - | - | - | OK |
+| `thermal.temperatures[]` | redfish | _ | _ | _ | _ | _ | _ | e | e | e | _ | redfish:1 |
+| `thermal.temperatures[].reading_celsius` | redfish | _ | _ | _ | _ | _ | _ | e | e | e | _ | redfish:1 |
+| `thermal.temperatures[].upper_critical` | redfish | _ | _ | _ | _ | _ | _ | e | e | e | _ | redfish:1 |
+| `thermal.temperatures[].physical_context` | redfish | _ | _ | _ | _ | _ | _ | e | e | e | _ | redfish:1 |
+| `thermal.fans[]` | redfish | _ | _ | _ | _ | _ | _ | e | e | e | _ | redfish:1 |
+| `thermal.fans[].reading` | redfish | _ | _ | _ | _ | _ | _ | e | e | e | _ | redfish:1 |
+| `thermal.fans[].reading_units` | redfish | _ | _ | _ | _ | _ | _ | e | e | e | _ | redfish:1 |
+| `cpu.cores_physical` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `firmware[].category` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `firmware[].pending` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `firmware[].component` | redfish | O | O | - | O | O | O | - | - | - | - | OK |
+| `users[]` | os | - | - | - | - | - | - | O | O | O | O | OK |
+| `users[].name` | os | - | - | - | - | - | - | O | O | O | O | OK |
+| `users[].uid` | os | - | - | - | - | - | - | O | O | O | O | OK |
+| `users[].groups` | os | - | - | - | - | - | - | O | O | O | O | OK |
+| `users[].home` | os | - | - | - | - | - | - | O | O | O | O | OK |
+| `users[].last_access_time` | os | - | - | - | - | - | - | O | O | O | O | OK |
+| `bmc.ip` | redfish | O | O | - | O | O | O | - | - | - | - | OK |
+| `bmc.firmware_version` | redfish | O | O | - | O | O | O | - | - | - | - | OK |
+| `bmc.model` | redfish | O | O | - | O | O | O | - | - | - | - | OK |
+| `bmc.manager_type` | redfish | O | O | - | O | O | O | - | - | - | - | OK |
+| `bmc.name` | redfish | O | O | - | O | O | O | - | - | - | - | OK |
+| `bmc.health` | redfish | O | O | - | O | O | n | - | - | - | - | redfish:2 |
+| `bmc.state` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `bmc.power_state` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `bmc.uuid` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `bmc.mac_address` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `bmc.dns_name` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `bmc.datetime` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `bmc.datetime_offset` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `bmc.timezone` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `bmc.last_reset_time` | redfish | _ | _ | - | _ | O | _ | - | - | - | - | redfish:1 |
+| `bmc.oem` | redfish | e | e | - | O | O | e | - | - | - | - | redfish:3? |
+| `correlation.host_ip` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `diagnosis.auth_success` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `hardware.power_state` | redfish | O | O | _ | O | O | O | - | - | _ | - | OK |
+| `storage.physical_disks[].failure_predicted` | redfish | O | O | _ | O | O | O | _ | _ | _ | _ | OK |
+| `network.interfaces[].kind` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `meta.duration_ms` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `diagnosis.failure_stage` | redfish,os,esxi | n | n | n | n | n | n | n | n | n | n | redfish:1,os:1,esxi:1 |
+| `storage.physical_disks[].media_type` | redfish,os | O | O | O | O | O | O | O | O | O | O | esxi:DRIFT-B? |
+| `storage.physical_disks[].protocol` | redfish | O | O | n | O | O | O | n | n | O | n | OK |
+| `cpu.architecture` | redfish,os,esxi | n | n | O | n | O | n | O | O | O | O | redfish:1 |
+| `system.hosting_type` | os | - | - | O | - | - | - | O | O | O | O | esxi:DRIFT-B? |
+| `system.uptime_seconds` | os,esxi | - | - | O | - | - | - | O | O | O | O | OK |
+| `firmware[].updateable` | redfish | O | O | - | O | O | O | - | - | - | - | OK |
+| `cpu.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `memory.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `storage.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `network.summary` | redfish,os,esxi | O | O | O | O | O | O | O | O | O | O | OK |
+| `network.adapters[]` | redfish,esxi | _ | _ | O | _ | O | _ | O | O | e | _ | redfish:1,os:DRIFT-B? |
+| `network.adapters[].firmware_version` | redfish,os | _ | _ | _ | _ | O | _ | n | n | e | _ | redfish:1,os:1 |
+| `network.ports[]` | redfish | _ | _ | _ | _ | O | _ | e | e | e | _ | redfish:1 |
+| `network.virtual_switches[]` | esxi | _ | _ | O | _ | _ | _ | e | e | e | _ | OK |
+| `network.driver_map[]` | os | _ | _ | _ | _ | _ | _ | O | O | e | _ | os:2 |
+| `network.bonds[]` | os | _ | _ | _ | _ | _ | _ | O | e | e | e | os:3? |
+| `network.bonds[].mode` | os | _ | _ | _ | _ | _ | _ | O | e | e | e | os:3? |
+| `network.bonds[].slaves[]` | os | _ | _ | _ | _ | _ | _ | O | e | e | e | os:3? |
+| `network.teams[]` | os | _ | _ | _ | _ | _ | _ | e | e | O | e | os:1 |
+| `network.bridges[]` | os | _ | _ | _ | _ | _ | _ | O | e | e | e | os:3? |
+| `network.interfaces[].bond_role` | os | _ | _ | _ | _ | _ | _ | O | _ | _ | _ | os:3? |
+| `network.interfaces[].bond_master` | os | _ | _ | _ | _ | _ | _ | O | _ | _ | _ | os:3? |
+| `network.interfaces[].slave_state` | os | _ | _ | _ | _ | _ | _ | O | _ | _ | _ | os:3? |
+| `network.interfaces[].bond_mode` | os | _ | _ | _ | _ | _ | _ | O | _ | _ | _ | os:3? |
+| `network.interfaces[].active_slave` | os | _ | _ | _ | _ | _ | _ | O | _ | _ | _ | os:3? |
+| `network.interfaces[].bond_slaves` | os | _ | _ | _ | _ | _ | _ | O | _ | _ | _ | os:3? |
+| `network.interfaces[].addresses[].label` | os | n | n | _ | n | n | n | O | O | n | _ | os:2 |
+| `network.interfaces[].addresses[].parent_interface` | os | n | n | _ | n | n | n | O | O | n | _ | os:2 |
+| `network.interfaces[].addresses[].is_alias` | os | n | n | _ | n | n | n | O | O | n | _ | os:2 |
+| `network.interfaces[].addresses[].scope` | os | n | n | _ | n | n | n | O | O | n | _ | os:2 |
+| `network.interfaces[].addresses[].is_secondary` | os | n | n | _ | n | n | n | O | O | n | _ | os:2 |
+| `network.bonds[].addresses[].label` | os | _ | _ | _ | _ | _ | _ | O | e | e | e | os:3? |
+| `network.bonds[].addresses[].parent_interface` | os | _ | _ | _ | _ | _ | _ | O | e | e | e | os:3? |
+| `network.bonds[].addresses[].is_alias` | os | _ | _ | _ | _ | _ | _ | O | e | e | e | os:3? |
+| `network.bonds[].addresses[].scope` | os | _ | _ | _ | _ | _ | _ | O | e | e | e | os:3? |
+| `network.bonds[].addresses[].is_secondary` | os | _ | _ | _ | _ | _ | _ | O | e | e | e | os:3? |
+| `network.interfaces[].vlan_id` | os | _ | _ | _ | _ | _ | _ | _ | _ | _ | _ | os:1 |
+| `network.interfaces[].vlan_parent` | os | _ | _ | _ | _ | _ | _ | _ | _ | _ | _ | os:1 |
+| `network.interfaces[].team_role` | os | _ | _ | _ | _ | _ | _ | _ | _ | O | _ | os:1 |
+| `network.interfaces[].team_master` | os | _ | _ | _ | _ | _ | _ | _ | _ | O | _ | os:1 |
+| `storage.hbas[]` | redfish,os,esxi | _ | _ | O | _ | O | _ | e | e | e | _ | redfish:1,os:1 |
+| `storage.infiniband[]` | redfish,os,esxi | _ | _ | e | _ | e | _ | e | e | O | _ | redfish:1,os:1,esxi:1 |
+| `storage.hbas[].wwpn` | redfish,os,esxi | _ | _ | O | _ | O | _ | e | e | e | _ | redfish:1,os:1 |
+| `storage.hbas[].wwnn` | redfish,os,esxi | _ | _ | O | _ | O | _ | e | e | e | _ | redfish:1,os:1 |
+| `storage.hbas[].port_type` | redfish,os,esxi | _ | _ | O | _ | O | _ | e | e | e | _ | redfish:1,os:1 |
+| `storage.hbas[].link_speed_gbps` | redfish,os,esxi | _ | _ | n | _ | O | _ | e | e | e | _ | redfish:1,os:1,esxi:1 |
+| `storage.hbas[].source` | redfish,os,esxi | _ | _ | O | _ | O | _ | e | e | e | _ | redfish:1,os:1 |
+| `storage.infiniband[].node_guid` | redfish,os,esxi | _ | _ | e | _ | e | _ | e | e | n | _ | redfish:1,os:1,esxi:1 |
+| `storage.infiniband[].rate` | redfish,os,esxi | _ | _ | e | _ | e | _ | e | e | n | _ | redfish:1,os:1,esxi:1 |
+| `storage.infiniband[].rate_gbps` | redfish,os,esxi | _ | _ | e | _ | e | _ | e | e | n | _ | redfish:1,os:1,esxi:1 |
+| `storage.infiniband[].source` | redfish,os,esxi | _ | _ | e | _ | e | _ | e | e | O | _ | redfish:1,os:1,esxi:1 |
+| `system.runtime` | os,esxi | - | - | O | - | - | - | O | O | O | O | OK |
+| `multi_node` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | _ | redfish:1 |
+| `multi_node.enabled` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | _ | redfish:1 |
+| `multi_node.layout` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | _ | redfish:1 |
+| `multi_node.summary` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | _ | redfish:1 |
+| `multi_node.partitions[]` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | _ | redfish:1 |
+| `multi_node.managers[]` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | _ | redfish:1 |
+| `multi_node.chassis[]` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | _ | redfish:1 |
+| `diagnosis.details.hostname_source` | redfish,os,esxi | _ | _ | _ | _ | _ | _ | O | O | O | _ | redfish:1,os:2,esxi:1 |
+| `diagnosis.details.multi_node_layout` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | _ | redfish:1 |
+| `diagnosis.details.rmc_activation_check` | redfish | _ | _ | _ | _ | O | _ | _ | _ | _ | _ | redfish:1 |
 
 **범례**: O=present / n=null / e=empty / -=not_supported / _=missing
 

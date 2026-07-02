@@ -30,7 +30,7 @@
 |---|---|---|
 | 1 | envelope 13 필드 / `data.<section>.<field>` shape 변경 0 | `scripts/ai/hooks/envelope_change_check.py` |
 | 2 | 기존 path 유지 (수정 안 됨) — 새 path **추가만** | `git diff` 검토 — 삭제 line 0 / 추가 line만 |
-| 3 | sections 10 / field_dictionary 83 entries 의미 변경 0 | rule 13 R5 / R7 (docs/20 동기화) |
+| 3 | sections / field_dictionary entries 의미 변경 0 (count-agnostic — 실측은 field_dictionary 헤더) | rule 13 R5 / R7 (docs/20 동기화) |
 | 4 | 호출자 시스템 파싱 변경 0 | docs/20 / baseline_v1 회귀 |
 | 5 | 회귀 fixture 추가 (호환성 fix 영역만) | `tests/fixtures/` mock 추가 |
 

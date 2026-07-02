@@ -18,21 +18,21 @@
 | users | os | 로컬 시스템 사용자 계정 |
 | power | redfish | PSU 상태 / 전력 정보 |
 
-## Field Dictionary (실측 카운트, 2026-04-29)
+## Field Dictionary (실측 카운트, 2026-07-02)
 
 ```bash
 $ python3 -c "import yaml; from collections import Counter; \
     d=yaml.safe_load(open('schema/field_dictionary.yml')); \
     print(Counter(e.get('priority') for e in d['fields'].values()))"
-Counter({'must': 39, 'nice': 38, 'skip': 6})
+Counter({'nice': 115, 'must': 47, 'skip': 6})
 ```
 
 | 분류 | 카운트 | 의미 |
 |---|---|---|
-| Must | **39** | 모든 vendor baseline에 존재 필수 |
-| Nice | **38** | vendor-specific 허용 |
+| Must | **47** | 모든 vendor baseline에 존재 필수 |
+| Nice | **115** | vendor-specific 허용 |
 | Skip | **6** | 의도적 미수집 |
-| **합계** | **83 entries** | YAML key 기준 (validate_field_dictionary.py) |
+| **합계** | **168 entries** | YAML key 기준 (validate_field_dictionary.py) |
 
 **[INFO]** cycle-012에서 P3/P4/P5 신 필드 11개 Nice 추가:
 - **P3 group summary (4)**: cpu/memory/storage/network.summary

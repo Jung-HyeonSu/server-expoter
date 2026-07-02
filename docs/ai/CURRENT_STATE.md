@@ -6,7 +6,8 @@
 - **구현**: OS Linux(`findmnt /`→`lsblk -s`, python_ok+raw 대칭) / OS Windows(`%SystemDrive%`→`Get-Partition.DiskNumber`, WMI fallback). RAID/LVM 멤버 모두 true, SAN/iSCSI/NFS 루트=null(거짓 false 안 냄). ESXi/Redfish 미수집.
 - **변경**: `field_dictionary.yml`(Nice +1) / `os-gather` linux·windows gather_storage / baseline 4(ubuntu·rhel810_raw_fallback·windows·windows_2022) / output_examples 4 / conftest OS_ARRAY_FIELDS + test_os_output(`test_os_disk_flag`) / docs 20·16·09.
 - **검증**: `validate_field_dictionary.py` PASS, `pytest tests/e2e/test_os_output.py` 31 passed, baseline JSON valid, gather YAML parse OK. **ansible syntax-check 미수행(Windows dev 미설치) + 실장비 실측 미수행 → NEXT_ACTIONS 등재**.
-- **부수 정정 (DRIFT-018)**: field_dictionary 카운트 문서 drift 정정 — "134 / Nice 81" → 실측 "**168 / Nice 115**" (must·skip 일치, nice 만 34 누락분; 2026-06-22 cycle 미반영). 13곳 일괄.
+- **부수 정정 (DRIFT-018)**: field_dictionary 카운트 문서 drift 정정 — "134 / Nice 81" → 실측 "**168 / Nice 115**" (must·skip 일치, nice 만 34 누락분; 2026-06-22 cycle 미반영). 13곳 + 감사 추가 5곳 일괄.
+- **감사 (2026-07-02, is-os-disk-audit workflow 4관점·27 findings)**: 실장비 전 코드/영향 검수 → **HIGH 1(Linux `lsblk -s` 트리 글리프 → is_os_disk 항상 false)** + MED(btrfs strip / Windows 2회열거·WQL 가드 / `schema/fields/os.yml` 누락 / 카탈로그 stale) + 테스트갭(windows_2022·rhel810 semantic) fix. Windows Storage Spaces=null 비대칭 문서화. 재검증 pytest 820 passed. 상세: `tests/evidence/2026-07-02-is-os-disk.md`.
 
 ---
 

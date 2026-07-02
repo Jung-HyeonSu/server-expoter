@@ -28,6 +28,7 @@
 - **제안/조치**: 전 카운트 기재를 실측(168 / Nice 115)으로 정정 (is_os_disk +1 포함). 향후 additive Nice cycle 마다 카운트 동반 갱신 (rule 13 R7 정신).
 - **상태**: resolved (2026-07-02 — 13곳 정정 + is_os_disk 추가 cycle)
 - **관련**: rule 13 R7 / rule 28 R1 #1 / rule 70 R8 / DRIFT-001 / DRIFT-007 / `tests/evidence/2026-07-02-is-os-disk.md`
+- **감사 addendum (2026-07-02, is-os-disk-audit)**: 초기 13곳 sweep 이 놓친 추가 stale 발견·정정 — `schema/output_examples/README.md`, `docs/ai/catalogs/SCHEMA_FIELDS.md`(83 로 더 오래된 stale) + `FIELD_USAGE_MATRIX.md`(regen), `.claude/rules/92`(count-agnostic 전환), `.claude/policy/measurement-targets.yaml`, PROJECT_MAP fingerprint(--update). `docs/ai/catalogs/VENDOR_ADAPTERS.md` 는 dated cycle-log(역사적)이라 보존. 최종 실측 168/Nice 115 전 위치 동기화.
 
 ## DRIFT-017 (2026-06-08, resolved cycle audit-cleanup)
 
