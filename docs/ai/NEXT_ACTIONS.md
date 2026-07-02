@@ -7,6 +7,18 @@
 
 ---
 
+## is_os_disk 실장비 검증 후속 (2026-07-02)
+
+> 상세: `tests/evidence/2026-07-02-is-os-disk.md`. 코드/스키마/baseline/테스트/문서 완료 + validator PASS + pytest 31(test_os_output).
+> baseline 값은 **토폴로지 기반**(단일 OS 디스크 VM 가정) — 실장비 gather 로 실값 확정 필요.
+
+- [ ] **[MED] 실장비 is_os_disk 실측**: gatherOS 실행(Linux+Windows)으로 is_os_disk true/false 실값 확인.
+  Linux `findmnt`/`lsblk -s`, Windows `Get-Partition` 경로가 실환경에서 OS 디스크를 정확히 표시하는지.
+  (이 세션 Windows dev 는 ansible 미설치 → syntax-check/실행 미수행.)
+- [ ] **[MED] baremetal BOSS/LVM/RAID 실측**: Dell BOSS-N1 부팅(예: 10.100.64.96)에서 `nvme0n1`=true, 대용량 RAID `sda`=false 확인 (예시 `os_linux_baremetal_dell.jsonc` 시연값 실측 대조).
+- [ ] **[LOW] SAN/iSCSI/NFS 루트 null 케이스 실측**: 로컬 물리 디스크 매핑 불가 시 null 반환 확인.
+- [ ] **[LOW] ansible syntax-check**: 실장비 Agent 에서 `ansible-playbook --syntax-check os-gather/site.yml` (Windows dev 미수행분).
+
 ## OS physical_disks serial/wwn 후속 (2026-06-22)
 
 > 상세: `docs/ai/CURRENT_STATE.md` 2026-06-22 + `tests/evidence/2026-06-22-os-disk-serial-wwn.md`.

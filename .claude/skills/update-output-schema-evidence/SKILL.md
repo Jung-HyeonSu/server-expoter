@@ -36,7 +36,7 @@ server-exporter 출력 schema 3종 (sections.yml + field_dictionary.yml + baseli
 | lenovo | (영향 없음) | SKIP |
 
 ### docs/ai/catalogs/SCHEMA_FIELDS.md
-- validate_field_dictionary.py 기준 분포 갱신 (예: Must 47 / Nice 81 / Skip 6 = 134 entries — 실측은 매 cycle마다 갱신)
+- validate_field_dictionary.py 기준 분포 갱신 (예: Must 47 / Nice 115 / Skip 6 = 168 entries — 실측은 매 cycle마다 갱신)
 ```
 
 ## 절차

@@ -1,5 +1,15 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-07-02 (storage.physical_disks[].is_os_disk 추가 — OS 설치 디스크 식별)
+
+- **사용자 승인**: OS 채널 한정 `is_os_disk` (Nice, `boolean|null`) 추가. 적용 범위=OS 한정 / baseline 값=토폴로지 기반 + 실장비 확인 NEXT_ACTIONS.
+- **구현**: OS Linux(`findmnt /`→`lsblk -s`, python_ok+raw 대칭) / OS Windows(`%SystemDrive%`→`Get-Partition.DiskNumber`, WMI fallback). RAID/LVM 멤버 모두 true, SAN/iSCSI/NFS 루트=null(거짓 false 안 냄). ESXi/Redfish 미수집.
+- **변경**: `field_dictionary.yml`(Nice +1) / `os-gather` linux·windows gather_storage / baseline 4(ubuntu·rhel810_raw_fallback·windows·windows_2022) / output_examples 4 / conftest OS_ARRAY_FIELDS + test_os_output(`test_os_disk_flag`) / docs 20·16·09.
+- **검증**: `validate_field_dictionary.py` PASS, `pytest tests/e2e/test_os_output.py` 31 passed, baseline JSON valid, gather YAML parse OK. **ansible syntax-check 미수행(Windows dev 미설치) + 실장비 실측 미수행 → NEXT_ACTIONS 등재**.
+- **부수 정정 (DRIFT-018)**: field_dictionary 카운트 문서 drift 정정 — "134 / Nice 81" → 실측 "**168 / Nice 115**" (must·skip 일치, nice 만 34 누락분; 2026-06-22 cycle 미반영). 13곳 일괄.
+
+---
+
 ## 일자: 2026-06-22 (Tier 1+2 미수집 필드 구현 — controllers/NIC firmware/listening_ports)
 
 - **사용자 지시**: 전수조사 Tier 1(무의존)+Tier 2(channel drift) 다 구현.

@@ -19,6 +19,16 @@
 
 ---
 
+## DRIFT-018 (2026-07-02, resolved cycle is-os-disk)
+
+- **발견 위치**: `schema/field_dictionary.yml:33` 헤더 + 카운트 기재 12곳 (CLAUDE.md / schema/README.md / rules 00·13·23 / ai-context output-schema·common×2 / role output-schema README×3 / skills update-output-schema-evidence / PROJECT_MAP)
+- **분류**: catalog-stale
+- **설명**: 카운트 문서가 "Must 47 / Nice 81 / Skip 6 = 134" 로 기재됐으나 실측(YAML 파싱 + `grep -c "priority:"`)은 "Must 47 / **Nice 115** / Skip 6 = **168**". must(47)·skip(6) 은 일치, **nice 만 34 어긋남** → 2026-06-22 T1/T2 cycle(`controllers[]` 서브필드 / `memory.slots[]` 7서브필드 channel os / `physical_disks.health` 등 Nice 다수 추가)이 카운트 문서를 미갱신. DRIFT-001 / DRIFT-007 과 동종 반복.
+- **영향**: 문서 간 불일치. 코드/검증 영향 없음 (`validate_field_dictionary.py` 는 동적 카운트, 하드코딩 assertion 없음 — 실측 확인).
+- **제안/조치**: 전 카운트 기재를 실측(168 / Nice 115)으로 정정 (is_os_disk +1 포함). 향후 additive Nice cycle 마다 카운트 동반 갱신 (rule 13 R7 정신).
+- **상태**: resolved (2026-07-02 — 13곳 정정 + is_os_disk 추가 cycle)
+- **관련**: rule 13 R7 / rule 28 R1 #1 / rule 70 R8 / DRIFT-001 / DRIFT-007 / `tests/evidence/2026-07-02-is-os-disk.md`
+
 ## DRIFT-017 (2026-06-08, resolved cycle audit-cleanup)
 
 - **발견 위치**: `redfish-gather/library/redfish_gather.py:1192` `_normalize_link_status`
