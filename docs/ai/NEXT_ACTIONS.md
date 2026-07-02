@@ -13,7 +13,8 @@
 
 - [x] **[DONE 2026-07-02] 실장비 is_os_disk 실측 (Linux 4대 + Windows)**: SSH/winrm 직접 + Jenkins #165/#166 envelope 교차 대조 전부 일치 (Linux OS=sda true, Windows PHYSICALDRIVE0 true). `lsblk -s` 글리프 버그 실증 + `-s -l` fix 검증.
 - [x] **[DONE 2026-07-02] 실 Agent ansible 실행**: Jenkins #165/#166 4-Stage SUCCESS (syntax-check 이상 — 실 gather + schema validate + E2E 통과).
-- [ ] **[LOW] 예외 토폴로지 실측 (테스트 서버에 부재)**: btrfs root(`${src%%\[*}` strip) / mdraid·multipath 멤버 all-true / Dell BOSS-N1 부팅(예 10.100.64.96 → nvme0n1=true) / Windows Storage Spaces·동적미러=null — 해당 장비 확보 시.
+- [x] **[DONE 2026-07-02] 예외 토폴로지 loop 더미 검증**: mdraid RAID1 + LVM 2-PV(.161) 멤버 all-true, btrfs subvol(.154) `[/@]` strip — loop 파일 더미로 실장비 실증(사용자 승인, 완료 후 정리). 상세 evidence.
+- [ ] **[LOW] 잔여 토폴로지 (장비 부재)**: multipath 멤버 all-true(=mdraid 동일 traversal, 고신뢰 미실측) / Windows Storage Spaces·동적미러=null / Dell BOSS-N1 실부팅(예 10.100.64.96 → nvme0n1=true) — 해당 장비 확보 시.
 - [ ] **[LOW] SAN/iSCSI/NFS 루트 null 케이스 + 회귀 fixture**: 로컬 매핑 불가 시 null 실측 + 빈 osdisks fixture 추가 ('거짓 false 금지' 불변식 고정).
 
 ## OS physical_disks serial/wwn 후속 (2026-06-22)
