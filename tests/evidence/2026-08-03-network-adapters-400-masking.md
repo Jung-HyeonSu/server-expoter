@@ -179,3 +179,60 @@ stderr 를 표준 경로에서 걸러냄). 즉 진단 신호가 완전히 사라
 | 사이트 R630 에서 **NIC 카드가 실제로 수집되는지** | Jenkins 재빌드 → `data.network.adapters[]` 가 채워지는지. **이번 수정의 핵심 성과 지표** |
 | 실 ansible-playbook 통합 | 동 재빌드 |
 | adapter 세대 오선택 (iDRAC8 → idrac10) | 별건 — NEXT_ACTIONS |
+
+---
+
+# 빌드 #4 — fallback 실효 확인 + FCoE CNA 오분류 노출
+
+## 13. 빌드 #4 결과 (Systems fallback 배포 후) — [PASS] 목표 달성
+
+| 항목 | #1 | #3 | **#4** |
+|---|---|---|---|
+| `status` | `partial` | `success` | `success` |
+| `sections.network` | `failed` | `success` | `success` |
+| `data.network.adapters` | `[]` | `[]` | **1건** |
+| `data.network.ports` | `[]` | `[]` | **4건** |
+| `errors[]` | 400 1건 | `[]` | `[]` |
+| 빌드 | — | SUCCESS | **SUCCESS** |
+
+8대 전부 동일. 수집된 실제 값 (10.50.11.52):
+
+```
+adapters[0] : BRCM 10G/GbE 2+2P 57800 rNDC | Dell | P/N 0MT09V
+              S/N CN137402AU00V3 | firmware 15.20.13 | port_count 4
+ports[0..3] : NIC.Integrated.1-1 ~ -4 | Ethernet | MAC ...e2:8d/8f/91/93
+```
+
+MAC 4개가 `data.network.interfaces[]` 와 정확히 일치 → **Systems 경로 fallback 실효 확인**.
+`sections` 는 #3 과 완전히 동일(부작용 0).
+
+## 14. 새로 드러난 문제 — FCoE 지원 CNA 를 FC HBA 로 오분류
+
+데이터가 처음 들어오면서 **기존 분류 버그**가 노출됐다. 같은 물리 포트 4개가:
+
+| 위치 | 값 |
+|---|---|
+| `network.ports[].port_type` | `Ethernet` |
+| `network.summary.groups[].link_type` | `ethernet` |
+| **`storage.hbas[].port_type`** | **`FibreChannel`** (4건) ← 모순 |
+
+- `storage.hbas[].port_id` = `NIC.Integrated.1-1-1 ~ -4-1` (NetworkDeviceFunction)
+- WWPN 이 **MAC 파생**: `20:01:90:b1:1c:1f:e2:8e` = MAC `90:b1:1c:1f:e2:8d` + 1
+- Broadcom 57800 = **FCoE 지원 CNA** → 이더넷 기능에도 WWN 을 단다
+
+**원인**: `_classify_port_protocol` 의 CSUS-FC1 휴리스틱(`ndf_wwpn` → FibreChannel)이 Ethernet 판정보다
+위에 있어 명시 신호를 덮어씀. 이 휴리스틱은 `NetDevFuncType` 을 아예 안 주는 HPE CSUS RMC 전용이었다.
+
+**fix**: `ndf_wwpn` 휴리스틱을 함수 맨 끝(명시 신호 전무 시)으로 강등.
+
+**검증**:
+
+| 항목 | 결과 |
+|---|---|
+| 신규 회귀 | `tests/unit/test_fcoe_cna_not_fc_hba.py` **9 passed** (오분류 방지 3 / 진짜 FC·FCoE·IB 보존 5 / e2e 1) |
+| 전체 회귀 | **1315 passed** / 5 skipped / 7 xfailed |
+| 가드 유효성 | 강등을 되돌리면 **4 failed** — 테스트가 실제로 버그를 잡음 |
+| CSUS 보존 | `test_csus_wwpn_only_still_fc` + 실 CSUS 미러 replay 통과 |
+| 진짜 FC 보존 | 실 Dell R740 미러(FC.Slot.1/7, `NetDevFuncType=FibreChannel`) replay 통과 |
+
+**⚠️ 미검증**: 사이트에서 `storage.hbas` 가 실제로 `[]` 가 되는지 → 다음 빌드 확인 필요.

@@ -28,10 +28,13 @@
   사이트 8대는 PowerEdge R630(13G / iDRAC8)이고 벤더 공식 API 가이드상 NetworkAdapters 는
   `Systems/{id}/NetworkAdapters`. `Chassis` 만 물어봐서 400. 400→unsupported 분류는 **철회**하고
   Systems 경로 fallback 신설. `EXTERNAL_CONTRACTS.md` 2026-08-03 에 세대별 URI 표 기록.
-- [ ] **[HIGH / lab] fallback 실효 재빌드 확인**: 같은 Job 1회 더 실행 → Dell R630 8대의
-  **`data.network.adapters[]` 가 실제로 채워지는지** 확인. **이번 수정의 핵심 성과 지표**
-  (지금까지는 영구 빈 배열이었음). 채워지면 NIC 카드 모델/펌웨어/포트수 확보.
-  - 만약 여전히 비면: `errors[].detail` 의 `tried: <경로1> / <경로2>` + BMC 확장 메시지로 다음 원인 판단.
+- [x] **[DONE 2026-08-03] fallback 실효 확인 (빌드 #4)**: Dell R630 8대 전부 `adapters` 1건
+  (`BRCM 10G/GbE 2+2P 57800 rNDC`, S/N·firmware·port_count 실값) + `ports` 4건 수집. MAC 이
+  `network.interfaces[]` 와 일치. 빌드 SUCCESS. **목표 달성.**
+- [ ] **[HIGH / lab] FCoE CNA 오분류 fix 재빌드 확인**: 빌드 #4 에서 `storage.hbas` 에 FC HBA 4건이
+  잡히는 오분류 노출 → `_classify_port_protocol` 의 `ndf_wwpn` 휴리스틱을 맨 끝으로 강등.
+  같은 Job 1회 더 실행 → **`data.storage.hbas` 가 `[]` 가 되고 `network.ports`(Ethernet)와 일관**되는지 확인.
+  (로컬 회귀 1315 passed + 강등 되돌리면 4 FAIL 확인했으나 사이트 실측은 미확인.)
 - [ ] **[MED / lab] 사이트 fixture 캡처**: iDRAC8(13G) 은 lab 미보유 세대 — `capture-site-fixture` 로
   미러 확보 시 Systems-경로 토폴로지 회귀를 **합성 변조가 아닌 실 캡처**로 고정 가능
   (현재 integration 테스트는 R740 미러를 Systems 밑으로 옮긴 합성).

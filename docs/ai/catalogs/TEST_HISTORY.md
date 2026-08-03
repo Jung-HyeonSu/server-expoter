@@ -35,6 +35,19 @@
   jinja_compile / additive_only / status_logic / docs20_sync / adapter_origin). py_compile OK.
 - Baseline 갱신: 없음.
 
+### 2026-08-03 (후속 2) — 빌드 #4 실효 확인 + FCoE CNA 오분류 fix
+
+- **빌드 #4 (fallback 배포 후)**: 8대 전부 `adapters` 1건 + `ports` 4건 수집, 빌드 SUCCESS.
+  MAC 이 `network.interfaces[]` 와 일치. **fallback 실효 확인 — 목표 달성.**
+- **노출된 기존 버그**: 같은 포트 4개가 `network.ports`=Ethernet 인데 `storage.hbas`=FibreChannel.
+  CSUS-FC1 휴리스틱(`ndf_wwpn` → FC)이 Ethernet 판정보다 위에 있던 것 → 맨 끝으로 강등.
+- **전체**: `pytest tests/ --ignore=tests/e2e_browser` = **1315 passed, 5 skipped, 7 xfailed**.
+- 신규 회귀 9건: `tests/unit/test_fcoe_cna_not_fc_hba.py` — 오분류 방지 3 / 진짜 FC·FCoE·IB 보존 5 /
+  end-to-end(사이트 57800 재현 → `fc_hbas == []`) 1.
+- **가드 유효성**: 강등을 되돌리면 4 failed 확인.
+- CSUS(명시 신호 전무 + WWPN) / Dell R740(명시 `NetDevFuncType=FibreChannel`) 실미러 replay 모두 통과.
+- Baseline 갱신: 없음.
+
 ## 2026-06-15 (Lenovo SR650 V4 실 미러 검수 — 2-Round 수렴)
 
 Lenovo ThinkSystem SR650 V4 (XCC3, fw IHX414J 1.22) 전수 미러(2901 리소스) `replay_full_mirror.py`

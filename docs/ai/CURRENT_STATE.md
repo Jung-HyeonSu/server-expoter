@@ -28,8 +28,17 @@
   vendor 분기 없음) / (유지) A 섹션 status 분리 + C detail 보존(`tried:` 경로 + BMC 확장 메시지).
 - **재검증**: pytest **1306 passed**, 게이트 9종 rc=0. fallback 실효는 실 R740 미러의 NetworkAdapters 를
   Systems 밑으로 옮긴 replay 로 **원본과 동일한 NIC 카드 집합 수집** 확인. 은폐 재발 가드 테스트 추가.
-- **⚠️ 미검증**: 사이트 R630 에서 `data.network.adapters[]` 가 실제로 채워지는지(이번 수정의 핵심 성과 지표)
-  + 실 ansible 통합 → **Jenkins 재빌드 필요**. 상세: `tests/evidence/2026-08-03-network-adapters-400-masking.md`.
+- **[PASS] 빌드 #4 실효 확인**: 8대 전부 `adapters` 1건(`BRCM 10G/GbE 2+2P 57800 rNDC`, S/N·firmware·port_count
+  실값) + `ports` 4건 수집. MAC 4개가 `network.interfaces[]` 와 일치. 빌드 SUCCESS, `sections` 는 #3 과 동일(부작용 0).
+  **지금까지 영구 빈 배열이던 NIC 카드 정보 확보 — 목표 달성.**
+- **[후속 fix] FCoE 지원 CNA 오분류**: 데이터가 들어오면서 기존 분류 버그 노출 — 같은 포트 4개가
+  `network.ports`=Ethernet 인데 `storage.hbas`=FibreChannel(자기모순). 원인은 CSUS-FC1 휴리스틱
+  (`ndf_wwpn` → FC)이 Ethernet 판정보다 위에 있던 것. 57800 같은 CNA 는 이더넷 기능에도 MAC 파생 WWN 을 단다.
+  → 휴리스틱을 **명시 신호 전무 시에만** 적용하도록 맨 끝으로 강등. 실 FCoE 설정 장비는
+  `NetDevFuncType=FibreChannelOverEthernet` 로 잡히므로 영향 없음. 회귀 **1315 passed**, 신규 9건,
+  강등 되돌리면 4 FAIL(가드 유효).
+- **⚠️ 미검증**: 사이트에서 `storage.hbas` 가 실제로 `[]` 가 되는지 → 다음 빌드.
+  상세: `tests/evidence/2026-08-03-network-adapters-400-masking.md`.
 - **BMC 직접 probe 시도 실패**: 10.50.11.52 에 vault 계정으로 GET → 401 + 연결 차단. lockout 위험으로 즉시 중단.
 - **별건 발견**: iDRAC8 장비인데 adapter 는 `redfish_dell_idrac10` 선택(무인증 probe 에 model/firmware
   부재 → priority 최상위). 기존 NEXT_ACTIONS 항목. 본 fallback 은 adapter 무관 동작이라 영향 없음.
