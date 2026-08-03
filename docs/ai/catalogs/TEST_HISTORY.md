@@ -2,6 +2,24 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-03 (사이트 Dell NetworkAdapters 400 마스킹 fix)
+
+사이트 Jenkins console(DAY_1/git/소연등록redfish #1) Dell 8대 `status=partial` 조사 → 보조 섹션
+마스킹 + 400 미분류 + detail 소실 3건 fix.
+
+- 신규 회귀 **27건**: `tests/unit/test_network_adapters_aux_status.py`(21) +
+  `tests/integration/test_site_dell_networkadapters_400.py`(6 — 실 R740 미러의 NetworkAdapters 를 400 으로
+  변조해 모듈→normalize fragment→build_sections→build_status 전 체인 렌더, 역가드 포함).
+- 전체: `pytest tests/ --ignore=tests/e2e_browser` = **1302 passed, 5 skipped, 7 xfailed**.
+- 게이트: output_schema_drift(sections=11 fd=168) / envelope_change / jinja_compile / jinja_namespace /
+  additive_only / status_logic / docs20_sync / verify_harness_consistency / verify_vendor_boundary /
+  check_project_map_drift **전부 rc=0**. py_compile + YAML parse OK.
+- 가드 유효성 실증: `git stash push -- redfish-gather/tasks/normalize_standard.yml` 후 재실행 → **9 failed**
+  (fix 없으면 신규 테스트가 실제로 잡음), stash pop 복원.
+- Baseline 갱신: 없음 (10종 전부 `sections.network=success` 유지 — 변경 전후 동일).
+- **미실행(환경 제약)**: `ansible-playbook --syntax-check`(CLI 부재) / 실 Jenkins 빌드 → NEXT_ACTIONS 등재.
+- Evidence: `tests/evidence/2026-08-03-network-adapters-400-masking.md`
+
 ## 2026-06-15 (Lenovo SR650 V4 실 미러 검수 — 2-Round 수렴)
 
 Lenovo ThinkSystem SR650 V4 (XCC3, fw IHX414J 1.22) 전수 미러(2901 리소스) `replay_full_mirror.py`

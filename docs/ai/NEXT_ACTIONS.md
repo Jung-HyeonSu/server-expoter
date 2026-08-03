@@ -17,6 +17,23 @@
 - [ ] **[LOW] 잔여 토폴로지 (장비 부재)**: multipath 멤버 all-true(=mdraid 동일 traversal, 고신뢰 미실측) / Windows Storage Spaces·동적미러=null / Dell BOSS-N1 실부팅(예 10.100.64.96 → nvme0n1=true) — 해당 장비 확보 시.
 - [ ] **[LOW] SAN/iSCSI/NFS 루트 null 케이스 + 회귀 fixture**: 로컬 매핑 불가 시 null 실측 + 빈 osdisks fixture 추가 ('거짓 false 금지' 불변식 고정).
 
+## NetworkAdapters 400 마스킹 fix 후속 (2026-08-03) — 사이트 재검증
+
+> 상세: `tests/evidence/2026-08-03-network-adapters-400-masking.md` + `docs/19_decision-log.md` 2026-08-03.
+> 코드 fix 3종 적용 + pytest 1302 passed. 아래는 **이 환경에서 확인 불가**한 항목.
+
+- [ ] **[HIGH / lab] 사이트 Jenkins 재빌드 확인**: 같은 Job(DAY_1/git/소연등록redfish) 1회 재실행 →
+  Dell 8대가 `status=success` + `sections.network=success` 로 바뀌는지 확인. (이 환경 `ansible-playbook`
+  CLI 부재 → YAML 은 Jinja2 식 렌더로만 검증.)
+- [ ] **[HIGH / lab] 400 의 근본 사유 확정**: 재빌드 후 `errors[].detail`(신규 `_extended_info`) 또는 Jenkins
+  console stderr 의 `capability 부재로 분류(비-404 응답)` 라인에서 iDRAC 확장 메시지 확인 →
+  미구현 / 라이선스 등급 / 기타 중 무엇인지 `EXTERNAL_CONTRACTS.md` 2026-08-03 행에 확정 기록 (현재 미확정).
+- [ ] **[MED / lab] 400→unsupported 오분류 감시**: 400 을 capability 부재로 분류하므로, 다른 섹션에서
+  *진짜* 요청 결함 400 이 조용히 `not_supported` 로 덮이지 않는지 첫 몇 빌드의 stderr 모니터링.
+  (완화책 = `_is_empty_result` AND 가드 + stderr 원문. 오분류 발견 시 vendor/섹션 화이트리스트로 축소.)
+- [ ] **[LOW] 사이트 fixture 캡처**: 이 iDRAC(RedfishVersion 1.4.0) 은 lab 미보유 세대 —
+  `capture-site-fixture` 로 미러 확보 시 400 경로 회귀를 합성이 아닌 실 캡처로 고정 가능.
+
 ## OS physical_disks serial/wwn 후속 (2026-06-22)
 
 > 상세: `docs/ai/CURRENT_STATE.md` 2026-06-22 + `tests/evidence/2026-06-22-os-disk-serial-wwn.md`.
@@ -191,9 +208,11 @@
   replay 도구 한정 누설. 라이브러리 `gather_bmc` 정상(normalize 가 소비→default_gateways/dns_servers 생성 후 strip,
   baseline grep 0). 라이브러리 pop 시 전 벤더 회귀 → **수정 금지**. single(normalize strip) vs multi_node(라이브러리 strip,
   CSUS-R15) 비대칭은 정규화 경로 의존 의도된 설계. code/data bug 아님. (NET-SHAPE 와 동류 — replay≠production.)
-- [ ] **[LOW] network 섹션 매핑 충돌 (NET-SEC-MAP)**: normalize `_rf_proc_map` 가 network/network_adapters 를 같은
-  'network' 로 collapse + build_sections unsupported 우선 → host network 성공이 network_adapters 404 에 가려질 latent
-  충돌 (CSUS 수정 후 미발동). build_sections 충돌해소 규칙 명시 (다채널 영향 — 승인).
+- [x] ~~**[LOW] network 섹션 매핑 충돌 (NET-SEC-MAP)**~~ — **해소 2026-08-03** (사이트 Dell 8대에서 실발동).
+  `_rf_aux_sections: ['network_adapters']` 도입 — 보조 섹션을 collected/failed/**unsupported** 세 fragment
+  전부에서 제외해 섹션 status 를 주 수집만으로 결정. 400 도 capability 부재로 분류(+`errors[].detail` 에
+  ExtendedInfo 보존). 회귀 27건 신규. 상세: `docs/19_decision-log.md` 2026-08-03 +
+  `tests/evidence/2026-08-03-network-adapters-400-masking.md`.
 - [ ] **[LOW] Rmp 관리어댑터 / multi_node.chassis name / ResourceBlock count**: Rmp(관리 NIC, MAC 은 bmc.mac_address 존재)
   placeholder 필터 drop / chassis name 미emit(envelope shape) / ResourceBlock proc·mem count=0(ComputerSystem-type 충실).
 - [ ] **[INFO] lab 도입 후 별도 cycle**: `hpe-csus-3200-lab-validation` round — 실 capture-site-fixture + baseline + vault 결정.

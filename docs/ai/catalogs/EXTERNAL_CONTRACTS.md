@@ -2,6 +2,25 @@
 
 > 외부 시스템 (Redfish / IPMI / SSH / WinRM / vSphere) 계약 카탈로그. rule 28 #11 측정 대상 (TTL 90일). rule 96 origin 주석 정본.
 
+## 일자: 2026-08-03 (Dell iDRAC — 미지원 sub-resource 에 404 아닌 **400** 반환)
+
+> 사이트 실측 (rule 25 R7-A-1 — 사용자 실측 > spec). Jenkins DAY_1/git/소연등록redfish #1.
+
+| 항목 | 값 |
+|---|---|
+| 대상 | Dell iDRAC, `RedfishVersion=1.4.0`, Product=`Integrated Dell Remote Access Controller` |
+| 대수 | 8대 전부 동일 (10.50.11.51~54, .151~154) |
+| 엔드포인트 | `GET /redfish/v1/Chassis/System.Embedded.1/NetworkAdapters` |
+| 응답 | **HTTP 400 Bad Request** (표준 미구현 신호인 404 아님) |
+| 대조군 1 | 같은 `chassis_uri` 의 `Power` / `Thermal` = **200** → chassis URI 해석 정상 |
+| 대조군 2 | 실 Dell R740 전수 미러(`tests/fixtures/redfish/real_dell_r740`)의 **동일 URL = 200** → 요청 형식 정상 |
+| 결론 | 장비/펌웨어(또는 라이선스) 차이. **400 을 404 와 동급의 capability 부재 신호로 취급**해야 함 |
+| 미확정 | 400 의 근본 사유(미구현 / iDRAC 라이선스 등급 / 기타). 응답 body 를 버려 확인 불가였음 → `_extended_info` 로 `errors[].detail` 보존 후 **다음 빌드에서 확인 필요** |
+
+- server-exporter 적용: `_is_capability_missing_error`(404 or 400, `_is_empty_result` AND 가드) +
+  `_extended_info`(DSP0266 `error.@Message.ExtendedInfo` 축약 보존). 상세 `docs/19_decision-log.md` 2026-08-03.
+- source (rule 96 R1-A): DMTF DSP0266 "Error responses" + 사이트 실측 8대.
+
 ## 일자: 2026-06-09 (cycle csus-model-completion — CSUS 3200 모델 5종 신 계약 — ADR-2026-06-09)
 
 > CSUS 3200 Redfish 모델 검수 → 누락 5종 수집 추가. 표준 DMTF DSP0266 리소스 (lab 부재 — 사이트 실측 정정 의무 C9~C14).

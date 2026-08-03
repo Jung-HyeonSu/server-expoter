@@ -1,5 +1,28 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-03 (사이트 Dell 8대 partial — 보조 섹션 마스킹 + 400 분류 fix)
+
+- **사용자 제보**: Jenkins DAY_1/git/소연등록redfish #1 — Dell iDRAC 8대가 `status=partial`,
+  `sections.network=failed`, `errors[]="NetworkAdapters 미지원 또는 실패: HTTP 400"`. "코드에 버그 있는건가?"
+- **진단**: 버그 맞음. `data.network` 는 정상 수집(interfaces 4/gateway/summary)인데 **보조 수집**
+  (NIC 카드 모델·펌웨어 = Chassis/NetworkAdapters) 실패가 주 수집 성공을 덮음. `_rf_proc_map` 이
+  network/network_adapters 를 collapse + `build_sections` 우선순위(not_supported>failed>success).
+  = NEXT_ACTIONS 의 **NET-SEC-MAP**(LOW, "미발동") latent 결함 실발동.
+- **요청 형식 문제 아님 확인**: 동일 chassis_uri 의 power/thermal=success + 실 R740 미러의 동일 URL=200.
+- **fix 3종 (사용자 승인 "전부 진행")**: (A) `_rf_aux_sections` 보조 섹션을 세 status fragment 전부에서
+  제외 — status 는 주 수집만으로 결정 / (B) `_is_capability_missing_error` 404**+400**, `_is_empty_result`
+  AND 가드 + 비-404 는 stderr 원문 / (C) `_extended_info` 로 DSP0266 `@Message.ExtendedInfo` 를
+  `errors[].detail` 보존 (기존 null).
+- **변경**: `redfish_gather.py` / `redfish-gather/tasks/normalize_standard.yml` / docs 19·20 /
+  신규 회귀 2파일(unit 21 + integration 6, 실 R740 미러 400 변조 사이트 재현 + 역가드).
+- **검증**: pytest **1302 passed**/5 skipped/7 xfailed, py_compile OK, YAML parse OK, baseline 10종 영향 0.
+  fix 제거 시 9 FAIL 확인(가드 유효성 실증).
+- **⚠️ 미검증**: 실 ansible-playbook 통합(이 환경 CLI 부재 — Jinja2 식 렌더로만 검증) + 사이트 envelope
+  실제 변화 + 400 의 근본 사유. → Jenkins 재빌드 필요. 상세: `tests/evidence/2026-08-03-network-adapters-400-masking.md`.
+- **BMC 직접 probe 시도 실패**: 10.50.11.52 에 vault 계정으로 GET → 401 + 연결 차단. lockout 위험으로 즉시 중단.
+
+---
+
 ## 일자: 2026-07-02 (storage.physical_disks[].is_os_disk 추가 — OS 설치 디스크 식별)
 
 - **사용자 승인**: OS 채널 한정 `is_os_disk` (Nice, `boolean|null`) 추가. 적용 범위=OS 한정 / baseline 값=토폴로지 기반 + 실장비 확인 NEXT_ACTIONS.
