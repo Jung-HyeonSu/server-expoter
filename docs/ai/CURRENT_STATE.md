@@ -37,9 +37,9 @@
   → 휴리스틱을 **명시 신호 전무 시에만** 적용하도록 맨 끝으로 강등. 실 FCoE 설정 장비는
   `NetDevFuncType=FibreChannelOverEthernet` 로 잡히므로 영향 없음. 회귀 **1315 passed**, 신규 9건,
   강등 되돌리면 4 FAIL(가드 유효).
-- **빌드 #5 (CNA fix 배포 후)**: 8대 중 **6대 `hbas=0` 해결, 2대(.52/.152) 잔존**. 같은 NIC 모델인데
-  NIC 펌웨어가 갈림 — 15.20.13 은 NDF 에 MAC 파생 WWN 노출(잔존), 15.15.08 은 미노출(원래 0).
-  즉 실제 fix 대상 2대에서 실패.
+- **빌드 #5 (CNA fix 배포 후)**: 8대 중 **6대 `hbas=0` 해결, 2대(.52/.152) 잔존**. 두 펌웨어 모두
+  MAC 파생 WWN 을 노출하지만(빌드 #4 는 8대 전부 4건), 15.15.08 계열은 NDF 에 `NetDevFuncType=Ethernet`
+  신호가 있어 강등 fix 로 해결됐고 15.20.13 계열은 그 신호가 없어 최후 WWPN 휴리스틱까지 흘러감.
 - **잔여 원인 + 추가 fix**: Dell 은 NDF Id 를 `<PortId>-<funcIdx>` 로 매기는데(포트 `...1-1` ↔ NDF `...1-1-1`)
   join 시도 2종(`PhysicalPortAssignment` / `Id 동일`)이 둘 다 빗나가 **orphan** 이 되고, orphan 분류는
   포트 컨텍스트가 전무해 강등 fix 가 무력화됐다. → **orphan NDF 가 부모 포트 신호를 상속**하도록 수정

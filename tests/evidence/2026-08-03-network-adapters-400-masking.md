@@ -243,10 +243,10 @@ MAC 4개가 `data.network.interfaces[]` 와 정확히 일치 → **Systems 경�
 
 ## 15. 빌드 #5 결과 — 6/8 해결, 2대 잔존
 
-| 호스트 | `hbas` | NIC 펌웨어 |
-|---|---|---|
-| .51 / .53 / .54 / .151 / .153 / .154 | **0** (해결) | 15.15.08 |
-| **.52 / .152** | **4** (잔존) | **15.20.13** |
+| 호스트 | `#4 hbas` | `#5 hbas` | NIC 펌웨어 |
+|---|---|---|---|
+| .51 / .53 / .54 / .151 / .153 / .154 | 4 | **0** (해결) | 15.15.08 |
+| **.52 / .152** | 4 | **4** (잔존) | **15.20.13** |
 
 - 8대 전부 `status=success` / `sections.network=success` / `adapters` 1 / `ports` 4 / `errors` 0, 빌드 SUCCESS.
 - `#4 → #5` 전수 diff: `sections` 변화 0. `data` 변화는 bmc/power/thermal(시각·센서 값 — 변동 정상)
@@ -254,9 +254,21 @@ MAC 4개가 `data.network.interfaces[]` 와 정확히 일치 → **Systems 경�
 
 ## 16. 잔여 원인 — orphan NDF 에 포트 컨텍스트가 없었다
 
-동일 NIC 모델인데 **NIC 펌웨어가 갈렸다**. 15.20.13 은 NDF 에 MAC 파생 WWN 을 노출하고,
-15.15.08 은 미노출 → 후자는 애초에 FC 후보가 아니라 이미 0 이었다(=fix 무관하게 0).
-**즉 실제로 fix 효과를 받아야 할 대상은 .52 / .152 두 대였고, 거기서 실패했다.**
+> **[정정]** 최초 작성 시 "15.15.08 은 WWN 미노출이라 원래 0" 이라고 썼으나 **틀렸다**.
+> 빌드 #4 실측상 **두 펌웨어 모두 MAC 파생 WWN 을 노출**했고(`.51` wwpn `20:01:d4:ae:52:9e:b4:fb`,
+> `.52` wwpn `20:01:90:b1:1c:1f:e2:8e`), 8대 전부 `hbas=4` 였다.
+> 즉 강등 fix 는 **6대에서 실제로 효과가 있었고**, 2대에서만 실패했다.
+
+두 대의 차이 (실측 추론):
+
+| | .51 계열 (fw 15.15.08) | .52 계열 (fw 15.20.13) |
+|---|---|---|
+| NDF 의 MAC 파생 WWN | 노출 | 노출 |
+| NDF 의 `NetDevFuncType=Ethernet` 신호 | **있음** → 강등 fix 가 Ethernet 으로 판정 → 해결 | **없음**(또는 미인식 값) → 최후 WWPN 휴리스틱까지 흘러감 |
+
+두 계열 모두 **orphan** 이다 — `storage.hbas[].port_id` 가 포트 id 가 아니라 **NDF id**
+(`NIC.Integrated.1-1-1`)인 것이 증거(orphan 경로 산출물). orphan 분류는 포트 컨텍스트가 전무해
+NDF 자체 신호에만 의존하므로, NDF 가 `NetDevFuncType` 을 안 주면 강등 fix 가 닿지 않는다.
 
 실패 경로:
 
@@ -265,10 +277,12 @@ Dell NDF Id = <PortId>-<funcIdx>     예: 포트 NIC.Integrated.1-1 ↔ NDF NIC.
 join 시도 (a) Links.PhysicalPortAssignment  → 부재
 join 시도 (b) NDF.Id == Port.Id             → 불일치 ("...1-1-1" != "...1-1")
 → orphan 처리 → _classify_port_protocol(None, None, ndf, None)
-→ 포트 컨텍스트 전무 → 앞선 강등 fix 무력화 → 최후 WWPN 휴리스틱 → FibreChannel
+→ 포트 컨텍스트 전무 + NDF 에 Ethernet 신호 없음 → 최후 WWPN 휴리스틱 → FibreChannel
 ```
 
-증거: `storage.hbas[].port_id` 가 포트 id 가 아니라 **NDF id**(`NIC.Integrated.1-1-1`) — orphan 경로 산출물.
+**⚠️ `NetDevFuncType` 이 정확히 부재인지 다른 값인지는 raw 없이 확정 불가** — 다만 `FCoE`/`FibreChannel`
+은 아니다(그랬다면 port_type 이 `FCoE` 이거나 강등 fix 이전부터 정상 FC 였을 것). 아래 fix 는
+어느 경우든 부모 포트의 Ethernet 신호로 덮으므로 두 가능성 모두 커버한다.
 
 ## 17. 추가 fix + 검증
 
