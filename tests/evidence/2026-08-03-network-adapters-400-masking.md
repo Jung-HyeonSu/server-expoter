@@ -236,3 +236,51 @@ MAC 4개가 `data.network.interfaces[]` 와 정확히 일치 → **Systems 경�
 | 진짜 FC 보존 | 실 Dell R740 미러(FC.Slot.1/7, `NetDevFuncType=FibreChannel`) replay 통과 |
 
 **⚠️ 미검증**: 사이트에서 `storage.hbas` 가 실제로 `[]` 가 되는지 → 다음 빌드 확인 필요.
+
+---
+
+# 빌드 #5 — 부분 해결(6/8) + 잔여 2대 원인 규명
+
+## 15. 빌드 #5 결과 — 6/8 해결, 2대 잔존
+
+| 호스트 | `hbas` | NIC 펌웨어 |
+|---|---|---|
+| .51 / .53 / .54 / .151 / .153 / .154 | **0** (해결) | 15.15.08 |
+| **.52 / .152** | **4** (잔존) | **15.20.13** |
+
+- 8대 전부 `status=success` / `sections.network=success` / `adapters` 1 / `ports` 4 / `errors` 0, 빌드 SUCCESS.
+- `#4 → #5` 전수 diff: `sections` 변화 0. `data` 변화는 bmc/power/thermal(시각·센서 값 — 변동 정상)
+  + 해결된 6대의 `storage`(hbas 비워짐). 잔존 2대는 `storage` 무변화.
+
+## 16. 잔여 원인 — orphan NDF 에 포트 컨텍스트가 없었다
+
+동일 NIC 모델인데 **NIC 펌웨어가 갈렸다**. 15.20.13 은 NDF 에 MAC 파생 WWN 을 노출하고,
+15.15.08 은 미노출 → 후자는 애초에 FC 후보가 아니라 이미 0 이었다(=fix 무관하게 0).
+**즉 실제로 fix 효과를 받아야 할 대상은 .52 / .152 두 대였고, 거기서 실패했다.**
+
+실패 경로:
+
+```
+Dell NDF Id = <PortId>-<funcIdx>     예: 포트 NIC.Integrated.1-1 ↔ NDF NIC.Integrated.1-1-1
+join 시도 (a) Links.PhysicalPortAssignment  → 부재
+join 시도 (b) NDF.Id == Port.Id             → 불일치 ("...1-1-1" != "...1-1")
+→ orphan 처리 → _classify_port_protocol(None, None, ndf, None)
+→ 포트 컨텍스트 전무 → 앞선 강등 fix 무력화 → 최후 WWPN 휴리스틱 → FibreChannel
+```
+
+증거: `storage.hbas[].port_id` 가 포트 id 가 아니라 **NDF id**(`NIC.Integrated.1-1-1`) — orphan 경로 산출물.
+
+## 17. 추가 fix + 검증
+
+**fix**: orphan NDF 는 **부모 포트 신호를 상속**해 분류. NDF Id 가 `<PortId>-` 로 시작하면 그 포트의
+`(PortProtocol, link_tech, raw port)` 를 넘긴다. 구분자 `-` 요구 → `...1-1` 이 `...1-10-1` 을 안 삼킴.
+부모 미발견 시 기존 동작 유지(CSUS 의 진짜 port-less NDF 보존).
+
+| 항목 | 결과 |
+|---|---|
+| 전체 회귀 | **1318 passed** / 5 skipped / 7 xfailed |
+| 신규 회귀 | +3건 (총 12건) — orphan 상속 / orphan 이어도 진짜 FCoE 는 HBA 유지 / 접두 구분자 |
+| 가드 유효성 | 상속을 제거하면 **1 failed** |
+| CSUS / R740 실미러 | replay 통과 (port-less NDF · 명시 FC 보존) |
+
+**⚠️ 미검증**: .52 / .152 에서 실제로 `hbas` 가 `[]` 가 되는지 → 다음 빌드.

@@ -48,6 +48,17 @@
 - CSUS(명시 신호 전무 + WWPN) / Dell R740(명시 `NetDevFuncType=FibreChannel`) 실미러 replay 모두 통과.
 - Baseline 갱신: 없음.
 
+### 2026-08-03 (후속 3) — 빌드 #5 부분 해결 + orphan NDF 부모 상속 fix
+
+- **빌드 #5**: 8대 중 6대 `hbas=0` 해결, 2대(.52/.152) 잔존. 원인 = NIC 펌웨어 15.20.13 이 NDF 에
+  MAC 파생 WWN 노출 + Dell NDF Id(`<PortId>-<funcIdx>`) 가 join 2종에 모두 빗나가 orphan → 포트
+  컨텍스트 없이 분류 → 강등 fix 무력화.
+- **fix**: orphan NDF 가 부모 포트 신호(`PortProtocol`/link_tech/raw port)를 상속. 접두 매칭 + 구분자 `-` 요구.
+- **전체**: `pytest tests/ --ignore=tests/e2e_browser` = **1318 passed, 5 skipped, 7 xfailed**.
+- 신규 회귀 +3 (총 12): orphan 부모 상속 / orphan 이어도 진짜 FCoE 는 HBA 유지 / 접두 구분자 경계.
+- **가드 유효성**: 상속 로직 제거 시 1 failed 확인.
+- Baseline 갱신: 없음.
+
 ## 2026-06-15 (Lenovo SR650 V4 실 미러 검수 — 2-Round 수렴)
 
 Lenovo ThinkSystem SR650 V4 (XCC3, fw IHX414J 1.22) 전수 미러(2901 리소스) `replay_full_mirror.py`

@@ -37,7 +37,15 @@
   → 휴리스틱을 **명시 신호 전무 시에만** 적용하도록 맨 끝으로 강등. 실 FCoE 설정 장비는
   `NetDevFuncType=FibreChannelOverEthernet` 로 잡히므로 영향 없음. 회귀 **1315 passed**, 신규 9건,
   강등 되돌리면 4 FAIL(가드 유효).
-- **⚠️ 미검증**: 사이트에서 `storage.hbas` 가 실제로 `[]` 가 되는지 → 다음 빌드.
+- **빌드 #5 (CNA fix 배포 후)**: 8대 중 **6대 `hbas=0` 해결, 2대(.52/.152) 잔존**. 같은 NIC 모델인데
+  NIC 펌웨어가 갈림 — 15.20.13 은 NDF 에 MAC 파생 WWN 노출(잔존), 15.15.08 은 미노출(원래 0).
+  즉 실제 fix 대상 2대에서 실패.
+- **잔여 원인 + 추가 fix**: Dell 은 NDF Id 를 `<PortId>-<funcIdx>` 로 매기는데(포트 `...1-1` ↔ NDF `...1-1-1`)
+  join 시도 2종(`PhysicalPortAssignment` / `Id 동일`)이 둘 다 빗나가 **orphan** 이 되고, orphan 분류는
+  포트 컨텍스트가 전무해 강등 fix 가 무력화됐다. → **orphan NDF 가 부모 포트 신호를 상속**하도록 수정
+  (접두 매칭 + 구분자 `-` 요구, 부모 미발견 시 기존 동작 유지 = CSUS port-less NDF 보존).
+  회귀 **1318 passed**, 신규 총 12건, 상속 제거 시 1 FAIL(가드 유효).
+- **⚠️ 미검증**: .52/.152 에서 실제로 `hbas` 가 `[]` 가 되는지 → 다음 빌드.
   상세: `tests/evidence/2026-08-03-network-adapters-400-masking.md`.
 - **BMC 직접 probe 시도 실패**: 10.50.11.52 에 vault 계정으로 GET → 401 + 연결 차단. lockout 위험으로 즉시 중단.
 - **별건 발견**: iDRAC8 장비인데 adapter 는 `redfish_dell_idrac10` 선택(무인증 probe 에 model/firmware

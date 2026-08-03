@@ -31,10 +31,13 @@
 - [x] **[DONE 2026-08-03] fallback 실효 확인 (빌드 #4)**: Dell R630 8대 전부 `adapters` 1건
   (`BRCM 10G/GbE 2+2P 57800 rNDC`, S/N·firmware·port_count 실값) + `ports` 4건 수집. MAC 이
   `network.interfaces[]` 와 일치. 빌드 SUCCESS. **목표 달성.**
-- [ ] **[HIGH / lab] FCoE CNA 오분류 fix 재빌드 확인**: 빌드 #4 에서 `storage.hbas` 에 FC HBA 4건이
-  잡히는 오분류 노출 → `_classify_port_protocol` 의 `ndf_wwpn` 휴리스틱을 맨 끝으로 강등.
-  같은 Job 1회 더 실행 → **`data.storage.hbas` 가 `[]` 가 되고 `network.ports`(Ethernet)와 일관**되는지 확인.
-  (로컬 회귀 1315 passed + 강등 되돌리면 4 FAIL 확인했으나 사이트 실측은 미확인.)
+- [x] **[PARTIAL 2026-08-03] FCoE CNA 오분류 1차 fix (빌드 #5)**: 8대 중 6대 `hbas=0` 해결.
+  잔존 2대(.52/.152)는 NIC 펌웨어 15.20.13 이 NDF 에 MAC 파생 WWN 을 노출하는 케이스 —
+  NDF↔Port join 실패(orphan)로 포트 컨텍스트 없이 분류돼 강등 fix 가 무력화됨.
+- [ ] **[HIGH / lab] orphan NDF 부모 상속 fix 재빌드 확인**: 같은 Job 1회 더 실행 →
+  **.52 / .152 의 `data.storage.hbas` 가 `[]` 가 되고 `network.ports`(Ethernet)와 일관**되는지 확인.
+  (로컬 회귀 1318 passed + 상속 제거 시 1 FAIL 확인. 사이트 실측 미확인.)
+  - 여전히 4건이면: 해당 NDF 의 raw(`NetDevFuncType` / `Links`)를 캡처해야 판단 가능 → `capture-site-fixture`.
 - [ ] **[MED / lab] 사이트 fixture 캡처**: iDRAC8(13G) 은 lab 미보유 세대 — `capture-site-fixture` 로
   미러 확보 시 Systems-경로 토폴로지 회귀를 **합성 변조가 아닌 실 캡처**로 고정 가능
   (현재 integration 테스트는 R740 미러를 Systems 밑으로 옮긴 합성).
