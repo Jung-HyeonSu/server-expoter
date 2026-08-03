@@ -2,6 +2,37 @@
 
 > 외부 시스템 (Redfish / IPMI / SSH / WinRM / vSphere) 계약 카탈로그. rule 28 #11 측정 대상 (TTL 90일). rule 96 origin 주석 정본.
 
+## 일자: 2026-08-03 (감사) — **조립 경로 17곳 전수 목록 + 세대 이동 위험도**
+
+> 배경: iDRAC8 사고의 본질은 "리소스 위치가 세대별로 다를 수 있는데 우리는 경로를 **문자열로 조립**한다"
+> 는 것이다. 링크(`@odata.id`)를 따라가면 세대 무관하지만, 현 코드는 대부분 조립한다.
+> 아래는 `redfish_gather.py` 의 조립 지점 **전수**와 각각의 fallback 유무다.
+
+| 부모 | 조립 경로 | fallback | 세대 이동 위험 |
+|---|---|---|---|
+| ServiceRoot | `/redfish/v1/` | — | 없음 (표준 진입점) |
+| ServiceRoot | `AccountService` | — | 낮음 (ServiceRoot 링크와 관례 일치) |
+| ServiceRoot | `TelemetryService/MetricReports` | — | 낮음 |
+| Systems | `Processors` / `Memory` / `EthernetInterfaces` | — | **미지** (링크 추적 아님) |
+| Systems | `Storage` → `SimpleStorage` → `SmartStorage`(HPE OEM) | **있음 (3단)** | 낮음 |
+| Systems | `NetworkAdapters` | **2순위 fallback (2026-08-03 신설)** | 해소 |
+| Chassis | `NetworkAdapters` (1순위) | ↑ 와 쌍 | 해소 |
+| Chassis | `Power` ↔ `PowerSubsystem` | **있음** | 낮음 |
+| Chassis | `Thermal` ↔ `ThermalSubsystem` | **있음** | 낮음 |
+| Chassis | `Sensors` / `EnvironmentMetrics` | — (보조) | 낮음 (부재 시 graceful) |
+
+**실측 대조 (2026-08-03)**: 보유 replay fixture **10종 전수**(Dell iDRAC9 / HPE iLO5·iLO6·Gen12 /
+HPE CSUS 3200 / Lenovo XCC3 / DMTF 표준 mockup)에서 **부모가 노출한 링크 ↔ 우리가 조립한 경로
+불일치 0건**. → 보유 세대에서는 조립이 안전하다.
+
+**남은 위험**: **미보유 세대**. iDRAC8 이 정확히 그 사례였고 fixture 가 없어 사이트가 먼저 발견했다.
+자동 가드로 `tests/integration/test_port_classification_invariants.py::test_constructed_paths_match_exposed_links`
+신설 — 새 미러를 fixture 로 넣는 순간 자동 대조된다(미보유 세대 캡처 시 즉시 효력).
+
+**근본 대책 (별도 cycle 권장)**: 조립 대신 **부모의 `@odata.id` 링크 추적**. 다만 현 함수 시그니처가
+부모 응답을 갖고 있지 않아(`gather_processors(bmc_ip, system_uri, ...)`) ComputerSystem/Chassis 를
+한 번 받아 하위로 전달하는 구조 변경이 필요 → 전 섹션 영향, 별도 cycle.
+
 ## 일자: 2026-08-03 (Dell — **NetworkAdapters 의 부모 리소스가 세대별로 다름**)
 
 > **가장 중요한 계약 항목**: 같은 리소스가 iDRAC8(13G)은 `Systems` 밑, iDRAC9(14G+)은 `Chassis` 밑.

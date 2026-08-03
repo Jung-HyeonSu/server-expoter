@@ -36,6 +36,11 @@
   NDF↔Port join 실패(orphan)로 포트 컨텍스트 없이 분류돼 강등 fix 가 무력화됨.
 - [x] **[DONE 2026-08-03] orphan NDF 부모 상속 fix 확인 (빌드 #6)**: **8/8 `hbas=0`** +
   `ports` 전부 Ethernet + 빌드 SUCCESS. 사이트 증상 전부 해소.
+- [ ] **[MED] 조립 경로 → 링크 추적 전환 (근본 대책)**: `redfish_gather.py` 는 하위 컬렉션 경로를
+  문자열로 조립한다(17곳 — `EXTERNAL_CONTRACTS.md` 2026-08-03 감사 표). 부모의 `@odata.id` 를
+  따라가면 세대 무관해진다. 현 시그니처가 부모 응답을 안 갖고 있어 ComputerSystem/Chassis 를
+  한 번 받아 하위로 전달하는 구조 변경 필요 → 전 섹션 영향, **별도 cycle**.
+  (임시 안전망: `test_constructed_paths_match_exposed_links` 가 fixture 기준 자동 대조)
 - [ ] **[MED / lab] `.52` / `.152` 만 orphan Ethernet 신호를 못 얻은 이유 확정**: 두 번의 원인 가설
   (WWN 미노출 / NIC 펌웨어)이 **전수 대조로 모두 반증**됐다(`.53`↔`.52` 동일 fw, 결과 상이).
   NDF raw(`NetDevFuncType` / `Links`)를 캡처해야 확정 가능 → `capture-site-fixture`.

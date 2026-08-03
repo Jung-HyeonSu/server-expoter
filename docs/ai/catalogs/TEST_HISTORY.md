@@ -2,6 +2,25 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-03 (후속 4) — 교차 검증 불변식 + 조립 경로 링크 대조 가드 신설
+
+사용자 요구: "다른 세대·벤더 물리장비에서도 버그가 없어야 한다. 그 기준으로 개선하고 있나?"
+→ 기대값 고정형 회귀만으로는 미보유 장비를 못 잡는다는 진단 하에 **결과 자체의 정합성**을 보는
+가드 2종 신설 (`tests/integration/test_port_classification_invariants.py`, 35건).
+
+- **INV-1~4 (분류 자기모순)**: 같은 물리 포트가 `network.ports[]` 와 `storage.hbas[]`/`infiniband[]`
+  에서 다르게 분류되면 FAIL. **replay fixture 10종 전수**(Dell iDRAC9 / HPE iLO5·iLO6·Gen12 /
+  HPE CSUS 3200 / Lenovo XCC3 / DMTF mockup) + **baseline 10종 전수**에 적용.
+  - 매칭은 `(adapter_id, port_id)` — `port_id` 는 호스트 내 유일하지 않다(실측 HPE DL380 Gen12:
+    FC HBA 와 이더넷 NIC 이 둘 다 `"1"`/`"2"`). 초기 구현이 id 만 써서 HPE 3종에 **가짜 모순**을
+    냈고, 제품 버그가 아님을 확인 후 테스트 측을 수정.
+- **조립 경로 ↔ 노출 링크 대조**: 부모 응답이 `@odata.id` 를 노출하면 우리가 조립한 경로와 같아야 함.
+  **10 fixture 전수 불일치 0** → 보유 세대에서 조립 안전 확인. 미보유 세대 캡처 시 자동 효력.
+- **가드 유효성**: 분류 불변식 = 사고 형태 주입 시 검출 / 링크 대조 = 조립 키 변조 시 10 FAIL.
+- **전체**: `pytest tests/ --ignore=tests/e2e_browser` = **1353 passed, 5 skipped, 7 xfailed**.
+- 감사 산출물: `EXTERNAL_CONTRACTS.md` 2026-08-03 "조립 경로 17곳 전수 목록 + 세대 이동 위험도".
+- Baseline 갱신: 없음.
+
 ## 2026-08-03 (사이트 Dell NetworkAdapters 400 마스킹 fix)
 
 사이트 Jenkins console(DAY_1/git/소연등록redfish #1) Dell 8대 `status=partial` 조사 → 보조 섹션
