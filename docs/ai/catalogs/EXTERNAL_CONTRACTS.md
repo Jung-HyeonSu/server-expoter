@@ -2,24 +2,37 @@
 
 > 외부 시스템 (Redfish / IPMI / SSH / WinRM / vSphere) 계약 카탈로그. rule 28 #11 측정 대상 (TTL 90일). rule 96 origin 주석 정본.
 
-## 일자: 2026-08-03 (Dell iDRAC — 미지원 sub-resource 에 404 아닌 **400** 반환)
+## 일자: 2026-08-03 (Dell — **NetworkAdapters 의 부모 리소스가 세대별로 다름**)
 
-> 사이트 실측 (rule 25 R7-A-1 — 사용자 실측 > spec). Jenkins DAY_1/git/소연등록redfish #1.
+> **가장 중요한 계약 항목**: 같은 리소스가 iDRAC8(13G)은 `Systems` 밑, iDRAC9(14G+)은 `Chassis` 밑.
+
+| 세대 | 장비 | NetworkAdapters URI | 근거 |
+|---|---|---|---|
+| **iDRAC8 (13G)** | PowerEdge R630/R730/M630 등 | `/redfish/v1/**Systems**/System.Embedded.1/NetworkAdapters[/<id>]` | 벤더 공식 iDRAC8 Redfish API Guide 2.70.70.70 (Collection / Instance 양쪽) |
+| **iDRAC9 (14G+)** | PowerEdge R740 등 | `/redfish/v1/**Chassis**/System.Embedded.1/NetworkAdapters[/<id>]` | 내부 실측 — `tests/fixtures/redfish/real_dell_r740/recording.json` = 200 |
+
+**사이트 사고 (Jenkins DAY_1/git/소연등록redfish #1)**:
 
 | 항목 | 값 |
 |---|---|
-| 대상 | Dell iDRAC, `RedfishVersion=1.4.0`, Product=`Integrated Dell Remote Access Controller` |
-| 대수 | 8대 전부 동일 (10.50.11.51~54, .151~154) |
-| 엔드포인트 | `GET /redfish/v1/Chassis/System.Embedded.1/NetworkAdapters` |
-| 응답 | **HTTP 400 Bad Request** (표준 미구현 신호인 404 아님) |
-| 대조군 1 | 같은 `chassis_uri` 의 `Power` / `Thermal` = **200** → chassis URI 해석 정상 |
-| 대조군 2 | 실 Dell R740 전수 미러(`tests/fixtures/redfish/real_dell_r740`)의 **동일 URL = 200** → 요청 형식 정상 |
-| 결론 | 장비/펌웨어(또는 라이선스) 차이. **400 을 404 와 동급의 capability 부재 신호로 취급**해야 함 |
-| 미확정 | 400 의 근본 사유(미구현 / iDRAC 라이선스 등급 / 기타). 응답 body 를 버려 확인 불가였음 → `_extended_info` 로 `errors[].detail` 보존 후 **다음 빌드에서 확인 필요** |
+| 대상 | PowerEdge **R630** 8대 (10.50.11.51~54, .151~154), BMC model `13G Monolithic` |
+| iDRAC 펌웨어 | 2.75.100.75 / 2.80.80.80 / 2.85.85.85 / 2.86.86.86 → **iDRAC8** |
+| RedfishVersion | 1.4.0 |
+| 증상 | `GET Chassis/System.Embedded.1/NetworkAdapters` → **HTTP 400 Bad Request** |
+| 결론 | **장비 미지원 아님.** iDRAC8 은 이 리소스를 `Systems` 밑에 둔다 — 수집 측 경로 오류 |
 
-- server-exporter 적용: `_is_capability_missing_error`(404 or 400, `_is_empty_result` AND 가드) +
-  `_extended_info`(DSP0266 `error.@Message.ExtendedInfo` 축약 보존). 상세 `docs/19_decision-log.md` 2026-08-03.
-- source (rule 96 R1-A): DMTF DSP0266 "Error responses" + 사이트 실측 8대.
+**오판 기록 (rule 96 R4 — drift 추적)**: 최초 조사에서 "R740 미러의 동일 URL 이 200" 을 근거로
+"장비/펌웨어 미지원" 이라 결론내고 400 을 unsupported 로 분류했으나, **R740 은 14G/iDRAC9 로 세대가 달랐다**.
+세대가 다른 장비를 대조군으로 삼은 추론 결함. 같은 날 정정.
+
+- server-exporter 적용: `gather_network_adapters_chassis` 수집 경로 후보 2종(Chassis 1순위 → Systems fallback,
+  Additive) + `_extended_info`(DSP0266 `error.@Message.ExtendedInfo` 보존). 400→unsupported 분류는 **철회**.
+  상세 `docs/19_decision-log.md` 2026-08-03 정정 절.
+- source (rule 96 R1-A):
+  - https://www.dell.com/support/manuals/en-us/poweredge-r730/idrac8_redfishapiguide_2.70.70.70/networkadapter-collection (확인 2026-08-03)
+  - https://www.dell.com/support/manuals/en-us/poweredge-r730/idrac8_redfishapiguide_2.70.70.70/networkadapter-instance (확인 2026-08-03)
+  - 내부 실측: `tests/fixtures/redfish/real_dell_r740` (iDRAC9 = Chassis 경로 200)
+- **미확정**: iDRAC8 이 Chassis 경로에 404 가 아니라 400 을 주는 이유(벤더 구현 특성). fallback 으로 무해화됨.
 
 ## 일자: 2026-06-09 (cycle csus-model-completion — CSUS 3200 모델 5종 신 계약 — ADR-2026-06-09)
 

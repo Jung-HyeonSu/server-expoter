@@ -17,9 +17,22 @@
   신규 회귀 2파일(unit 21 + integration 6, 실 R740 미러 400 변조 사이트 재현 + 역가드).
 - **검증**: pytest **1302 passed**/5 skipped/7 xfailed, py_compile OK, YAML parse OK, baseline 10종 영향 0.
   fix 제거 시 9 FAIL 확인(가드 유효성 실증).
-- **⚠️ 미검증**: 실 ansible-playbook 통합(이 환경 CLI 부재 — Jinja2 식 렌더로만 검증) + 사이트 envelope
-  실제 변화 + 400 의 근본 사유. → Jenkins 재빌드 필요. 상세: `tests/evidence/2026-08-03-network-adapters-400-masking.md`.
+- **1차 재검증 (빌드 #3)**: 8대 전부 `status=success` + `sections.network=success`, 빌드 SUCCESS.
+  전수 비교에서 바뀐 필드는 `sections.network` 하나뿐(부작용 0).
+- **[정정] 근본 원인은 미지원이 아니라 경로 오류** — 사용자 지적("근본 해결이 아니라 안 보이게 한 것 아니냐")
+  후 재조사. envelope 실측상 8대는 **PowerEdge R630(13G / iDRAC8 fw 2.7x~2.8x)** 이고, 벤더 공식
+  iDRAC8 Redfish API Guide 는 NetworkAdapters 를 **`Systems/{id}/NetworkAdapters`** 로 문서화한다.
+  우리는 `Chassis` 경로만 물어봤다. 최초 판단의 대조군이던 R740 은 **14G/iDRAC9** — 세대가 달랐다(추론 결함).
+- **정정 fix**: (B 철회) 400→unsupported 분류 제거 — 우리 버그를 미지원으로 덮던 상태 해소 /
+  (신설) 수집 경로 fallback — 1순위 Chassis → 실패 시 2순위 Systems. 1순위 200 이면 2순위 미시도(Additive,
+  vendor 분기 없음) / (유지) A 섹션 status 분리 + C detail 보존(`tried:` 경로 + BMC 확장 메시지).
+- **재검증**: pytest **1306 passed**, 게이트 9종 rc=0. fallback 실효는 실 R740 미러의 NetworkAdapters 를
+  Systems 밑으로 옮긴 replay 로 **원본과 동일한 NIC 카드 집합 수집** 확인. 은폐 재발 가드 테스트 추가.
+- **⚠️ 미검증**: 사이트 R630 에서 `data.network.adapters[]` 가 실제로 채워지는지(이번 수정의 핵심 성과 지표)
+  + 실 ansible 통합 → **Jenkins 재빌드 필요**. 상세: `tests/evidence/2026-08-03-network-adapters-400-masking.md`.
 - **BMC 직접 probe 시도 실패**: 10.50.11.52 에 vault 계정으로 GET → 401 + 연결 차단. lockout 위험으로 즉시 중단.
+- **별건 발견**: iDRAC8 장비인데 adapter 는 `redfish_dell_idrac10` 선택(무인증 probe 에 model/firmware
+  부재 → priority 최상위). 기존 NEXT_ACTIONS 항목. 본 fallback 은 adapter 무관 동작이라 영향 없음.
 
 ---
 

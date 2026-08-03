@@ -20,6 +20,21 @@
 - **미실행(환경 제약)**: `ansible-playbook --syntax-check`(CLI 부재) / 실 Jenkins 빌드 → NEXT_ACTIONS 등재.
 - Evidence: `tests/evidence/2026-08-03-network-adapters-400-masking.md`
 
+### 2026-08-03 (후속) — 사이트 재검증 + 근본 원인 정정
+
+- **빌드 #3 재검증**: Dell 8대 `partial → success`, `sections.network failed → success`, 빌드 SUCCESS.
+  전수 비교에서 바뀐 필드는 `sections.network` 하나뿐(data keys / network sub-keys / interfaces 전부 동일).
+- **정정**: 400 은 장비 미지원이 아니라 **경로 오류**(iDRAC8 은 NetworkAdapters 가 `Systems` 밑).
+  400→unsupported 분류 **철회** + Chassis→Systems fallback 신설.
+- **전체**: `pytest tests/ --ignore=tests/e2e_browser` = **1306 passed, 5 skipped, 7 xfailed**.
+- 개정 회귀: unit 24 + integration 7. 핵심 3건 —
+  `test_systems_fallback_recovers_nic_cards`(실 R740 미러를 Systems 토폴로지로 변조 → 원본과 동일 NIC 집합 수집) /
+  `test_400_is_not_treated_as_unsupported`(은폐 재발 차단 — 헬퍼 부활 자체 금지) /
+  `test_chassis_success_does_not_try_systems`(1순위 200 시 왕복 불변).
+- 게이트 9종 rc=0 (harness_consistency / vendor_boundary / output_schema_drift / envelope_change /
+  jinja_compile / additive_only / status_logic / docs20_sync / adapter_origin). py_compile OK.
+- Baseline 갱신: 없음.
+
 ## 2026-06-15 (Lenovo SR650 V4 실 미러 검수 — 2-Round 수렴)
 
 Lenovo ThinkSystem SR650 V4 (XCC3, fw IHX414J 1.22) 전수 미러(2901 리소스) `replay_full_mirror.py`

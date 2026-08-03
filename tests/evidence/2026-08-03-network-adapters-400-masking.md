@@ -43,14 +43,19 @@ errors: [{"section":"network_adapters",
 
 `docs/ai/NEXT_ACTIONS.md` 에 **NET-SEC-MAP**(LOW, "CSUS 수정 후 미발동")으로 등재돼 있던 latent 결함이 실발동.
 
-## 3. "우리 요청 문제 아님" 검증 (증거 2건)
+## 3. [오판] "우리 요청 문제 아님" 결론 — 나중에 뒤집힘
 
-| # | 증거 | 결과 |
+당시 근거 2건:
+
+| # | 증거 | 당시 해석 |
 |---|---|---|
-| 1 | `power` / `thermal` 이 **동일 `eff_chassis_uri`** 사용 (`_collect_all_sections`) | 둘 다 `success` → chassis URI 해석 정상 |
-| 2 | 실 Dell R740 전수 미러 `tests/fixtures/redfish/real_dell_r740/recording.json` 에 `get::Chassis/System.Embedded.1/NetworkAdapters` | **200** (NIC.Integrated.1 / NIC.Slot.2,3,5,8 / FC.Slot.1,7 수집) → URL 구성 정상 |
+| 1 | `power` / `thermal` 이 **동일 `eff_chassis_uri`** 사용 | 둘 다 `success` → chassis URI 해석 정상 |
+| 2 | 실 Dell R740 미러의 `get::Chassis/System.Embedded.1/NetworkAdapters` = **200** | URL 구성 정상 |
 
-→ 장비/펌웨어(또는 라이선스) 차이로 결론. rule 25 R7-A-1(사용자 실측 우선).
+→ "장비/펌웨어 미지원" 으로 결론. **틀렸다.**
+
+**결함**: 증거 2 의 R740 은 **14G / iDRAC9**, 사이트는 **13G / iDRAC8** — **세대가 다른 장비를 대조군**으로
+삼았다. Dell 은 이 리소스의 부모를 세대별로 다르게 둔다. 상세는 아래 8절.
 
 ## 4. 실장비 직접 확인 시도 — 실패 (정직 보고)
 
@@ -91,4 +96,86 @@ A 에서 `unsupported` 까지 제외한 게 핵심 — 안 하면 B 적용 후 `
 |---|---|---|
 | 실 ansible-playbook 통합 | 이 환경에 `ansible-playbook` CLI 부재 (ansible **라이브러리** 2.19.9 만 존재) | Jenkins Agent 에서 redfish 파이프라인 1회 재빌드 |
 | 사이트 envelope 실제 변화 | BMC 직접 접근 불가 | 같은 Job 재실행 → `status`/`sections.network` 확인 |
-| 400 의 근본 사유 | 위 4절 | 재빌드 후 `errors[].detail` 또는 Jenkins console stderr 의 `capability 부재로 분류(비-404 응답)` 라인 |
+| 400 의 근본 사유 | 위 4절 | 재빌드 후 `errors[].detail` 확인 |
+
+---
+
+# 후속 (같은 날) — 1차 재검증 + **근본 원인 정정**
+
+## 8. 빌드 #3 재검증 결과 (A+B+C 배포 후)
+
+| 항목 | #1 (수정 전) | #3 (수정 후) |
+|---|---|---|
+| `status` | `partial` 8/8 | **`success` 8/8** |
+| `sections.network` | `failed` | **`success`** |
+| `errors[]` | 400 1건 | `[]` |
+| 빌드 | — | **Finished: SUCCESS** |
+
+8대 전수 비교에서 바뀐 필드는 `sections.network` **하나뿐** — data keys / network sub-keys /
+`interfaces` 전부 동일(부작용 0). checkout commit = `92715bb2`(main HEAD) 로 수정 코드 실행 확인.
+
+**단, `errors[]` 가 비워진 것은 fix B 가 400 을 미지원으로 분류해 드롭한 결과**였고, stderr 로 남기려던
+`capability 부재로 분류(비-404 응답)` 라인도 console 전수 검색 결과 **0건**(json_only callback 이 모듈
+stderr 를 표준 경로에서 걸러냄). 즉 진단 신호가 완전히 사라진 상태였다.
+
+## 9. 사용자 지적 → 근본 원인 재조사
+
+> "지금 400 에러가 발생하는 것을 근본적으로 해결한 게 아니라 안 보이게 해둔 거야?"
+
+지적이 정확했다. 근거를 다시 조사한 결과:
+
+### 9.1 장비 정체 (envelope 실측 — `data.bmc` / `data.hardware`)
+
+| 항목 | 값 (8대 전부) |
+|---|---|
+| 모델 | **PowerEdge R630** (13G) |
+| BMC 모델 | `13G Monolithic` |
+| iDRAC 펌웨어 | 2.75.100.75 / 2.80.80.80 / 2.85.85.85 / 2.86.86.86 → **iDRAC8** |
+| 선택 adapter | `redfish_dell_idrac10` (세대 오선택 — 별건, NEXT_ACTIONS 등재) |
+
+### 9.2 벤더 공식 문서 (rule 96 R1-A)
+
+**iDRAC8 Redfish API Guide 2.70.70.70** — NetworkAdapter Collection / Instance 양쪽 모두:
+
+```
+/redfish/v1/Systems/System.Embedded.1/NetworkAdapters[/<id>]
+```
+
+**Chassis 가 아니라 Systems 밑이다.** 우리 코드는 `Chassis/{id}/NetworkAdapters` 만 요청했다.
+
+- https://www.dell.com/support/manuals/en-us/poweredge-r730/idrac8_redfishapiguide_2.70.70.70/networkadapter-collection
+- https://www.dell.com/support/manuals/en-us/poweredge-r730/idrac8_redfishapiguide_2.70.70.70/networkadapter-instance
+
+### 9.3 결론
+
+**400 = 장비 미지원이 아니라 수집 측 경로 오류.** 3절의 오판은 세대가 다른 R740(14G/iDRAC9)을
+대조군으로 삼은 데서 왔다.
+
+## 10. 정정 fix
+
+| # | 내용 |
+|---|---|
+| **B 철회** | `_is_capability_missing_error` 제거, `_run` 은 `_is_404_only_error` 복귀. 400 은 다시 `failed` + `errors[]` 노출 |
+| **경로 fallback 신설** | `gather_network_adapters_chassis(..., system_uri=None)` — 1순위 `Chassis/{id}/NetworkAdapters` → 실패 시 2순위 `Systems/{id}/NetworkAdapters`. 1순위 200 이면 2순위 미시도(왕복 불변, Additive). vendor 분기 없음 |
+| **detail 보강** | 양 경로 실패 시 `tried: <경로1> / <경로2>` + BMC 확장 메시지 |
+| A / C 유지 | 섹션 status 분리(별개의 진짜 버그) + ExtendedInfo 보존 |
+
+## 11. 정정 후 검증
+
+| 항목 | 결과 |
+|---|---|
+| 전체 회귀 | **1306 passed** / 5 skipped / 7 xfailed |
+| 신규/개정 회귀 | unit 24 + integration 7 |
+| **fallback 실효 검증** | `test_systems_fallback_recovers_nic_cards` — 실 R740 미러의 NetworkAdapters 트리를 Systems 밑으로 옮기고 Chassis=400 으로 만든 뒤, **원본(Chassis 200) 수집과 동일한 NIC 카드 집합**이 나오는지 대조 |
+| 은폐 재발 가드 | `test_400_is_not_treated_as_unsupported` — `_is_capability_missing_error` 부활 자체를 차단 |
+| 왕복 불변 | `test_chassis_success_does_not_try_systems` — 1순위 200 이면 2순위 GET 호출 0 |
+| back-compat | `test_system_uri_absent_keeps_single_path` (구 호출부) / `test_duplicate_uri_not_requested_twice` |
+| 게이트 | harness_consistency / vendor_boundary / output_schema_drift / envelope_change / jinja_compile / additive_only / status_logic / docs20_sync / adapter_origin **전부 rc=0** |
+
+## 12. 남은 미검증 (⚠️)
+
+| 항목 | 확인 방법 |
+|---|---|
+| 사이트 R630 에서 **NIC 카드가 실제로 수집되는지** | Jenkins 재빌드 → `data.network.adapters[]` 가 채워지는지. **이번 수정의 핵심 성과 지표** |
+| 실 ansible-playbook 통합 | 동 재빌드 |
+| adapter 세대 오선택 (iDRAC8 → idrac10) | 별건 — NEXT_ACTIONS |

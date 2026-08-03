@@ -22,17 +22,23 @@
 > 상세: `tests/evidence/2026-08-03-network-adapters-400-masking.md` + `docs/19_decision-log.md` 2026-08-03.
 > 코드 fix 3종 적용 + pytest 1302 passed. 아래는 **이 환경에서 확인 불가**한 항목.
 
-- [ ] **[HIGH / lab] 사이트 Jenkins 재빌드 확인**: 같은 Job(DAY_1/git/소연등록redfish) 1회 재실행 →
-  Dell 8대가 `status=success` + `sections.network=success` 로 바뀌는지 확인. (이 환경 `ansible-playbook`
-  CLI 부재 → YAML 은 Jinja2 식 렌더로만 검증.)
-- [ ] **[HIGH / lab] 400 의 근본 사유 확정**: 재빌드 후 `errors[].detail`(신규 `_extended_info`) 또는 Jenkins
-  console stderr 의 `capability 부재로 분류(비-404 응답)` 라인에서 iDRAC 확장 메시지 확인 →
-  미구현 / 라이선스 등급 / 기타 중 무엇인지 `EXTERNAL_CONTRACTS.md` 2026-08-03 행에 확정 기록 (현재 미확정).
-- [ ] **[MED / lab] 400→unsupported 오분류 감시**: 400 을 capability 부재로 분류하므로, 다른 섹션에서
-  *진짜* 요청 결함 400 이 조용히 `not_supported` 로 덮이지 않는지 첫 몇 빌드의 stderr 모니터링.
-  (완화책 = `_is_empty_result` AND 가드 + stderr 원문. 오분류 발견 시 vendor/섹션 화이트리스트로 축소.)
-- [ ] **[LOW] 사이트 fixture 캡처**: 이 iDRAC(RedfishVersion 1.4.0) 은 lab 미보유 세대 —
-  `capture-site-fixture` 로 미러 확보 시 400 경로 회귀를 합성이 아닌 실 캡처로 고정 가능.
+- [x] **[DONE 2026-08-03] 1차 재빌드 확인 (#3)**: 8대 전부 `status=success` + `sections.network=success`,
+  빌드 SUCCESS. 전수 비교에서 바뀐 필드는 `sections.network` 하나뿐(부작용 0).
+- [x] **[DONE 2026-08-03] 400 의 근본 사유 확정**: **장비 미지원 아님 — 수집 측 경로 오류**.
+  사이트 8대는 PowerEdge R630(13G / iDRAC8)이고 벤더 공식 API 가이드상 NetworkAdapters 는
+  `Systems/{id}/NetworkAdapters`. `Chassis` 만 물어봐서 400. 400→unsupported 분류는 **철회**하고
+  Systems 경로 fallback 신설. `EXTERNAL_CONTRACTS.md` 2026-08-03 에 세대별 URI 표 기록.
+- [ ] **[HIGH / lab] fallback 실효 재빌드 확인**: 같은 Job 1회 더 실행 → Dell R630 8대의
+  **`data.network.adapters[]` 가 실제로 채워지는지** 확인. **이번 수정의 핵심 성과 지표**
+  (지금까지는 영구 빈 배열이었음). 채워지면 NIC 카드 모델/펌웨어/포트수 확보.
+  - 만약 여전히 비면: `errors[].detail` 의 `tried: <경로1> / <경로2>` + BMC 확장 메시지로 다음 원인 판단.
+- [ ] **[MED / lab] 사이트 fixture 캡처**: iDRAC8(13G) 은 lab 미보유 세대 — `capture-site-fixture` 로
+  미러 확보 시 Systems-경로 토폴로지 회귀를 **합성 변조가 아닌 실 캡처**로 고정 가능
+  (현재 integration 테스트는 R740 미러를 Systems 밑으로 옮긴 합성).
+- [ ] **[MED] adapter 세대 오선택 (iDRAC8 → `redfish_dell_idrac10`)**: 무인증 probe 단계에 model/firmware
+  가 비어 priority 최상위만 선택되는 기존 이슈가 사이트에서 실증됨(8대 전부 iDRAC8 인데 idrac10 선택).
+  수집 데이터는 세대 무관 동일이라 무해하나 `diagnosis.not_supported_message` 라벨이 부정확.
+  기존 항목("Dell·Lenovo 세대 adapter 가 priority 로만 선택") 과 동일 건 — 실증 사례 확보로 우선순위 상향 검토.
 
 ## OS physical_disks serial/wwn 후속 (2026-06-22)
 
