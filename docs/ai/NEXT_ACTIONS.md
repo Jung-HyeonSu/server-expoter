@@ -34,10 +34,12 @@
 - [x] **[PARTIAL 2026-08-03] FCoE CNA 오분류 1차 fix (빌드 #5)**: 8대 중 6대 `hbas=0` 해결.
   잔존 2대(.52/.152)는 NIC 펌웨어 15.20.13 이 NDF 에 MAC 파생 WWN 을 노출하는 케이스 —
   NDF↔Port join 실패(orphan)로 포트 컨텍스트 없이 분류돼 강등 fix 가 무력화됨.
-- [ ] **[HIGH / lab] orphan NDF 부모 상속 fix 재빌드 확인**: 같은 Job 1회 더 실행 →
-  **.52 / .152 의 `data.storage.hbas` 가 `[]` 가 되고 `network.ports`(Ethernet)와 일관**되는지 확인.
-  (로컬 회귀 1318 passed + 상속 제거 시 1 FAIL 확인. 사이트 실측 미확인.)
-  - 여전히 4건이면: 해당 NDF 의 raw(`NetDevFuncType` / `Links`)를 캡처해야 판단 가능 → `capture-site-fixture`.
+- [x] **[DONE 2026-08-03] orphan NDF 부모 상속 fix 확인 (빌드 #6)**: **8/8 `hbas=0`** +
+  `ports` 전부 Ethernet + 빌드 SUCCESS. 사이트 증상 전부 해소.
+- [ ] **[MED / lab] `.52` / `.152` 만 orphan Ethernet 신호를 못 얻은 이유 확정**: 두 번의 원인 가설
+  (WWN 미노출 / NIC 펌웨어)이 **전수 대조로 모두 반증**됐다(`.53`↔`.52` 동일 fw, 결과 상이).
+  NDF raw(`NetDevFuncType` / `Links`)를 캡처해야 확정 가능 → `capture-site-fixture`.
+  **동작은 이미 정상**이므로 우선순위 MED — 다만 원인 미상인 채로 두면 유사 케이스 재발 시 또 헤맨다.
 - [ ] **[MED / lab] 사이트 fixture 캡처**: iDRAC8(13G) 은 lab 미보유 세대 — `capture-site-fixture` 로
   미러 확보 시 Systems-경로 토폴로지 회귀를 **합성 변조가 아닌 실 캡처**로 고정 가능
   (현재 integration 테스트는 R740 미러를 Systems 밑으로 옮긴 합성).
