@@ -1,5 +1,28 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (수집 로직 설명 자료용 원천 정보 문서 신설 — 코드 실측 재작성)
+
+- **요청**: 수집 로직을 쉽게 설명하는 PPT 를 만들 예정. 그 근거가 될 MD 를 **문서 말고 실제 코드**
+  기준으로 작성해 달라(사용자 명시 "문서는 지금 업데이트가 안돼있음"). 장표 구성/장수는 사용자가
+  별도로 정하므로 **AI 는 정보만 담는다**(다이어그램 없음, 흐름은 말로 완전 서술, 내부 용어 지양).
+- **산출**: `docs/presentation/gathering-explainer-source.md` (1,253줄, 15개 주제 블록 + 작도 체크리스트).
+  코드만 근거 — Explore 3영역(파이프라인/3채널 실행/어댑터 확장) 전수 조사 후 주요 인용 직접 재확인.
+- **코드 변경 0줄.** 읽기 전용 조사.
+- **조사 중 확인된 정본 stale/결함 8건** (문서 15절에 기록, 수정은 미착수):
+  - `CLAUDE.md`/docs 의 "os-gather 3-Play" → 실제 **4 Play** (`os-gather/site.yml:25,138,187,382`)
+  - `CLAUDE.md` rule 20 R3 의 "OUTPUT: <desc> prefix" → 실제 **정확일치 `OUTPUT`**
+    (`callback_plugins/json_only.py:49,108` + 각 site.yml `- name: OUTPUT`)
+  - `schema/sections.yml:5` 주석 "섹션 10종" → 실측 **11종**
+  - **huawei/inspur adapter 의 `normalize.oem_normalize` 키 오타** → `site.yml:145` 조건과 불일치로
+    해당 `normalize_oem.yml` **영구 미실행** (dead path)
+  - `adapter_loader.py:174-184` `_pick_generic_fallback()` **도달 불가** (generic 이 `match:{}` 라
+    항상 matched 에 들어가 −400 으로 정렬 최하위 → 자연 승리 구조. 동작 자체는 정상)
+  - `precheck_bundle.py` 의 `os` 채널 코드 — production playbook 에서 **미호출** (os 는 `wait_for` ×3)
+  - precheck **4단계(auth) 항상 skip** — redfish/esxi site.yml 이 계정을 안 넘김
+  - `adapters/registry.yml` — **읽는 실행 코드 0건** (문서용 인덱스)
+- **실측 갱신치**: adapter 42 (redfish 31/os 7/esxi 4), vendor canonical 9, vault 9, section 11,
+  field_dictionary 168 (must 47/nice 115/skip 6), baseline 10, `redfish_gather.py` **5,082줄**.
+
 ## 일자: 2026-08-03 (사이트 Dell 8대 partial — 보조 섹션 마스킹 + 400 분류 fix)
 
 - **사용자 제보**: Jenkins DAY_1/git/소연등록redfish #1 — Dell iDRAC 8대가 `status=partial`,
