@@ -2,6 +2,32 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-10 (g) — Phase 3-A 보정 검증 (폴링 복원 / 문구 정정)
+
+- **신규**: `tests/unit/test_os_precheck_polling.py` **21건**.
+  실제 시간 기반 소켓 상태 전환을 만들 수 없어 **결정적 mock clock** 사용
+  (`pb.time.monotonic` / `pb.time.sleep` 대체 → 실제 대기 0초).
+  - **핵심 회귀 Case**: t=0 에 닫혀 있고 t=1.0 에 기동되는 서비스 →
+    폴링(예산 2초, sleep 1) 으로 **2회째 시도에서 성공**. 대조군(단일 시도)은 실패.
+  - 예산 초과 대기 없음(clock <= 2.0) / 시도별 타임아웃 = `min(5, ceil(남은))` = [2, 1]
+  - timeout 실패는 1회로 끝남(wait_for 와 동일) / refused 후 예산 내 성공
+  - 여러 시도의 kind 종합 우선순위 4조합
+  - checked_ports 중복 없음 / 첫 성공에서 중단
+  - **DNS 규칙**: 주소 시도 실패는 timeout kind, getaddrinfo 실패만 DNS kind /
+    복수 주소 중 하나 실패해도 다른 주소 성공이 우선
+  - **§9 채널 보호**: redfish/esxi 는 `(443, 3.0)` 단일 시도 유지, stage/code/checked_ports 불변
+  - os-gather/run_precheck 배선 검증 + RST 문구에 "서버는 응답하지만" 부재 확인
+- **수정**: 공유 테스트 하네스 2곳에 `port_poll_interval` 파라미터 추가,
+  RST 문구 기대값 갱신.
+- **전체 회귀**: `pytest tests/` → **1519 passed, 11 skipped, 7 xfailed**
+- **Jenkins 등가**: Stage 3 PASS / e2e 258 / integration 200 / unit 889 / regression 169
+- **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0
+- **Baseline**: 10건 변경 없음
+- **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows, `os.get_blocking` POSIX 전용).
+  대체로 YAML 파싱 5종 + Jinja2 165 표현식 전수 컴파일 실패 0.
+- **wait_for 실측 근거**: `ansible/modules/wait_for.py` argument_spec
+  (`timeout=300`, `connect_timeout=5`, `sleep=1`, `delay=0`) + started 분기 폴링 루프 :619-628.
+
 ## 2026-08-10 (f) — OS 공통 Precheck 통합 검증 (Phase 3-A)
 
 - **신규**: `tests/unit/test_os_precheck_integration.py` **18건** — `run_module()` 을 실제로

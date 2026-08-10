@@ -1,5 +1,39 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (g) — Phase 3-A 호환성 보정 (최종 완료)
+
+> Phase 3-A 에서 스스로 보고했던 동작 차이 1건과 진단 문구 2건을 보정. 새 기능 아님.
+
+- **wait_for 의 "예산 안에서 반복 확인" 의미 복원 (회귀 제거)** — 설치본 ansible 2.19.9 의
+  `modules/wait_for.py` 를 실측한 결과 `state=started` + `port` 는 단발 연결이 아니라
+  `end = start + timeout` 동안 `min(connect_timeout=5, ceil(남은시간))` 으로 연결하고
+  실패 시 `sleep=1` 후 반복한다(:619-628, argument_spec 기본값). Phase 3-A 최초 전환이
+  이를 포트당 1회 시도로 바꿔 **probe 시작 시점엔 닫혀 있지만 예산 안에 기동되는 서비스**가
+  실패로 바뀌는 회귀가 있었다. `tcp_check_budget()` 신설로 동등 동작을 복원했다.
+  - 예산(포트당 2초)·포트 순서·첫 성공 시 중단·checked_ports 의미 모두 불변
+  - `port_poll_interval` 파라미터 기본값 0 = 단일 시도 → **redfish/esxi 동작 불변**
+  - OS 만 `wait_for` 기본값 sleep=1 을 명시 전달 (간격 임의 튜닝 안 함)
+  - 무한 재시도 없음. timeout 실패는 연결 시도가 예산을 소모해 1회로 끝난다(wait_for 와 동일)
+- **한 포트의 여러 시도 결과 종합** — 마지막 오류 문자열이 아니라 구조화된 kind 로
+  대표를 정한다(`_dominant_kind`: DNS > REFUSED > TIMEOUT > OTHER). 중간 실패가 있어도
+  최종 성공이면 성공이다.
+- **RST 문구 과장 제거** — 종전 "서버는 응답하지만 ... 포트가 모두 열려 있지 않습니다" 는
+  RST 를 서버 자체 응답으로 단정한다. 중간 방화벽이나 보안 장비가 RST 를 생성했을 수 있어
+  관측 사실까지만 표현하도록 교체:
+  "SSH(22)/WinRM(5985, 5986) 관리 포트에 연결하지 못했습니다. 일부 연결 시도에서 연결 거부
+  응답이 확인되었습니다. 서비스 기동 상태와 네트워크 정책을 확인하세요."
+- **DNS 선정 규칙은 코드 변경 없음** — `tcp_check_ex` 는 `socket.getaddrinfo` 자체가
+  `gaierror` 를 낼 때만 DNS kind 를 낸다. 주소가 여러 개일 때 일부 실패는 timeout/refused/other
+  로 분류되고, 한 주소라도 연결되면 성공이 우선한다. 구조적으로 오분류가 불가능해
+  **테스트와 근거만 추가**했다.
+- **JSON Contract 변경 0** — 키·타입·enum 추가 없음. `schema_version` `"1"` 유지.
+  attempt count / elapsed 같은 내부 값은 외부로 내보내지 않는다.
+- **회귀**: `pytest tests/` **1519 passed / 11 skipped / 7 xfailed**. 신규
+  `tests/unit/test_os_precheck_polling.py` 21건(결정적 mock clock). Stage 3 PASS /
+  e2e 258 / integration 200 / unit 889 / regression 169 / 하네스·경계·drift·envelope·
+  cross-channel 전부 exit 0 / baseline 10 무변경.
+- **Phase 3-A 최종 완료.** 다음 Phase(SSH/WinRM 실제 Protocol Probe 등) 미착수.
+
 ## 일자: 2026-08-10 (f) — OS 관리 포트 사전 점검을 공통 Precheck 로 통합 (Phase 3-A)
 
 > 목적은 구조 정렬이다. SSH/WinRM 실제 프로토콜 검증은 이번 범위가 아니다.
