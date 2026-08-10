@@ -2,6 +2,34 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-10 (e) — failure_stage / failure_code 계약 테스트 (Phase 2)
+
+- **신규**: `tests/e2e/test_failure_code_contract.py` **42건**. production site.yml /
+  precheck_bundle 을 직접 렌더·실행해 검증 (합성 fixture 아님).
+  - 사용자 지정 14 Case 전수 + OS 포트 전멸 예외 매핑
+  - 불변식: code 허용 집합 / code-stage 조합 / success·partial 은 둘 다 null /
+    baseline 전수 null / field_dictionary 와 코드 집합 일치 / 자격 전멸 시 auth false 금지 /
+    HTTP 403 auth false 금지 / errors detail 민감정보 미노출 / Phase 1 reason 문구 유지
+- **수정**: `tests/e2e/test_envelope_failure_modes.py` fixture 에 failure_code 추가 +
+  fallback 문구를 production 과 동기화. `tests/regression/test_cross_channel_consistency.py` 에
+  `test_diagnosis_has_failure_keys` 추가 (baseline 10 전수 shape 고정).
+  `tests/e2e/test_failure_reason_contract.py` 기대값 4건 갱신
+  (인증 통과 후 실패의 stage 가 null → gather 로 바뀐 의도된 변경을 실제로 검출했다).
+- **14 Case 실측 렌더 결과**: 조합 위반 0, 전 Case failure_code 키 존재.
+- **전체 회귀**: `pytest tests/` → **1472 passed, 11 skipped, 7 xfailed**
+- **Jenkins 등가**: Stage 3 `validate_field_dictionary.py` PASS (fd_paths 168→169) /
+  Stage 4-a e2e 252 passed / Stage 4-b integration 200 passed / unit 848 / regression 169
+- **하네스**: harness / vendor boundary / output_schema_drift / envelope_change /
+  cross_channel 전부 exit 0
+- **자산 파싱**: baseline 10 + examples 4 + output_examples 11 전수 파싱 실패 0
+  (검증 중 scratchpad 헬퍼의 이스케이프 처리 버그로 2건이 거짓 실패로 보고돼, 상태 머신
+  기반 파서로 교체 후 재확인)
+- **Baseline 갱신**: 10건에 `failure_code: null` **키만** 추가. 전부 `status=success` 라
+  null 이 실측과 일치하는 값이며 회귀 기준선의 의미는 불변 (rule 13 R1 3종 동반 갱신)
+- **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows 에서 Ansible CLI 진입부가
+  POSIX 전용 `os.get_blocking` 호출). 대체로 YAML 파싱 6종 + Jinja2 표현식 163개 전수 컴파일
+  실패 0 + 14 Case 실제 렌더 수행. lab/Jenkins 에서 재확인 필요.
+
 ## 2026-08-10 (d) — Portal 실패 사유 계약 테스트 신설 (Phase 1-B)
 
 - **신규**: `tests/e2e/test_failure_reason_contract.py` **40건**. 합성 fixture 가 아니라

@@ -29,7 +29,7 @@
   "sections": { "system": "supported", "cpu": "not_supported", ... },
   "diagnosis": {
     "reachable": true, "port_open": true, "protocol_supported": true,
-    "auth_success": true, "failure_stage": null, "failure_reason": null,
+    "auth_success": true, "failure_stage": null, "failure_code": null, "failure_reason": null,
     "details": { "channel": "...", "checked_ports": [...], ... }
   },
   "meta": { "loc": "...", "duration_ms": ..., ... },

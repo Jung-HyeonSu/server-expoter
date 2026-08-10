@@ -123,6 +123,7 @@ def scan_envelope_changes(changed_files: list[str]) -> list[dict[str, str]]:
         for m in DIAGNOSIS_SUBKEY_RE.finditer(text):
             sub = m.group(1)
             if sub not in {"precheck", "details", "failure_stage",
+                           "failure_code", "failure_reason",
                            "gather_mode", "auth"}:
                 findings.append({
                     "file": f,
@@ -186,6 +187,7 @@ def self_test() -> int:
     diag_findings = [
         m.group(1) for m in DIAGNOSIS_SUBKEY_RE.finditer(sample_yaml)
         if m.group(1) not in {"precheck", "details", "failure_stage",
+                              "failure_code", "failure_reason",
                               "gather_mode", "auth"}
     ]
     data_findings = [

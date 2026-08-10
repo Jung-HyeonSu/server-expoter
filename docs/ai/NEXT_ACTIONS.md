@@ -42,24 +42,23 @@
       `auth_success` 의 `false` 가 사실상 사라진다. Portal 이 이 값들로 분기하고 있지 않은지
       확인 필요 (현재 failure_reason 만 쓴다는 전제라면 영향 없음).
 
-### Phase 2 (Q3~Q7 후 — schema 변경 동반)
+### Phase 2 — **완료 (2026-08-10)**
 
-- [ ] **[MED] `failure_code` 도입 (7종)** — `DNS_RESOLUTION_FAILED` / `TCP_CONNECT_FAILED` /
-      `TCP_CONNECTION_REFUSED` / `PROTOCOL_CHECK_FAILED` / `AUTH_PROBE_FAILED` /
-      `GATHER_FAILED` / `OUTPUT_BUILD_FAILED`. **1 code ↔ 1 stage** 원칙.
-      사용자 확정 J-3: **원인 추정이 아니라 관측 사실 중심 명명** (`TCP_UNREACHABLE` 같은
-      단정형 금지 → `TCP_CONNECT_FAILED`).
-- [ ] **[MED] `failure_stage` 에 `gather` 추가** — 현재 gather 단계 실패는 `status=failed` +
-      `failure_stage=null` 이라 precheck 실패와 구분하려면 `errors[].section` 문자열 파싱이 필요.
-      `schema/field_dictionary.yml:1310-1327` enum 수정 동반 → rule 92 R5 승인 필요.
-- [ ] **[MED] 인증 실패 표기 — 단, 확정 가능한 경우만**. 4채널 모두 "자격 후보 전멸"이
-      인증 실패를 **확정하지 못한다**(제한 쉘 rc≠0 / ESXi 권한 부족 / 전송 실패 / timeout 이
-      모두 같은 값으로 뭉개짐 — `os-gather/tasks/try_one_credential.yml:59-69`,
-      `esxi-gather/tasks/try_one_credential.yml:35`, `redfish-gather/tasks/try_one_account.yml:38-40`).
-      기본은 `auth_success:null` + `AUTH_PROBE_FAILED`.
-      **사용자 확정 J-2: HTTP 401 만 명시적 인증 거부 근거로 사용하고, 403 은 인증 후 권한
-      부족일 수 있으므로 `AUTHENTICATION_FAILED` 로 단정하지 않는다.**
-      (`redfish_gather.py:4434-4444` 는 현재 401/403 을 동일 취급 — 분리 필요)
+> 상세: `docs/ai/CURRENT_STATE.md` 2026-08-10 (e). 계약 테스트 `tests/e2e/test_failure_code_contract.py`.
+
+- [x] `failure_stage` enum 에 `gather` 추가 (실행이 중단된 단계 의미 유지)
+- [x] `diagnosis.failure_code` 신설 (nullable 7종, 성공 시에도 키 존재)
+- [x] TCP 실패 분류를 문자열 파싱에서 `tcp_check_ex()` 구조화 kind 로 교체
+- [x] schema/baseline/examples/fixtures/hook/문서 정합화
+- [x] schema_version `"1"` 유지 (근거: `docs/20:589` 정책 + 전례 2건)
+- [ ] **[남음] Redfish HTTP 401 기반 인증 실패 세분화 (운영 경로)** — `redfish_gather.py` 의
+      errors 엔트리는 `{section, message, detail}` 3키뿐이고 HTTP status 가 message 문자열
+      안에만 있다(`_err():370-371`). 모듈 `exit_json` 에도 구조화된 status 필드가 없다.
+      문자열 파싱을 새로 만들지 않기로 해(사용자 지시) 운영 Redfish 경로는
+      `AUTH_PROBE_FAILED` + `auth_success:null` 을 유지한다. 모듈이 구조화된 status 를
+      반환하도록 바꾸는 것이 선행 조건.
+- [ ] **[남음] Portal Receiver strict deserialization 확인** — 저장소에서 확인 불가.
+      `failure_code` 신규 키와 `failure_stage` 신규 값 `gather` 를 Portal 이 거부하지 않는지 확인.
 
 ### 별도 후속 (이번 범위 밖)
 

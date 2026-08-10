@@ -1,5 +1,45 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (e) — failure_stage / failure_code Contract 완성 (Phase 2)
+
+> 목적: Portal 사용자 문구(failure_reason)가 아니라 **시스템이 실패 종류로 분기**할 수 있게
+> 하는 것. Portal 은 현재 failure_reason 만 쓰므로 이번 변경은 Portal UI 기능에 직접 쓰이지 않는다.
+
+- **`failure_stage` 에 `gather` 추가** — enum `[reachable, port, protocol, auth, gather, fallback]`.
+  종전에는 연결·인증을 통과한 뒤 수집/정규화에서 실패하면 `status=failed` + `stage=null` 이라
+  precheck 실패와 구분하려면 `errors[].section` 문자열을 파싱해야 했다.
+  의미는 Root Cause 가 아니라 **실행이 중단된 단계**로 유지한다.
+- **`diagnosis.failure_code` 신설 (nullable, 7종)** — `DNS_RESOLUTION_FAILED` /
+  `TCP_CONNECT_FAILED` / `TCP_CONNECTION_REFUSED` / `PROTOCOL_CHECK_FAILED` /
+  `AUTH_PROBE_FAILED` / `GATHER_FAILED` / `OUTPUT_BUILD_FAILED`.
+  **정상 결과에서도 키는 존재하고 값만 null** (소비자가 키 유무로 분기하지 않게 shape 고정).
+  Raw Exception 종류(SOCKET_TIMEOUT / SSL_ERROR / HTTP_500 등)는 code 로 만들지 않는다.
+- **TCP 실패 분류를 문자열 파싱에서 구조화로 교체** — `tcp_check_ex()` 신설이 `(ok, err, kind)` 를
+  반환한다(`kind` ∈ dns/refused/timeout/other). 종전 `_check_ports` 는 `"거부" in err` 부분 문자열
+  검사로 refused 를 판별해, 문구를 한 글자만 바꿔도 분류가 조용히 깨지는 구조였다.
+  기존 `tcp_check()` 는 2-튜플 래퍼로 남겨 호출자/테스트 호환 유지.
+- **timeout 을 장비 다운으로 확정하지 않음** — `TCP_UNREACHABLE` 대신 `TCP_CONNECT_FAILED`.
+  RST 를 실제로 관측했을 때만 `TCP_CONNECTION_REFUSED`.
+- **HTTP 401 / 403 분리 유지** — 둘 다 code 는 `AUTH_PROBE_FAILED`, `auth_success` 만
+  401 에서 `false`. 403 / 5xx / timeout 은 `null` 유지.
+- **Redfish 는 gather 실패에서도 `auth_success` 를 만들지 않는다** — 모듈이 인증과 수집을
+  한 결과로 합쳐 반환하므로(`try_one_account.yml:38-40`) 인증 성공을 관측했다고 말할 수 없다.
+  ESXi / OS 는 자격 probe 가 분리돼 있어 통과 시 `auth_success=true` 를 기록한다.
+- **매핑 예외 1건 (문서화)** — OS 관리 포트 전체 실패는 `stage=port` + `code=TCP_CONNECT_FAILED`.
+  `wait_for` 는 RST 를 관측할 수 없어 REFUSED 로 확정하면 안 되고, 멈춘 단계는 포트 감지 단계다.
+- **Partial 정책 불변** — partial 이라는 이유로 대표 stage/code 를 강제 생성하지 않는다.
+- **schema_version 은 `"1"` 유지** — 저장소 정책은 `docs/20:589` "envelope 13 필드의 의미가
+  깨지는 변경이면 `"2"`". 이번은 diagnosis 하위 nullable 필드 추가 + enum 확장이라 13 필드
+  자체와 그 의미가 불변. 동일 성격 전례 2건(`docs/19:358` additive, `docs/19:630` enum 확장)도
+  `"1"` 유지였다.
+- **정합화 완료**: field_dictionary(enum + 신규 entry, 168→169) / baseline 10 / examples 4 /
+  output_examples 11 / e2e fixtures / cross-channel 회귀 / envelope hook allowlist / rule 20 / docs/20.
+- **회귀**: `pytest tests/` **1472 passed / 11 skipped / 7 xfailed**. 신규 계약 테스트
+  `tests/e2e/test_failure_code_contract.py` 42건. Stage 3 PASS / Stage 4-a 252 / Stage 4-b 200 /
+  unit 848 / regression 169 / 하네스·경계·drift·envelope·cross-channel 전부 exit 0.
+- **다음 Phase 미착수**: OS Precheck 구조 개선 / Protocol Detection 강화 /
+  Redfish ServiceRoot 판정 강화 / Credential Probe 원인 세분화 / Authorization 별도 stage.
+
 ## 일자: 2026-08-10 (d) — Portal 실패 사유 계약 확보 (Phase 1-B)
 
 > **새 계약 (사용자 확인)**: Portal 은 서버 등록 / Gathering 실패 시 Grid 의 "실패 사유" 칸에
