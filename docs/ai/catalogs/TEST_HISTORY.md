@@ -2,6 +2,39 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-10 (j) — Redfish ServiceRoot 판정 검증 (Phase 4-A)
+
+- **신규**: `tests/unit/test_redfish_service_root_fixtures.py` **40건** —
+  저장소의 ServiceRoot 응답을 **전수** 판정.
+  - `service_root.json` 28개 (cisco 4 / dell 5 / fujitsu 2 / hpe 6 / huawei 3 /
+    inspur 1 / lenovo 3 / quanta 1 / supermicro 3) → **전부 PASS**
+  - `recording.json` 의 비인증 `noauth::` 10개 (DMTF 표준 mockup 1 + HPE 에뮬레이터 5 +
+    실장비 캡처 4: dell_r740 / hpe_csus3200 / hpe_dl380 / lenovo_sr650) → **전부 PASS**
+  - fixture 개수 감소 감시 + "ServiceRoot 에서 비-200 을 반환하는 캡처가 생기면 실패" 가드
+- **재작성**: `tests/unit/test_precheck_probe_redfish.py`.
+  - Positive: ServiceRoot 인정 / trailing slash 2종 / RedfishVersion 4종 /
+    ServiceRoot 스키마 버전 3종 / 자격증명 미전송 / verify=False 유지
+  - **False Positive 17조합 전부 거부**: HTML(JSON 아님) / 빈 JSON / 일반 JSON /
+    Redfish 무관 OData JSON / JSON Array / JSON 문자열 / @odata.type 없는 유사 JSON /
+    @odata.id 불일치 / RedfishVersion 빈 문자열 / RedfishVersion 부재 /
+    **HTTP 401·403·404·405·406·500·503 단독**
+  - retry 정책 불변 확인 3건 (payload=None 만 재시도 / HTTP 응답 시 재시도 없음 /
+    200 이지만 ServiceRoot 아닐 때도 재시도 없음), evidence 길이 제한
+- **수정**: 다른 테스트의 ServiceRoot stub 4곳을 유효 shape 로 교체.
+  `test_precheck_robustness.py` 의 비-dict JSON 케이스는 "crash 안 함 + ok=True" 에서
+  "crash 안 함 + Redfish 아님으로 거부" 로 기대값 갱신.
+- **전체 회귀**: `pytest tests/` → **1631 passed, 11 skipped, 7 xfailed**
+- **Jenkins 등가**: Stage 3 PASS / e2e 258 / integration 200 / unit 1001 / regression 169
+- **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0
+- **OS / ESXi**: `probe_os` / `probe_esxi` / 후보 탐색 / 포트 폴링 미변경.
+  `http_get` 도 미변경(Phase 3-B 에서 추가한 headers 키 그대로). 두 채널 회귀 0.
+- **schema/**: 파일 변경 0
+- **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows, `os.get_blocking` POSIX 전용).
+  대체로 YAML 파싱 5종 + Jinja2 166 표현식 전수 컴파일 실패 0.
+- **실장비 미검증 영역**: ServiceRoot 에서 인증을 요구하는 펌웨어. 저장소에 캡처가 없어
+  제거된 401/403 예외가 실제로 필요한지 확인할 수 없다. 해당 장비를 만나면
+  PROTOCOL_CHECK_FAILED 로 차단된다.
+
 ## 2026-08-10 (i) — WinRM WS-Management Identify 판정 검증 (Phase 3-B 최종)
 
 - **재작성**: `tests/unit/test_precheck_probe_os.py` **30건**.

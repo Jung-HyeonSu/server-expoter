@@ -1,5 +1,40 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (j) — Redfish 판정을 실제 ServiceRoot 검증으로 강화 (Phase 4-A)
+
+> Redfish Precheck 의 Protocol Detection 만 변경. Gathering / OS / ESXi 는 손대지 않았다.
+
+- **본문 미검증 문제 해소** — 종전에는 HTTP 2xx 면 **응답 본문을 보지 않고** protocol 성공이었다.
+  443 에 뜬 일반 HTTPS 서버가 200 + HTML/JSON 을 돌려줘도 Redfish 로 판정됐다.
+  이제 `/redfish/v1/` 응답이 ServiceRoot 인지 구조로 검증한다(`parse_service_root`).
+- **HTTP Status whitelist 제거** — 종전 401/403/405/406/503 을 "BMC 가 Redfish 를 응답한다는
+  증거" 로 보고 성공 처리하던 것을 전부 폐기했다. status 는 실패 evidence 로만 남긴다.
+  401 을 받아도 Protocol Probe 는 인증을 시도하지 않으므로 `auth_success` 를 건드리지 않는다.
+- **최소 성공 조건 (규격 + 실측 양쪽 근거)**:
+  1) JSON object  2) `@odata.type` 이 `#ServiceRoot.` 로 시작
+  3) `@odata.id` 가 `/redfish/v1` 또는 `/redfish/v1/`  4) `RedfishVersion` 비어 있지 않음
+  - 규격: `@odata.type`/`@odata.id` 는 모든 Redfish 리소스 필수(DSP0266/DSP2046),
+    `RedfishVersion` 은 ServiceRoot_v1.xml 에서 `Nullable="false"`.
+  - 실측: 저장소 ServiceRoot **38개 전수**(service_root.json 28 + recording.json 의
+    비인증 `noauth::` 10)가 네 조건을 모두 만족. trailing slash 는 vendor 마다 갈려(22 vs 6)
+    양쪽 다 허용.
+- **제거된 호환 예외 (운영 위험 — 보고 대상)** — 종전 주석은 "일부 BMC(HPE iLO5/6 보안 강화
+  펌웨어, Lenovo XCC 일부)가 무인증 ServiceRoot 에 401 을 던진다" 를 근거로 401/403 을 성공
+  처리했다. 그러나 저장소의 비인증 ServiceRoot 캡처 10개는 **전부 HTTP 200** 이고 그 주장을
+  뒷받침하는 fixture 는 없다. 실제로 그런 펌웨어를 만나면 이제 PROTOCOL_CHECK_FAILED 가 된다.
+  `redfish_gather.py` 의 401 WWW-Authenticate realm fallback(G6, :1142)은 precheck 를
+  통과해야 도달하므로 그 경로도 함께 막힌다. 캡처가 생기면 실패하도록 테스트로 감시한다.
+- **유지된 것**: URI / GET / Accept 헤더 / TLS 정책(verify=False + legacy fallback) /
+  timeout / retry(payload=None 일 때만 1회, 1초 backoff) / redirect(urllib 기본 자동 추종).
+  redirect 는 최종 응답 본문으로만 판정하므로 "redirect 가 있었다" 는 사실 자체는 무관하다.
+- **JSON Contract 변경 0** — 새 필드 없음, enum 추가 없음, `schema_version` `"1"`,
+  `schema/` 파일 무변경. probe_facts(redfish_version / product / systems_uri)는 종전 그대로.
+- **회귀**: `pytest tests/` **1631 passed / 11 skipped / 7 xfailed**. 신규
+  `test_redfish_service_root_fixtures.py` 40건(vendor fixture 전수) +
+  `test_precheck_probe_redfish.py` 재작성(False Positive 17조합).
+  Stage 3 PASS / e2e 258 / integration 200 / unit 1001 / regression 169 / 하네스 전부 exit 0.
+- **Phase 4-A 완료.** ESXi Protocol Detection / Credential Probe 원인 세분화 미착수.
+
 ## 일자: 2026-08-10 (i) — WinRM 판정을 WS-Management Identify 로 교체 (Phase 3-B 최종)
 
 > Phase 3-B 의 WinRM Protocol Probe 만 보정. SSH 구현은 변경 없음.
