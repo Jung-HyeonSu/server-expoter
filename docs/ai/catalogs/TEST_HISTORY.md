@@ -2,6 +2,36 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-10 (i) — WinRM WS-Management Identify 판정 검증 (Phase 3-B 최종)
+
+- **재작성**: `tests/unit/test_precheck_probe_os.py` **30건**.
+  - Positive: 5985 / 5986 정상 IdentifyResponse, 네임스페이스 표기 변형 2종,
+    Identify 요청 형식(SOAP POST + `WSMANIDENTIFY: unauthenticated` + `/wsman` + verify=False)
+  - **False Positive 11조합 전부 거부**: 단순 200(일반 웹서버 HTML) / 401 / 403 / 404 /
+    405 / 500 / 일반 XML / 다른 네임스페이스의 IdentifyResponse / ProtocolVersion 없음 /
+    ProtocolVersion 이 WS-Management 아님 / 잘린 IdentifyResponse
+  - **헤더 heuristic 제거 확인**: `_looks_like_wsman` 부재 + Microsoft-HTTPAPI/401 거부
+  - **비-Windows WS-Man 장비**(Openwsman) 를 Windows 로 판정하지 않음
+  - XML 폭탄 방어(64KB 상한) / TLS handshake 실패 / timeout / 자격증명 미전송
+- **SSH**: 구현 변경 없음. 기존 23건 중 SSH 관련 테스트 그대로 통과
+  (identification 2종 / 선행 추가 줄 / SMTP 배너 거부 / 무응답 / 알 수 없는 protoversion / 읽기 상한).
+- **Timeout 최악 계산**: 죽은 호스트 6초(Phase 3-A 대비 불변) / 정상 Windows 7초 /
+  정상 Linux 11초 / 전 포트 열림 + 프로토콜 전멸 21초.
+- **전체 회귀**: `pytest tests/` → **1566 passed, 11 skipped, 7 xfailed**
+- **Jenkins 등가**: Stage 3 PASS / e2e 258 / integration 200 / unit 936 / regression 169
+- **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0
+- **Redfish/ESXi**: `http_get` 미변경(새 `http_post_soap` 분리) → 두 채널 소비 경로 영향 0.
+  regression 169 · integration 200 · baseline 10 통과.
+- **schema/**: 파일 변경 0
+- **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows, `os.get_blocking` POSIX 전용).
+  대체로 YAML 파싱 5종 + Jinja2 166 표현식 전수 컴파일 실패 0.
+- **한계 (보고 대상)**: lab 에 Windows WinRM 실장비가 없어 IdentifyResponse 는 **규격 기반**이며
+  실측 캡처가 아니다. 네임스페이스 표기(http/https, .xsd 유무)를 4가지 허용해 방어했으나
+  실장비 확보 시 실제 응답으로 재확인이 필요하다.
+- **SSH 읽기 상한은 정책값**: 8줄 / 2048바이트. RFC 4253 은 선행 줄 상한을 정하지 않으며
+  OpenSSH banner(/etc/issue.net)는 통상 3~10줄이다. 매우 긴 banner 를 쓰는 사이트에서는
+  identification 을 놓칠 수 있어 상한 조정이 필요할 수 있다.
+
 ## 2026-08-10 (h) — OS Protocol 판정 강화 검증 (Phase 3-B)
 
 - **신규**: `tests/unit/test_os_candidate_search.py` **24건** — run_module 을 실제로 돌려

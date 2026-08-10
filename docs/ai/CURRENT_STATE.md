@@ -1,5 +1,41 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (i) — WinRM 판정을 WS-Management Identify 로 교체 (Phase 3-B 최종)
+
+> Phase 3-B 의 WinRM Protocol Probe 만 보정. SSH 구현은 변경 없음.
+
+- **헤더 heuristic 전면 제거** — 종전 근거 두 가지를 모두 폐기했다.
+  (1) `WWW-Authenticate` 의 WSMAN realm, (2) `Server: Microsoft-HTTPAPI` + 인증 요구.
+  특히 (2) 는 WinRM 의 Protocol Identity 를 직접 증명하지 못하고 http.sys 위의 아무
+  서비스나 통과시킬 수 있었다. `_looks_like_wsman` 함수 자체를 삭제했고, 테스트가
+  재도입을 차단한다.
+- **비인증 WS-Management Identify 도입** — `/wsman` 에 `WSMANIDENTIFY: unauthenticated`
+  헤더와 SOAP Identify 본문을 POST 하고 **IdentifyResponse 를 XML 네임스페이스 기준으로**
+  검증한다. HTTP status / Server / WWW-Authenticate 는 판정에 쓰지 않는다.
+  검증 항목: 정상 XML → wsmanidentity 네임스페이스의 IdentifyResponse →
+  ProtocolVersion 이 DMTF WS-Management URI → ProductVendor 구조적 존재.
+- **Windows 확정은 vendor 까지 확인** — WS-Management 는 표준이라 비-Windows 장비(BMC 등)도
+  구현한다. ProductVendor 에 Microsoft 표기가 있어야 Windows 로 선택한다. Openwsman 같은
+  구현은 "WS-Management 는 응답하나 Windows WinRM 이 아님" 으로 거부한다.
+- **전용 최소 helper 분리** — `http_post_soap()` 신설. 기존 `http_get` 은 Redfish / ESXi 가
+  함께 쓰는 GET 전용이라 POST 겸용으로 변형하지 않았다 (두 채널 영향 0).
+- **XML 폭탄 방어** — 파싱 전 본문 64KB 상한. ElementTree 는 엔티티 확장에 취약하다.
+- **TLS 정책 불변** — `verify=False` 로 `ansible_winrm_server_cert_validation: ignore` 와 정렬.
+  인증서 유효성 검사가 아니라 WinRM 존재 확인이 목적이다.
+- **근거 (lab 부재, rule 96 R1-A)**: Microsoft Learn "Detecting Whether a Remote Computer
+  Supports WS-Management Protocol" (확인 2026-08-10) + 설치본 pywinrm 의 xmlns 맵 교차 확인.
+  **실장비 캡처가 아니라 규격 기반**이다. 네임스페이스 표기는 문서/구현마다 http/https 와
+  `.xsd` 유무가 갈려 관측된 4가지를 모두 허용한다(완전 일치 비교).
+- **Timeout 최악** — 죽은 호스트 6초(불변) / 정상 Windows 7초 / 정상 Linux 11초 /
+  전 포트 열림 + 프로토콜 전멸 21초. 프로토콜 probe(5초)는 **열린 포트에만** 적용된다.
+- **JSON Contract 변경 0** — 새 필드 없음, `schema_version` `"1"`, `schema/` 파일 무변경.
+  raw SOAP / Server 헤더를 Portal JSON 에 싣지 않는다.
+- **회귀**: `pytest tests/` **1566 passed / 11 skipped / 7 xfailed**.
+  `test_precheck_probe_os.py` 30건(WinRM Identify 11 False Positive 조합 포함).
+  Stage 3 PASS / e2e 258 / integration 200 / unit 936 / regression 169 / 하네스 전부 exit 0.
+- **Phase 3-B 최종 완료.** Credential Probe 원인 세분화 / Redfish ServiceRoot 강화 /
+  ESXi Protocol Detection 강화 미착수.
+
 ## 일자: 2026-08-10 (h) — OS 판정을 실제 Protocol 확인 기준으로 강화 (Phase 3-B)
 
 > 목적: "포트가 열렸다"가 아니라 "기대한 관리 프로토콜이 응답한다"로 OS 를 판정.
