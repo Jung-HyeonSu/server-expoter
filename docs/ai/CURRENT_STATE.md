@@ -1,5 +1,44 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (h) — OS 판정을 실제 Protocol 확인 기준으로 강화 (Phase 3-B)
+
+> 목적: "포트가 열렸다"가 아니라 "기대한 관리 프로토콜이 응답한다"로 OS 를 판정.
+
+- **후보 탐색 도입** — 포트가 열려도 기대 프로토콜이 아니면 **다음 후보로 계속 진행**한다.
+  종전에는 첫 TCP 성공에서 멈춰 5986/5985/22 에 다른 서비스가 떠 있으면 오판했다.
+  우선순위 5986 → 5985 → 22 는 그대로. `_search_os_candidates` + `_run_os_candidate_flow` 는
+  **OS + probe_protocol=true 일 때만** 타고, redfish / esxi 는 기존 흐름 그대로다.
+- **SSH 판정 강화 (RFC 4253 §4.2)** — 종전에는 첫 `recv(256)` 이 `SSH-` 로 시작하는지만 봤다.
+  이제 identification 앞의 추가 줄(법적 고지 등)을 건너뛰고 `SSH-2.0-` / `SSH-1.99-` 만
+  성공으로 인정한다. 읽기는 8줄 / 2048 바이트로 제한하고, 자격증명·Key Exchange 는 하지 않는다.
+- **WinRM 판정을 상태 코드에서 헤더 근거로 교체** — 종전 `status in (200,401,403,405,503)` 은
+  사실상 "/wsman 에서 아무 HTTP 응답이나 오면 WinRM" 이라 일반 웹서버를 Windows 로 오판할 수
+  있었다(운영 미배선이라 실제 사고는 없었음). 이제 인정하는 근거는 둘뿐:
+  (1) `WWW-Authenticate` 에 `WSMAN` realm — 결정적
+  (2) `Server: Microsoft-HTTPAPI` + 인증 요구 — 강한 정황
+  그 외 200/401/403/405/503 은 전부 거부한다.
+- **TLS 정책 불변** — Windows 수집이 `ansible_winrm_server_cert_validation: ignore` 를 쓰므로
+  probe 도 `verify=False` 로 맞췄다. probe 가 더 엄격해 정상 서버가 탈락하는 일이 없다.
+  경로는 프로젝트가 custom path 를 설정하지 않아 기본 `/wsman`.
+- **`http_get` 에 응답 헤더 노출 (additive)** — payload 에 `headers` 키 추가. 기존 호출자는
+  `status_code` / `json` 만 읽어 redfish / esxi 동작 불변.
+- **protocol_supported 가 OS 에서도 실제 의미** — 프로토콜 확인 성공 시 true,
+  포트는 열렸으나 확인 실패 시 false. TCP 전멸이면 probe 자체를 안 하므로 false 유지하고
+  내부 `protocol_checked` 로 "검사 안 함"과 구분한다(외부 미노출).
+- **failure_stage / failure_code** — 열린 포트가 있는데 프로토콜을 하나도 못 찾으면
+  `protocol` + `PROTOCOL_CHECK_FAILED`. TCP 전멸 시 Phase 3-A 매핑(DNS / REFUSED /
+  CONNECT_FAILED) 그대로. **성공 우선** — 앞 후보 실패해도 뒤 후보 성공이면 전체 성공.
+- **auth_success 는 여전히 null** — Protocol Probe 는 자격증명을 보내지 않는다.
+- **Phase 3-A 폴링 보존** — 포트별 예산 2초 / poll 1초 / 순서 유지. 프로토콜 probe 는
+  별도 bounded timeout(기본 5초)이며 **살아 있는 포트에만** 적용된다.
+- **JSON Contract 변경 0** — 새 필드 없음, `schema_version` `"1"` 유지, schema 파일 무변경.
+  probe_facts 에 raw banner / 소프트웨어 버전을 싣지 않는다.
+- **회귀**: `pytest tests/` **1559 passed / 11 skipped / 7 xfailed**. 신규
+  `tests/unit/test_os_candidate_search.py` 24건 + `test_precheck_probe_os.py` 재작성 23건.
+  Stage 3 PASS / e2e 258 / integration 200 / unit 929 / regression 169 / 하네스 전부 exit 0.
+- **Phase 3-B 완료. 다음 작업 미착수** (Credential Probe 원인 세분화 / Redfish ServiceRoot 강화 /
+  ESXi Protocol Detection 강화).
+
 ## 일자: 2026-08-10 (g) — Phase 3-A 호환성 보정 (최종 완료)
 
 > Phase 3-A 에서 스스로 보고했던 동작 차이 1건과 진단 문구 2건을 보정. 새 기능 아님.

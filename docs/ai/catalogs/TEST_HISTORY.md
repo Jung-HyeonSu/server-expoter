@@ -2,6 +2,39 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-10 (h) — OS Protocol 판정 강화 검증 (Phase 3-B)
+
+- **신규**: `tests/unit/test_os_candidate_search.py` **24건** — run_module 을 실제로 돌려
+  후보 탐색 전 경로 검증.
+  - Case 1~4 정상 판정(5986 / 5985 / 22) + scheme + checked_ports
+  - Case 12 열린 포트는 있으나 프로토콜 전멸 → `protocol` + `PROTOCOL_CHECK_FAILED`,
+    `port_open=true` / `protocol_supported=false` / `detected_os=None`
+  - Case 13 앞 후보 실패 후 뒤 후보 성공 → 전체 성공
+  - Case 11 TCP 전멸 4조합 → Phase 3-A 매핑 유지, 프로토콜 probe 미호출
+  - Case 16 auth_success 는 어떤 경우에도 null
+  - Case 14 checked_ports 5조합 (중복 없음)
+  - 폴링 인자 보존 (포트별 예산 2초 / poll 1초 / 순서)
+  - Case 18 redfish/esxi 는 후보 탐색을 타지 않음 + probe_protocol=false 경로 잔존 확인
+- **재작성**: `tests/unit/test_precheck_probe_os.py` **23건**. 종전 상태 코드 whitelist
+  테스트(200/401/403/405/503 → WinRM)를 폐기하고 헤더 근거 기반으로 교체.
+  - **False Positive 8조합**: nginx/Apache 의 200 / 404 / 403 / 405 / 503 /
+    `Basic realm="Restricted"` 401 / 헤더 없음 → **전부 거부**
+  - WSMAN realm / Microsoft-HTTPAPI + 인증요구 → 인정
+  - SSH: 정상 identification 2종 / 선행 추가 줄 3줄 후 identification / SMTP 배너 거부 /
+    무응답 거부 / 알 수 없는 protoversion 거부 / 읽기 상한 확인
+  - `/wsman` 기본 경로 + `verify=False` 확인, probe 가 자격증명 미전송 확인
+- **PLAY 1 → PLAY 1.5 시뮬레이션**: 9 시나리오를 실제 템플릿으로 렌더.
+  OS 판정 / scheme / protocol_supported / stage / code / auth / checked_ports / reason 전부 기대 일치.
+- **전체 회귀**: `pytest tests/` → **1559 passed, 11 skipped, 7 xfailed**
+- **Jenkins 등가**: Stage 3 PASS / e2e 258 / integration 200 / unit 929 / regression 169
+- **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0
+- **Baseline / schema**: 파일 변경 0
+- **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows, `os.get_blocking` POSIX 전용).
+  대체로 YAML 파싱 5종 + Jinja2 166 표현식 전수 컴파일 실패 0.
+- **구현 한계 (보고 대상)**: 자격증명 없이 WS-Management handshake 를 완결할 수 없어 WinRM
+  판정은 **헤더 근거 기반**이다. (2) `Server=Microsoft-HTTPAPI + 인증요구` 는 결정적 증거가
+  아니라 강한 정황이다. 완전한 판정은 Credential Probe 영역이며 이번 범위 밖이다.
+
 ## 2026-08-10 (g) — Phase 3-A 보정 검증 (폴링 복원 / 문구 정정)
 
 - **신규**: `tests/unit/test_os_precheck_polling.py` **21건**.
