@@ -2,6 +2,51 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-10 (c) — 진단 detail 전달 + 오진단 회귀 고정 (Phase 1-A)
+
+계획 `precheck-snazzy-leaf.md` rev.2 Phase 1-A 구현에 대한 검증.
+
+- **신규 테스트**: `tests/unit/test_precheck_detail_propagation.py` **13건**
+  - C2~C6 각 실패 단계에서 `detail` 이 실제로 채워지는지 (DNS / TCP timeout / refused /
+    기타 OSError / protocol) — `socket` 계층 monkeypatch, 네트워크 0
+  - 성공 시 `detail is None` (이후 gather 실패로 precheck detail 이 새지 않음)
+  - **자격증명 미포함 방어** — `_try_redfish_auth` 실패의 detail/reason 에 password /
+    username / `Basic <base64>` 패턴 0건. detail 이 이번 변경으로 처음 envelope 에
+    노출되므로 필수 방어선.
+  - YAML 배선 회귀 — `_fail_error_detail` 생산처(run_precheck.yml) + 소비처
+    (build_failed_output.yml) 양쪽 존재 확인 (한쪽만 있으면 다시 null 이 된다)
+  - **B-8 재발 차단** — redfish 실패 메시지 분기에 `d.auth_success` 재등장 금지
+  - **B-4 회귀** — `wait_for` 실제 순서(5986/5985/22) 추출 + checked_ports 리터럴 대조
+  - **B-7 회귀** — redfish/esxi rescue 메시지의 `[task: ]` prefix 대칭
+- **수정 테스트**: `tests/e2e/test_envelope_failure_modes.py` — fixture 를 production 실제
+  shape(flat diagnosis)로 교체 + `collection_method` 실제 값으로 정정 + stale 인용 라인 정정.
+  종전 fixture 는 `diagnosis.precheck.*` 중첩이라 실제 회귀를 잡지 못했다.
+- **전체 회귀**: `pytest tests/` → **1381 passed, 5 skipped, 7 xfailed** (81.96s)
+- **Jenkins 게이트 등가**:
+  - Stage 3 `python tests/validate_field_dictionary.py` → **PASS** (10 checks, 8 passed, 0 failed)
+  - Stage 4-a `pytest tests/e2e/` → **170 passed**
+  - Stage 4-b `pytest tests/integration/ -m "not live"` → **200 passed, 3 skipped**
+- **하네스**: `verify_harness_consistency.py` PASS (rules 28 / skills 51 / agents 60 / policies 10) /
+  `verify_vendor_boundary.py` PASS / `output_schema_drift_check.py` PASS
+  (sections=11 fd_paths=168) / `envelope_change_check.py` exit 0 /
+  `cross_channel_consistency_check.py` exit 0
+- **Baseline 갱신**: **없음** — Phase 1-A 는 성공 경로 envelope 을 건드리지 않는다
+  (baseline 10 + examples 15 무변경)
+- **환경 제약**: `ansible-playbook --syntax-check` **실행 불가** — Windows 개발환경에서
+  `ansible/cli/__init__.py:44` 가 POSIX 전용 `os.get_blocking` 을 호출한다(ansible 2.19.9 설치됨,
+  CLI 진입 자체가 AttributeError). 대체 검증 4종 수행:
+  (a) 변경 YAML 5종 `yaml.safe_load_all` 파싱 OK
+  (b) 변경 파일 내 **Jinja2 표현식 159개 전수 `env.parse()` — 실패 0**
+  (c) redfish 실패 메시지 템플릿을 site.yml 에서 추출해 **4개 분기 전수 렌더** (details 부재
+      케이스 포함 → `? / Unknown` fallback 확인)
+  (d) `precheck_bundle.run_module()` 실행 → `run_precheck.yml` set_fact →
+      `build_failed_output.yml` errors 조립까지 **전 경로 시뮬레이션**
+      (NativeEnvironment, `ansible.cfg:44 jinja2_native=True` 반영):
+      `detail='port=443: 연결 시간 초과 (timeout=3.0s)'` 가 `errors[0].detail` 까지 도달 **PASS**.
+      성공 경로에서는 `None` 유지 **PASS**.
+  → lab/Jenkins 에서 `--syntax-check` 재확인 필요 (미실행 항목으로 남김)
+- **미실행**: 실장비 검증 없음 (코드 변경이 성공 경로 envelope 을 바꾸지 않음)
+
 ## 2026-08-03 (후속 4) — 교차 검증 불변식 + 조립 경로 링크 대조 가드 신설
 
 사용자 요구: "다른 세대·벤더 물리장비에서도 버그가 없어야 한다. 그 기준으로 개선하고 있나?"

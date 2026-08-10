@@ -1,5 +1,51 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (c) — 진단(diagnosis) 정보 손실·오진단 fix (Phase 1-A)
+
+> 사용자 승인 계획 `precheck-snazzy-leaf.md` rev.2 의 **Phase 1-A 만** 구현.
+> 범위 원칙: **외부 JSON Contract 의미가 바뀌지 않는 수정만.** 값 의미가 달라질 수 있는
+> 항목(OS `auth_success` false→null, OS `diagnosis` null→object)은 Portal 확인 전까지 Phase 1-B 로 분리.
+
+- **B-1 진단 detail 소실 복구 (동작 변화 있음)** — `precheck_bundle` 이 만든 가장 구체적인 기술
+  오류(`"port=443: 연결 시간 초과 (timeout=3.0s)"` / DNS 해석 실패 / 연결 거부 / HTTP status)가
+  최종 envelope 에 **한 번도 도달하지 못하고 있었다.** `build_diagnosis()` 가 detail 을 싣지 않고
+  (`diagnosis_mapper.py:60-68`), 대신 전제로 삼은 `errors[0].detail` 은 `_fail_error_detail` 로
+  채워지는데(`build_failed_output.yml:49`) **그 변수를 set 하는 코드가 저장소에 0건**이었다.
+  `run_precheck.yml` 에 set_fact 1개 추가로 전제를 실제로 성립시킴. **신규 필드/키 추가 없음** —
+  이미 있던 `errors[].detail` 이 null 대신 값을 갖게 될 뿐(타입 `string|null` 불변).
+- **B-8 Redfish 오진단 수정 (사용자 노출 메시지 변화)** — `redfish-gather/site.yml:97-113` 의
+  4번째 분기 조건이 `auth_success is none or not auth_success` 인데, 이 시점 `auth_success` 는
+  **항상 None** 이다(precheck 가 Stage 4 를 건너뜀 `precheck_bundle.py:546-548`, true 로 덮는
+  태스크는 `:191-206` 으로 **뒤에** 있음). 따라서 4번 분기가 항상 잡히고 5번(else)은 **도달 불가**
+  → **precheck 통과 후 실패한 모든 수집이 "인증 실패"로 보고**되고 있었다(펌웨어/OEM/endpoint
+  문제여도). 게다가 `_rf_collect_ok` 는 인증 테스트가 아니라 **전체 수집 결과**라
+  (`try_one_account.yml:38-40`) 이 지점에서 인증 실패를 확정할 근거 자체가 없다.
+  두 분기를 하나로 합쳐 **확인된 사실(네트워크/포트/API 정상)과 가능한 원인 3종을 분리 안내**.
+- **B-4 checked_ports 실제 검사 이력과 정합 (표기 정정)** — 실제 순서는 5986→5985→22
+  (`os-gather/site.yml:40-69`). 종전: 포트전멸 `[22,5985,5986]`(역순) / linux `[22]`(3개 시도했는데
+  1개만 표기) / windows `[5985,5986]`(순서·내용 모두 상이. 5986 성공 시 5985 는 시도조차 안 함).
+  windows 는 실제 접속 포트 기반 조건식으로 교체.
+- **B-7 ESXi rescue 메시지 대칭 (표기 정정)** — redfish 에만 있던 `[task: ]` prefix 추가.
+  json_only callback 이 fatal 태스크 출력을 막으므로 `errors[].message` 가 유일한 위치 단서.
+- **N-2/M-2/M-3/M-5 stale 계약 테스트·정본 문서 정정 (문서·테스트만)** —
+  `tests/e2e/test_envelope_failure_modes.py` 가 `diagnosis.precheck.*` **중첩 shape** 를 fixture 로
+  쓰고 있었으나 production 은 **flat** 이다(`diagnosis_mapper.py:60-68` + baseline 10건 전수 확인).
+  `precheck` 하위 키를 만드는 production 코드는 0건 → 이 테스트는 진짜 회귀를 잡지 못했다.
+  `collection_method` 도 실제와 달랐다(os `ansible`→`agent`, esxi `vmware`→`vsphere_api`).
+  같은 오기재가 **rule 20 R1 정본**에도 있어 함께 정정. 인용 라인 stale 도 정정.
+- **docs/20 §5 정정** — `auth_success:false` + `failure_stage:"port"` 예시는 precheck 실제 출력과
+  다르다(port 단계에서 auth 는 **미수행 → null**). `reachable` 을 "ping 응답"으로 적은 것도 오류
+  (ICMP 아님, 실제 TCP 연결 시도 `precheck_bundle.py:109-142`). `fallback` enum 행 누락도 보완.
+- **회귀**: `pytest tests/` **1381 passed / 5 skipped / 7 xfailed** (신규 13건 포함).
+  Stage 3 등가 `validate_field_dictionary.py` PASS / Stage 4 등가 e2e 170 + integration 200 PASS /
+  harness consistency PASS / vendor boundary PASS / envelope_change_check exit 0.
+  baseline 10 + examples 15 **무변경** (성공 경로 envelope 불변).
+- **환경 제약**: `ansible-playbook --syntax-check` 는 Windows 에서 실행 불가
+  (`ansible/cli/__init__.py:44` 가 POSIX 전용 `os.get_blocking` 사용). 대체로 (a) YAML 파싱 5종 OK,
+  (b) 변경 파일의 **Jinja2 표현식 159개 전수 컴파일 0 실패**, (c) 실패 메시지 템플릿 4개 분기 전수
+  렌더 확인, (d) precheck→envelope detail 전달 **전 경로 시뮬레이션 PASS** 로 검증.
+- **Phase 1-B / Phase 2 는 미착수** (사용자 지시). 계획서 §18 Q1~Q9 (Portal Contract 확인) 선행 필요.
+
 ## 일자: 2026-08-10 (b) — 설명 자료 조사에서 나온 stale/결함 10건 fix
 
 > 사용자 지시 "위 8건 수정 해라". 수정 착수 중 **결함 2건 추가 발견**(총 10건 처리 + 2건 보류).

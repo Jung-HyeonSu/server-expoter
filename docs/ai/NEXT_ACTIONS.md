@@ -7,6 +7,69 @@
 
 ---
 
+## 진단(diagnosis) 개선 Phase 1-B / Phase 2 (2026-08-10) — Portal Contract 확인 대기
+
+> 계획서: `C:/Users/hshwa/.claude/plans/precheck-snazzy-leaf.md` rev.2 (§18 Q1~Q9, §19 3목록).
+> Phase 1-A 는 2026-08-10 완료 (`docs/ai/CURRENT_STATE.md` 2026-08-10 (c)).
+> 아래는 **외부 JSON Contract 의미가 바뀔 수 있어** Portal 확인 없이 착수하면 안 되는 항목.
+> Jenkins 는 envelope 을 파싱하지 않고 그대로 통과시키므로(`Jenkinsfile_portal:250-272`)
+> 리스크는 전부 **저장소 밖 Portal API** 한 곳에 집중된다 — 코드를 볼 수 없어 추정 불가.
+
+### 선행 질문 (사용자 / Portal 담당)
+
+- [ ] **Q1** Portal 이 `diagnosis.auth_success` 를 읽는가? **null 을 안전 처리**하는가?
+      `diagnosis` 자체가 null 인 경우를 분기 조건으로 쓰고 있는가?
+- [ ] **Q2** Portal 이 `failure_stage` 로 분기하는가? 지금까지 안 나오던 `"auth"` 값 유입 영향?
+- [ ] **Q3** Portal 이 알 수 없는 신규 필드(`failure_code`)를 무시하는가, 거부하는가?
+- [ ] **Q4** `failure_stage` 신규 값 `"gather"` 유입 시 default 분기가 있는가?
+- [ ] **Q5** `failure_code` 를 항상 emit(성공 시 null) vs 실패 시만 emit — 어느 쪽?
+- [ ] **Q6** `schema/field_dictionary.yml` 수정 승인 (rule 92 R5 / 보호 경로)
+- [ ] **Q7** baseline 10건에 실측 없이 shape 키 추가 승인 (rule 21 R1 예외)
+- [ ] **Q9** Contract 확장 시 `schema_version` 증가 원칙이 Portal 과 합의돼 있는가?
+
+### Phase 1-B (Q1·Q2 후)
+
+- [ ] **[HIGH / Q1] OS 인증 실패 시 `diagnosis: null` 제거** — `_diagnosis` 를 set 하는 코드가
+      **성공 경로에만** 있어(`os-gather/site.yml:277-295`, `:471-489`) 자격 전멸 시 rescue 가
+      진단 없이 envelope 을 만든다(`build_failed_output.yml:79` `default(none)`).
+      소비자가 `diagnosis.failure_stage` 를 무조건 참조하면 null 역참조.
+- [ ] **[HIGH / Q1] OS 포트 전멸 시 `auth_success: false` → `null`** (`os-gather/site.yml:162`)
+      — **인증을 시도하는 코드 자체가 없다**(PLAY 1 은 `wait_for` 만). false 는 거짓 정보.
+- [ ] **[참고] `failure_stage` 는 원인이 아니라 "실행이 멈춘 단계"** (사용자 확정 J-1, 2026-08-10).
+      OS 포트 감지 실패는 실행이 **포트 감지 단계**에서 멈춘 것이므로 기존 `"port"` **유지**.
+      (계획 rev.1 의 `"reachable"` 변경안은 사용자 판단으로 폐기됨)
+
+### Phase 2 (Q3~Q7 후 — schema 변경 동반)
+
+- [ ] **[MED] `failure_code` 도입 (7종)** — `DNS_RESOLUTION_FAILED` / `TCP_CONNECT_FAILED` /
+      `TCP_CONNECTION_REFUSED` / `PROTOCOL_CHECK_FAILED` / `AUTH_PROBE_FAILED` /
+      `GATHER_FAILED` / `OUTPUT_BUILD_FAILED`. **1 code ↔ 1 stage** 원칙.
+      사용자 확정 J-3: **원인 추정이 아니라 관측 사실 중심 명명** (`TCP_UNREACHABLE` 같은
+      단정형 금지 → `TCP_CONNECT_FAILED`).
+- [ ] **[MED] `failure_stage` 에 `gather` 추가** — 현재 gather 단계 실패는 `status=failed` +
+      `failure_stage=null` 이라 precheck 실패와 구분하려면 `errors[].section` 문자열 파싱이 필요.
+      `schema/field_dictionary.yml:1310-1327` enum 수정 동반 → rule 92 R5 승인 필요.
+- [ ] **[MED] 인증 실패 표기 — 단, 확정 가능한 경우만**. 4채널 모두 "자격 후보 전멸"이
+      인증 실패를 **확정하지 못한다**(제한 쉘 rc≠0 / ESXi 권한 부족 / 전송 실패 / timeout 이
+      모두 같은 값으로 뭉개짐 — `os-gather/tasks/try_one_credential.yml:59-69`,
+      `esxi-gather/tasks/try_one_credential.yml:35`, `redfish-gather/tasks/try_one_account.yml:38-40`).
+      기본은 `auth_success:null` + `AUTH_PROBE_FAILED`.
+      **사용자 확정 J-2: HTTP 401 만 명시적 인증 거부 근거로 사용하고, 403 은 인증 후 권한
+      부족일 수 있으므로 `AUTHENTICATION_FAILED` 로 단정하지 않는다.**
+      (`redfish_gather.py:4434-4444` 는 현재 401/403 을 동일 취급 — 분리 필요)
+
+### 별도 후속 (이번 범위 밖)
+
+- [ ] **[LOW] OS Precheck 구조 개선** — OS 는 프로토콜을 **한 번도 독립 관측하지 않는다**
+      (`wait_for` = TCP only). `probe_os()` 는 구현·단위테스트가 있으나 운영 미배선이며,
+      배선 시 배너 억제 SSH 서버가 **신규 탈락**한다(`precheck_bundle.py:327-328` 자인) +
+      `add_host` 의 connection/port/scheme 결정에 직결(`os-gather/site.yml:99-131`).
+- [ ] **[LOW] Protocol Detection 강화** — 현재 허용 status 목록은 사이트 실측 기반 vendor
+      호환 대응(HPE iLO 406 / Lenovo XCC 헤더 / ESXi `/sdk` 404·500). 본문 검증을 추가하면
+      **바로 그 장비들이 False Negative** 가 된다. lab 부재 vendor 다수 → 별도 조사 선행.
+- [ ] **[LOW] `try_one_credential` 실패 원인 구분** — `_os_probe_*.unreachable` /
+      `_e_probe.msg` 에 구분 재료가 남아 있으나 현재 판정식이 전부 버린다.
+
 ## adapter/OEM 배선 정합 후속 (2026-08-10) — 설명자료 조사에서 파생
 
 > 상세: `docs/ai/CURRENT_STATE.md` 2026-08-10 (b) + `docs/presentation/gathering-explainer-source.md` §15.
