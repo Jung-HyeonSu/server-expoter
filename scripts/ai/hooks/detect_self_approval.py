@@ -22,7 +22,8 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-LOG_PATH = Path(".claude") / ".cache" / "self-approval-log.jsonl"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+LOG_PATH = REPO_ROOT / ".claude" / ".cache" / "self-approval-log.jsonl"
 
 SELF_APPROVAL_PATTERNS = [
     re.compile(r"검수.{0,3}완료"),

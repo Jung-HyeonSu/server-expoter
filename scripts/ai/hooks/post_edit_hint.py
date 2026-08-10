@@ -17,6 +17,8 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 # server-exporter 도메인 힌트 규칙
 HINT_RULES = [
@@ -132,7 +134,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="편집 후 힌트")
     parser.add_argument("file_path", nargs="?", default=None)
     parser.add_argument("--json", action="store_true")
-    parser.add_argument("--repo-root", default=".")
+    parser.add_argument("--repo-root", default=str(REPO_ROOT))
     args = parser.parse_args()
 
     file_path = args.file_path or _read_file_path_from_stdin()

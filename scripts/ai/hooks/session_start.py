@@ -26,6 +26,7 @@ if sys.platform == "win32":
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 SCRIPT_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from detect_session_context import detect_context, get_current_branch  # noqa: E402
@@ -90,7 +91,7 @@ def _safe_call(fn, *args, default_error: str = "execution failed") -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description="세션 시작 컨텍스트/구조/팩트 수집")
     parser.add_argument("--json", action="store_true")
-    parser.add_argument("--repo-root", default=".")
+    parser.add_argument("--repo-root", default=str(REPO_ROOT))
     parser.add_argument("--no-cache", action="store_true")
     args = parser.parse_args()
 

@@ -16,7 +16,8 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-LOG_PATH = Path(".claude") / ".cache" / "agent-log.jsonl"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+LOG_PATH = REPO_ROOT / ".claude" / ".cache" / "agent-log.jsonl"
 
 
 def main() -> int:

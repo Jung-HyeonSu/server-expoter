@@ -16,6 +16,8 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 def _read_payload() -> dict | None:
     if sys.stdin.isatty():
@@ -31,7 +33,7 @@ def _read_payload() -> dict | None:
 
 def main() -> int:
     payload = _read_payload()
-    repo_root = Path(".").resolve()
+    repo_root = REPO_ROOT
 
     # git status 요약 (변경된 파일이 있으면 알림)
     try:
