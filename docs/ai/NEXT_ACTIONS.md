@@ -27,17 +27,20 @@
 - [ ] **Q7** baseline 10건에 실측 없이 shape 키 추가 승인 (rule 21 R1 예외)
 - [ ] **Q9** Contract 확장 시 `schema_version` 증가 원칙이 Portal 과 합의돼 있는가?
 
-### Phase 1-B (Q1·Q2 후)
+### Phase 1-B — **완료 (2026-08-10)**
 
-- [ ] **[HIGH / Q1] OS 인증 실패 시 `diagnosis: null` 제거** — `_diagnosis` 를 set 하는 코드가
-      **성공 경로에만** 있어(`os-gather/site.yml:277-295`, `:471-489`) 자격 전멸 시 rescue 가
-      진단 없이 envelope 을 만든다(`build_failed_output.yml:79` `default(none)`).
-      소비자가 `diagnosis.failure_stage` 를 무조건 참조하면 null 역참조.
-- [ ] **[HIGH / Q1] OS 포트 전멸 시 `auth_success: false` → `null`** (`os-gather/site.yml:162`)
-      — **인증을 시도하는 코드 자체가 없다**(PLAY 1 은 `wait_for` 만). false 는 거짓 정보.
-- [ ] **[참고] `failure_stage` 는 원인이 아니라 "실행이 멈춘 단계"** (사용자 확정 J-1, 2026-08-10).
-      OS 포트 감지 실패는 실행이 **포트 감지 단계**에서 멈춘 것이므로 기존 `"port"` **유지**.
-      (계획 rev.1 의 `"reachable"` 변경안은 사용자 판단으로 폐기됨)
+> Portal 이 `diagnosis.failure_reason` 만 사용한다는 사실이 확인되어 Q1/Q2 대기 없이 진행.
+> 상세: `docs/ai/CURRENT_STATE.md` 2026-08-10 (d). 계약 테스트 `tests/e2e/test_failure_reason_contract.py`.
+
+- [x] OS 인증 실패 / 수집 예외 시 `diagnosis: null` 제거 (linux·windows rescue 에 진단 생성)
+- [x] Redfish·ESXi precheck 통과 후 실패 시 `failure_reason: null` 제거
+- [x] OS 포트 전멸 `auth_success: false` → `null`
+- [x] `_try_redfish_auth` 가 timeout/5xx 까지 `auth_success=false` 로 만들던 것 → **401 한정**
+- [x] `failure_reason` 문구를 특수 구분자 없는 완전한 한국어 문장으로 통일
+- [ ] **[남음] Portal Q1~Q2 확인** — 위 변경으로 Portal 이 받는 값이 달라진다:
+      `diagnosis` 가 null 이 아니게 되고, `failure_stage` 에 `"auth"` 가 새로 유입되며,
+      `auth_success` 의 `false` 가 사실상 사라진다. Portal 이 이 값들로 분기하고 있지 않은지
+      확인 필요 (현재 failure_reason 만 쓴다는 전제라면 영향 없음).
 
 ### Phase 2 (Q3~Q7 후 — schema 변경 동반)
 

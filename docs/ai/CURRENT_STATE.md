@@ -1,5 +1,39 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (d) — Portal 실패 사유 계약 확보 (Phase 1-B)
+
+> **새 계약 (사용자 확인)**: Portal 은 서버 등록 / Gathering 실패 시 Grid 의 "실패 사유" 칸에
+> **`diagnosis.failure_reason` 하나만** 표시하며, 현재 이 필드 외에는 사실상 사용하지 않는다.
+> 따라서 `status=failed` 인 모든 결과는 이 필드 하나만으로 의미가 통해야 한다.
+
+- **diagnosis=null 경로 제거 (OS)** — `_diagnosis` 를 **성공 경로에서만** set 하고 있어
+  (`os-gather/site.yml` linux `:277-295` / windows `:471-489`), 자격 실패나 수집 예외로 rescue 에
+  들어오면 `build_failed_output.yml:79` 의 `_diagnosis | default(none)` 이 발동해 **diagnosis 가
+  통째로 null** 이었다. linux/windows rescue 에 진단 생성 태스크를 추가해 제거.
+- **failure_reason=null 경로 제거 (Redfish / ESXi)** — precheck 통과 후 실패하면 rescue 가
+  precheck 의 diagnosis 를 그대로 쓰는데 precheck 는 성공했으므로 `failure_reason` 이 null 이었다.
+  두 채널 rescue 에 "비어 있을 때만 채우는" 태스크 추가 (precheck 의 구체적 사유는 보존).
+- **확정할 수 없는 원인을 단정하지 않음**:
+  - `auth_success=false` 는 **HTTP 401 을 관측했을 때만**. 종전 `_try_redfish_auth` 는 timeout /
+    5xx / TLS 오류까지 전부 false 로 만들었다. 403 은 인증 후 권한 문제일 수 있어 제외(사용자 확정).
+  - OS 포트 전멸 경로의 `auth_success: false` → **null** (인증 코드가 실행되지 않는 경로).
+  - 자격 후보 전멸은 4채널 모두 잘못된 자격 / 연결 끊김 / 권한 부족 / 제한 쉘을 구분하지 못하므로
+    `auth_success` 를 null 로 두고 문구도 "접속하지 못했습니다"로 관측 사실만 기술.
+  - `CHANNEL_PROTOCOL_MESSAGES['redfish']` 의 "이 장비는 Redfish를 지원하지 않습니다." 는
+    관측 범위를 넘는 단정(TLS 실패 / 5xx / timeout 도 같은 분기)이라 교체.
+- **failure_stage 의미 유지** — 원인이 아니라 **실행이 멈춘 단계**. OS 포트 전멸은 `"port"` 유지
+  (사용자 확정). 수집 단계 실패는 현재 enum 에 표현값이 없어 `null` 유지 (`gather` 추가는 Phase 2).
+- **문체 원칙 적용 (사용자 지시)** — Portal Grid 를 읽는 사람은 일반 사용자다. 긴 대시(—) /
+  가운데점(·) 같은 특수 구분자를 쓰지 않고 완전한 한국어 문장으로 통일. failure_reason 15종 +
+  사용자 노출 msg 24곳 치환.
+- **회귀**: `pytest tests/` **1421 passed / 8 skipped / 7 xfailed**. 신규 계약 테스트
+  `tests/e2e/test_failure_reason_contract.py` **40건** (12 Case 전수 + status=failed 불변식 + 문체).
+  Stage 3 PASS / Stage 4-a 210 / Stage 4-b 200 / 하네스·경계·schema drift·envelope 전부 exit 0.
+  baseline 10 + examples 15 **무변경**.
+- **JSON shape 변경 0** — 키 추가/삭제/타입 변경 없음. 값만 채워진다.
+- **Phase 2 미착수** (사용자 지시). `failure_code` / `failure_stage=gather` / schema_version /
+  OS Precheck 구조 / Protocol Detection 정책은 전부 그대로.
+
 ## 일자: 2026-08-10 (c) — 진단(diagnosis) 정보 손실·오진단 fix (Phase 1-A)
 
 > 사용자 승인 계획 `precheck-snazzy-leaf.md` rev.2 의 **Phase 1-A 만** 구현.

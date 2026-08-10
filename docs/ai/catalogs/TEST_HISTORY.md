@@ -2,6 +2,30 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-10 (d) — Portal 실패 사유 계약 테스트 신설 (Phase 1-B)
+
+- **신규**: `tests/e2e/test_failure_reason_contract.py` **40건**. 합성 fixture 가 아니라
+  **production site.yml 에서 템플릿을 추출해 직접 렌더**한다 (NativeEnvironment +
+  ansible `bool`/`combine` 필터 대역, `ansible.cfg:44 jinja2_native=True` 반영).
+  - 사용자 지정 12 Case 전수: precheck reachable/port/protocol, Redfish post-precheck(수집실패·
+    정규화예외), ESXi 자격전멸·facts실패·기타예외, Linux/Windows 자격전멸·수집예외,
+    OS 포트 전멸, Fallback(3채널 × always 블록 4개)
+  - **요구사항 11 불변식**: `status=failed` ⇒ `diagnosis` 非null ∧ `failure_reason` 非공백
+  - **요구사항 6 불변식**: `auth_success=false` 는 HTTP 401 관측 시에만 (403·500 은 null)
+  - 문체 가드: 긴 대시(—)·가운데점(·) 금지, 완결 문장, 200자 이내, 내부 잡음 미노출
+  - `_diagnosis` 미정의 상황에서도 7키 shape 보장, precheck 사유 보존(when 가드) 검증
+- **가드 유효성 증명** (사고 형태 주입): 구 OS 동작(diagnosis=null) / 구 Redfish 동작
+  (failure_reason=null) / 빈 문자열 → **3건 모두 검출**. 문체 위반 4종 → **4건 모두 검출**.
+- **전체 회귀**: `pytest tests/` → **1421 passed, 8 skipped, 7 xfailed** (35.04s)
+- **Jenkins 등가**: Stage 3 `validate_field_dictionary.py` PASS (0 failed) /
+  Stage 4-a `tests/e2e/` 210 passed / Stage 4-b `tests/integration/ -m "not live"` 200 passed
+- **하네스**: harness consistency / vendor boundary / output_schema_drift /
+  envelope_change / cross_channel 전부 exit 0
+- **Baseline 갱신**: **없음** (성공 경로 envelope 불변)
+- **환경 제약**: `ansible-playbook --syntax-check` 실행 불가 (Windows, `os.get_blocking` POSIX 전용).
+  대체로 YAML 파싱 5종 + **Jinja2 표현식 163개 전수 컴파일 실패 0** + 12 Case 실제 렌더 수행.
+  lab/Jenkins 에서 `--syntax-check` 재확인 필요.
+
 ## 2026-08-10 (c) — 진단 detail 전달 + 오진단 회귀 고정 (Phase 1-A)
 
 계획 `precheck-snazzy-leaf.md` rev.2 Phase 1-A 구현에 대한 검증.
