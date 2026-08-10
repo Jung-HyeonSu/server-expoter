@@ -20,7 +20,7 @@ server-exporter/
 ├── filter_plugins/      # diagnosis_mapper.py + field_mapper.py
 ├── lookup_plugins/      # adapter_loader.py (adapter 동적 선택)
 ├── module_utils/        # adapter_common.py (점수 계산 + 벤더 정규화)
-├── os-gather/           # site.yml (3-Play) + tasks/{linux,windows}/
+├── os-gather/           # site.yml (4-Play) + tasks/{linux,windows}/
 ├── esxi-gather/         # site.yml + tasks/
 ├── redfish-gather/      # site.yml + library/redfish_gather.py + tasks/vendors/{vendor}/
 ├── schema/              # sections.yml + field_dictionary.yml + baseline_v1/ + examples/
@@ -43,7 +43,7 @@ server-exporter/
     Jenkins Job (Jenkinsfile, 4-Stage)
     ├─ [1 Validate] 입력값 검증
     ├─ [2 Gather] ansible-playbook
-    │   ├─ os-gather/site.yml (3-Play)
+    │   ├─ os-gather/site.yml (4-Play)
     │   ├─ esxi-gather/site.yml
     │   └─ redfish-gather/site.yml
     ├─ [3 Validate Schema] field_dictionary 정합 (FAIL 게이트)

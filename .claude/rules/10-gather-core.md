@@ -9,7 +9,7 @@
 
 - 3-channel gather는 raw 수집 + fragment 생성으로 분리
 - precheck_bundle.py가 4단계 진단 (ping → port → protocol → auth) 후 본 수집
-- redfish_gather.py는 stdlib만 사용 (urllib / ssl / json), 약 3,867줄 (2026-06-08 재실측)
+- redfish_gather.py는 stdlib만 사용 (urllib / ssl / json), **5,082줄** (2026-08-10 재실측 — 종전 "3,867줄" 표기는 stale)
 - Linux 2-tier (preflight.yml의 `_l_python_mode`로 Python ok / raw fallback 분기)
 
 ## 목표 규칙

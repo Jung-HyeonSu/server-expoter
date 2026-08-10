@@ -7,6 +7,30 @@
 
 ---
 
+## adapter/OEM 배선 정합 후속 (2026-08-10) — 설명자료 조사에서 파생
+
+> 상세: `docs/ai/CURRENT_STATE.md` 2026-08-10 (b) + `docs/presentation/gathering-explainer-source.md` §15.
+> 코드 fix 3종 적용 완료(pytest 1368 passed). 아래는 **승인 또는 실장비가 필요해 미착수**한 항목.
+
+- [ ] **[MED / 승인필요] cisco OEM tasks 배선**: `redfish-gather/tasks/vendors/cisco/{collect,normalize}_oem.yml`
+  이 구현돼 있으나 cisco 어댑터 3개(`cisco_bmc` / `cisco_cimc` / `cisco_ucs_xseries`) 전부
+  `collect.oem_tasks` / `normalize.oem_tasks` 키가 없어 **한 번도 실행되지 않았다**.
+  연결 시 `data.bmc.oem_cisco` 신설 → **envelope 변경 + `schema/baseline_v1/cisco_baseline.json`
+  갱신 동반** → rule 92 R1-B(Additive 범위 밖) + rule 13 R4(baseline 은 실측 기반) 로
+  **사용자 명시 승인 + 실장비 재수집이 선행돼야 함**. 승인 시 별도 cycle.
+- [ ] **[MED / lab] huawei 실펌웨어 문자열 확보 후 firmware_patterns 재검증**: 2026-08-10 에
+  glob→정규식 정정했으나 **lab 부재라 실제 `FirmwareVersion` 표기를 못 봤다**(rule 96 R1-A).
+  현재 패턴은 `3.01` / `iBMC 3.01` / `V3.01` 3형식을 커버하는 추정값이며 회귀 12건으로 고정돼 있다.
+  실장비 확보 시 실측으로 교체 + `tests/evidence/` 기록.
+- [ ] **[LOW] lenovo firmware_patterns 정리**: `AFBT*` / `TAOT*` / `USX*` 도 정규식에서는
+  "AFB + T반복" 으로 해석된다(huawei 와 동일 계열 위험). 의도한 입력에는 우연히 동작하나,
+  `^AFBT` 형태로 정리 권장. 실장비 펌웨어 문자열 확보 후 착수.
+- [ ] **[LOW] 어댑터 스키마 검증기 도입 검토**: 위 3건 모두 **adapter YAML 오타/오문법을
+  아무도 검출하지 않는다**는 같은 뿌리에서 나왔다(`adapter_loader` 는 스키마 검증 없음).
+  허용 키 화이트리스트 + `*_patterns` 정규식 컴파일 검사를 하는 pre-commit 훅 후보.
+
+---
+
 ## is_os_disk 실장비 검증 (2026-07-02) — 표준 토폴로지 [DONE]
 
 > 상세: `tests/evidence/2026-07-02-is-os-disk.md` (라이브 검증 절). Jenkins build #165(Linux 4대)/#166(Windows .120) SUCCESS + SSH/winrm ground truth 3자 일치. 배포 커밋 c4696c87.

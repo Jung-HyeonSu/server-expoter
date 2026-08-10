@@ -46,8 +46,19 @@
 
 ### R3. OUTPUT 태스크 식별
 
-- **Default**: OUTPUT 태스크는 `name: "OUTPUT: <description>"`로 시작. callback이 이 prefix로 식별
-- **Forbidden**: 다른 prefix로 OUTPUT 태스크 (callback이 인식 못함)
+> 2026-08-10 정정: 종전 본문은 "`name: \"OUTPUT: <description>\"` **prefix**로 식별"이라 서술했으나
+> **코드는 prefix 가 아니라 완전일치 비교다.** `json_only.py:108` 은
+> `if result._task.name != self._output_task: return` (기본값 `'OUTPUT'`, `:49`) 이므로
+> `"OUTPUT: 결과 출력"` 같은 이름은 **캡처되지 않는다.** 실제 4개 site.yml 모두
+> `- name: OUTPUT` 으로 정확히 일치시켜 두었다 (`os-gather/site.yml:180,361,553`,
+> `esxi-gather/site.yml:252`, `redfish-gather/site.yml:256`).
+
+- **Default**: OUTPUT 태스크의 이름은 **정확히 `OUTPUT`** (`name: OUTPUT`). callback 이 문자열
+  완전일치로 식별한다 (`callback_plugins/json_only.py:49`, `:108`)
+- **Allowed**: 환경변수 `ANSIBLE_JSON_OUTPUT_TASK` 로 대상 태스크 이름 자체를 바꿀 수 있다
+  (`json_only.py:49`). 단 현재 저장소에서 이 변수를 설정하는 곳은 없다 → 항상 `OUTPUT`
+- **Forbidden**: `OUTPUT:` 접두사 + 설명 형태로 이름 짓기, 그 밖의 어떤 변형도 금지
+  (완전일치가 깨지면 callback 이 결과를 내보내지 않아 **호출자가 빈 응답을 받는다**)
 
 ### R4. Jinja2 출력 변수 정합성
 
@@ -65,13 +76,13 @@ post_edit_jinja_check.py가 자동 검증.
 
 - envelope 6 필드 외 추가 — R1
 - json_only.py 임의 수정 — R2
-- OUTPUT prefix 누락 — R3
+- OUTPUT 태스크 이름이 `OUTPUT` 완전일치가 아님 (접두사 형태 포함) — R3
 - envelope 필드 자체 누락 — R4
 
 ## 리뷰 포인트
 
 - [ ] envelope 6 필드 모두 존재
-- [ ] OUTPUT prefix 일관성
+- [ ] OUTPUT 태스크 이름이 정확히 `OUTPUT` (완전일치)
 - [ ] Jinja2 정합성
 - [ ] callback URL 처리 무결성
 

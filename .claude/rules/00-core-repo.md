@@ -50,7 +50,7 @@ python scripts/ai/check_project_map_drift.py
 ansible.cfg + Jenkinsfile (3종)
   ↓
 3-channel:
-  ├── os-gather/site.yml (3-Play: 포트감지 → Linux → Windows)
+  ├── os-gather/site.yml (4-Play: 포트감지 → 감지실패 OUTPUT → Linux → Windows)
   ├── esxi-gather/site.yml (1-Play, community.vmware)
   └── redfish-gather/site.yml (precheck → detect → adapter → collect → normalize)
   ↓

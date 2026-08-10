@@ -154,13 +154,35 @@
 | HPE | `redfish-gather/tasks/vendors/hpe/` | [DONE] (M-G1 Superdome 분기 보강) |
 | Lenovo | `redfish-gather/tasks/vendors/lenovo/` | [DONE] |
 | Supermicro | `redfish-gather/tasks/vendors/supermicro/` | [DONE] (M-B2 보강) |
-| **Cisco** | `redfish-gather/tasks/vendors/cisco/` | **[NEW] cycle 2026-05-07 M-J1 신설 (collect_oem.yml + normalize_oem.yml)** |
-| Huawei | `redfish-gather/tasks/vendors/huawei/` | [DONE] (Phase 1 M-C2 신설) |
-| Inspur | `redfish-gather/tasks/vendors/inspur/` | [DONE] (Phase 1 M-D1 신설) |
+| **Cisco** | `redfish-gather/tasks/vendors/cisco/` | **[ORPHAN] 파일은 있으나 어느 adapter 도 참조 안 함** (2026-08-10 실측) |
+| Huawei | `redfish-gather/tasks/vendors/huawei/` | [DONE] (Phase 1 M-C2 신설) — **normalize 는 2026-08-10 까지 미실행이었음** |
+| Inspur | `redfish-gather/tasks/vendors/inspur/` | [DONE] (Phase 1 M-D1 신설) — **normalize 는 2026-08-10 까지 미실행이었음** |
 | Fujitsu | `redfish-gather/tasks/vendors/fujitsu/` | [DONE] (Phase 1 M-E2 신설) |
 | Quanta | `redfish-gather/tasks/vendors/quanta/` | [DONE] (Phase 1 M-F1 신설) |
 
 → 9 vendor 모두 OEM tasks 디렉터리 보유 (cycle 2026-05-07 M-J1 종료 시점).
+
+### 2026-08-10 실측 정정 — "디렉터리 보유 ≠ 실행됨"
+
+adapter 의 `collect.oem_tasks` / `normalize.oem_tasks` 에 **경로가 실려 있어야만**
+`redfish-gather/site.yml:140,145` 가 include 한다. 파일 존재 여부와 무관하다.
+adapter 참조 여부 실측(`grep -rl "vendors/<v>/..._oem.yml" adapters/redfish/`):
+
+| vendor | collect 참조 adapter 수 | normalize 참조 adapter 수 | 판정 |
+|---|---:|---:|---|
+| dell / lenovo | 4 | 4 | 정상 |
+| hpe | 7 | 7 | 정상 |
+| supermicro | 6 | 6 | 정상 |
+| fujitsu / quanta | 1 | 1 | 정상 |
+| huawei / inspur | 1 | **0 → 1 (2026-08-10 fix)** | 키 이름이 `oem_normalize` 오타였음 |
+| **cisco** | **0** | **0** | **미해결 — 아래 참조** |
+
+- **cisco 미해결 사유**: 연결하면 `data.bmc.oem_cisco` 가 신설되어 envelope 이 바뀌고
+  `cisco_baseline.json` 갱신이 동반된다 → rule 92 R1-B / rule 13 R4 **사용자 승인 사항**.
+  NEXT_ACTIONS 등재 대상.
+- **huawei 부가 사항**: `firmware_patterns` 가 정규식 자리에 glob(`iBMC*3.*`)이라
+  실펌웨어가 오면 -9999 실격 → `redfish_generic` 선택 → **adapter 자체가 안 붙어
+  collect OEM 도 함께 죽어 있었다.** 2026-08-10 정규식 정정 + 회귀 12건 신설.
 
 ## recovery_accounts 메타 (cycle-012 + M-A 보강)
 

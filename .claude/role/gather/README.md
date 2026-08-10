@@ -4,7 +4,7 @@
 Ansible 기반 3-channel 서버 정보 수집 개발. 각 채널이 자기 fragment만 만들고, 공통 정규화 파이프라인이 병합한다 (Fragment 철학). Linux/Windows OS / ESXi / Redfish (BMC) 프로토콜로 raw 수집 후 build_*.yml로 표준화.
 
 ## 주요 영역
-- `os-gather/site.yml` — 3-Play (포트감지 → Linux → Windows) + tasks/{linux,windows}/gather_*.yml (각 6개 섹션)
+- `os-gather/site.yml` — 4-Play (포트감지 → 감지실패 OUTPUT → Linux → Windows) + tasks/{linux,windows}/gather_*.yml (각 6개 섹션)
 - `esxi-gather/site.yml` — 1-Play, community.vmware 의존
 - `redfish-gather/site.yml` — 1-Play (precheck → detect → adapter → collect → normalize)
 - `redfish-gather/library/redfish_gather.py` — Python Redfish API 엔진 (약 3,830줄, stdlib only)

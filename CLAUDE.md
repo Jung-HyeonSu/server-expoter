@@ -30,7 +30,7 @@
     Jenkins Job (Jenkinsfile v3, 4-Stage)
     ├─ [1 Validate] 입력값 검증
     ├─ [2 Gather] ansible-playbook 실행
-    │   ├─→ os-gather/site.yml (Play1:포트감지 → Play2:Linux → Play3:Windows)
+    │   ├─→ os-gather/site.yml (Play1:포트감지 → Play1.5:감지실패 OUTPUT → Play2:Linux → Play3:Windows)
     │   ├─→ esxi-gather/site.yml (1-Play)
     │   └─→ redfish-gather/site.yml (1-Play)
     ├─ [3 Validate Schema] field_dictionary.yml 정합성 (FAIL 게이트)
@@ -118,14 +118,14 @@ server-exporter/ (프로젝트 루트)
 
 [1] 수집 채널 (3개)
    ├── os-gather/
-   │   ├── site.yml (3-Play: 포트감지→Linux→Windows)
+   │   ├── site.yml (4-Play: 포트감지→감지실패 OUTPUT→Linux→Windows)
    │   └── tasks/linux/ (6개) + windows/ (6개) → gather_*.yml
    ├── esxi-gather/
    │   ├── site.yml (1-Play)
    │   └── tasks/ → collect_facts/config/datastores + normalize_*
    └── redfish-gather/
        ├── site.yml (1-Play: precheck→detect→adapter→collect→normalize)
-       ├── library/redfish_gather.py (약 3,867줄, Redfish API 엔진 — Storage+Volumes 수집, 2026-06-08 재실측)
+       ├── library/redfish_gather.py (5,082줄, Redfish API 엔진 — Storage+Volumes 수집, 2026-08-10 재실측)
        └── tasks/ + vendors/{dell,hpe,lenovo,supermicro,cisco}/
 
 [2] 공통 로직 (Fragment 정규화)

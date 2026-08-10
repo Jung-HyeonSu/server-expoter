@@ -39,7 +39,7 @@
 
 | 채널 | 디렉터리 | 핵심 파일 |
 |---|---|---|
-| OS gather | `os-gather/` | site.yml (3-Play: 포트감지 → Linux → Play3 Windows), tasks/{linux,windows}/gather_*.yml |
+| OS gather | `os-gather/` | site.yml (4-Play: 포트감지 → 감지실패 OUTPUT → Linux → Windows), tasks/{linux,windows}/gather_*.yml |
 | ESXi gather | `esxi-gather/` | site.yml (1-Play), tasks/collect_facts/config/datastores + normalize_*.yml |
 | Redfish gather | `redfish-gather/` | site.yml (1-Play: precheck → detect → adapter → collect → normalize), library/redfish_gather.py (약 3,830줄) |
 | 공통 | `common/` | library/precheck_bundle.py (4단계 진단), tasks/normalize/init_fragments/merge_fragment/build_*.yml |

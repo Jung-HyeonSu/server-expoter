@@ -1,5 +1,38 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (b) — 설명 자료 조사에서 나온 stale/결함 10건 fix
+
+> 사용자 지시 "위 8건 수정 해라". 수정 착수 중 **결함 2건 추가 발견**(총 10건 처리 + 2건 보류).
+
+- **실제 결함 fix 3종 (동작 변화 있음)**:
+  - **adapter 키 오타** — `huawei_ibmc` / `inspur_isbmc` 의 `normalize.oem_normalize` →
+    `normalize.oem_tasks`. site.yml:145 가 보는 키와 달라 해당 `normalize_oem.yml` 이 영구 미실행이었다.
+  - **[신규 발견] 누적 변수명 오류** — `vendors/{cisco,huawei,inspur}/normalize_oem.yml` 이
+    `_collected_data` 를 참조(정본은 `_merged_data`). 미정의 변수라 `when` 이 항상 거짓 →
+    키 오타를 고쳐도 여전히 skip 됐을 것. 변수명 정정 + `default({}, true)` None 가드.
+    (셋 다 `debug` 전용 태스크라 **envelope 변화 0**)
+  - **[신규 발견 · 영향 큼] huawei firmware_patterns 가 정규식 자리에 glob 문법** —
+    `"iBMC*1.*"` 는 re.search 에서 `iBM` + `C*` + `1` 로 해석된다. 실제 FirmwareVersion
+    (`3.01` / `iBMC 3.01` / `5.32`) 이 전부 미매치 → **-9999 실격 → redfish_generic(-400) 선택**.
+    huawei 장비는 사실상 adapter 가 안 붙고 OEM 도 함께 죽어 있었다.
+    정정 후 `redfish_huawei_ibmc` (score 80570) 선택 확인. 다른 벤더 선택 결과 무변.
+- **표기 정정 5종 (동작 무관)**: 3-Play→**4-Play** 9곳 / rule 20 R3 "OUTPUT: prefix"→**완전일치**
+  (`json_only.py:108` 근거, 접두사 금지 명시) / `sections.yml` 헤더 "10종"→**11종** /
+  `registry.yml` 에 "읽는 코드 없음 — 등록 불요" 명시 / `redfish_gather.py` 줄수 3,867→**5,082**.
+- **결함 아님으로 판정 + 사유 주석만 추가 3종**: `_pick_generic_fallback` 도달불가(범용 부재 시
+  방어망 — 삭제 금지, 실 degrade 는 점수 정렬) / `precheck_bundle` os 채널 미호출(단위 테스트가
+  지키는 라이브러리 기능) / **precheck Stage4 auth 항상 skip(의도된 설계** — 진단 시점엔 벤더
+  미확정이라 vault 를 못 열고, 억지 인증은 BMC 계정 잠금 위험 증가).
+- **보류 2건 (사용자 결정 필요)**:
+  - **cisco OEM 2파일이 어느 adapter 에서도 참조되지 않음** (cisco_bmc/cimc/ucs_xseries 전부
+    `oem_tasks` 키 부재). 연결 시 `data.bmc.oem_cisco` 신설 → **envelope 변경 + cisco_baseline
+    갱신 동반** → rule 92 R1-B / rule 13 R4 승인 사항이라 미착수.
+  - lenovo `AFBT*` 등도 같은 glob 계열 위험 — 실장비 펌웨어 문자열 확보 후 정리 권장.
+- **신규 테스트**: `tests/unit/test_adapter_huawei_firmware_regex.py` 12건 (실격 회피 / 실제 선택 /
+  glob 흔적 검출 / oem_tasks 키). 옛 glob 값으로 되돌리면 실패 — **가드 유효성 실증**.
+- **검증**: pytest **1368 passed**/5 skipped/7 xfailed, 게이트 4종 rc=0
+  (field_dictionary / vendor 경계 / 하네스 정합 / schema drift), **baseline 10종 변경 0**.
+
 ## 일자: 2026-08-10 (수집 로직 설명 자료용 원천 정보 문서 신설 — 코드 실측 재작성)
 
 - **요청**: 수집 로직을 쉽게 설명하는 PPT 를 만들 예정. 그 근거가 될 MD 를 **문서 말고 실제 코드**

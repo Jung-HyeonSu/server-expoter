@@ -25,7 +25,7 @@ server-exporter/
 ├── filter_plugins/          # diagnosis_mapper.py + field_mapper.py
 ├── lookup_plugins/          # adapter_loader.py
 ├── module_utils/            # adapter_common.py
-├── os-gather/               # 3-Play (포트감지 → Linux → Windows)
+├── os-gather/               # 4-Play (포트감지 → 감지실패 OUTPUT → Linux → Windows)
 ├── esxi-gather/             # 1-Play (community.vmware)
 ├── redfish-gather/          # 1-Play (precheck → detect → adapter → collect → normalize)
 │   ├── library/redfish_gather.py    (stdlib only — cycle-017 B5 _endpoint_with_fallback helper 도입)
@@ -90,7 +90,7 @@ server-exporter/
 Jenkins Job (Jenkinsfile / _portal, 4-Stage — cycle-015 _grafana 제거)
   ├─ [1 Validate] 입력값
   ├─ [2 Gather] ansible-playbook
-  │   ├─ os-gather/site.yml (3-Play: 포트 → Linux → Windows)
+  │   ├─ os-gather/site.yml (4-Play: 포트 → 감지실패 OUTPUT → Linux → Windows)
   │   ├─ esxi-gather/site.yml
   │   └─ redfish-gather/site.yml (precheck → detect → adapter → collect → normalize)
   ├─ [3 Validate Schema] field_dictionary 정합 (FAIL 게이트)
