@@ -1,5 +1,43 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (f) — OS 관리 포트 사전 점검을 공통 Precheck 로 통합 (Phase 3-A)
+
+> 목적은 구조 정렬이다. SSH/WinRM 실제 프로토콜 검증은 이번 범위가 아니다.
+
+- **os-gather PLAY 1 의 `wait_for` 3연타 제거** — 종전에는 5986/5985/22 를 각각
+  `ansible.builtin.wait_for` 로 두드려 OS 전용 감지를 했다. 이제 다른 두 채널과 같은
+  `common/tasks/precheck/run_precheck.yml` 을 호출한다. 관측 위치(controller)는 불변.
+- **보존한 동작**: 포트 순서 5986→5985→22 / 첫 성공에서 중단 / OS 판정 규칙
+  (22=linux, 5985·5986=windows + scheme) / 포트당 타임아웃 2초(모듈 기본 3.0 대신 명시 전달) /
+  재시도 없음 / add_host 가 쓰는 `_detected_os`·`_winrm_port`·`_winrm_scheme` 이름과 타입.
+- **공통 모듈 최소 확장 2건**:
+  - `probe_protocol` 파라미터(기본 true) — false 면 Stage 3 를 수행하지 않고
+    `protocol_supported` 를 초기값 False 로 남긴다. "포트가 열렸으니 프로토콜도 된다"고
+    **거짓 표시하지 않기 위함**. 결과에 `protocol_checked` 를 함께 실어 호출부가
+    "확인 안 함"과 "확인했는데 실패"를 구분할 수 있게 했다(envelope 미노출).
+  - `checked_ports` 를 **실제 probe 한 포트**로 정정 — 종전에는 구성된 전체 목록을 넣었다.
+    redfish/esxi 는 포트가 [443] 하나뿐이라 값 변화 없음.
+- **`tcp_check_ex` 구조화 결과 활용** — OS 도 거부(RST) / 시간 초과 / 주소 해석 실패를
+  구분해 관측한다. 그 결과 **Phase 2 의 OS 매핑 예외가 해소**됐다:
+  종전 `stage=port + TCP_CONNECT_FAILED` 고정 → 이제 무응답이면 `reachable + TCP_CONNECT_FAILED`,
+  RST 관측 시 `port + TCP_CONNECTION_REFUSED`, 주소 해석 실패면 `reachable + DNS_RESOLUTION_FAILED`.
+  code↔stage 매핑이 전 채널 1:1 이 됐다.
+- **대표 failure_code 선정 규칙 명문화** — 포트마다 결과가 다를 수 있다(예: 5986 timeout /
+  5985 refused / 22 timeout). 마지막 결과가 아니라 **관측의 강도** 순으로 결정한다:
+  DNS 실패 > RST 관측 > 그 외. probe 순서와 무관하게 결정적이며 테스트로 고정했다.
+  포트별 원본 사유는 `errors[].detail` 에 `port=<n>: <사유>` 로 전부 보존된다.
+- **PLAY 1.5 의 하드코딩 diagnosis 제거** — 공통 precheck 결과를 그대로 쓰고
+  Portal 표시 문구만 OS 문맥으로 덮어쓴다. `auth_success` 는 null 유지(인증 미시도).
+- **failure_reason 3분기** — Phase 1 문구를 유지하되, 관측과 어긋나는 경우만 최소 수정:
+  RST 관측 시 "모두 응답이 없습니다"는 사실과 달라 별도 문구, 주소 해석 실패도 마찬가지.
+- **회귀**: `pytest tests/` **1498 passed / 11 skipped / 7 xfailed**. 신규
+  `tests/unit/test_os_precheck_integration.py` 18건. Stage 3 PASS / e2e 258 / integration 200 /
+  unit 868 / regression 169 / 하네스·경계·drift·envelope·cross-channel 전부 exit 0.
+- **JSON Contract 변경 0** — 키·타입·enum 추가 없음. `schema_version` `"1"` 유지.
+- **Portal Receiver 코드는 workspace 에 없음** — 확인 불가 항목으로 유지.
+- **다음 Phase 미착수**: SSH/WinRM 실제 프로토콜 probe / Redfish ServiceRoot 판정 강화 /
+  ESXi Protocol Detection 강화 / Credential Probe 원인 세분화.
+
 ## 일자: 2026-08-10 (e) — failure_stage / failure_code Contract 완성 (Phase 2)
 
 > 목적: Portal 사용자 문구(failure_reason)가 아니라 **시스템이 실패 종류로 분기**할 수 있게

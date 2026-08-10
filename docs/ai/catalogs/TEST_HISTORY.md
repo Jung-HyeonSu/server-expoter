@@ -2,6 +2,35 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-10 (f) — OS 공통 Precheck 통합 검증 (Phase 3-A)
+
+- **신규**: `tests/unit/test_os_precheck_integration.py` **18건** — `run_module()` 을 실제로
+  돌려 포트별 결과를 주입한다(네트워크 0).
+  - Case 1~3 포트 우선순위 + OS Type + scheme + checked_ports
+  - Case 4~7 전 포트 timeout / 전 포트 refused / 혼합 4조합 / DNS 실패
+  - Case 8~9 IPv6 → IPv4 graceful degradation (주소군 순서)
+  - 포트 점검 단계는 auth_success 를 만들지 않음 / 프로토콜을 확인했다고 위장하지 않음
+  - 타임아웃 2초가 실제 전달되는지(모듈 기본 3.0 이 조용히 적용되지 않는지) / 포트당 재시도 없음
+  - Case 18 민감정보 비노출
+  - **Cross-channel**: redfish/esxi 는 probe_protocol 기본 true 로 Stage 3 유지,
+    checked_ports=[443] 불변
+- **수정**: `test_precheck_detail_propagation.py` 의 포트 순서 회귀를 공통 모듈 정본
+  (`CHANNEL_DEFAULT_PORTS['os']`) 기준으로 재작성 + `_check_ports` 실측 probed 목록 검증 추가.
+  `test_failure_code_contract.py` 의 OS 매핑 예외 제거(해소됨) →
+  code↔stage 전 채널 1:1 로 강화. `test_failure_reason_contract.py` OS 포트 전멸 3분기 검증.
+- **PLAY 1 → PLAY 1.5 배선 시뮬레이션**: site.yml 템플릿을 직접 추출해 7 시나리오 렌더.
+  OS 판정 / stage / code / auth / checked_ports / reason 전부 기대와 일치.
+- **전체 회귀**: `pytest tests/` → **1498 passed, 11 skipped, 7 xfailed**
+- **Jenkins 등가**: Stage 3 PASS / Stage 4-a 258 / Stage 4-b 200 / unit 868 / regression 169
+- **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel 전부 exit 0
+- **Baseline**: 10건 shape·값 검사 통과 (변경 없음)
+- **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows 에서 Ansible CLI 진입부가
+  POSIX 전용 `os.get_blocking` 호출). 대체로 YAML 파싱 5종 + Jinja2 163 표현식 전수 컴파일
+  실패 0 + 7 시나리오 실제 렌더 수행. lab/Jenkins 재확인 필요.
+- **알려진 동작 차이 (보고 대상)**: `wait_for` 는 timeout 안에서 재시도(polling)하지만
+  `tcp_check_ex` 는 포트당 1회 시도다. 부팅 중 서비스가 t=1.5s 에 열리는 경계 사례에서
+  결과가 달라질 수 있다. 재시도 정책 변경은 이번 범위 밖이라 1회 시도를 채택했다.
+
 ## 2026-08-10 (e) — failure_stage / failure_code 계약 테스트 (Phase 2)
 
 - **신규**: `tests/e2e/test_failure_code_contract.py` **42건**. production site.yml /
