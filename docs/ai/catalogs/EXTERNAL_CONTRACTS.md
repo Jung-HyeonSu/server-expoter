@@ -681,6 +681,19 @@ except ssl.SSLError:
 
 > precheck Stage 3 (probe_*) 및 본 수집 endpoint 호출 시 의미. 200 외 응답이 모두 fail 이 아니라는 외부 계약. 본 매트릭스는 5 commits (c23d185f / 31178f8c / a60e42b5 / 6ea2c292 / 9d5c957b) 의 root reference.
 
+> **[WARN] 2026-08-10 정정 — precheck Stage 3 는 더 이상 status 로 판정하지 않는다.**
+> 아래 세 매트릭스는 **본 수집(gather) 단계의 status 해석**으로만 유효하다. Protocol Probe
+> (precheck Stage 3)는 status whitelist 를 전부 제거하고 **응답 본문의 구조**로 판정한다.
+>
+> | 채널 | 현재 판정 근거 | 도입 |
+> |---|---|---|
+> | Redfish | `/redfish/v1/` 본문이 ServiceRoot 인가 (`@odata.type` `#ServiceRoot.` + `@odata.id` + `RedfishVersion`) | Phase 4-A |
+> | vSphere | `/sdk` 에 vim25 `RetrieveServiceContent` POST → `RetrieveServiceContentResponse`/`about`(apiType·apiVersion), 또는 `urn:vim25`·`urn:internalvim25` Fault | Phase 4-B |
+> | WinRM | `/wsman` 에 WS-Management Identify POST → `IdentifyResponse` 네임스페이스 검증 | Phase 3-B |
+>
+> `requires_auth_at_root` probe fact 는 Redfish(4-A)·vSphere(4-B)에서 모두 제거됐다.
+> HTTP 401/403 은 어느 채널에서도 `auth_success` 를 바꾸지 않는다.
+
 ### Redfish ServiceRoot (`GET /redfish/v1/`)
 
 | status_code | 의미 | server-exporter 처리 | 발생 BMC 예시 |
@@ -694,18 +707,34 @@ except ssl.SSLError:
 | timeout | 응답 무 | protocol_supported=False | 네트워크 / BMC 다운 |
 | SSL fail | TLS 호환성 | protocol_supported=False | 구형 BMC TLS 1.0만 |
 
-### vSphere `/sdk` (`GET https://{ip}/sdk`)
+### vSphere `/sdk` — **Phase 4-B(2026-08-10) 이후 계약**
 
-| status_code | 의미 | server-exporter 처리 |
+precheck Stage 3 는 `POST https://{ip}:443/sdk` 로 vim25 `RetrieveServiceContent` 를 보낸다
+(비인증). `GET /sdk` 의 status whitelist(200/301/302/401/403/404/405/500/503)는 **제거**됐다.
+
+| 요청 요소 | 값 | 근거 |
 |---|---|---|
-| 200 | 정상 응답 | OK |
-| 301/302 | 리다이렉트 | OK (서비스 살아있음) |
-| 401/403 | 인증 / 권한 (vCenter SSO) | OK (Stage 4 또는 본 수집 처리) |
-| 404 | ESXi 7+ GET /sdk 정상 동작 (POST SOAP만 허용) | OK |
-| 405 | Method Not Allowed (정상) | OK |
-| 500 | SOAP fault (정상 — discover 응답) | OK |
-| 503 | 일시 과부하 | OK (재시도) |
-| timeout / SSL fail | 실 장애 | fail |
+| Method / Path | `POST /sdk` | pyVmomi `SoapStubAdapter` 기본 path |
+| Body | `<RetrieveServiceContent xmlns="urn:vim25"><_this versionId="6.0" type="ServiceInstance">ServiceInstance</_this></RetrieveServiceContent>` | 설치본 pyVmomi 9.x `SerializeRequest` 결과와 **바이트 동일** |
+| Content-Type | `text/xml; charset=UTF-8` (SOAP 1.1) | pyVmomi `InvokeMethod` 헤더 |
+| SOAPAction | `"urn:vim25/6.0"` | 〃 / govc `GOVC_VIM_VERSION` 기본값 6.0 |
+| 인증 | **없음** — `RetrieveServiceContent` privId = `System.Anonymous` | pyVmomi typeinfo 실측 + Broadcom vSphere WS API 문서 |
+| Retry | 없음 (요청 1회) | Phase 4-B 에서 추가하지 않음 |
+
+| 응답 | protocol_supported | 비고 |
+|---|---|---|
+| `{urn:vim25}RetrieveServiceContentResponse` → `returnval` → `about`(apiType·apiVersion 존재) | **true** | 정상 경로. `about` 은 API 2.0 부터 ServiceContent 필수 필드 |
+| SOAP Fault + detail 요소가 `urn:vim25` / `urn:internalvim25` | **true** | vSphere 자신이 만든 구조화 Fault = endpoint 존재 증거 |
+| 일반 HTML / JSON / XML / 일반 SOAP / 일반 SOAP Fault | **false** | status 와 무관 |
+| HTTP 200/301/302/401/403/404/405/500/503 **만** | **false** | status 는 Evidence 이지 Protocol Identity 가 아님 |
+| timeout / TLS fail / 본문 없음 | **false** | 원본 오류를 `errors[].detail` 로 보존 |
+
+`auth_success` 는 어떤 응답에서도 바뀌지 않는다(`null` 유지). 자격 확인은
+`esxi-gather/tasks/try_credentials.yml` 이 계속 담당한다.
+
+> ESXi 는 standalone host agent 라 `about.apiType = HostAgent`, vCenter 는 `VirtualCenter` 다.
+> 본 Probe 가 증명하는 것은 "vSphere Web Services API 존재" 이며, 대상이 standalone ESXi 인지는
+> `vmware_host_facts`(esxi_hostname 미지정) 호출 계약이 계속 강제한다.
 
 ### WinRM `/wsman` (`GET https://{ip}:5986/wsman`)
 

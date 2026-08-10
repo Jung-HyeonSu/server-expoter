@@ -2,6 +2,47 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-10 (k) — ESXi vim25 SOAP 판정 검증 (Phase 4-B)
+
+- **신규 fixture**: `tests/fixtures/esxi/` (README 에 출처 기록 — rule 21 R2)
+  - `lab/esxi_7_0_3_service_content.xml` — lab ESXi **3대**(10.100.64.1/2/3, 모두
+    ESXi 7.0.3 build-20842708, `apiType=HostAgent` / `apiVersion=7.0.3.0`)의 실측
+    AboutInfo(`tests/reference/esxi/*/pyvmomi_host_dump.json` → `config_product`)를
+    pyVmomi 직렬화기로 감싼 것. 생성 후 pyVmomi `SoapResponseDeserializer` 로 되읽어
+    `vim.ServiceInstanceContent` 복원까지 확인.
+  - `synthetic/` — ESXi 6.0 / 6.7 / 8.0 / vCenter 8.0 ServiceContent(합성) +
+    vim25 Fault 2종 + 일반 SOAP Fault 1종(음성 표본).
+  - **wire capture 아님** — 해당 버전을 "검증 완료" 로 표기하지 않는다.
+- **재작성**: `tests/unit/test_precheck_probe_esxi.py` **54건**
+  - 요청 검증: `POST /sdk` / `RetrieveServiceContent` 본문 / SOAP 1.1 Content-Type /
+    `SOAPAction: "urn:vim25/6.0"` / ServiceContent 전용 본문 상한 / **자격증명 미전송** /
+    TLS 정책 유지 / **retry 없음(요청 1회)**
+  - Positive: lab ServiceContent / 버전 4종 fixture / 네임스페이스 접두사 변형 /
+    비-200 이어도 본문이 ServiceContent 면 통과 / vim25·internalvim25 Fault 2종
+  - **False Positive 13 본문 + HTTP status 단독 9종 전부 거부**: 일반 HTML / 일반 JSON /
+    일반 XML / 빈 SOAP Envelope / 다른 SOAP 서비스 Response / 일반 SOAP Fault / 잘린 XML /
+    vSphere 문자열만 있는 XML / 다른 vim25 응답(LoginResponse) / about 없음 /
+    apiType 없음 / apiVersion 공백 / 네임스페이스 없는 Response /
+    **HTTP 200·301·302·401·403·404·405·500·503 단독**
+  - Evidence 위생: 실패 사유에 raw SOAP 덤프 금지 / 본문 상한 초과 거부
+- **신규**: `tests/unit/test_esxi_precheck_contract.py` **14건** — `run_module()` 전 경로에서
+  Diagnosis 계약 고정. protocol_supported / `auth_success` 항상 `null`(401·403 포함) /
+  `protocol` + `PROTOCOL_CHECK_FAILED` / Phase 1 failure_reason 문구 / probe_facts 키 집합
+  불변 / TCP 실패 시 Probe 미전송 / timeout 전달 / 민감정보 미노출
+- **수정**: `test_os_candidate_search.py`·`test_os_precheck_integration.py` 의 esxi 회귀
+  케이스에 `http_post_soap` stub 추가, `test_failure_reason_contract.py` 의 `_run_precheck`
+  가 두 seam 을 함께 대체하도록 보정(+ stale 주석 정정).
+- **전체 회귀**: `pytest tests/` → **1676 passed, 11 skipped, 7 xfailed**
+- **Jenkins 등가**: Stage 3(output_schema_drift) PASS / unit 1049 / e2e 258 /
+  integration 200 / regression 169
+- **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0
+- **OS / Redfish 회귀 0**: `probe_os` / `ssh_banner_check` / `parse_identify_response` /
+  `probe_redfish` / `parse_service_root` / `http_get` 전부 미변경. 공통 `http_post_soap` 는
+  인자만 추가했고 **기본값이 종전과 같아** WinRM Identify 동작 불변.
+- **미실행**: `ansible-playbook --syntax-check` — Windows 개발 환경에 `ansible-playbook`
+  부재(POSIX 전용 `os.get_blocking` 의존). 성공으로 표기하지 않는다.
+  대안으로 YAML 파싱 28파일 + Jinja2 문자열 스칼라 239개 컴파일 0오류 확인.
+
 ## 2026-08-10 (j) — Redfish ServiceRoot 판정 검증 (Phase 4-A)
 
 - **신규**: `tests/unit/test_redfish_service_root_fixtures.py` **40건** —

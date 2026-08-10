@@ -1,5 +1,54 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-10 (k) — ESXi 판정을 실제 vim25 SOAP 응답 검증으로 강화 (Phase 4-B)
+
+> ESXi Precheck 의 Protocol Detection 만 변경. Gathering(community.vmware / pyVmomi / facts /
+> adapter / normalize)과 OS / Redfish 판정은 손대지 않았다.
+
+- **status 기반 판정 폐기** — 종전 `probe_esxi` 는 `GET /sdk` 의 HTTP status
+  (`200/301/302/401/403/404/405/500/503`) 만 봤다. 443 에서 뭐라도 응답하면 통과라 일반
+  HTTPS 서버가 vSphere 로 판정될 수 있었다. 이제 `/sdk` 에 vim25
+  `RetrieveServiceContent` 를 POST 하고 **응답 본문 구조**로 판정한다.
+- **요청은 추측하지 않았다** — 설치본 pyVmomi 9.x 의 `SoapStubAdapter.SerializeRequest` 가
+  만드는 요청과 **바이트 단위로 동일**함을 오프라인 대조로 확인했다. Content-Type
+  (`text/xml; charset=UTF-8`, SOAP 1.1) / `SOAPAction: "urn:vim25/6.0"` 도 pyVmomi
+  `InvokeMethod` 헤더와 같다. `versionId=6.0` 은 VMware 자체 CLI govc 의 기본값
+  (`GOVC_VIM_VERSION`)이며 저장소 지원 하한(ESXi 6.0)과도 맞는다.
+- **비인증 호출 근거** — `RetrieveServiceContent` 의 privId 는 `System.Anonymous`
+  (pyVmomi typeinfo 실측). Broadcom vSphere WS API 문서도 ServiceInstance 는 인증 없이
+  접근 가능하다고 기술한다.
+- **최소 성공 조건 2가지**
+  1) `{urn:vim25}RetrieveServiceContentResponse` → `returnval` → `about` 에
+     `apiType` / `apiVersion` 이 채워져 있다. (`about` 은 ServiceContent 필수,
+     `apiType`/`apiVersion` 은 AboutInfo 필수 — 둘 다 **API 2.0(version1)부터** 존재해
+     6.x/7.x/8.x 공통이다. pyVmomi typeinfo 로 실측.)
+  2) SOAP Fault 인데 detail 안 요소의 네임스페이스가 `urn:vim25` / `urn:internalvim25`.
+     vSphere 자신이 만든 구조화 Fault 이므로 endpoint 존재의 직접 증거다. 네임스페이스가
+     없는 일반 SOAP Fault 는 구별할 수 없으므로 성공으로 쓰지 않는다(문자열 검색 아님).
+- **인증과 분리(§9)** — Probe 는 자격증명을 보내지 않는다. HTTP 401/403 을 받아도
+  `auth_success` 는 `null` 을 유지한다. 실패 시 `protocol` / `PROTOCOL_CHECK_FAILED`.
+- **failure_reason 무변경** — "예상한 vSphere API 응답을 확인하지 못했습니다..." 문구가
+  강화된 관측 수준과도 일치해 그대로 뒀다.
+- **Timeout / Retry 무변경** — 요청 1회, retry 없음. 최악 수행 시간은 종전과 같다
+  (GET 1회 → POST 1회, `timeout_protocol` 은 esxi-gather 가 주는 30초 그대로).
+- **JSON Contract 변경 0** — 새 필드 없음, enum 추가 없음, `schema_version` `"1"`,
+  `schema/` 파일 무변경. `diagnosis.details` 로 나가는 probe_facts 는 종전과 같은 키만
+  싣는다(`vsphere_endpoint`, 비-200 일 때 `root_status_code`). 확보한 `apiType`/`apiVersion`
+  은 판정 근거로만 쓰고 envelope 에 넣지 않았다(§21 — 필요하면 별도 결정).
+  `requires_auth_at_root` 는 도달 불가가 되어 제거했다(baseline 에 없던 키).
+- **공통 helper 영향 차단** — `http_post_soap` 에 `content_type` / `max_bytes` 인자를 더했으나
+  **기본값이 종전 상수와 같아** WinRM Identify(OS) 동작은 그대로다. `http_get` 는 손대지 않아
+  Redfish 경로도 무영향.
+- **실장비 미검증(보고 대상)** — 저장소에 `/sdk` **wire capture 가 없다.** Positive fixture 는
+  lab ESXi 3대(모두 7.0.3 build-20842708)의 실측 AboutInfo 를 pyVmomi 직렬화기로 감싼 것이다.
+  6.x / 8.x / vCenter fixture 는 **합성**이며 "해당 버전 검증 완료" 로 취급하지 않는다.
+- **회귀**: `pytest tests/` **1676 passed / 11 skipped / 7 xfailed**
+  (unit 1049 / e2e 258 / integration 200 / regression 169). 신규
+  `test_esxi_precheck_contract.py` 14건 + `test_precheck_probe_esxi.py` 재작성 54건.
+  Stage 3(output_schema_drift) PASS / 하네스·경계·envelope·cross-channel 전부 exit 0 /
+  Jinja2 239 표현식 컴파일 0 오류.
+- **Phase 4-B 완료.** Credential Probe 원인 세분화 / Authorization 구분 / Portal Receiver 미착수.
+
 ## 일자: 2026-08-10 (j) — Redfish 판정을 실제 ServiceRoot 검증으로 강화 (Phase 4-A)
 
 > Redfish Precheck 의 Protocol Detection 만 변경. Gathering / OS / ESXi 는 손대지 않았다.
