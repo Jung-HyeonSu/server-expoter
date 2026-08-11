@@ -1,5 +1,36 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-11 (n) — Phase 6-B: 계정 보정 안전화 + 결과 누락 제거 + 문구 통일
+
+- **평문 자격증명 제거** — vault master 와 표준계정 password 가 추적 파일 4곳(3곳은 production)에
+  평문으로 있었다. 전부 참조 표기로 교체했고 **live vault 자격 16종 전수 잔존 0** 확인.
+  단 **git history 에는 그대로 남아 있다** (history rewrite 미수행 — 별도 대상).
+- **[BLOCKED] vault master rotation 미수행** — Jenkins credential store 를 갱신할 수단이 없다
+  (익명 API 403 / `cloviradmin` 은 sudo 불가 / CLI SSH 비활성 / Jenkins admin 토큰 없음).
+  갱신 없이 rekey 하면 **운영 수집이 전면 중단**되므로 실행하지 않았다.
+- **과거 노출 영향 (실측)** — BMC `infraops` 5/5 와 vendor recovery 5/5 가 **과거 커밋의 vault 로
+  지금도 복호화 가능**. Linux/Windows/ESXi 는 그 사이 변경돼 해당 커밋으로는 유효하지 않다.
+- **계정 보정 진입 조건 강화** — 종전 "primary 실패 + recovery 성공" → 이제
+  **primary 가 구조화된 401 로 거부됐을 때만**. timeout / TLS / 5xx / transport / **403** 은 write 0.
+  동일 username 다중 slot 이면 중단. `delete_recreate` 는 opt-in(default off).
+  **A→B password 동기화 기능은 그대로 유지**된다.
+- **unreachable host envelope 소실 제거** — 콜백이 host lifecycle 을 추적해 play 종료 시
+  누락 host 를 보충한다. 요청 host 1개 = envelope 1개.
+- **Portal 문구 통일** — Portal 이 실제로 읽는 `errors[].message` 를 `diagnosis.failure_reason`
+  에서 **복사**하도록 구조화(`build_failed_output.yml`). 문구는 5종으로 통일하고 정의를 1곳
+  (`common/vars/failure_reasons.yml`)으로 모았다. DNS·호스트이름 안내 제거(Portal 은 IPv4 만 전달).
+- **운영 Jenkins 정합화** — 내부 GitLab main 이 `c00e2422` 에 머물러 있었다.
+  기존 커밋을 지우지 않는 **병합**으로 정합화(`e57598c3`). `Jenkinsfile_portal_test` 보존.
+  force/rewrite/reset 미사용.
+- **범위 밖 변경 되돌림** — 작업 중 Dell 대표 시리얼을 Service Tag 로 바꾸는 변경이 섞여 들어와
+  `schema/baseline_v1/dell_baseline.json`(보호 경로)까지 수정돼 있었다. 이번 Phase 지시에 없고
+  `correlation.serial_number` 의 **값 의미**를 바꾸므로 전부 되돌렸다.
+- **회귀**: `pytest tests/` **1926 passed / 10 skipped / 7 xfailed** ·
+  Linux `--syntax-check` 3채널 exit 0 · 하네스/경계/schema-drift/envelope/cross-channel exit 0 ·
+  `schema/baseline_v1` 무변경.
+- **Phase 6-B 완료.** vault rotation 과 실장비 계정 검증은 미수행(사유는 위).
+
+
 ## 일자: 2026-08-11 (m) — 실환경 검증 (Phase 6-A) + WinRM 전송 버그 수정
 
 > lab 네트워크가 개발 PC 에서 직접 도달 가능함을 확인해 **실장비 검증**을 처음 수행했다.
