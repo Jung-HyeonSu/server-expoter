@@ -1275,9 +1275,17 @@ ServiceTag 없음 4종 / invalid 10종 / **폴백 금지 실증**(결과 어디�
 `ChassisServiceTag`·`NodeID` 값이 등장하지 않음) / 무인증·인증 ServiceRoot 노출 차이 /
 재조회 횟수 / **정상 결과에 Dell serial null 0건 불변식** / 비-Dell 무회귀.
 
-**미확인 (⚠)**: 이 환경에 ansible 이 없어 `ansible-playbook redfish-gather/site.yml` 실제 실행으로
-얻은 end-to-end envelope 은 확인하지 못했다. 모듈 산출 + 커밋된 envelope fixture + 배선 무변경
-3층으로 대체 확인했다. 실 Dell 장비 1대 playbook 실행 대조는 lab / Jenkins 단계로 남는다.
+**실 Jenkins end-to-end 검증 (2026-08-11 사후 완료)** — job `clovirone-server-gather`
+(SCM = GitHub `*/main`) 로 실제 파이프라인을 돌려 닫았다.
+
+| 빌드 | 대상 | 결과 |
+|---|---|---|
+| #188 `redfish` | BMC 10.100.15.27 / 10.100.15.34 | `hardware.serial` = `correlation.serial_number` = **`64CXJ54`** / **`GSBPK54`**, status=success, errors 0, envelope 13필드 일치, Stage 3 PASS, 콘솔 `CNIVC` 0회 |
+| #189 `os` | 10.100.64.96 (10.100.15.34 의 짝) | `correlation.serial_number` = **`GSBPK54`** |
+
+동일 `system_uuid`(`4c4c4544-0053-4210-8050-c7c04f4b3534`) 위에서 두 채널 `serial_number` 가
+일치 — **교정 전 DIFFERENT → 교정 후 SAME** 이 실 산출물로 증명됐다.
+(두 빌드의 `UNSTABLE` 은 미라우팅 콜백 주소 timeout 이며 수집과 무관 — rule 31 R2.)
 
 ### 29-8. 알려진 리스크 — iDRAC7/8 (실기기 미검증)
 

@@ -119,11 +119,40 @@ Service Tag 를 못 얻은 14가지 경우(키 부재 4종 + 무효값 10종)에
 비-Dell 무회귀: `real_hpe_dl380` / `real_lenovo_sr650` / `real_hpe_csus3200` 골든 재생성 없이 통과.
 HPE CSUS `SGHD3TLNDD-000` 유지. baseline 10종 중 Dell 1종만 변경.
 
-## 7. 한계 (미확인)
+## 7. 실 Jenkins end-to-end 검증 (2026-08-11, 사후 추가)
 
-- **end-to-end playbook 미실행**: 이 환경에 ansible 이 없어 `ansible-playbook redfish-gather/site.yml`
-  실행 envelope 은 확인하지 못했다. 모듈 산출 + 커밋된 envelope fixture + 배선 무변경 3층으로 대체 확인.
-  실 Dell 장비 1대 실행 대조는 lab / Jenkins 단계로 남는다.
+오프라인 검증만으로 남겨뒀던 항목을 **실 Jenkins + 실 BMC** 로 닫았다.
+Job `clovirone-server-gather` (`Jenkinsfile_portal`, SCM = GitHub `*/main`).
+
+### 7-1. Redfish — 빌드 #188 (`target_type=redfish`, Dell 2대)
+
+파라미터: `loc=git` / `inventory_json=[{"bmc_ip":"10.100.15.34"},{"bmc_ip":"10.100.15.27"}]` /
+`deploymentEnvironmentId=1` / `callbackUrl=http://192.0.2.1:8086` (RFC 5737 미라우팅).
+
+| BMC | `data.hardware.serial` | `correlation.serial_number` | status | errors |
+|---|---|---|---|---|
+| 10.100.15.27 | **`64CXJ54`** | **`64CXJ54`** | success | 0 |
+| 10.100.15.34 | **`GSBPK54`** | **`GSBPK54`** | success | 0 |
+
+- envelope **13 필드 정확히 일치** (누락 0 / 추가 0) — schema 무변경 실증
+- **Stage 3 Validate Schema `RESULT: PASS`**
+- 콘솔 전체에서 `CNIVC` **0회** — 보드 제조 시리얼이 envelope 어디에도 없음
+- 빌드 결과 `UNSTABLE` 은 콜백 대상(미라우팅 주소) HTTP 408 timeout 3회 재시도 실패 때문이며
+  수집 자체와 무관하다 (rule 31 R2 — 콜백 실패는 빌드를 fail 시키지 않음)
+
+### 7-2. 동일 장비 채널 간 대조 — 빌드 #189 (`target_type=os`, 10.100.64.96)
+
+| | Redfish (BMC 10.100.15.34) | OS (10.100.64.96) | |
+|---|---|---|---|
+| `correlation.serial_number` | `GSBPK54` | `GSBPK54` | **SAME** |
+| `correlation.system_uuid` | `4c4c4544-0053-4210-8050-c7c04f4b3534` | 동일 | SAME (동일 장비 확정) |
+
+`system_uuid` 가 같아 동일 물리 장비임이 확정된 상태에서 `serial_number` 가 일치한다.
+**교정 전 DIFFERENT → 교정 후 SAME** 이 실 파이프라인 산출물로 증명됐다.
+OS 채널은 `data.hardware=null` 이라 `correlation` 이 `data.system.serial_number` 분기를 타는
+기존 구조도 그대로다 (추적 문서 9절).
+
+## 8. 남은 한계 (미확인)
 - **iDRAC7/8 미검증**: 해당 세대 실장비 fixture 부재. `DellServiceRoot` 미노출 펌웨어라면 수집이
   실패한다 (폴백 금지의 귀결). `docs/ai/NEXT_ACTIONS.md` 등재.
 - **Dell 모듈러(블레이드) 미검증**: 보유 Dell 7대 전부 Monolithic. `ChassisServiceTag` 를 쓰지 않고

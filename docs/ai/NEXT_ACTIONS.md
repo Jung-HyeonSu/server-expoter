@@ -21,10 +21,11 @@
 - [ ] **DELL-ST-2 (MED) Dell 모듈러(블레이드) 확인** — 보유 Dell 7대 전부 Monolithic 이라
       `ChassisServiceTag`(= enclosure) 대신 `ServiceRoot.ServiceTag`(= node) 를 고른 근거가
       문서(DCIM1048)뿐이고 실측이 없다. MX7000 sled / FX2 / VRTX 1대 캡처로 확정.
-- [ ] **DELL-ST-3 (MED) 실 playbook end-to-end 대조** — 개발 환경에 ansible 이 없어
-      `ansible-playbook redfish-gather/site.yml` 실행 envelope 을 확인하지 못했다.
-      Dell 1대에 실제 실행 후 `data.hardware.serial` == `correlation.serial_number` ==
-      Service Tag 인지, 그리고 같은 장비 OS 수집값과 SAME 인지 대조.
+- [x] **DELL-ST-3 실 playbook end-to-end 대조 — 완료 (2026-08-11)**
+      Jenkins `clovirone-server-gather` #188(redfish, BMC 10.100.15.27/.34) / #189(os, 10.100.64.96).
+      `hardware.serial` == `correlation.serial_number` == Service Tag 확인(`64CXJ54` / `GSBPK54`),
+      동일 `system_uuid` 위에서 Redfish ↔ OS **SAME**. envelope 13필드 일치 / Stage 3 PASS.
+      증거: `tests/evidence/2026-08-11-dell-serial-service-tag.md` 7절.
 - [ ] **DELL-ST-4 (LOW) 무인증 ServiceRoot 미노출 사례 확보** — 인증 재조회 경로는 합성 BMC 로만
       검증했다(`test_service_tag_recovered_from_authenticated_service_root`). 실제로 무인증 200 +
       OEM 미노출인 펌웨어를 만나면 fixture 로 남길 것.

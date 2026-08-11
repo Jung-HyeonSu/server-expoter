@@ -54,8 +54,10 @@
   들어가 있었고(함수 본문 없는 고아 주석) 이번 재적용으로 해소됐다.
 - **회귀**: unit 1186 / e2e 416 / integration 200 / regression 169 passed ·
   `validate_field_dictionary` / `verify_vendor_boundary` / `verify_harness_consistency` PASS.
-- **⚠ 미확인**: ansible 부재로 실제 `ansible-playbook` 실행 envelope 은 미검증
-  (모듈 산출 + envelope fixture + 배선 무변경 3층으로 대체 확인). 실장비 실행 대조는 lab 단계.
+- **실 Jenkins 검증 완료** — job `clovirone-server-gather` #188(redfish, Dell 2대) /
+  #189(os, 짝 호스트). BMC 10.100.15.34 = OS 10.100.64.96 이 동일 `system_uuid` 위에서
+  `correlation.serial_number` **둘 다 `GSBPK54`** → 교정 전 DIFFERENT 가 SAME 으로 해소.
+  envelope 13필드 일치 / Stage 3 PASS / errors 0 / 콘솔 `CNIVC` 0회.
 - 정본: `docs/ai/SERIAL-NUMBER-TRACE-2026-08-11.md` Part III (29절) /
   `tests/evidence/2026-08-11-dell-serial-service-tag.md`.
 

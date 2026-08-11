@@ -24,7 +24,14 @@
 - **결과**: unit 1186 passed / e2e 416 passed·6 skipped / integration 200 passed·3 skipped /
   regression 169 passed·7 xfailed. `validate_field_dictionary` / `verify_vendor_boundary` /
   `verify_harness_consistency` PASS.
-- **⚠ 미실행**: ansible 부재로 실제 playbook end-to-end envelope 미검증 (lab 단계 이월).
+- **실 Jenkins 실행 (2026-08-11 사후)** — job `clovirone-server-gather`:
+  - **#188** `target_type=redfish`, BMC 10.100.15.27 / 10.100.15.34 → 각각
+    `hardware.serial` = `correlation.serial_number` = `64CXJ54` / `GSBPK54`,
+    status=success, errors 0, envelope 13필드 일치, Stage 3 Validate Schema PASS,
+    콘솔 전체 `CNIVC` 0회.
+  - **#189** `target_type=os`, 10.100.64.96 (위 .34 의 짝) → `correlation.serial_number=GSBPK54`.
+  - 동일 `system_uuid` 위에서 두 채널 serial **SAME** (교정 전 DIFFERENT).
+  - 두 빌드 `UNSTABLE` 은 미라우팅 콜백(`192.0.2.1`) timeout — 수집 무관 (rule 31 R2).
 - 증거: `tests/evidence/2026-08-11-dell-serial-service-tag.md`.
 
 ## 2026-08-11 (m) — 실환경 검증 (Phase 6-A)
