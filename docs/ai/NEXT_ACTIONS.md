@@ -7,6 +7,28 @@
 
 ---
 
+## Dell 대표 시리얼 교정 후속 (2026-08-11) — lab 부재로 미검증
+
+> 본 작업 정본: `docs/ai/SERIAL-NUMBER-TRACE-2026-08-11.md` Part III / 커밋 `0fb63799`.
+> Dell 대표 시리얼을 `ServiceRoot.Oem.Dell.ServiceTag` 단일 정본으로 바꿨고 폴백을 없앴다.
+> 아래는 **실기기가 있어야만** 닫을 수 있는 항목 (rule 96 R1-C).
+
+- [ ] **DELL-ST-1 (HIGH) iDRAC7/8 실장비 fixture 캡처** — iDRAC7/8 Redfish API Guide(2.30~2.70)
+      목차에 `DellServiceRoot` 가 없다. 실제로 `Oem.Dell.ServiceTag` 를 노출하지 않는 펌웨어라면
+      그 장비는 이제 **수집이 실패**한다(폴백 금지의 귀결). 12G/13G PowerEdge 1대에서
+      `curl -sk -u <user>:<pass> https://<BMC>/redfish/v1/ | jq .Oem.Dell.ServiceTag` 확인 후
+      `capture-site-fixture` 로 fixture 화. 미노출이면 정책 재검토 필요(사용자 결정 사항).
+- [ ] **DELL-ST-2 (MED) Dell 모듈러(블레이드) 확인** — 보유 Dell 7대 전부 Monolithic 이라
+      `ChassisServiceTag`(= enclosure) 대신 `ServiceRoot.ServiceTag`(= node) 를 고른 근거가
+      문서(DCIM1048)뿐이고 실측이 없다. MX7000 sled / FX2 / VRTX 1대 캡처로 확정.
+- [ ] **DELL-ST-3 (MED) 실 playbook end-to-end 대조** — 개발 환경에 ansible 이 없어
+      `ansible-playbook redfish-gather/site.yml` 실행 envelope 을 확인하지 못했다.
+      Dell 1대에 실제 실행 후 `data.hardware.serial` == `correlation.serial_number` ==
+      Service Tag 인지, 그리고 같은 장비 OS 수집값과 SAME 인지 대조.
+- [ ] **DELL-ST-4 (LOW) 무인증 ServiceRoot 미노출 사례 확보** — 인증 재조회 경로는 합성 BMC 로만
+      검증했다(`test_service_tag_recovered_from_authenticated_service_root`). 실제로 무인증 200 +
+      OEM 미노출인 펌웨어를 만나면 fixture 로 남길 것.
+
 ## 진단(diagnosis) 개선 Phase 1-B / Phase 2 (2026-08-10) — Portal Contract 확인 대기
 
 > 계획서: `C:/Users/hshwa/.claude/plans/precheck-snazzy-leaf.md` rev.2 (§18 Q1~Q9, §19 3목록).

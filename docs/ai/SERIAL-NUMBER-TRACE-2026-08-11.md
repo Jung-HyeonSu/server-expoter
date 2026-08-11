@@ -6,8 +6,12 @@
 > **라인 번호 기준 커밋**: `5d0c857b` (2026-08-11). 코드가 바뀌면 라인 번호는 밀린다 — 함수명/문자열로 재확인할 것.
 > **검증**: 실장비 미러 4대(`tests/fixtures/redfish/real_*`) 오프라인 재생 + fixture 39 디렉터리 전수 스캔 + 실 Jenkins 실행 envelope(`tests/evidence/2026-04-29-full-lab-sweep/`) 재추출.
 >
-> **이 문서는 사실 기록 전용이다.** 어떤 값을 써야 하는지, 코드를 고쳐야 하는지는 **판단하지 않는다**.
-> `권장 정본` / `수정 필요 여부` 같은 설계 판단은 이 문서의 범위 밖이다 (사용자 지시, 2026-08-11).
+> **Part I·II 는 사실 기록 전용이다.** 어떤 값을 써야 하는지, 코드를 고쳐야 하는지는 **판단하지 않는다**.
+> `권장 정본` / `수정 필요 여부` 같은 설계 판단은 두 Part 의 범위 밖이다 (사용자 지시, 2026-08-11).
+>
+> **[MOD] Part III 추가 (2026-08-11)**: 위 조사 결과를 근거로 **Dell 채널만** 1차 교정을 수행했다.
+> Part I·II 본문의 "Dell 은 `System.SerialNumber` 를 쓴다" 는 서술은 **교정 전 사실**이며,
+> 교정 후 Dell 동작은 **29절 (Part III)** 이 정본이다. 다른 벤더 서술은 전부 유효하다.
 
 ## 문서 구성
 
@@ -15,6 +19,7 @@
 |---|---|---|
 | **Part I** | Redfish(BMC) 채널의 시리얼 코드 경로 전수 추적 | 0 ~ 15, 부록 A/B |
 | **Part II** | 전 벤더 × 4채널(Redfish/Linux/Windows/ESXi) 사실 조사 | 16 ~ 25 |
+| **Part III** | **Dell 1차 교정** (조사 → 설계 결정 → 구현 → 검증) | 29 |
 
 ---
 
@@ -1129,3 +1134,160 @@ grep -rn "ansible_product_serial\|esxcli" esxi-gather/
 | Windows 수집 코드 | `os-gather/tasks/windows/gather_system.yml`, `gather_hardware.yml` |
 | ESXi 수집 코드 | `esxi-gather/tasks/collect_facts.yml`, `normalize_system.yml` |
 | correlation 분기 | `common/tasks/normalize/build_correlation.yml:21-26`, `init_fragments.yml:43` |
+
+---
+---
+
+# Part III — Dell 1차 교정 (2026-08-11)
+
+> **범위**: Dell 채널 **단독**. HPE / HPE CSUS / Lenovo / Cisco / Supermicro / Huawei /
+> Inspur / Fujitsu / Quanta 는 **한 줄도 바꾸지 않았다.**
+> **구현 커밋**: `0fb63799` (`fix: Dell 대표 시리얼을 ServiceRoot Service Tag 로 교정`)
+
+## 29. Dell 서버 대표 시리얼 = ServiceRoot.Oem.Dell.ServiceTag
+
+### 29-1. 변경 전 / 변경 후 수집 원천
+
+| | 변경 전 | 변경 후 |
+|---|---|---|
+| endpoint | `GET /redfish/v1/Systems/{Members[0]}` | `GET /redfish/v1/` (ServiceRoot) |
+| JSON field | `SerialNumber` | `Oem.Dell.ServiceTag` |
+| 폴백 | 없음 (null 허용) | **없음 (실패 처리)** |
+| 코드 | `redfish_gather.py` `gather_system` 의 `_ne('SerialNumber')` | `_resolve_serial_dell()` + `_SERIAL_RESOLVERS` → `main()` 확정 |
+
+`data.hardware.serial` → `correlation.serial_number` 배선(`normalize_standard.yml` /
+`build_correlation.yml`)은 **무변경**이다. envelope 13 필드 / sections / field_dictionary
+entry 도 추가·삭제 0 (rule 13 R5 / rule 96 R1-B Additive).
+
+### 29-2. 변경 이유
+
+1. **`System.SerialNumber` 는 서버 대표 시리얼이 아니다.** 동일 R760 실측에서 그 값(`CNIVC0048R0159`)은
+   SMBIOS **Type 2(Baseboard)** 문자열 `.GSBPK54.CNIVC0048R0159.` 안에만 나타나고
+   Type 1(System)·Type 3(Chassis) 에는 없다 (19절). 즉 보드 단위 제조 시리얼이다.
+2. **그 결과 채널 간 매칭이 깨진다.** Redfish `correlation.serial_number` = `CNIVC0048R0159`,
+   같은 장비 Linux = `GSBPK54` → DIFFERENT (19절 / `round13_baremetal_pair.json`).
+3. **ServiceTag 는 Dell 이 문서로 정의한 유일한 후보다** (rule 96 R1-A).
+   Dell iDRAC9 Redfish API Guide *"Table 70. Properties for DellServiceRoot"* 가
+   `ServiceTag` 를 **"System Service Tag"** 로 정의한다 (확인 2026-08-11).
+   후보 4종 중 Dell 공식 정의가 있는 건 이것뿐이고, 문구가 chassis 가 아니라 System 스코프다.
+
+**다른 후보를 쓰지 않은 이유** (값이 같아도 의미가 다르거나 근거가 없다):
+
+| 후보 | 미채택 사유 |
+|---|---|
+| `ComputerSystem.SerialNumber` | 보드 제조 시리얼 (위 1). 폴백으로도 금지 |
+| `System.SKU` | DMTF 정의는 "manufacturer SKU" 일 뿐. Dell 이 Service Tag 라고 문서화한 적 없음 |
+| `DellSystem.ChassisServiceTag` | Dell System Info Profile(DCIM1048) 정의 = *"the service tag for the modular enclosure chassis"* → 모듈러에서 **enclosure** 를 가리킴 |
+| `DellSystem.NodeID` | Redfish 스키마·프로파일에 정의 없음 (SNMP MIB `systemNodeID` 만 존재) |
+| BIOS `Attributes.SystemServiceTag` | 추가 GET 필요 + 일부 fixture 에 부재 |
+
+### 29-3. fixture 별 Before / After (실측)
+
+| 대상 | 종류 | Before (`System.SerialNumber`) | After (`ServiceRoot.Oem.Dell.ServiceTag`) |
+|---|---|---|---|
+| `real_dell_r740` | 실장비 미러 | `CNIVC0098G0600` | **`J0KV603`** |
+| `dell` (R740, 10.50.11.162) | 실장비 fixture | `CNIVC009CP0282` | **`2BJ8033`** |
+| `dell_r760` (10.100.15.27) | 실장비 fixture | `CNIVC004950455` | **`64CXJ54`** |
+| `reference` 10.100.15.28 | 실장비 미러 | `CNIVC004950460` | **`29N1K54`** |
+| `reference` 10.100.15.31 | 실장비 미러 | `CNIVC004950423` | **`4BP2K54`** |
+| `reference` 10.100.15.33 | 실장비 미러 | `CNIVC0048R0468` | **`C3BXJ54`** |
+| `reference` 10.100.15.34 (R760-6) | 실장비 미러 | `CNIVC0048R0159` | **`GSBPK54`** |
+
+갱신된 회귀 기준선 3종 (Dell 만):
+`tests/fixtures/redfish/real_dell_r740/expected_output.json` (`data.system.serial`) /
+`tests/fixtures/outputs/dell_r760_output.json` /
+`schema/baseline_v1/dell_baseline.json` (뒤 2개는 `data.hardware.serial` + `correlation.serial_number`).
+전부 손으로 적지 않고 수정된 모듈로 원본 fixture 를 재생해 산출한 값이다 (rule 21 R1).
+
+### 29-4. 동일 Dell R760 — Linux System Serial 대조 결과
+
+```
+장비 : Dell PowerEdge R760 (BMC 10.100.15.34 / OS 10.100.64.96)
+
+[Redfish]  data.hardware.serial      : CNIVC0048R0159  →  GSBPK54
+           correlation.serial_number : CNIVC0048R0159  →  GSBPK54
+[Linux]    /sys/class/dmi/id/product_serial (SMBIOS Type 1) : GSBPK54  (불변)
+
+[채널 간 동일 여부]  교정 전 DIFFERENT  →  교정 후 SAME
+```
+
+즉 19절이 기록한 Dell 채널 간 불일치가 이번 교정으로 해소됐다.
+
+### 29-5. Service Tag 를 못 얻은 경우 — 실패 처리
+
+`ServiceRoot.Oem.Dell.ServiceTag` 가 없거나 무효면 **다른 값으로 대체하지 않고 수집을 실패**시킨다.
+Dell 서버 시리얼은 필수값이므로 `null` 인 채로 success/partial 을 내보내지 않는다.
+
+무효 판정값은 이 프로젝트가 이미 정의해 둔 식별자 센티널의 합집합을 그대로 쓴다 (새로 정의하지 않음):
+`'' / 공백`(= `_strip_or_none`), `NA`, `N/A`, `None`, `Not Specified`,
+`To Be Filled By O.E.M.`, `System Serial Number`, `0`, `00000000`
+(출처: `os-gather/tasks/linux/gather_system.yml` serial 센티널 + `os-gather/tasks/windows/gather_hardware.yml` BIOS serial 센티널).
+
+실패 시 envelope 은 **기존 계약 그대로**이며 신규 failure code 를 만들지 않았다:
+
+| 필드 | 값 |
+|---|---|
+| `status` | `failed` |
+| `diagnosis.failure_stage` / `failure_code` | `gather` / `GATHER_FAILED` (기존 enum) |
+| `correlation.serial_number` | `null` |
+| `errors[]` | 기존 3키 shape (`section` / `message` / `detail`) |
+
+**인증 ServiceRoot 재조회**: `_fetch_service_root` 는 무인증 GET 이 200 이면 인증 GET 을 하지 않는다.
+무인증 응답이 200 이면서 OEM 블록만 빠지는 펌웨어에서 Service Tag 를 "없음" 으로 오판하지 않도록,
+1차 조회에서 못 찾은 경우에 **한해** 인증 ServiceRoot 를 1회 재조회한다. 정상 경로(무인증 응답에
+이미 태그 존재)에서는 **추가 GET 0회**다.
+
+**system 섹션 미확보 차단**: Service Tag 는 정상인데 `GET Systems/{id}` 가 실패하면 대표 시리얼을
+실을 자리가 없다. 이 경우 `partial` + `hardware.serial=null` 로 내보내지 않고 실패로 끝낸다.
+
+### 29-6. 다른 벤더 — 이번 작업에서 변경 없음
+
+`_SERIAL_RESOLVERS` 에 등록된 vendor 만 대표 시리얼을 덮어쓴다. 현재 등록은 `dell` 하나뿐이라
+나머지 vendor 는 코드 경로 자체를 타지 않는다 (`.get(vendor)` → `None`).
+
+| 벤더 | 이번 작업 후 대표 시리얼 원천 | 값 변화 |
+|---|---|---|
+| HPE / HPE CSUS / Lenovo / Cisco | `ComputerSystem.SerialNumber` (기존 그대로) | 없음 |
+| Supermicro / Huawei / Inspur / Fujitsu / Quanta | 〃 | 없음 |
+| UNKNOWN (vendor 미식별) | 〃 | 없음 |
+
+**HPE CSUS 3200 의 `SGHD3TLNDD-000`** 도 이번 작업에서 **변경하지 않았다.**
+실미러 골든(`real_hpe_dl380` / `real_lenovo_sr650` / `real_hpe_csus3200`) 3종은 재생성 없이
+그대로 통과했고, 비-Dell baseline 9종도 무변경이다.
+
+Part I·II 가 기록한 다음 관측 사실들도 **이번 범위 밖이라 그대로 유지**한다:
+Lenovo `oem.fru_serial` 항상 null (13절 #4), Cisco `Oem.Cisco.BoardSerialNumber` fixture 부재,
+HPE `Oem.Hpe.PCASerialNumber` 미수집 (13절 #5), ESXi `'NA'` 센티널 미정규화 (17-D).
+
+### 29-7. 검증
+
+| 대상 | 결과 |
+|---|---|
+| `tests/unit/test_dell_service_tag_serial.py` (신규) | 41 passed |
+| `tests/integration/` (`-m "not live"`, 실미러 4대 골든 포함) | 200 passed |
+| `tests/e2e/` | 416 passed |
+| `tests/unit/` 전체 | 1186 passed |
+| `tests/regression/` | 169 passed |
+| `validate_field_dictionary.py` / `verify_vendor_boundary.py` / `verify_harness_consistency.py` | 전부 PASS |
+
+신규 테스트가 덮는 경로: ServiceTag 정상 + System 정상 / ServiceTag 정상 + System 실패 /
+ServiceTag 없음 4종 / invalid 10종 / **폴백 금지 실증**(결과 어디에도 `SerialNumber`·`SKU`·
+`ChassisServiceTag`·`NodeID` 값이 등장하지 않음) / 무인증·인증 ServiceRoot 노출 차이 /
+재조회 횟수 / **정상 결과에 Dell serial null 0건 불변식** / 비-Dell 무회귀.
+
+**미확인 (⚠)**: 이 환경에 ansible 이 없어 `ansible-playbook redfish-gather/site.yml` 실제 실행으로
+얻은 end-to-end envelope 은 확인하지 못했다. 모듈 산출 + 커밋된 envelope fixture + 배선 무변경
+3층으로 대체 확인했다. 실 Dell 장비 1대 playbook 실행 대조는 lab / Jenkins 단계로 남는다.
+
+### 29-8. 알려진 리스크 — iDRAC7/8 (실기기 미검증)
+
+Dell iDRAC7/8 Redfish API Guide(2.30~2.70) 목차에는 `DellServiceRoot` 자체가 없다. 해당 세대
+실장비 캡처가 lab 에 없어 런타임 노출 여부는 **UNKNOWN** 이다. 노출하지 않는다면 그 장비는 이제
+수집이 실패한다 (종전에는 `CNIVC…` 를 반환). 이는 폴백 금지 결정의 직접적 귀결이다.
+저장소의 `dell_idrac` / `dell_idrac8` / `dell_idrac9` 는 `service_root.json` + `system.json`
+두 파일뿐인 adapter 매칭용 합성 mockup 이라 이 리스크의 증거가 되지 못한다.
+→ `docs/ai/NEXT_ACTIONS.md` 에 "iDRAC7/8 실장비 fixture 캡처" 등재 (rule 96 R1-C).
+
+또한 교정 후 Dell envelope 에서 보드 제조 시리얼(`CNIVC…`)은 **어디에도 남지 않는다.**
+보존하려면 새 필드가 필요한데 이번 지시가 이를 금지해 의도적으로 미보존한다
+(`hardware.sku` / `hardware.oem.chassis_service_tag` 는 기존 필드라 값 그대로 유지된다).

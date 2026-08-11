@@ -1,5 +1,36 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-11 (o) — Dell 대표 시리얼 1차 교정 (ServiceRoot Service Tag)
+
+- **Dell 만 원천 교체** — `data.hardware.serial` / `correlation.serial_number` 의 Dell 원천을
+  `ComputerSystem.SerialNumber` → **`ServiceRoot.Oem.Dell.ServiceTag`** 로 바꿨다. 사용자 지시
+  (2026-08-11) 로 수행한 **독립 작업**이며 Phase 6-B 와 무관하다. 커밋 `0fb63799`.
+- **왜** — Dell 의 `System.SerialNumber` 는 보드 제조 시리얼이다. 동일 R760 실측에서 그 값
+  (`CNIVC0048R0159`)은 SMBIOS **Type 2(Baseboard)** 문자열 `.GSBPK54.CNIVC0048R0159.` 안에만 있고
+  Type 1/Type 3 에는 없다 → 같은 장비 Linux(`GSBPK54`)와 값이 달라 채널 매칭이 깨져 있었다.
+  교정 후 **Redfish = Linux = `GSBPK54`** 로 일치.
+- **원천 근거** — Dell iDRAC9 Redfish API Guide "Table 70. Properties for DellServiceRoot" 가
+  `ServiceTag` 를 "System Service Tag" 로 정의 (후보 4종 중 Dell 공식 정의가 있는 유일한 필드).
+  `SKU` / `ChassisServiceTag` / `NodeID` / BIOS `SystemServiceTag` 는 **폴백으로도 쓰지 않는다**.
+- **못 얻으면 실패** — Dell 시리얼은 필수값이라 null 인 채로 success/partial 을 내보내지 않는다.
+  기존 실패 계약 재사용(`failure_stage=gather` / `failure_code=GATHER_FAILED`) — **신규 code 0**.
+  무인증 ServiceRoot 에 OEM 블록이 없을 때만 인증 ServiceRoot 를 1회 재조회(정상 경로 추가 GET 0).
+- **schema 무변경** — envelope 13 필드 / sections / field_dictionary entry 추가·삭제 0.
+  배선(`normalize_standard.yml` / `build_correlation.yml`) 무변경. 새 필드 만들지 않음.
+- **다른 벤더 무변경** — `_SERIAL_RESOLVERS` 에 `dell` 만 등록. HPE / HPE CSUS(`SGHD3TLNDD-000`) /
+  Lenovo / Cisco 외 전 벤더는 코드 경로 자체를 타지 않는다. 비-Dell baseline 9종 무변경.
+- **[INFO] 되돌림 → 재적용 경위** — 이 작업이 진행되는 동안 Phase 6-B 세션이 같은 작업 트리에서
+  동시 작업했고, 미커밋 상태였던 본 변경을 "범위 밖 혼입" 으로 판단해 되돌렸다(그 세션 기록은
+  아래 (n) 항목). 실제로는 사용자 지시로 수행 중이던 별개 작업이라, Phase 6-B 커밋 완료 후
+  **다시 적용**해 `0fb63799` 로 커밋했다. 되돌림 당시 주석 블록 일부가 `5af488ef` 에 섞여
+  들어가 있었고(함수 본문 없는 고아 주석) 이번 재적용으로 해소됐다.
+- **회귀**: unit 1186 / e2e 416 / integration 200 / regression 169 passed ·
+  `validate_field_dictionary` / `verify_vendor_boundary` / `verify_harness_consistency` PASS.
+- **⚠ 미확인**: ansible 부재로 실제 `ansible-playbook` 실행 envelope 은 미검증
+  (모듈 산출 + envelope fixture + 배선 무변경 3층으로 대체 확인). 실장비 실행 대조는 lab 단계.
+- 정본: `docs/ai/SERIAL-NUMBER-TRACE-2026-08-11.md` Part III (29절) /
+  `tests/evidence/2026-08-11-dell-serial-service-tag.md`.
+
 ## 일자: 2026-08-11 (n) — Phase 6-B: 계정 보정 안전화 + 결과 누락 제거 + 문구 통일
 
 - **평문 자격증명 제거** — vault master 와 표준계정 password 가 추적 파일 4곳(3곳은 production)에

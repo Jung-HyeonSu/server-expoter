@@ -2,6 +2,31 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-11 (o) — Dell 대표 시리얼 교정 회귀 (ServiceRoot Service Tag)
+
+- **신규**: `tests/unit/test_dell_service_tag_serial.py` **41건** —
+  ServiceTag 정상 + System 정상(fixture `dell` / `dell_r760` / `real_dell_r740`) /
+  ServiceTag 정상 + System 수집 실패(→ partial+null 금지) / ServiceTag 없음 4종 /
+  invalid 10종(`NA` `N/A` `None` `Not Specified` `To Be Filled By O.E.M.`
+  `System Serial Number` `0` `00000000` `""` 공백) /
+  **폴백 금지 실증** 14케이스(결과에 `SerialNumber`·`SKU`·`ChassisServiceTag`·`NodeID` 0회 등장) /
+  무인증↔인증 ServiceRoot 노출 차이 + 재조회 횟수 / **serial null 0건 불변식** / 비-Dell 무회귀.
+- **신규**: `tests/e2e/test_redfish_baseline.py::TestDellServiceTagIsRepresentativeSerial` —
+  최종 envelope 의 `data.hardware.serial` == `correlation.serial_number` ==
+  raw fixture `Oem.Dell.ServiceTag` (기대값 하드코딩 없이 fixture 에서 읽어 비교).
+- **기준선 갱신 (Dell 3종만, 전부 재생 산출값)**:
+  `real_dell_r740/expected_output.json` `CNIVC0098G0600`→`J0KV603` ·
+  `dell_r760_output.json` `CNIVC004950455`→`64CXJ54` ·
+  `schema/baseline_v1/dell_baseline.json` `CNIVC009CP0282`→`2BJ8033`.
+  비-Dell baseline 9종 + 실미러 골든 3종(HPE/Lenovo/CSUS) **무변경 통과**.
+- **실장비 대조 7대** — reference 미러 5대 + fixture 2대 전부 `Oem.Dell.ServiceTag` 존재,
+  `SerialNumber` 와 상이. R760-6 은 Redfish `GSBPK54` == Linux SMBIOS Type 1 `GSBPK54`.
+- **결과**: unit 1186 passed / e2e 416 passed·6 skipped / integration 200 passed·3 skipped /
+  regression 169 passed·7 xfailed. `validate_field_dictionary` / `verify_vendor_boundary` /
+  `verify_harness_consistency` PASS.
+- **⚠ 미실행**: ansible 부재로 실제 playbook end-to-end envelope 미검증 (lab 단계 이월).
+- 증거: `tests/evidence/2026-08-11-dell-serial-service-tag.md`.
+
 ## 2026-08-11 (m) — 실환경 검증 (Phase 6-A)
 
 - **실장비 실측** (lab 네트워크 직접 도달):
