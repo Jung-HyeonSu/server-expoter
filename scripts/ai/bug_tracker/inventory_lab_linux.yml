@@ -6,8 +6,8 @@ all:
     linux_targets:
       vars:
         ansible_user: cloviradmin
-        ansible_password: Goodmit0802!
-        ansible_become_password: Goodmit0802!
+        ansible_password: "{{ lookup(\'env\', \'LAB_LINUX_PASSWORD\') }}"
+        ansible_become_password: "{{ lookup(\'env\', \'LAB_LINUX_PASSWORD\') }}"
         ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
         ansible_python_interpreter: /usr/bin/python3
       hosts:
