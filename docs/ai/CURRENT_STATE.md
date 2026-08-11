@@ -1,5 +1,33 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-11 (o) — Phase 6-C: 실제 Jenkins Agent / lab BMC 검증
+
+> **코드 변경 0건.** Phase 6-B 결과를 실환경에서 검증만 했다.
+
+- **실제 Jenkins Agent(10.100.64.154) 검증 성공**
+  - 환경: Ubuntu 24.04.4 / Python 3.12.3 / **ansible-core 2.20.3**(`/opt/ansible-env`)
+  - 내부 GitLab main clone = **`ab7f687a`**(= 우리 HEAD). 최신 구현 9종 전부 존재
+  - **`ansible-playbook --syntax-check` 3채널 exit 0** — WSL 이 아니라 **운영 Agent 에서** 통과
+  - 요청 host 2 → **envelope 정확히 2개**, 중복 0 / 미지 host 0 / 전부 13필드 /
+    `errors[0].message == diagnosis.failure_reason`
+- **lab BMC 실측 (쓰기 강제 off: `-e _rf_account_service_dryrun=true`)**
+  - **Lenovo 10.50.11.232** — `used_role=primary`, `fallback_used=false` →
+    **account_service 미진입 = Write 0**. status success / 9 sections
+  - **Dell 10.100.15.28** — `used_role=recovery`, `attempted=5` → **401 게이트 통과**,
+    `account_existed=true` / `action=password_sync` / `method=patch_existing` /
+    `slot_uri=.../Accounts/3` / **`dryrun=true` 라 `recovered=false`, `verification=skipped`**
+    → **실제 PATCH 미발생 확인**. status success / 9 sections / errors 0
+  - → A→B 동기화 경로가 실장비에서 의도대로 진입하고, override 로 쓰기를 막을 수 있음을 확인
+- **[발견] Dell 10.100.15.28 의 `infraops` password 가 vault 값과 다르다** —
+  override 없이 운영 실행하면 이 장비는 password_sync PATCH 가 발생한다(설계된 동작).
+- **[BLOCKED] 실제 Jenkins 빌드 트리거 불가** — job 60여 개 전부 build token 0,
+  익명 API 403, Jenkins admin 자격 없음. 따라서 **"Job 이 실제로 최신 SHA 를 checkout" 은 미검증**.
+  다만 **전 job 의 SCM 이 내부 GitLab `origin/main`** 이고 그 브랜치가 우리 HEAD 와 같음을 확인했다.
+- **회귀**: `pytest tests/` **1971 passed / 10 skipped / 7 xfailed** ·
+  하네스/경계/schema-drift/envelope/cross-channel exit 0 · field_dictionary PASS.
+- **Phase 6-C 완료** (빌드 트리거 1건 blocked).
+
+
 ## 일자: 2026-08-11 (o) — Dell 대표 시리얼 1차 교정 (ServiceRoot Service Tag)
 
 - **Dell 만 원천 교체** — `data.hardware.serial` / `correlation.serial_number` 의 Dell 원천을
