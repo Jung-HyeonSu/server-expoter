@@ -2,6 +2,39 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-11 (l) — Portal Grid 실패 사유 + 자격 실패 분류 검증 (Phase 5-A)
+
+- **신규**: `tests/e2e/test_failure_reason_case_matrix.py` **27건**
+  - 18 Case 를 최종 diagnosis 까지 렌더 (precheck 6건은 `run_module()` 실제 실행,
+    rescue 12건은 site.yml `_diagnosis` 템플릿 추출 렌더)
+  - **§29 단계 진행 관계 Contract**: 문장이 주장하는 앞 단계 성공을 Machine Diagnosis 로
+    증명 (`관리 연결은 확인되었지만`→port_open / `<서비스>는 확인되었지만`→protocol_supported /
+    `접속은 확인되었지만`→auth_success). 문구와 Boolean 이 어긋나면 실패
+  - reachable 단계가 "통신은 되지만" 을, port 단계가 "서버는 응답하지만" 을 쓰지 않는지
+  - `정보 수집 후` 는 수집 성공이 관측된 경로에서만
+  - 18 Case 전수 민감정보 미노출
+- **신규**: `tests/e2e/test_credential_probe_classification.py` **13건** — 4 채널 자격 probe
+  파일이 문자열 파싱으로 인증 실패를 확정하지 않는지, `auth_success` 를 분산 판정하지 않는지,
+  **인증 시도 횟수 / retry / lockout backoff 가 그대로인지**, 403 을 거부로 만들지 않는지
+- **신규**: `tests/unit/test_redfish_auth_evidence.py` **14건** — `auth_evidence` 가
+  자격증명 요청의 첫 정수 status 만 기록 / 무인증 요청 미기록 / status=0 미기록 /
+  첫 관측 고정 / 반환값 불변 / invocation 단위 초기화 / 자격증명 미포함 / 문자열 미수용
+- **갱신**: `test_failure_reason_contract.py` 에 §26·§27 단언 추가
+  (관리 포트 `22/443/5985/5986` 금지, HTTP status 금지, timeout 초 금지,
+  내부 기술 용어 14종 금지) + OS 포트 실패 검증을 precheck 실제 실행 기반으로 교체 +
+  삭제한 PLAY 1.5 덮어쓰기 태스크가 되살아나면 실패하는 가드
+- **갱신**: `test_esxi_precheck_contract.py` / `test_os_candidate_search.py` /
+  `test_os_precheck_polling.py` / `test_failure_code_contract.py` 를 새 문구 계약으로
+- **동기화**: `schema/examples/redfish_{failed,not_supported}.json`,
+  `schema/output_examples/redfish_failed.jsonc`, `docs/20_json-schema-fields.md` 예시 문구
+- **전체 회귀**: `pytest tests/` → **1731 passed, 11 skipped, 7 xfailed**
+- **Jenkins 등가**: Stage 3(output_schema_drift) PASS / unit 1063 / e2e 299 /
+  integration 200 / regression 169 / field_dictionary PASS
+- **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0
+- **정적**: py_compile 2파일 / YAML 78파일 파싱 / Jinja2 문자열 스칼라 893개 컴파일 0오류
+- **미실행**: `ansible-playbook --syntax-check` — Windows 개발 환경에 `ansible-playbook`
+  부재. 성공으로 표기하지 않는다.
+
 ## 2026-08-10 (k) — ESXi vim25 SOAP 판정 검증 (Phase 4-B)
 
 - **신규 fixture**: `tests/fixtures/esxi/` (README 에 출처 기록 — rule 21 R2)

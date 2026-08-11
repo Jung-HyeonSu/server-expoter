@@ -1,5 +1,39 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-11 (l) — Portal Grid 실패 사유 최종 정리 + 자격 실패 분류 (Phase 5-A)
+
+> `diagnosis.failure_reason` 문구와 자격 실패 해석만 변경. Protocol Probe(OS TCP 폴링 /
+> SSH Identification / WinRM Identify / Redfish ServiceRoot / ESXi RetrieveServiceContent)와
+> Gathering / Timeout / Retry / 인증 시도 횟수는 손대지 않았다.
+
+- **failure_reason 을 Portal Grid 문장으로 통일** — "확인된 상태 + 실패한 현재 단계 +
+  확인할 항목" 구조. 앞 단계 성공은 **실제 관측된 경우에만** 표현한다.
+  TCP 실패에 "통신은 되지만", RST 에 "서버는 응답하지만" 을 쓰지 않는다(중간 방화벽이
+  대신 응답했을 수 있다).
+- **관리 포트 번호 제거** — os-gather PLAY 1.5 의 `failure_reason` 덮어쓰기 태스크를 삭제했다.
+  종전 문구는 `SSH(22)/WinRM(5985, 5986)` 을 Grid 에 그대로 노출했다. 포트 정보는
+  `errors[].message` 로 옮겼고 포트별 원본 사유는 `errors[].detail` 에 그대로 남는다.
+- **OS rescue 의 protocol_supported 정정** — 종전엔 자격 probe 결과를 그대로 썼는데,
+  Phase 3-B 이후 PLAY 1 이 SSH identification / WinRM Identify 를 실제로 확인해야만
+  PLAY 2/3 에 도달한다. 자격 결과와 무관하게 `true` 가 관측된 사실이다.
+- **Redfish 구조화 인증 거부** — `redfish_gather` 가 module result 에
+  `auth_evidence.first_auth_status`(정수)를 싣는다. **자격증명을 실은 요청의 첫 status** 만
+  기록하며 새 요청을 만들지 않는다(인증 시도 횟수 = 계정 잠금 위험 불변). 401 이면
+  `auth_success=false` + `failure_stage=auth`, 403 은 인증 이후 권한 부족일 수 있어
+  거부로 확정하지 않는다(null 유지). 문자열 파싱은 쓰지 않는다.
+- **Linux / Windows / ESXi 는 auth_success=null 유지** — HEAD 실측 결과 세 채널 모두
+  인증 거부와 transport 실패 / 권한 부족 / 제한 쉘 / 모듈 오류를 구조적으로 구분할 필드가
+  없다(판정식은 각각 `rc==0 and '__auth_ok__' in stdout` / `ping=='pong'` /
+  `ansible_facts is defined`). 남는 단서는 `msg` 문자열뿐이라 확정하지 않는다.
+- **failure_stage / failure_code enum 무변경** — 7 stage / 7 code 그대로. 신규 stage·code 0개.
+- **JSON Contract 변경 0** — 새 envelope 필드 없음, `schema_version` `"1"`.
+  `auth_evidence` 는 **module result 내부 키**이며 envelope 으로 나가지 않는다.
+- **회귀**: `pytest tests/` **1731 passed / 11 skipped / 7 xfailed**
+  (unit 1063 / e2e 299 / integration 200 / regression 169). 신규
+  `test_failure_reason_case_matrix.py` 27건(18 Case 전수 + 단계 진행 관계) +
+  `test_credential_probe_classification.py` 13건 + `test_redfish_auth_evidence.py` 14건.
+- **Phase 5-A 완료.** Authorization 별도 분류 / Portal Receiver 확인 / 실장비 검증 미착수.
+
 ## 일자: 2026-08-10 (k) — ESXi 판정을 실제 vim25 SOAP 응답 검증으로 강화 (Phase 4-B)
 
 > ESXi Precheck 의 Protocol Detection 만 변경. Gathering(community.vmware / pyVmomi / facts /
