@@ -32,6 +32,16 @@
   (unit 1063 / e2e 299 / integration 200 / regression 169). 신규
   `test_failure_reason_case_matrix.py` 27건(18 Case 전수 + 단계 진행 관계) +
   `test_credential_probe_classification.py` 13건 + `test_redfish_auth_evidence.py` 14건.
+- **보정 3건 (2026-08-11)**:
+  1. Redfish Stage 4 비-401 실패 문구를 `Redfish 서비스는 확인되었지만 BMC에 접속하지 못했습니다.
+     자격증명과 계정 권한을 확인하세요.` 로 교체 (다른 채널과 같은 어휘).
+  2. `REASON_PORT_REFUSED` 를 `관리 서비스 연결 시도가 거부되었습니다.` 로 교체 — RST 를
+     보낸 주체가 최종 대상인지 중간 네트워크 장비인지 확정할 수 없다.
+  3. **Redfish 복수 후보 집계 규칙 도입** — 후보 하나의 401 로 전체를 확정하던 것을 고쳤다.
+     `try_one_account.yml` 이 후보별 `first_auth_status` 를 `_rf_auth_statuses` 에 누적하고,
+     site.yml 이 (시도 후보 1개 이상) + (후보 수만큼 관측) + (전부 401) 셋을 모두 만족할 때만
+     `auth_success=false`. timeout / TLS / 403 / 200 이 하나라도 섞이면 null 유지.
+     `first_auth_status` 는 **첫** 인증 응답이라 인증 통과 후의 리소스 401 은 승격되지 않는다.
 - **Phase 5-A 완료.** Authorization 별도 분류 / Portal Receiver 확인 / 실장비 검증 미착수.
 
 ## 일자: 2026-08-10 (k) — ESXi 판정을 실제 vim25 SOAP 응답 검증으로 강화 (Phase 4-B)

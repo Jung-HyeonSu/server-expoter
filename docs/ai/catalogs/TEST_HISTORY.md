@@ -32,6 +32,15 @@
   integration 200 / regression 169 / field_dictionary PASS
 - **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0
 - **정적**: py_compile 2파일 / YAML 78파일 파싱 / Jinja2 문자열 스칼라 893개 컴파일 0오류
+- **보정 회귀 (2026-08-11)**: `tests/e2e/test_redfish_multi_credential_auth.py` **29건**
+  - 사용자 지정 8 조합(401+401 / timeout+401 / 401+timeout / 403+401 / 401+403 /
+    transport+401 / 401+성공 / 단일 401) → **1번과 8번만 false, 나머지 전부 null**
+  - 경계: 후보 0개 / 관측 누락 / 관측 초과 / 비-401 혼입 10종 / 후보 1·2·3·5개 전부 401
+  - `first_auth_status` 가 첫 인증 응답임을 고정 (200 뒤의 401 은 승격 안 됨),
+    무인증 요청은 기록 안 됨, 집계에 문자열 파싱 없음
+  - 판정식은 **실제 Jinja2 `select('equalto', 401)`** 로도 동일 결과 교차 확인
+- **전체 회귀 (보정 후)**: `pytest tests/` → **1760 passed, 11 skipped, 7 xfailed**
+  (unit 1063 / e2e 328 / integration 200 / regression 169)
 - **미실행**: `ansible-playbook --syntax-check` — Windows 개발 환경에 `ansible-playbook`
   부재. 성공으로 표기하지 않는다.
 
