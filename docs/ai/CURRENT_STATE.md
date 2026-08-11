@@ -1,5 +1,52 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-11 (m) — 실환경 검증 (Phase 6-A) + WinRM 전송 버그 수정
+
+> lab 네트워크가 개발 PC 에서 직접 도달 가능함을 확인해 **실장비 검증**을 처음 수행했다.
+> 코드 수정은 실측으로 재현·대조군까지 확보한 **1건**만 했다.
+
+- **`ansible-playbook --syntax-check` 최초 실제 통과** — WSL Ubuntu 24.04.3 /
+  ansible-core 2.20.7 / vault 암호 적용. 3 채널 전부 exit 0. Phase 1~5-A 내내 "미실행"
+  이던 항목이 해소됐다. (`/mnt/c` 는 world-writable 이라 ansible.cfg 가 무시되므로
+  Linux 네이티브 경로 사본에서 실행해야 한다.)
+- **[CRIT] WinRM Identify 전송 버그 수정** — lab Windows(10.100.64.120)가 5985/5986
+  양쪽에서 **HTTP 401 + 본문 0** 을 반환해 정상 Windows 호스트가 전부
+  `detected_os=None` 으로 떨어졌다. Phase 3-B 이후 **Windows 수집이 전면 차단**되는 상태.
+  원인은 판정 로직이 아니라 전송 계층이었다 — `urllib.request` 가 헤더 이름을
+  `capitalize()` / `title()` 로 두 번 정규화해 `WSMANIDENTIFY` 가 `Wsmanidentify` 로 나갔다.
+  **양성 대조군**: 헤더 이름만 보존해 보내면 같은 호스트가 HTTP 200 + 완전한
+  IdentifyResponse(ProductVendor=Microsoft Corporation)를 반환.
+  → `http_post_soap` 의 전송만 `http.client` 로 교체(stdlib 유지). 요청 본문 / 판정 로직 /
+  timeout / retry / 인증 시도 횟수 / JSON contract 전부 무변경.
+  **수정 후 실장비 재검증**: `probe_os` OK, `detected_os=windows`, `winrm_scheme=https`.
+- **테스트 seam 교정** — 기존 WinRM 테스트는 `http_post_soap` 자체를 mock 해서 버그가 사는
+  계층이 테스트에 없었다(전수 통과 ↔ 실장비 100% 실패 동시 성립).
+  `tests/unit/test_soap_header_case_preserved.py` 15건이 `http.client` 를 seam 으로 잡는다.
+- **ESXi 7.0.3 실장비 3대 검증 완료** — `versionId=6.0` 수락, HTTP 200,
+  `RetrieveServiceContentResponse`, `about.apiType=HostAgent` / `apiVersion=7.0.3.0`.
+  Phase 4-B 의 "wire capture 없음" 한계 해소. probe 0.06~0.11s.
+- **Redfish BMC 11대 검증** — 9대 정상(Dell iDRAC9 ×5 / AMI ×1 / HPE iLO Gen11 / Lenovo XCC /
+  Cisco ×1), cisco 1대는 502·503 흔들림, 1대는 다운. **무인증 ServiceRoot 에서 401/403 을
+  반환한 장비 0대** → Phase 4-A 판정을 완화하지 않는다(근거 없음).
+  Dell iDRAC 은 **HTTP 200 과 함께 `WWW-Authenticate: Basic realm="RedfishService"`** 를 보낸다
+  — 과거 "401 반환" 기록의 출처로 보인다. trailing slash 는 실장비에서도 갈린다
+  (Dell `/redfish/v1` / 그 외 `/redfish/v1/`) → Phase 4-A 의 양쪽 허용이 실제로 필요.
+- **[CRIT, 미수정] 운영 Jenkins 가 우리 코드를 실행하지 않는다** — job SCM 은 내부 GitLab
+  `origin/main`(= `c00e2422`)이고 agent 워크스페이스 지문도 `a382bdee` 시점이다.
+  Phase 1~5-A 33 커밋 **0% 반영**. `production` 은 최신이지만 그 브랜치를 보는 job 이 없다.
+  → 사용자 결정 필요(rule 93 R1 force 계열 금지).
+- **[CRIT, 미수정] 수집 도중 unreachable 이면 해당 host envelope 이 사라진다** —
+  2 host 투입 → 1 envelope 재현. 두 Jenkinsfile 모두 감지하지 못한다.
+- **[CRIT, 미수정] Portal 실패 Grid 의 실제 소스는 `errors[].message`** —
+  `diagnosis.failure_reason` 은 Portal 코드에서 읽는 곳이 0건. Phase 5-A 문구 정화가
+  사용자에게 보이는 필드에 적용되지 않았다.
+- **[CRIT, 사고] 검증 중 BMC 쓰기 1건 발생** — `account_service.yml:43` 이 dryrun 을
+  false 로 덮어써 Dell 10.100.15.27 에 `PATCH .../Accounts/3` 이 실행됐다.
+- **회귀**: `pytest tests/` **1775 passed / 11 skipped / 7 xfailed** · Linux syntax-check 3/3 exit 0 ·
+  하네스/경계/schema-drift/envelope/cross-channel exit 0 · `schema/` 무변경.
+- **Phase 6-A 완료.** 위 미수정 CRIT 3건은 사용자 지시 대기.
+
+
 ## 일자: 2026-08-11 (l) — Portal Grid 실패 사유 최종 정리 + 자격 실패 분류 (Phase 5-A)
 
 > `diagnosis.failure_reason` 문구와 자격 실패 해석만 변경. Protocol Probe(OS TCP 폴링 /

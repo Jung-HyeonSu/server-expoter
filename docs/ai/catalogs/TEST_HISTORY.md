@@ -2,6 +2,31 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-11 (m) — 실환경 검증 (Phase 6-A)
+
+- **실장비 실측** (lab 네트워크 직접 도달):
+  - ESXi 3대(10.100.64.1/2/3, 전부 7.0.3 build-20842708) — `/sdk` POST wire 응답 확인.
+    `versionId=6.0` 수락 / HTTP 200 / `RetrieveServiceContentResponse` /
+    `about.apiType=HostAgent` / `apiVersion=7.0.3.0` / `parse_service_content` True.
+  - BMC 11대 — 9대 `probe_redfish` OK. **무인증 ServiceRoot 401/403 = 0대**.
+    cisco .1 은 502/503 흔들림(테스트 flaky 위험), cisco .3 다운.
+  - OS 7대 — Linux 5대 SSH identification 확인(`SSH-2.0-OpenSSH_8.0/8.7/9.6p1`),
+    rhel920 .163 은 전 포트 timeout(= `TCP_CONNECT_FAILED` 실제 사례).
+  - Windows 1대 — 수정 전 401 실패 → **수정 후 200 + IdentifyResponse 확인**.
+- **Linux 실제 Ansible CLI**: `ansible-playbook --syntax-check` 3 채널 exit 0
+  (WSL Ubuntu 24.04.3 / ansible-core 2.20.7 / vault 암호 적용). **최초 실제 통과**.
+- **신규**: `tests/unit/test_soap_header_case_preserved.py` **15건** —
+  `http.client` 를 seam 으로 잡아 헤더 이름 정규화 재발을 차단.
+  `WSMANIDENTIFY` / `SOAPAction` / `Content-Type` 보존, 요청 shape 불변,
+  http/https 분기, 비-2xx status 보존, timeout·refused 분류, max_bytes, 민감정보 미포함,
+  실장비 응답 그대로를 넣은 `probe_os` 통합 확인.
+- **전체 회귀**: `pytest tests/` → **1775 passed, 11 skipped, 7 xfailed**
+- **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0,
+  field_dictionary PASS, `schema/` 무변경.
+- **수행 시간 실측**: ESXi probe 0.06~0.11s / Redfish probe 0.13~1.20s(죽은 호스트 31.1s) /
+  Linux precheck 4.06~4.09s / Windows precheck 0.19s(수정 후) / OS 전 포트 실패 6.03s /
+  전체 playbook: ESXi 25.1s, Redfish 133.3s, Linux 29.7s.
+
 ## 2026-08-11 (l) — Portal Grid 실패 사유 + 자격 실패 분류 검증 (Phase 5-A)
 
 - **신규**: `tests/e2e/test_failure_reason_case_matrix.py` **27건**
