@@ -44,7 +44,7 @@ options:
   verify_ssl: optional, bool, default false
 '''
 
-import json, socket, sys, time, traceback
+import json, re, socket, sys, time, traceback
 
 # ── 단위 변환 상수 (cycle 2026-06-04 R-4 — 매직넘버 명명) ──────────────────────
 # 주의: decimal(10^n) 과 binary(2^n) 는 의미가 다르므로 절대 통합 금지.
@@ -452,6 +452,54 @@ MAX_EXTENDED_INFO_LEN = 300
 # BMC 가 계정 변경을 비동기 반영하거나 직전 연결이 옛 자격으로 남아 있는 경우를 흡수한다.
 # 합계 6초 — 무한 대기가 되지 않도록 값 자체로 상한을 고정한다.
 ACCOUNT_VERIFY_DELAYS = (0, 1, 5)
+
+# 계정 PATCH 에서 **빼도 되는** 속성. 이 목록에 없는 속성(Password / UserName)은
+# 빼는 순간 요청의 의미가 달라지므로 자동 제거 대상이 아니다.
+ACCOUNT_OPTIONAL_PATCH_PROPS = ("Locked", "Enabled", "RoleId")
+
+_READ_ONLY_PROP_RE = re.compile(
+    r'property\s+([A-Za-z][A-Za-z0-9_]*)\s+is\s+a?\s*read[\s-]?only', re.IGNORECASE
+)
+
+
+def rejected_patch_properties(body):
+    """쓰기 응답에서 "이 속성은 쓸 수 없다" 고 지목된 속성 이름들.
+
+    왜 필요한가 (2026-08-12 Dell 실측):
+        iDRAC10 은 `Locked` 를 포함한 계정 PATCH 에 **HTTP 200** 을 주면서 본문에
+            Base.1.12.GeneralError
+            "The property Locked is a read only property and cannot be assigned a value."
+        를 담아 **요청 전체를 거부**했다. 상태 코드만 보면 성공이고, 실제로는 Password 도
+        적용되지 않는다. 그 뒤 새 자격으로 인증하면 401 이 나오고, 코드는 원인을
+        "비밀번호 정책 미충족" 쯤으로 추측할 수밖에 없었다.
+
+        종전 코드에는 `Locked` 를 빼고 재시도하는 경로가 이미 있었지만 **HTTP 400/405
+        에서만** 켜졌다. 200 으로 거부하는 펌웨어에는 도달하지 않았다.
+
+    반환: 응답이 지목한 속성 이름 집합 (없으면 빈 set).
+    source: DMTF DSP0266 Error responses (`@Message.ExtendedInfo`, `MessageArgs`),
+            사이트 실측 (10.100.15.34 iDRAC10 / Redfish 1.20.1).
+    """
+    if not isinstance(body, dict):
+        return set()
+    err = body.get('error')
+    scope = err if isinstance(err, dict) else body
+    found = set()
+    for item in _dicts(scope.get('@Message.ExtendedInfo')):
+        for arg in _as_list(item.get('MessageArgs')):
+            if isinstance(arg, str) and arg:
+                found.add(arg)
+        text = item.get('Message')
+        if isinstance(text, str):
+            m = _READ_ONLY_PROP_RE.search(text)
+            if m:
+                found.add(m.group(1))
+    text = scope.get('message')
+    if isinstance(text, str):
+        m = _READ_ONLY_PROP_RE.search(text)
+        if m:
+            found.add(m.group(1))
+    return found
 
 
 def _extended_info(body, limit=MAX_EXTENDED_INFO_LEN):
@@ -4949,30 +4997,46 @@ def account_service_provision(
             bmc_ip, _p(existing['slot_uri']), body_full,
             current_username, current_password, timeout, verify_ssl,
         )
-        # 일부 펌웨어가 Locked 필드 PATCH 거부 (read-only) — Locked 빼고 1회 retry
-        if code not in (200, 204) and code in (400, 405):
-            body_no_locked = {k: v for k, v in body_full.items() if k != 'Locked'}
+        # 일부 펌웨어가 Locked 같은 필드를 read-only 로 거부한다. 거부 신호는 두 가지다:
+        #   (a) HTTP 400 / 405
+        #   (b) **HTTP 200 인데 본문에 "그 속성은 read only" 라고 적혀 있다** — Dell iDRAC10.
+        #       (b) 를 놓치면 성공으로 보고 넘어가고, Password 도 적용되지 않은 채
+        #       "인증이 안 된다" 만 남는다 (2026-08-12 사이트 실측 사고).
+        rejected = rejected_patch_properties(patch_resp)
+        droppable = [p for p in ACCOUNT_OPTIONAL_PATCH_PROPS
+                     if p in rejected and p in body_full]
+        if (code not in (200, 204) and code in (400, 405)) or droppable:
+            drop = set(droppable) or {'Locked'}
+            body_retry = {k: v for k, v in body_full.items() if k not in drop}
             code, patch_resp, err = _patch(
-                bmc_ip, _p(existing['slot_uri']), body_no_locked,
+                bmc_ip, _p(existing['slot_uri']), body_retry,
                 current_username, current_password, timeout, verify_ssl,
             )
-            if code in (200, 204) and not err:
+            out['write_response_info'] = _extended_info(patch_resp) or out['write_response_info']
+            out['dropped_properties'] = sorted(drop)
+            if code in (200, 204) and not err and not rejected_patch_properties(patch_resp):
                 out['errors'].append(_err(
                     'account_service',
-                    'Locked 필드 PATCH 거부 — Locked 빼고 retry 성공 (BMC 펌웨어가 Locked read-only)',
+                    f'{"/".join(sorted(drop))} 필드 PATCH 거부 — 해당 필드 빼고 retry 성공 '
+                    f'(BMC 펌웨어가 read-only 로 취급)',
                 ))
         # 2026-08-12: 2xx 든 4xx 든 응답 body 의 확장 오류 정보를 **먼저 건진다.**
         #   Dell 은 PATCH 200 과 함께 @Message.ExtendedInfo 로 "무엇을 적용했는지 /
         #   무엇을 거부했는지" 를 돌려준다. 종전에는 body 를 `_` 로 버려서, 쓰기가
         #   수락됐는데 인증이 안 되는 상태의 원인을 알 방법이 아예 없었다.
-        out['write_response_info'] = _extended_info(patch_resp)
-        if code not in (200, 204) or err:
+        out['write_response_info'] = _extended_info(patch_resp) or out.get('write_response_info')
+        still_rejected = rejected_patch_properties(patch_resp)
+        if code not in (200, 204) or err or still_rejected:
+            # 2xx 인데 본문이 거부를 말하면 그것은 실패다. 여기서 끝내야 재인증 시도
+            # 3회를 헛돌지 않고, 원인(어느 속성이 거부됐는지)이 그대로 남는다.
             out['errors'].append(_err(
                 'account_service',
                 f'PATCH 기존 사용자 실패 (slot={existing.get("id")})',
-                detail=' | '.join(
-                    x for x in (err or f'HTTP {code}', out['write_response_info']) if x
-                ),
+                detail=' | '.join(x for x in (
+                    err or f'HTTP {code}',
+                    (f'rejected properties: {sorted(still_rejected)}' if still_rejected else None),
+                    out['write_response_info'],
+                ) if x),
             ))
             return out
         # F50 phase 4: PATCH 후 실 인증 verify — silent fail / 권한 cache 손상 감지.

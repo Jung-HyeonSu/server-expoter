@@ -492,3 +492,86 @@ def test_failed_envelope_exposes_account_service_meta():
     assert rescue, "rescue 의 _diagnosis 템플릿을 찾지 못했다"
     for key in ("credential_scope", "recovery_credential_scope", "account_service", "auth"):
         assert f"'{key}'" in rescue, f"실패 envelope details 에 {key} 누락"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Dell iDRAC10 실사고 회귀 — 200 인데 본문이 거부인 응답
+# ═══════════════════════════════════════════════════════════════════════════
+_IDRAC_LOCKED_REJECT = {"@Message.ExtendedInfo": [
+    {"MessageId": "Base.1.12.GeneralError",
+     "Message": "A general error has occurred. See Resolution for information."},
+    {"MessageId": "Base.1.12.PropertyNotWritable",
+     "Message": "The property Locked is a read only property and cannot be assigned a value.",
+     "MessageArgs": ["Locked"],
+     "Resolution": "Remove the property from the request body and retry."},
+]}
+
+
+def test_rejected_patch_properties_reads_the_device_words():
+    assert "Locked" in rg.rejected_patch_properties(_IDRAC_LOCKED_REJECT)
+    assert rg.rejected_patch_properties({}) == set()
+    assert rg.rejected_patch_properties({"@Message.ExtendedInfo": []}) == set()
+
+
+def test_dell_200_with_locked_rejection_triggers_retry_without_locked(monkeypatch):
+    """HTTP 200 + '그 속성은 read only' → Locked 빼고 재시도해야 한다.
+
+    2026-08-12 실측 (10.100.15.34 / iDRAC10 / Redfish 1.20.1): iDRAC 는 Locked 가 든
+    계정 PATCH 에 **200** 을 주면서 본문으로 거부했다. Password 도 적용되지 않는데
+    코드는 성공으로 보고 넘어가, 이후 401 을 "비밀번호 정책 미충족" 으로 추측했다.
+    종전 재시도 경로는 400/405 에서만 켜져 이 펌웨어에 닿지 않았다.
+    """
+    responses = [(_IDRAC_LOCKED_REJECT, 200), ({}, 200)]
+    sent = []
+
+    def fake_patch(bmc_ip, path, body, u, p, t, v):
+        sent.append(dict(body))
+        resp, code = responses[min(len(sent) - 1, len(responses) - 1)]
+        return code, resp, None
+
+    monkeypatch.setattr(rg, "account_service_get",
+                        lambda *a, **k: ({}, _dell_accounts("infraops"), []))
+    monkeypatch.setattr(rg, "_patch", fake_patch)
+    monkeypatch.setattr(rg, "_get", lambda *a, **k: (200, {}, None))
+    monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
+
+    out = rg.account_service_provision(
+        bmc_ip="10.0.0.1", vendor="dell",
+        current_username="rec", current_password="<rec>",
+        target_username="infraops", target_password="<tgt>",
+        target_role="Administrator", timeout=5, verify_ssl=False, dryrun=False,
+    )
+    assert len(sent) == 2, "거부 응답을 받고도 재시도하지 않았다"
+    assert "Locked" in sent[0]
+    assert "Locked" not in sent[1], "재시도에서 거부된 속성을 그대로 다시 보냈다"
+    assert "Password" in sent[1], "재시도에서 Password 까지 빠지면 의미가 없다"
+    assert out["dropped_properties"] == ["Locked"]
+    assert out["recovered"] is True
+    assert out["verification"] == "verified"
+
+
+def test_persistent_200_rejection_is_a_write_failure_not_a_verify_failure(monkeypatch):
+    """재시도해도 계속 거부하면 '쓰기 실패' 로 끝낸다 — 재인증을 헛돌지 않는다."""
+    verify_calls = {"n": 0}
+
+    def fake_get(*a, **k):
+        verify_calls["n"] += 1
+        return 401, {}, "HTTP 401"
+
+    monkeypatch.setattr(rg, "account_service_get",
+                        lambda *a, **k: ({}, _dell_accounts("infraops"), []))
+    monkeypatch.setattr(rg, "_patch",
+                        lambda *a, **k: (200, _IDRAC_LOCKED_REJECT, None))
+    monkeypatch.setattr(rg, "_get", fake_get)
+    monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
+
+    out = rg.account_service_provision(
+        bmc_ip="10.0.0.1", vendor="dell",
+        current_username="rec", current_password="<rec>",
+        target_username="infraops", target_password="<tgt>",
+        target_role="Administrator", timeout=5, verify_ssl=False, dryrun=False,
+    )
+    assert out["recovered"] is False
+    assert verify_calls["n"] == 0, "쓰기가 거부됐는데 재인증을 시도했다"
+    joined = " ".join(f"{e.get('detail')}" for e in out["errors"])
+    assert "rejected properties" in joined
