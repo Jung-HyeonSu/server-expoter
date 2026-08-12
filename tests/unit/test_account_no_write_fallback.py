@@ -304,3 +304,59 @@ def test_hpe_no_second_write_when_nothing_else_drifted(monkeypatch):
 
     assert len(bodies) == 1
     assert list(bodies[0]) == ["Password"]
+
+
+# ── 보호 계정: 이름이 겹쳐도 건드리지 않는다 ─────────────────────────────────
+
+def test_protected_account_conflict_writes_nothing(monkeypatch):
+    """표준 계정 이름이 `HostBootstrapAccount` 계정과 겹치면 **쓰기 0** 이다.
+
+    이름이 같다는 이유로 특수 계정의 비밀번호/권한을 바꾸면 호스트 부팅 경로 같은 다른
+    기능이 조용히 망가진다. `ambiguous` 와 같은 층의 무진행 종료로 다룬다.
+    source: 03 §11.1/§24 + DMTF ManagerAccount.HostBootstrapAccount
+    """
+    writes = []
+    monkeypatch.setattr(rg, "account_service_discover", _as_discovery(
+        lambda *a, **k: ({}, [_account(host_bootstrap=True)], [])))
+    monkeypatch.setattr(rg, "_patch",
+                        lambda *a, **k: writes.append("patch") or (200, {}, None))
+    monkeypatch.setattr(rg, "_post",
+                        lambda *a, **k: writes.append("post") or (200, {}, None))
+    monkeypatch.setattr(rg, "_delete",
+                        lambda *a, **k: writes.append("delete") or (200, {}, None))
+    monkeypatch.setattr(rg, "_get", lambda *a, **k: (200, {}, None))
+    monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
+
+    out = _provision("lenovo", adapter_id="redfish_lenovo_xcc3")
+
+    assert out["presence"] == rg.PRESENCE_PROTECTED_CONFLICT
+    assert writes == [], f"보호 계정에 쓰기가 발생했다: {writes}"
+    assert out["recovered"] is False
+    assert out["account_existed"] is True
+    joined = " ".join(str(e.get("message")) for e in out["errors"])
+    assert "예약" in joined
+
+
+def test_protected_account_is_not_offered_as_an_empty_create_slot(monkeypatch):
+    """보호 계정 슬롯을 '비어 있다' 고 세어 그 위에 만들지 않는다."""
+    slots = []
+    for i in range(1, 5):
+        slots.append(_account(slot_uri=f"/redfish/v1/AccountService/Accounts/{i}",
+                              id=str(i), username="", enabled=False,
+                              host_bootstrap=(i == 3)))
+    patched = []
+    monkeypatch.setattr(rg, "account_service_discover",
+                        _as_discovery(lambda *a, **k: ({}, slots, [])))
+    monkeypatch.setattr(rg, "_patch", lambda ip, path, body, *a, **k:
+                        patched.append(path) or (200, {}, None))
+    monkeypatch.setattr(rg, "_get", lambda *a, **k: (200, {}, None))
+    monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
+
+    out = _provision("dell")
+
+    assert out["presence"] == rg.PRESENCE_ABSENT
+    assert patched, "생성 자체가 일어나지 않았다"
+    assert not any(p.endswith("/3") for p in patched), \
+        "HostBootstrapAccount 슬롯에 계정을 만들었다"
+    # Dell slot 1 은 Family reserved — 생성 대상에서도 빠져야 한다.
+    assert not any(p.endswith("/1") for p in patched)

@@ -90,6 +90,7 @@
       verify_resource: null
       create_uri: null
       create_uri_kind: null
+      create_uri_basis: null
       # isolation_basis: Password 단독 PATCH 를 고른 근거 수준.
       #   live_proven(실장비 재현) / advisory_derived(벤더 Advisory) / safety_strategy(저장소 선택)
       isolation_basis: null
@@ -207,6 +208,8 @@
           # create_uri / create_uri_kind: 어디에 만들었는가. Accounts 열거 URI 와 다른 개념이다.
           create_uri: "{{ (_rf_acct_result.account_service | default({})).create_uri | default(none) }}"
           create_uri_kind: "{{ (_rf_acct_result.account_service | default({})).create_uri_kind | default(none) }}"
+          # create_uri_basis: 최신 Create 계약을 쓸 근거가 장비값에서 나왔는가.
+          create_uri_basis: "{{ (_rf_acct_result.account_service | default({})).create_uri_basis | default(none) }}"
           # isolation_basis: 이 Family 의 쓰기 방식을 무슨 근거로 골랐는가.
           #   실장비 실측(live_proven)과 벤더 Advisory 추론(advisory_derived)을 합치지 않는다.
           isolation_basis: "{{ (_rf_acct_result.account_service | default({})).isolation_basis | default(none) }}"

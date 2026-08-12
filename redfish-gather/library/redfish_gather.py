@@ -4827,33 +4827,11 @@ def _compute_final_status(collected, failed, errors=None):
 # HPE / Lenovo / Supermicro: POST /Accounts 표준
 # Cisco : AccountService 표준 미지원 (errors[]에 not_supported 기록 후 종료)
 
-# rule 95 R1 #4 (debugging visibility — cycle 2026-05-07 Phase H 보강):
-# vendor → 신규 계정 생성 strategy 매핑 (account_service_provision 분기 정본).
-# 본 dict 는 코드 분기를 변경하지 않음 — 의도 가시화 + log/도구가 사용.
-# source: 사이트 실측 + Dell SWC0296 + Cisco CIMC 사이트 실측 (10.100.15.2).
-_ACCOUNT_CREATE_STRATEGY = {                                                   # nosec rule12-r1
-    'dell':       'patch_slot',     # nosec rule12-r1 — PATCH /Accounts/{N=2..17}
-    'hpe':        'post_standard',  # nosec rule12-r1 — POST /AccountService/Accounts
-    'lenovo':     'post_standard',  # nosec rule12-r1
-    'supermicro': 'post_standard',  # nosec rule12-r1
-    'cisco':      'post_id_role_remap',  # nosec rule12-r1 — POST + Id 1-15 + RoleId enum remap
-    'huawei':     'post_standard',  # nosec rule12-r1 — lab 부재 / web sources
-    'inspur':     'post_standard',  # nosec rule12-r1
-    'fujitsu':    'post_standard',  # nosec rule12-r1
-    'quanta':     'post_standard',  # nosec rule12-r1
-}
-
-
-def _account_create_method_for_vendor(vendor):
-    """vendor → 신규 계정 생성 strategy 이름 (rule 95 R1 #4 debugging helper).
-
-    실제 분기는 account_service_provision() 본문 inline if/elif 가 수행.
-    본 함수는 가시성 / 로깅 / 도구 (-vvv 시 정상 어떻게 분기될지) 용도.
-
-    Returns: 'patch_slot' | 'post_standard' | 'post_id_role_remap' | 'unknown'
-    """
-    return _ACCOUNT_CREATE_STRATEGY.get(vendor, 'unknown')
-
+# 2026-08-12 (rev.2): vendor -> create method 표(`_ACCOUNT_CREATE_STRATEGY`)를 제거했다.
+#   production 소비자가 0건인데 `_ACCOUNT_FAMILIES` 와 **다른 답**을 담고 있었다
+#   (예: cisco -> post_id_role_remap 무조건. 실제로는 Roles 어휘에 따라
+#   cisco_bmc_dynamic 이나 generic 이 될 수 있다). 정본이 둘이면 둘 다 못 믿는다.
+#   생성 방식의 정본은 `_ACCOUNT_FAMILIES[...]['create_method']` 하나다.
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Account Capability Discovery (읽기 전용) — 2026-08-12
@@ -5006,6 +4984,9 @@ def account_service_discover(bmc_ip, username, password, timeout, verify_ssl,
         # AccountService GET 의 HTTP status. 401(명시적 인증 거부)과 0/5xx(도달 실패)를
         # 구분해야 lockout 예산을 옳게 쓴다 — transport 오류는 실패 카운터를 올리지 않는다.
         'auth_status': None,
+        # ServiceRoot 본문. `RedfishVersion` 이 Family 판정 근거인 Vendor 가 있다
+        # (QCT: Legacy v1.1 / Modern v1.11 / Inhouse OpenBMC). 이미 읽은 값을 버리지 않는다.
+        'service_root': None,
     }
 
     # 1) ServiceRoot 가 알려주는 AccountService URI 를 우선한다.
@@ -5015,6 +4996,7 @@ def account_service_discover(bmc_ip, username, password, timeout, verify_ssl,
     if root is None:
         code_r, root_data, _err_r = _get(bmc_ip, '', username, password, timeout, verify_ssl)
         root = root_data if code_r == 200 else None
+    out['service_root'] = root
     svc_uri = _safe(root, 'AccountService', '@odata.id') if root else None
     out['service_uri'] = _p(svc_uri) if isinstance(svc_uri, str) and svc_uri else 'AccountService'
 
@@ -5089,6 +5071,12 @@ def account_service_discover(bmc_ip, username, password, timeout, verify_ssl,
             'password_change_required': _safe(acc_data, 'PasswordChangeRequired', default=None),
             'odata_type': _safe(acc_data, '@odata.type', default=''),
             'has_username_key': isinstance(acc_data, dict) and 'UserName' in acc_data,
+            # 2026-08-12 (rev.2): 자동화가 건드리면 안 되는 특수 계정인가.
+            #   `HostBootstrapAccount` 는 DMTF ManagerAccount 표준 Property 이고
+            #   (schema/redfish_dmtf_2026.1/ManagerAccount.v1_14_1.json), 실미러
+            #   tests/reference/redfish/lenovo/10_50_11_232 의 계정 3개에 실제로 존재한다.
+            #   즉 **XCC3 전용 개념이 아니다.** slot id 문자열로 맞히지 않고 이 값을 본다.
+            'host_bootstrap': _safe(acc_data, 'HostBootstrapAccount', default=None),
         })
     out['member_read'] = len(out['accounts'])
 
@@ -5117,14 +5105,45 @@ def account_service_discover(bmc_ip, username, password, timeout, verify_ssl,
     return out
 
 
-def account_presence(discovery, target_username):
-    """(state, matches) — 표준 계정이 있는가/없는가/알 수 없는가.
+# 표준 계정 이름이 보호 대상 Resource 와 겹쳤다. 자동으로 건드리지 않는다.
+PRESENCE_PROTECTED_CONFLICT = 'protected_conflict'
+
+
+def account_is_protected(account, family=None):
+    """자동화가 **건드리면 안 되는** 특수 계정인가.
+
+    근거는 **Resource Property** 하나다: `HostBootstrapAccount == true`.
+      DMTF ManagerAccount 표준 Property 이고(schema/redfish_dmtf_2026.1/
+      ManagerAccount.v1_14_1.json), 실미러 10.50.11.232 의 계정 3개에 실제로 존재한다.
+      즉 XCC3 전용 개념이 아니다. Family 이름이나 slot 번호로 맞히지 않는다.
+
+    **Family 의 `reserved_slot_ids` 는 여기 쓰지 않는다.** 그것은 "생성할 때 이 슬롯은
+    고르지 마라"(Dell slot 1 = IPMI anonymous 등)는 뜻이지, "그 슬롯에 있는 계정은
+    고칠 수 없다" 는 뜻이 아니다. 둘을 섞으면 예약 슬롯에 정상적으로 자리 잡은 표준
+    계정을 영영 복구하지 못한다. 생성 후보 제외는 create 경로에서 따로 한다.
+
+    보호 계정은 **열거와 진단에는 그대로 남긴다.** 후보에서만 뺀다 —
+    목록에서 지워 버리면 "없는 계정" 이 되어 오히려 생성 쓰기를 유발한다.
+    """
+    if not isinstance(account, dict):
+        return False
+    return account.get('host_bootstrap') is True
+
+
+def account_presence(discovery, target_username, family=None):
+    """(state, matches) — 표준 계정이 있는가/없는가/알 수 없는가/건드리면 안 되는가.
 
     ABSENT 는 **완전한 열거에 성공했고 그 안에 없을 때만** 확정한다.
     403 / 5xx / timeout / 링크 부재 / member 일부 실패는 전부 UNKNOWN 이다.
+
+    표준 계정 이름이 보호 대상 Resource 와 겹치면 PROTECTED_CONFLICT 다 — 이름이 같다는
+    이유로 HostBootstrap 같은 특수 계정의 비밀번호를 바꾸는 일은 하지 않는다.
     """
     accounts = (discovery or {}).get('accounts') or []
     matches = [a for a in accounts if (a.get('username') or '') == target_username]
+    protected = [a for a in matches if account_is_protected(a, family)]
+    if protected:
+        return PRESENCE_PROTECTED_CONFLICT, protected
     if len(matches) > 1:
         return PRESENCE_AMBIGUOUS, matches
     if matches:
@@ -5261,6 +5280,16 @@ _ACCOUNT_FAMILIES = {                                                          #
                                                    'Operator': 'user',
                                                    'ReadOnly': 'readonly'},
                                       'evidence': 'proven'},
+    # Cisco IMC 3.x — Collection 이 아니라 **Instance URI 에 POST** 한다.
+    #   POST /redfish/v1/AccountService/Accounts/<ID>  (body 에 Id 를 넣지 않는다)
+    # source: cisco.com/.../b_Cisco_IMC_REST_API_guide_301 (04 §4.2/§25.1)
+    'cisco_cimc3_instance_post': {'create_uri': 'account_instance',            # nosec rule12-r1
+                                  'needs_explicit_id': True,
+                                  'id_range': (2, 16),
+                                  'role_map': {'Administrator': 'admin',
+                                               'Operator': 'user',
+                                               'ReadOnly': 'readonly'},
+                                  'evidence': 'documented'},
     # 최신 Cisco BMC (AMI MegaRAC 기반) — Id 는 BMC 가 정하고 RoleId 는 표준 이름.
     # source: cisco.com/.../b_cisco-bmc-rest-api-guide (1.0/2.0/4.0)
     # BMC 1.1 공식 ManagerAccount: Locked=Writable(관리자 unlock),
@@ -5315,7 +5344,7 @@ _ACCOUNT_FAMILIES = {                                                          #
     #   read_only/verify_only/unsupported/unverified Property 는 여기서도 실리지 않는다.
     # source: 사이트 실측 10.50.11.232 (cycle 2026-05-06 F50 phase 4,
     #         tests/evidence/2026-08-12-git-location-live-verification.md §3.2)
-    'lenovo_xcc_accounttypes':  {'password_change_required': False,            # nosec rule12-r1
+    'lenovo_xcc2_accounttypes': {'password_change_required': False,            # nosec rule12-r1
                                  'account_types': ('Redfish',),
                                  'account_types_required': ('Redfish',),
                                  'reserved_slot_ids': ('HostBootStrap',),
@@ -5325,6 +5354,21 @@ _ACCOUNT_FAMILIES = {                                                          #
                                      'Locked': {'create': 'unsupported', 'repair': 'read_only'},
                                      'PasswordChangeRequired': {'create': 'writable',
                                                                 'repair': 'writable'},
+                                     'AccountTypes': {'create': 'writable', 'repair': 'writable'},
+                                 }},
+    # XCC3 — XCC2 와 거의 같지만 **PasswordChangeRequired 가 공식 Create/Update Property
+    #   목록에 없다.** XCC2 payload 를 그대로 쓰면 미지원 속성을 보내게 된다.
+    #   HostBootstrap 은 slot id 가 아니라 HostBootstrapAccount Property 로 걸러낸다.
+    # source: pubs.lenovo.com/xcc3-restapi/create_an_account_post,
+    #         .../update_userid_password_role_properties_patch (03 §11.2/§11.3/§15)
+    'lenovo_xcc3_accounttypes': {'account_types': ('Redfish',),                # nosec rule12-r1
+                                 'account_types_required': ('Redfish',),
+                                 'full_body_patch': True,
+                                 'evidence': 'documented',
+                                 'props': {
+                                     'Locked': {'create': 'unsupported', 'repair': 'read_only'},
+                                     'PasswordChangeRequired': {'create': 'unsupported',
+                                                                'repair': 'unsupported'},
                                      'AccountTypes': {'create': 'writable', 'repair': 'writable'},
                                  }},
     # HPE iLO4 — OEM namespace 가 Hpe 가 아니라 Hp 다.
@@ -5408,6 +5452,18 @@ _ACCOUNT_FAMILIES = {                                                          #
     #   2026-08-12 (rev.2): 종전의 400/405 후 PasswordChangeRequired 추가 재시도를
     #   제거했다. 이 Family 에 속한 Vendor 들이 바로 그 재시도를 금지한 대상이다.
     'generic_collection_post':  {'evidence': 'unverified'},
+    # ── Quanta / QCT ─────────────────────────────────────────────────────────
+    # 세 Family 로 나누는 이유는 **동작을 바꾸기 위해서가 아니라 경계를 기록하기 위해서**다.
+    #   D43K = Redfish v1.1 / D54U·S24P = Redfish v1.11 / S45Z 등 Xeon 6 = Inhouse OpenBMC.
+    #   AST2600 을 쓴다는 사실만으로 OpenBMC 로 판정하면 안 되고(09 §5), QCT Inhouse
+    #   OpenBMC 를 upstream bmcweb master 와 같다고 봐도 안 된다(09 §6).
+    #   셋 다 Account Write 계약 미확보이므로 동작은 generic 과 동일하다.
+    #   특히 AccountTypes 를 ['Redfish'] 로 보내면 upstream 은 StrictAccountTypes 오류를
+    #   낸다(Redfish+WebUI 결합) — 그래서 어느 Family 도 AccountTypes 를 쓰지 않는다.
+    # source: qct.io D43K / D54U / S24P / S45Z 제품자료 (09 §4/§5/§6/§44)
+    'qct_legacy_redfish':       {'evidence': 'unverified'},                    # nosec rule12-r1
+    'qct_modern_redfish':       {'evidence': 'unverified'},                    # nosec rule12-r1
+    'qct_inhouse_openbmc':      {'evidence': 'unverified'},                    # nosec rule12-r1
 }
 
 
@@ -5607,6 +5663,15 @@ def resolve_account_family(vendor, discovery, adapter_id=None):
             reasons.append('adapter hint cisco_bmc')
             return account_family('cisco_bmc_dynamic'), reasons
         if 'cimc' in hint:  # nosec rule12-r1
+            # IMC 3.x 는 Instance URI POST, 4.1+ 는 Collection POST + body Id 다.
+            # Manager Firmware major 로 가른다 — adapter hint 는 세대를 구분하지 못한다.
+            fw_major = None
+            m3 = re.match(r'\s*(\d+)\.', str(firmware or ''))
+            if m3:
+                fw_major = int(m3.group(1))
+            if fw_major == 3:
+                reasons.append('adapter hint cisco_cimc + firmware 3.x → Instance POST')  # nosec rule12-r1
+                return account_family('cisco_cimc3_instance_post'), reasons
             reasons.append('adapter hint cisco_cimc')
             return account_family('cisco_cimc_collection_post_id'), reasons
         # UCS X-Series 등 근거 없는 Cisco 는 generic 으로 둔다 (추측 Write 금지).
@@ -5614,16 +5679,33 @@ def resolve_account_family(vendor, discovery, adapter_id=None):
         return account_family('generic_collection_post'), reasons
 
     if v == 'lenovo':                                                          # nosec rule12-r1
-        if 'xcc3' in hint or 'xcc2' in hint:
-            reasons.append(f'adapter hint {hint} → AccountTypes 지원 XCC family')  # nosec rule12-r1
-            return account_family('lenovo_xcc_accounttypes'), reasons
-        if _has_prepopulated_slots(accounts) and 'imm2' not in hint:
-            # Purley 만 pre-populated empty slot PATCH 로 계정을 만든다.
-            reasons.append('pre-populated empty slots 관측 → XCC Purley slot PATCH')  # nosec rule12-r1
-            return account_family('lenovo_purley_slot_patch'), reasons
+        # 2026-08-12 (rev.2): **capability-first 로 되돌린다.** 종전에는 adapter hint 를
+        #   가장 먼저 봐서 Cisco 분기(capability > hint)와 계약이 달랐다(NEXT_ACTIONS PWC-7).
+        #   Dell iDRAC10 오분류가 보여줬듯 hint 는 무인증 probe 결과라 비어 있을 수 있고,
+        #   그때는 priority 만으로 정해진다. 장비가 준 값을 먼저 본다.
         if 'imm2' in hint:
             reasons.append('IMM2 는 Redfish AccountService 근거 미확보 → generic 유지')
             return account_family('generic_collection_post'), reasons
+        # (1) 장비가 실제로 노출한 AccountTypes — XCC2/XCC3 의 서명이다.
+        exposes_account_types = any(a.get('account_types') for a in accounts)
+        # (2) HostBootstrapAccount 는 XCC2/XCC3 계열에만 나타나는 표준 Property 다.
+        has_bootstrap = any(a.get('host_bootstrap') is not None for a in accounts)
+        if exposes_account_types or has_bootstrap or 'xcc3' in hint or 'xcc2' in hint:
+            # XCC2 와 XCC3 는 PasswordChangeRequired 계약이 다르다. XCC3 근거가 있을 때만
+            # XCC3 로 좁히고, 그 외에는 XCC2(더 넓은 Property 집합) 를 쓴다.
+            if 'xcc3' in hint:
+                reasons.append('adapter hint xcc3 → PasswordChangeRequired 미지원 Family')  # nosec rule12-r1
+                return account_family('lenovo_xcc3_accounttypes'), reasons
+            reasons.append(                                                        # nosec rule12-r1
+                f'AccountTypes 관측={exposes_account_types} HostBootstrap 관측={has_bootstrap} '
+                f'hint={hint!r} → AccountTypes 지원 XCC family')
+            return account_family('lenovo_xcc2_accounttypes'), reasons
+        # (3) Purley 만 pre-populated empty slot PATCH 로 계정을 만든다. Whitley/AMD 는 POST 라
+        #     hint 가 그쪽을 가리키면 slot 관측이 있어도 Purley 로 보지 않는다.
+        not_purley_hint = any(k in hint for k in ('whitley', 'amd', 'xcc2', 'xcc3'))
+        if _has_prepopulated_slots(accounts) and not not_purley_hint:
+            reasons.append('pre-populated empty slots 관측 → XCC Purley slot PATCH')  # nosec rule12-r1
+            return account_family('lenovo_purley_slot_patch'), reasons
         reasons.append('dynamic members → Lenovo Collection POST')  # nosec rule12-r1
         return account_family('lenovo_collection_post'), reasons
 
@@ -5656,18 +5738,46 @@ def resolve_account_family(vendor, discovery, adapter_id=None):
     if v == 'supermicro':                                                      # nosec rule12-r1
         # 계정 분리 세대는 Generation 이 아니라 Firmware 가 경계다.
         split = None
+        # Generation + Firmware 를 장비값으로 확정했는가 (Create URI 결정 근거).
+        gen_anchor = False
         if any(a.get('account_types') for a in accounts):
             split = True
             reasons.append('기존 계정이 AccountTypes 를 노출 → 계정 분리 세대')
         elif d.get('policy', {}).get('supported_account_types'):
             split = True
             reasons.append('AccountService.SupportedAccountTypes 존재 → 계정 분리 세대')
-        elif 'x13' in hint or 'x14' in hint:
-            newer = _fw_at_least(firmware, 1, 5) if 'x13' in hint else _fw_at_least(firmware, 1, 2)
+        elif 'x13' in hint or 'x14' in hint or 'ars' in hint:
+            # 계정 분리 경계는 Generation 마다 다르다.
+            #   Gen13 01.05.xx+ / Gen14 01.02.xx.xx+ / NVIDIA Superchip 01.04.xx+
+            # source: supermicro.com/.../redfish-user-guide/.../accounts.htm (05 §10/§31)
+            if 'x13' in hint:
+                bound = (1, 5)
+            elif 'x14' in hint:
+                bound = (1, 2)
+            else:                       # ARS = NVIDIA Superchip 계열
+                bound = (1, 4)
+            newer = _fw_at_least(firmware, *bound)
             split = bool(newer)
-            reasons.append(f'adapter hint {hint} firmware={firmware} split={split}')
+            gen_anchor = bool(newer is not None)
+            reasons.append(                                                        # nosec rule12-r1
+                f'adapter hint {hint} firmware={firmware} boundary={bound} split={split}')
         if split:
-            return account_family('supermicro_split_account'), reasons
+            fam = account_family('supermicro_split_account')
+            # §3.5 Create URI 결정 규칙:
+            #   최신 공식 Add Account 는 `POST /redfish/v1/AccountService` (루트) 다.
+            #   그 계약을 쓰려면 Generation + Firmware 를 **장비가 준 값**으로 확정해야 한다.
+            #   확정하지 못하면 추측하지 않고 구 Reference Guide 계약(Accounts Collection)
+            #   하나만 쓴다. **두 URI 를 순차로 시도하는 fallback 은 만들지 않는다.**
+            # source: 05 §9/§34/§39-B
+            if gen_anchor:
+                fam['create_uri'] = 'account_service_root'
+                fam['create_uri_basis'] = 'generation+firmware'
+            else:
+                fam['create_uri'] = 'accounts_collection'
+                fam['create_uri_basis'] = 'unverified_single_strategy'
+                fam['evidence'] = 'unverified'
+            reasons.append(f'create_uri={fam["create_uri"]} basis={fam["create_uri_basis"]}')
+            return fam, reasons
         if 'x9' in hint:
             reasons.append('X9 는 공식 Redfish AccountService 근거 미확보 → generic 유지')
             return account_family('generic_collection_post'), reasons
@@ -5680,6 +5790,24 @@ def resolve_account_family(vendor, discovery, adapter_id=None):
             reasons.append('Oem.Public 관측 또는 M6/ISBMC hint → Inspur M6 family')
             return account_family('inspur_m6'), reasons
         reasons.append('Inspur M5/M7 은 공식 계약 미확보 → generic 유지')
+        return account_family('generic_collection_post'), reasons
+
+    if v == 'quanta':                                                          # nosec rule12-r1
+        # 동작은 셋 다 generic 과 같다 — 라벨로 경계를 남겨 다음 작업자가 어느 Family 의
+        # Evidence 를 모아야 하는지 알 수 있게 한다. AST2600 만으로 OpenBMC 로 판정하지
+        # 않고, QCT Inhouse OpenBMC 를 upstream bmcweb 과 동일시하지도 않는다.
+        if 'openbmc' in hint or 'xeon6' in hint or 's45z' in hint or 's25z' in hint:
+            reasons.append('QCT Inhouse OpenBMC 계열 — upstream bmcweb 과 동일시하지 않는다')
+            return account_family('qct_inhouse_openbmc'), reasons
+        redfish_ver = _str(_safe(d.get('service_root'), 'RedfishVersion', default='')) \
+            if isinstance(d.get('service_root'), dict) else ''
+        if redfish_ver.startswith('1.1.'):
+            reasons.append(f'QCT Legacy Redfish {redfish_ver}')
+            return account_family('qct_legacy_redfish'), reasons
+        if redfish_ver.startswith('1.11'):
+            reasons.append(f'QCT Modern Redfish {redfish_ver}')
+            return account_family('qct_modern_redfish'), reasons
+        reasons.append('QCT Family 근거 부족 → generic 유지 (Account Write 계약 미확보)')
         return account_family('generic_collection_post'), reasons
 
     if v == 'huawei':                                                          # nosec rule12-r1
@@ -6061,6 +6189,7 @@ def account_service_provision(
         # 생성 대상 URI 와 그 종류 (Accounts Collection / AccountService 루트 / Instance).
         'create_uri':        None,
         'create_uri_kind':   None,
+        'create_uri_basis':  None,
         'errors':          [],
     }
 
@@ -6198,8 +6327,24 @@ def account_service_provision(
     #   있으면 코드가 임의의 slot 을 골라 PATCH 하게 된다. 그러면 운영자가 보고 있던 slot 이
     #   아닌 다른 slot 의 비밀번호가 조용히 바뀔 수 있다. 어느 쪽이 맞는지 코드가 알 수 없으므로
     #   자동 쓰기를 중단하고 사람이 정리하도록 slot 목록만 남긴다 (값은 남기지 않는다).
-    presence, matches = account_presence(discovery, target_username)
+    presence, matches = account_presence(discovery, target_username, family)
     out['presence'] = presence
+
+    if presence == PRESENCE_PROTECTED_CONFLICT:
+        # 표준 계정 이름이 보호 대상 Resource 와 겹쳤다 (예: HostBootstrapAccount).
+        #   이름이 같다는 이유로 특수 계정의 비밀번호/권한을 바꾸면 호스트 부팅 경로 같은
+        #   다른 기능이 조용히 망가진다. 사람이 정리하도록 사실만 남기고 끝낸다.
+        out['method'] = 'noop'
+        out['action'] = 'none'
+        out['account_existed'] = True
+        slot_ids = [('' if m.get('id') is None else str(m.get('id'))) for m in matches]
+        out['errors'].append(_err(
+            'account_service',
+            '표준 계정 이름이 시스템 예약 계정과 겹쳐 자동 처리를 중단했습니다. '
+            '표준 계정 이름 또는 해당 슬롯을 정리한 뒤 다시 시도하세요.',
+            detail='protected accounts: ' + ', '.join(s for s in slot_ids if s),
+        ))
+        return out
 
     if presence == PRESENCE_AMBIGUOUS:
         slot_ids = [('' if m.get('id') is None else str(m.get('id'))) for m in matches]
@@ -6561,8 +6706,11 @@ def account_service_provision(
         # 예약 슬롯은 Family 가 안다 (Dell slot 1, iDRAC10 은 slot 1·2).
         # source: dell.com/.../idrac10_1.20.xx_ug/configuring-local-users,
         #         pubs.lenovo.com/xcc-restapi/create_an_account_intel_p_based_patch
+        # 보호 계정은 Family 의 reserved id 뿐 아니라 **Resource Property** 로도 걸러낸다.
+        protected_ids = {('' if a.get('id') is None else str(a.get('id')))
+                         for a in accounts if account_is_protected(a, family)}
         empty_slots = account_service_find_all_empty_slots(
-            accounts, skip_slot_ids=set(family['reserved_slot_ids']),
+            accounts, skip_slot_ids=set(family['reserved_slot_ids']) | protected_ids,
         )
         if not empty_slots:
             out['errors'].append(_err(
@@ -6578,6 +6726,10 @@ def account_service_provision(
         # 읽지 못한 슬롯을 "비어 있다" 로 세지 않는다 — 열거가 complete 인 경우만 여기 온다.
         lo, hi = family['id_range'] or (2, 16)
         used_ids = {('' if a.get('id') is None else str(a.get('id'))) for a in accounts}
+        # 보호 계정 번호는 '비어 있음' 으로 세지 않는다.
+        used_ids |= {('' if a.get('id') is None else str(a.get('id')))
+                     for a in accounts if account_is_protected(a, family)}
+        used_ids |= set(family['reserved_slot_ids'] or ())
         for candidate_id in range(lo, hi):
             if str(candidate_id) not in used_ids:
                 explicit_id = str(candidate_id)
@@ -6666,6 +6818,8 @@ def account_service_provision(
     accounts_uri = _create_target_uri(family, discovery, explicit_id)
     out['create_uri'] = accounts_uri
     out['create_uri_kind'] = family.get('create_uri')
+    # 최신 계약을 쓸 근거가 장비값에서 나왔는지, 근거 부족으로 구 계약 하나만 쓴 것인지.
+    out['create_uri_basis'] = family.get('create_uri_basis')
     body_base = build_create_payload(family, target_username, target_password, role_id,
                                      explicit_id=explicit_id)
     code, resp_data, err = _post(

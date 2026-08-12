@@ -36,7 +36,8 @@ def _as_discovery(fn, **overrides):
     return _as_discovery_raw(fn, rg, **overrides)
 
 
-def _disc(accounts=None, role_ids=None, service=None, manager=None, policy=None):
+def _disc(accounts=None, role_ids=None, service=None, manager=None, policy=None,
+          service_root=None):
     return {
         "service_uri": "AccountService", "accounts_uri": "AccountService/Accounts",
         "roles_uri": "AccountService/Roles",
@@ -46,7 +47,7 @@ def _disc(accounts=None, role_ids=None, service=None, manager=None, policy=None)
         "accounts": list(accounts or []),
         "member_total": len(accounts or []), "member_read": len(accounts or []),
         "enumeration": rg.ENUM_COMPLETE, "manager": manager, "errors": [],
-        "auth_status": 200,
+        "auth_status": 200, "service_root": service_root,
     }
 
 
@@ -144,6 +145,82 @@ def test_dell_generation_changes_the_write_target_slot():
         "iDRAC10 이 slot 2 를 예약하지 않으면 default root 슬롯을 덮어쓸 수 있다"
 
 
+def test_cisco_imc3_uses_instance_post_not_collection_post():
+    """IMC 3.x 는 Instance URI 에 POST 한다 — 4.1+ 의 Collection POST 와 다르다 (04 §4.2)."""
+    disc = _disc(manager={"firmware_version": "3.0(4d)"})
+    fam, _ = rg.resolve_account_family("cisco", disc, "redfish_cisco_cimc")
+    assert fam["id"] == "cisco_cimc3_instance_post"
+    assert fam["create_uri"] == "account_instance"
+    uri = rg._create_target_uri(fam, {"accounts_uri": "AccountService/Accounts"}, "5")
+    assert uri == "AccountService/Accounts/5"
+
+
+def test_cisco_imc4_keeps_collection_post_with_body_id():
+    disc = _disc(manager={"firmware_version": "4.1(2g)"})
+    fam, _ = rg.resolve_account_family("cisco", disc, "redfish_cisco_cimc")
+    assert fam["id"] == "cisco_cimc_collection_post_id"
+    assert fam["create_uri"] == "accounts_collection"
+
+
+def test_qct_families_are_separated_without_changing_behaviour():
+    """Legacy / Modern / Inhouse OpenBMC 를 나누되 동작은 generic 과 같다 (09 §44).
+
+    AST2600 을 쓴다는 사실만으로 OpenBMC 로 판정하지 않고,
+    QCT Inhouse OpenBMC 를 upstream bmcweb 과 동일시하지도 않는다.
+    """
+    legacy, _ = rg.resolve_account_family(
+        "quanta", _disc(service_root={"RedfishVersion": "1.1.0"}), None)
+    modern, _ = rg.resolve_account_family(
+        "quanta", _disc(service_root={"RedfishVersion": "1.11.0"}), None)
+    inhouse, _ = rg.resolve_account_family("quanta", _disc(), "redfish_quanta_openbmc")
+    assert legacy["id"] == "qct_legacy_redfish"
+    assert modern["id"] == "qct_modern_redfish"
+    assert inhouse["id"] == "qct_inhouse_openbmc"
+    # 셋 다 계약 미확보 — 동작은 generic 과 같아야 한다.
+    for fam in (legacy, modern, inhouse):
+        assert fam["evidence"] == "unverified"
+        assert fam["create_method"] == "collection_post"
+        assert fam["account_types"] is None, "StrictAccountTypes 위험 — 보내지 않는다"
+        assert fam["full_body_patch"] is False, "UNVERIFIED 가 full body 예외를 상속했다"
+
+
+def test_supermicro_superchip_firmware_boundary():
+    """NVIDIA Superchip 은 BMC FW 01.04.xx+ 가 계정 분리 경계다 (05 §31)."""
+    older, _ = rg.resolve_account_family(
+        "supermicro", _disc(manager={"firmware_version": "01.03.10"}), "redfish_supermicro_ars")
+    newer, _ = rg.resolve_account_family(
+        "supermicro", _disc(manager={"firmware_version": "01.04.02"}), "redfish_supermicro_ars")
+    assert older["id"] == "supermicro_legacy"
+    assert newer["id"] == "supermicro_split_account"
+
+
+def test_supermicro_create_uri_only_switches_with_a_device_anchor():
+    """Generation+Firmware 를 장비값으로 확정했을 때만 최신 Create URI 를 쓴다 (05 §9/§34).
+
+    확정하지 못하면 추측하지 않고 구 계약 하나만 쓴다.
+    **두 URI 를 순차로 시도하는 fallback 은 어느 쪽에도 없다.**
+    """
+    anchored, _ = rg.resolve_account_family(
+        "supermicro", _disc(manager={"firmware_version": "01.05.12"}), "redfish_supermicro_x13")
+    assert anchored["create_uri"] == "account_service_root"
+    assert anchored["create_uri_basis"] == "generation+firmware"
+    assert rg._create_target_uri(anchored, {"service_uri": "AccountService",
+                                            "accounts_uri": "AccountService/Accounts"}) \
+        == "AccountService"
+
+    # Firmware 를 못 읽으면 AccountTypes 관측만으로 split 은 알지만 URI 근거는 없다.
+    guessed, _ = rg.resolve_account_family(
+        "supermicro",
+        _disc(accounts=[{"slot_uri": "/x/1", "id": "1", "username": "admin",
+                         "role_id": "Administrator", "enabled": True,
+                         "has_username_key": True, "account_types": ["Redfish"]}]),
+        None)
+    assert guessed["id"] == "supermicro_split_account"
+    assert guessed["create_uri"] == "accounts_collection"
+    assert guessed["create_uri_basis"] == "unverified_single_strategy"
+    assert guessed["evidence"] == "unverified"
+
+
 def test_cisco_family_comes_from_observed_role_vocabulary():
     """RoleId 어휘가 Family 를 가른다 — adapter 이름보다 실제 Resource 가 우선이다."""
     cimc, why = rg.resolve_account_family(
@@ -217,8 +294,80 @@ def test_lenovo_purley_detected_by_prepopulated_slots():
 
 def test_lenovo_xcc3_requires_redfish_account_type():
     fam, _ = rg.resolve_account_family("lenovo", _disc(), "redfish_lenovo_xcc3")
+    assert fam["id"] == "lenovo_xcc3_accounttypes"
     assert fam["account_types"] == ("Redfish",)
-    assert "HostBootStrap" in fam["reserved_slot_ids"]
+    # XCC3 공식 Create/Update Property 목록에 PasswordChangeRequired 가 없다 (03 §11.2/§11.3).
+    # XCC2 payload 를 그대로 쓰면 미지원 속성을 보내게 된다.
+    assert rg.account_prop_contract(fam, "PasswordChangeRequired", "create") == "unsupported"
+    assert rg.account_prop_contract(fam, "PasswordChangeRequired", "repair") == "unsupported"
+
+
+def test_lenovo_xcc2_still_supports_password_change_required():
+    """XCC2 는 PasswordChangeRequired 가 공식 writable 이다 — XCC3 와 섞지 않는다."""
+    fam, _ = rg.resolve_account_family("lenovo", _disc(), "redfish_lenovo_xcc2")
+    assert fam["id"] == "lenovo_xcc2_accounttypes"
+    assert rg.account_prop_contract(fam, "PasswordChangeRequired", "repair") == "writable"
+
+
+def test_lenovo_xcc_family_is_chosen_by_capability_not_only_by_hint():
+    """adapter hint 가 없어도 장비가 노출한 값으로 XCC 계열을 알아본다.
+
+    Cisco 분기는 capability > hint 인데 Lenovo 만 hint 를 먼저 봤다(NEXT_ACTIONS PWC-7).
+    hint 는 무인증 probe 결과라 비어 있을 수 있고, 그때는 priority 로만 정해진다
+    (Dell iDRAC10 오분류와 같은 실패 유형).
+    """
+    disc = _disc(accounts=[{"slot_uri": "/redfish/v1/AccountService/Accounts/1", "id": "1",
+                            "username": "USERID", "role_id": "Administrator",
+                            "enabled": True, "has_username_key": True,
+                            "account_types": ["Redfish", "IPMI", "WebUI"],
+                            "host_bootstrap": False}])
+    fam, reasons = rg.resolve_account_family("lenovo", disc, None)
+    assert fam["id"] == "lenovo_xcc2_accounttypes"
+    assert any("AccountTypes 관측" in r for r in reasons)
+
+
+def test_lenovo_whitley_hint_is_not_mistaken_for_purley():
+    """Whitley/AMD 는 Collection POST 다 — 빈 slot 이 보여도 Purley 로 보지 않는다 (03 §8/§9)."""
+    prepopulated = [{"slot_uri": f"/redfish/v1/AccountService/Accounts/{i}", "id": str(i),
+                     "username": "" if i > 2 else "USERID", "role_id": "",
+                     "enabled": False, "has_username_key": True}
+                    for i in range(1, 13)]
+    fam, _ = rg.resolve_account_family("lenovo", _disc(accounts=prepopulated),
+                                       "redfish_lenovo_xcc_whitley")
+    assert fam["id"] == "lenovo_collection_post"
+
+    # 반대로 근거가 없으면 관측대로 Purley 로 본다.
+    fam2, _ = rg.resolve_account_family("lenovo", _disc(accounts=prepopulated), None)
+    assert fam2["id"] == "lenovo_purley_slot_patch"
+
+
+def test_host_bootstrap_account_is_protected_regardless_of_family():
+    """`HostBootstrapAccount` 는 Resource Property 다 — XCC3 전용 개념이 아니다.
+
+    실미러 tests/reference/redfish/lenovo/10_50_11_232 의 계정 3개가 이 필드를 갖는다.
+    """
+    protected = {"slot_uri": "/redfish/v1/AccountService/Accounts/9", "id": "9",
+                 "username": "infraops", "role_id": "Administrator", "enabled": True,
+                 "has_username_key": True, "host_bootstrap": True}
+    assert rg.account_is_protected(protected) is True
+    state, matches = rg.account_presence(_disc(accounts=[protected]), "infraops")
+    assert state == rg.PRESENCE_PROTECTED_CONFLICT
+    assert matches and matches[0]["id"] == "9"
+
+
+def test_reserved_slot_id_does_not_block_repair():
+    """`reserved_slot_ids` 는 "여기에 만들지 마라" 지 "여기 있는 계정은 못 고친다" 가 아니다.
+
+    둘을 섞으면 예약 슬롯에 자리 잡은 표준 계정을 영영 복구하지 못한다.
+    """
+    in_reserved = {"slot_uri": "/redfish/v1/AccountService/Accounts/1", "id": "1",
+                   "username": "infraops", "role_id": "Administrator", "enabled": True,
+                   "has_username_key": True}
+    fam = rg.account_family("dell_slot_patch")
+    assert "1" in fam["reserved_slot_ids"]
+    assert rg.account_is_protected(in_reserved, fam) is False
+    state, _ = rg.account_presence(_disc(accounts=[in_reserved]), "infraops", fam)
+    assert state == rg.PRESENCE_PRESENT
 
 
 def test_supermicro_split_generation_detected_by_capability_not_name():

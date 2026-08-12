@@ -168,7 +168,7 @@ def test_lenovo_xcc_bundles_password_because_of_its_own_live_evidence(monkeypatc
     """
     bodies = _install(monkeypatch, [_account()])
     out = _provision("lenovo", adapter_id="redfish_lenovo_xcc3")
-    assert out["family"] == "lenovo_xcc_accounttypes"
+    assert out["family"] == "lenovo_xcc3_accounttypes"
     assert out.get("isolated_write") in (None, False)
     assert "Password" in bodies[0] and "Enabled" in bodies[0] and "RoleId" in bodies[0]
 
@@ -215,10 +215,19 @@ def test_full_body_family_still_refuses_non_writable_properties(monkeypatch):
     bodies = _install(monkeypatch,
                       [_account(locked=True, password_change_required=True)])
     out = _provision("lenovo", adapter_id="redfish_lenovo_xcc3")
-    assert out["family"] == "lenovo_xcc_accounttypes"
+    assert out["family"] == "lenovo_xcc3_accounttypes"
     assert "Locked" not in bodies[0], "full_body 예외가 read_only 속성까지 실었다"
-    # PasswordChangeRequired 는 XCC2/3 에서 writable 이라 실제 drift 가 있으면 실린다.
-    assert bodies[0].get("PasswordChangeRequired") is False
+    # XCC3 는 PasswordChangeRequired 가 공식 목록에 없다 → full_body 여도 보내지 않는다.
+    assert "PasswordChangeRequired" not in bodies[0], \
+        "full_body 예외가 unsupported 속성까지 실었다"
+
+    # XCC2 는 같은 속성이 공식 writable 이라 drift 가 있으면 실린다 — Family 별로 갈린다.
+    bodies2 = _install(monkeypatch,
+                       [_account(locked=True, password_change_required=True)])
+    out2 = _provision("lenovo", adapter_id="redfish_lenovo_xcc2")
+    assert out2["family"] == "lenovo_xcc2_accounttypes"
+    assert bodies2[0].get("PasswordChangeRequired") is False
+    assert "Locked" not in bodies2[0]
 
 
 # ── 실제 iLO 의미를 재현한 수렴 테스트 ───────────────────────────────────────
