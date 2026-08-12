@@ -17,6 +17,14 @@ from __future__ import annotations
 import sys
 
 import pytest
+
+# 2026-08-12: 누출 가드가 검사 대상인 **진짜 비밀번호를 소스에 그대로** 적어 두고 있었다.
+#   가드 파일 자체가 누출 지점이라, 평문 대신 sha256 앞 8자리로 대조하는 공용 가드로
+#   바꾼다. 입력으로 넣던 실 자격증명도 합성 canary 로 바꾼다 (검사 의미는 동일).
+from tests.secret_guard import (  # noqa: E402
+    CANARY_PASSWORD, CANARY_RECOVERY, CANARY_TARGET, assert_no_secret,
+)
+
 import types
 from pathlib import Path
 
@@ -88,8 +96,8 @@ def test_provision_cisco_post_with_id_field_succeeds(monkeypatch):
 
     out = rg.account_service_provision(
         bmc_ip='10.100.15.2', vendor='cisco',
-        current_username='admin', current_password='Goodmit1!',
-        target_username='infraops', target_password='Passw0rd1!Infra',
+        current_username='admin', current_password='zzz-canary-recovery-zzz',
+        target_username='infraops', target_password='zzz-canary-target-zzzInfra',
         target_role='Administrator',
         timeout=30, verify_ssl=False, dryrun=False,
     )
@@ -113,8 +121,8 @@ def test_provision_cisco_dryrun_no_post_call(monkeypatch):
 
     out = rg.account_service_provision(
         bmc_ip='10.100.15.2', vendor='cisco',
-        current_username='admin', current_password='Goodmit1!',
-        target_username='infraops', target_password='Passw0rd1!Infra',
+        current_username='admin', current_password='zzz-canary-recovery-zzz',
+        target_username='infraops', target_password='zzz-canary-target-zzzInfra',
         target_role='Administrator',
         timeout=30, verify_ssl=False, dryrun=True,
     )
@@ -134,8 +142,8 @@ def test_provision_cisco_no_empty_id_returns_error(monkeypatch):
 
     out = rg.account_service_provision(
         bmc_ip='10.100.15.2', vendor='cisco',
-        current_username='admin', current_password='Goodmit1!',
-        target_username='infraops', target_password='Passw0rd1!Infra',
+        current_username='admin', current_password='zzz-canary-recovery-zzz',
+        target_username='infraops', target_password='zzz-canary-target-zzzInfra',
         target_role='Administrator',
         timeout=30, verify_ssl=False, dryrun=False,
     )

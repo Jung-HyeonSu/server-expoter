@@ -196,7 +196,7 @@ credentials:
     - { vault_label: dell_recovery_root, role: recovery }
 ```
 
-**커버리지 (30/30)**: 모든 Redfish adapter 가 credentials 블록 보유. cycle 2026-05-11 M-A5 결과 9 vendor 모두 primary infraops/Password123! + recovery vendor 공장 기본 (rule 27 R6 / docs/21).
+**커버리지 (30/30)**: 모든 Redfish adapter 가 credentials 블록 보유. cycle 2026-05-11 M-A5 결과 9 vendor 모두 primary infraops/__REDACTED__ + recovery vendor 공장 기본 (rule 27 R6 / docs/21).
 
 **dryrun 정책 (cycle 2026-04-30 갱신)**: `_rf_account_service_dryrun: false` (기본 — 사용자 명시 승인으로 OFF 전환). 실 PATCH/POST 호출되어 BMC 에 infraops 자동 생성/enable 됨. 시뮬레이션 강제는 `-e _rf_account_service_dryrun=true` override. ADR-2026-04-30-account-service-dryrun-off 참조.
 

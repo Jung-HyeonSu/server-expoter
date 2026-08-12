@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:10.058891+00:00
 #
-Goodmit0802!
+__REDACTED__
 Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
  pkts bytes target     prot opt in     out     source               destination         
 

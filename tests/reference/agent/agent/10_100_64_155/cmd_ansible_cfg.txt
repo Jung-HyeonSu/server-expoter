@@ -24,7 +24,7 @@ forks                   = 20
 timeout                 = 60
 deprecation_warnings    = False
 fact_caching            = redis
-fact_caching_connection = 10.100.64.153:6379:0:Goodmit0802!
+fact_caching_connection = 10.100.64.153:6379:0:__REDACTED__
 fact_caching_timeout    = 86400
 
 [inventory]

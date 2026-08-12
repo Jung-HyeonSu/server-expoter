@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:47:18.148945+00:00
 #
-Goodmit0802!
+__REDACTED__
 
 State     Recv-Q    Send-Q       Local Address:Port        Peer Address:Port    Process                                                                         
 LISTEN    0         511          10.100.64.152:6379             0.0.0.0:*        users:(("redis-server",pid=445469,fd=7))                                       

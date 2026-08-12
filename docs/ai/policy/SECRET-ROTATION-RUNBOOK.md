@@ -10,12 +10,12 @@
 
 | 항목 | 값 (현재 평문 노출) | 실제 역할 | 영향 |
 |---|---|---|---|
-| **vault 마스터 암호** | `Goodmit0802!` | `ansible-vault` 복호화 키 — `vault/**/*.yml` 전체 (linux/windows/esxi + redfish/{vendor}) 를 복호화 | 이 한 줄로 **repo 안 모든 자격(전 벤더 BMC / OS / ESXi)** 복호화 가능 → vault 암호화가 사실상 무효 |
-| (동일 값) | `Goodmit0802!` | Dell BMC `root` 암호 + lab Linux SSH/sudo 암호 | BMC/호스트 직접 장악 |
-| **BMC primary 계정** | `Passw0rd1!Infra` (`infraops`) | 5 벤더 통일 primary Redfish 계정 | 전 벤더 BMC 인증 장악 |
-| **BMC recovery** | `VMware1!` (HPE admin / Lenovo USERID), `Goodmit1!` (Cisco admin) | 공장/복구 계정 — 최고 권한 fallback | BMC 복구 경로 장악 |
+| **vault 마스터 암호** | `__REDACTED__` | `ansible-vault` 복호화 키 — `vault/**/*.yml` 전체 (linux/windows/esxi + redfish/{vendor}) 를 복호화 | 이 한 줄로 **repo 안 모든 자격(전 벤더 BMC / OS / ESXi)** 복호화 가능 → vault 암호화가 사실상 무효 |
+| (동일 값) | `__REDACTED__` | Dell BMC `root` 암호 + lab Linux SSH/sudo 암호 | BMC/호스트 직접 장악 |
+| **BMC primary 계정** | `__REDACTED__Infra` (`infraops`) | 5 벤더 통일 primary Redfish 계정 | 전 벤더 BMC 인증 장악 |
+| **BMC recovery** | `__REDACTED__` (HPE admin / Lenovo USERID), `__REDACTED__` (Cisco admin) | 공장/복구 계정 — 최고 권한 fallback | BMC 복구 경로 장악 |
 
-> 정본 확인: `docs/21_vault-operations.md` (vault 암호 = `Goodmit0802!`), `jenkins/jobs/redfish-account-provision-verify/config.xml:100` (`echo 'Goodmit0802!' > .vault_pass`).
+> 정본 확인: `docs/21_vault-operations.md` (vault 암호 = `__REDACTED__`), `jenkins/jobs/redfish-account-provision-verify/config.xml:100` (`echo '__REDACTED__' > .vault_pass`).
 
 ## 2. 노출 인벤토리 (추적 파일 기준 — 2026-05-29 실측)
 
@@ -47,15 +47,15 @@ done
 ```
 
 ### 3.2 실제 자격 교체 (BMC/호스트 — vault 안 값 자체)
-- Dell BMC `root` (= `Goodmit0802!`), lab Linux SSH/sudo: 각 장비에서 암호 변경 후 `vault/redfish/dell.yml` / `vault/linux.yml` 갱신
-- primary `infraops/Passw0rd1!Infra`: 전 벤더 BMC 에서 변경 후 `vault/redfish/{vendor}.yml` 갱신
-- recovery `VMware1!` / `Goodmit1!`: HPE/Lenovo/Cisco BMC recovery 계정 변경 후 vault 갱신
+- Dell BMC `root` (= `__REDACTED__`), lab Linux SSH/sudo: 각 장비에서 암호 변경 후 `vault/redfish/dell.yml` / `vault/linux.yml` 갱신
+- primary `infraops/__REDACTED__Infra`: 전 벤더 BMC 에서 변경 후 `vault/redfish/{vendor}.yml` 갱신
+- recovery `__REDACTED__` / `__REDACTED__`: HPE/Lenovo/Cisco BMC recovery 계정 변경 후 vault 갱신
 > 회전 후 `vault/**` 재암호화 (3.1 의 NEW 키로). 회전 전·후 모두 `git ls-files vault/` 가 암호화 상태인지 확인.
 
 ### 3.3 운영 메커니즘 수정 — config.xml
 `jenkins/jobs/redfish-account-provision-verify/config.xml:99-101` 의
 ```
-if [[ ! -f .vault_pass ]]; then echo 'Goodmit0802!' > .vault_pass; ...
+if [[ ! -f .vault_pass ]]; then echo '__REDACTED__' > .vault_pass; ...
 ```
 → Jenkins **credentials binding** 으로 교체 (다른 파이프라인 `Jenkinsfile` 은 이미 `withCredentials` 사용):
 ```
@@ -71,7 +71,7 @@ withCredentials([string(credentialsId: 'server-gather-vault-password', variable:
 ```bash
 # git filter-repo 권장 (BFG 대안)
 pip install git-filter-repo
-git filter-repo --replace-text <(printf 'Goodmit0802!==>REDACTED\nPassw0rd1!Infra==>REDACTED\nVMware1!==>REDACTED\nGoodmit1!==>REDACTED\n')
+git filter-repo --replace-text <(printf '__REDACTED__==>REDACTED\n__REDACTED__Infra==>REDACTED\n__REDACTED__==>REDACTED\n__REDACTED__==>REDACTED\n')
 ```
 > **[CRIT] 제약**: 히스토리 재작성은 **force-push** 가 필수 (rule 93 R1 — AI 자율 금지, **사용자 명시 승인 필요**). 모든 클론/포크가 재clone 해야 함. github + gitlab 양쪽(rule 93 R7) 좌표. 본 audit 에서는 **미수행** (사용자 결정 "문서화만" + force-push 미승인).
 
@@ -82,10 +82,10 @@ git filter-repo --replace-text <(printf 'Goodmit0802!==>REDACTED\nPassw0rd1!Infr
 
 ## 6. 검증 체크리스트 (회전 후)
 - [ ] `ansible-vault view vault/redfish/dell.yml` 가 NEW 키로만 열림 (옛 키 거부)
-- [ ] `git grep -I 'Goodmit0802\|Passw0rd1!Infra\|VMware1!\|Goodmit1!'` → 0 (스크럽 선택 시)
+- [ ] `git grep -I 'Goodmit0802\|__REDACTED__Infra\|__REDACTED__\|__REDACTED__'` → 0 (스크럽 선택 시)
 - [ ] Jenkins `redfish-account-provision-verify` job 이 credential binding 으로 동작
 - [ ] BMC 로그인: 옛 암호 거부 / NEW 암호 허용
-- [ ] (히스토리 정리 시) `git log -S 'Goodmit0802!' --oneline` → 0
+- [ ] (히스토리 정리 시) `git log -S '__REDACTED__' --oneline` → 0
 
 ## 관련
 - rule: `60-security-and-secrets`(해제됨, 참고), `93-branch-merge-gate` R1(force-push), `27-precheck-guard-first` R6(vault)

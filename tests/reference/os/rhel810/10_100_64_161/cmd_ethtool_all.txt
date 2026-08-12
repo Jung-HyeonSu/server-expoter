@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:43:06.940600+00:00
 #
-Goodmit0802!
+__REDACTED__
 === lo ===
 Settings for lo:
 	Link detected: yes

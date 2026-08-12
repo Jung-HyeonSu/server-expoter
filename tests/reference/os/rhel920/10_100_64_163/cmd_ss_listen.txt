@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:17.407479+00:00
 #
-Goodmit0802!
+__REDACTED__
 Netid   State    Recv-Q   Send-Q     Local Address:Port      Peer Address:Port  Process                                                                         
 udp     UNCONN   0        0                0.0.0.0:5353           0.0.0.0:*      users:(("avahi-daemon",pid=912,fd=12))                                         
 udp     UNCONN   0        0                0.0.0.0:56666          0.0.0.0:*      users:(("avahi-daemon",pid=912,fd=14))                                         

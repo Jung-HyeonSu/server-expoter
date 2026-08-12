@@ -1,4 +1,4 @@
-# cmd: echo Goodmit0802! | sudo -S dmidecode -t bios 2>&1 | head -30
+# cmd: echo __REDACTED__ | sudo -S dmidecode -t bios 2>&1 | head -30
 # rc: 0
 # dmidecode 3.5
 Getting SMBIOS data from sysfs.

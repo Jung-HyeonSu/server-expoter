@@ -1,7 +1,7 @@
 # 계정 fallback 로직 실 검증 — Redfish / OS / ESXi
 
 **일자**: 2026-04-29
-**검증자**: AI (사용자 명시 권한 — `vault password = Goodmit0802!`, lab 실장비 접근 권한 위임)
+**검증자**: AI (사용자 명시 권한 — `vault password = __REDACTED__`, lab 실장비 접근 권한 위임)
 **브랜치**: main 직접
 **유형**: 사용자 요구 — 계정 fallback + AccountService 자동 복구가 명세대로 동작하는지 실 검증
 
@@ -57,10 +57,10 @@
 
 | Target | gather | AccountService (dryrun=false) | 결과 | 상세 |
 |---|---|---|---|---|
-| **Lenovo XCC** 10.50.11.232 | [PASS] | recovered=true, method=`post_new`, slot_uri=`/redfish/v1/AccountService/Accounts/4` | E2E 완전 성공 | 1차: USERID/VMware1!(recovery)로 fallback → infraops 신규 생성 → re-collect 시 infraops primary 성공 / 2차 idempotent: infraops primary 1회 성공, account_service skip ✓ |
-| **HPE iLO5** 10.50.11.231 | [PASS] | recovered=true, method=`post_new`, slot_uri=`/redfish/v1/AccountService/Accounts/3` | E2E 완전 성공 | 1차: admin/VMware1!(recovery, hpe_current)로 fallback → infraops 신규 생성 → re-collect / 2차 idempotent: infraops primary 1회 성공 ✓ |
+| **Lenovo XCC** 10.50.11.232 | [PASS] | recovered=true, method=`post_new`, slot_uri=`/redfish/v1/AccountService/Accounts/4` | E2E 완전 성공 | 1차: USERID/__REDACTED__(recovery)로 fallback → infraops 신규 생성 → re-collect 시 infraops primary 성공 / 2차 idempotent: infraops primary 1회 성공, account_service skip ✓ |
+| **HPE iLO5** 10.50.11.231 | [PASS] | recovered=true, method=`post_new`, slot_uri=`/redfish/v1/AccountService/Accounts/3` | E2E 완전 성공 | 1차: admin/__REDACTED__(recovery, hpe_current)로 fallback → infraops 신규 생성 → re-collect / 2차 idempotent: infraops primary 1회 성공 ✓ |
 | **Dell iDRAC9** 10.100.15.27 | [PASS] | recovered=false, method=`noop` | gather PASS / **AS 갭 발견** | 5번째 후보(`lab_dell_root`)까지 fallback → 성공. 그러나 AccountService 빈 슬롯 검색 결과 None — Dell iDRAC9 raw 응답 확인 시 빈 슬롯 14개 있음에도 코드의 `account_service_find_empty_slot` 가 None 반환. 추가 진단 필요 (NEXT_ACTIONS) |
-| **Cisco CIMC** 10.100.15.2 | [PASS] | recovered=false, method=`not_supported` | gather PASS / **CIMC 본질적 제약** | cisco_current(admin/Goodmit1!)로 recovery 동작. AccountService raw probe 결과 — CIMC 는 `Members@odata.count = 1` (slot 1: admin only). 추가 사용자 슬롯 미노출 (LDAP 기반 + local fallback 단일). **WebSearch 결과는 이론상 PATCH/POST 가능이지만 lab BMC 펌웨어/구성에서는 1슬롯만 운용 가능**. 코드의 `not_supported` 분기는 **lab 환경에서 정확** |
+| **Cisco CIMC** 10.100.15.2 | [PASS] | recovered=false, method=`not_supported` | gather PASS / **CIMC 본질적 제약** | cisco_current(admin/__REDACTED__)로 recovery 동작. AccountService raw probe 결과 — CIMC 는 `Members@odata.count = 1` (slot 1: admin only). 추가 사용자 슬롯 미노출 (LDAP 기반 + local fallback 단일). **WebSearch 결과는 이론상 PATCH/POST 가능이지만 lab BMC 펌웨어/구성에서는 1슬롯만 운용 가능**. 코드의 `not_supported` 분기는 **lab 환경에서 정확** |
 | **Supermicro** | (lab 부재) | — | skip | `.lab-credentials.yml` 에 Supermicro BMC 미정의 |
 
 ### 4.2 ESXi (vSphere API)
@@ -122,7 +122,7 @@
 ### G2. Cisco CIMC AccountService 단일 슬롯 제약
 
 - 증상: `Members@odata.count = 1` (slot 1: admin only). WebSearch 결과는 이론상 PATCH/POST 가능. 실 lab CIMC 펌웨어/구성은 단일 admin 슬롯만 노출
-- 영향: 운영 정책으로 결정 — Cisco 는 admin/Goodmit1! 로만 운용 (운영자 수동 사용자 추가는 별도 절차)
+- 영향: 운영 정책으로 결정 — Cisco 는 admin/__REDACTED__ 로만 운용 (운영자 수동 사용자 추가는 별도 절차)
 - 코드: `redfish_gather.py` line 1510-1516 `not_supported` 분기 — **lab 환경에서 정상 동작**
 - 후속: 사용자 명시 결정 후속 (현재 정책 유지). 만약 다른 Cisco CIMC 펌웨어/모델이 multi-slot 노출하면 본 분기 재검토.
 

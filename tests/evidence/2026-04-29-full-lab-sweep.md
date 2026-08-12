@@ -133,7 +133,7 @@ schema_version
   - hostname resolution도 실패 (envelope의 hostname=ip 그대로)
   - diagnosis.precheck = null, diagnosis.details에 adapter_candidate / channel / checked_ports / product / redfish_version / selected_port / systems_uri 키만
 - **원인 후보**:
-  1. R740 자격증명이 R760의 root/Goodmit0802!와 다름 (`vault/redfish/dell.yml` 단일 자격이라 R740만 다른 자격이면 실패)
+  1. R740 자격증명이 R760의 root/__REDACTED__와 다름 (`vault/redfish/dell.yml` 단일 자격이라 R740만 다른 자격이면 실패)
   2. R740 BMC 환경 (방화벽 / Redfish off / 모델 차이)
   3. R740 펌웨어 버전 차이 (iDRAC9 vs iDRAC8)
 - **확인 필요** (rule 96 R2 — 외부 계약 디버깅 시 사용자 질의 우선):

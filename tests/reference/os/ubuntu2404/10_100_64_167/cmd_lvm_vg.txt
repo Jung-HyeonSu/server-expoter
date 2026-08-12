@@ -3,8 +3,8 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:05.298549+00:00
 #
-Goodmit0802!
-Goodmit0802!
+__REDACTED__
+__REDACTED__
   VG        #PV #LV #SN Attr   VSize   VFree  
   ubuntu-vg   1   1   0 wz--n- <46.95g  23.47g
   vg_data     1   2   0 wz--n- <50.00g <19.90g

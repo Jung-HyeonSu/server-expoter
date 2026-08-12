@@ -102,7 +102,7 @@ supports-test: no
 supports-eeprom-access: no
 supports-register-dump: yes
 supports-priv-flags: no
-Goodmit0802!
+__REDACTED__
 Features for ens192:
 rx-checksumming: on
 tx-checksumming: on

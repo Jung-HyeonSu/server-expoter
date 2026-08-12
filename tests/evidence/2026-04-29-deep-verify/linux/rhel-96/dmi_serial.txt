@@ -1,4 +1,4 @@
-# cmd: echo Goodmit0802! | sudo -S dmidecode -s system-serial-number 2>&1
+# cmd: echo __REDACTED__ | sudo -S dmidecode -s system-serial-number 2>&1
 # rc: 0
 VMware-42 04 78 0c a1 7f e6 1d-78 7d 69 9c 6a a4 56 90
 

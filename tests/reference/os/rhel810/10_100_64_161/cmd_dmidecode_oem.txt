@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:42:56.193528+00:00
 #
-Goodmit0802!
+__REDACTED__
 Invalid type keyword: oem-strings
 Valid type keywords are:
   bios

@@ -19,14 +19,14 @@
 cycle-011에서 보안 정책 자체 해제 (rule 60 + protected-paths.yaml + pre_commit_policy 일괄 제거). AI 자동화 권한 부여 + 보안 검사 의무 해제. 그러나 운영 환경에서는 **Jenkins agent 빌드 실행 시 ansible-vault password 주입**이 여전히 필요. 평문 vault 파일을 그대로 commit / push 하면 GitHub 공개 노출.
 
 **P1 commit `fe0be36c`** (vault accounts list 추가) 시점에 평문 password 6종이 vault×8 파일에 1회 노출 commit됨:
-- linux: `Passw0rd1!` (1차) / `Goodmit0802!` (2차)
-- windows: `Passw0rd1!` / `Goodmit0802!`
-- esxi: `Passw0rd1!` / `Goodmit0802!`
-- redfish/dell: `Dellidrac1!` / `calvin`
-- redfish/hpe: `Goodmit0802!` / `hpinvent1!`
-- redfish/lenovo: `Goodmit0802!` / `Passw0rd1!`
-- redfish/supermicro: `Goodmit0802!` / `VMware1!`
-- redfish/cisco: `Goodmit0802!` / `VMware1!`
+- linux: `__REDACTED__` (1차) / `__REDACTED__` (2차)
+- windows: `__REDACTED__` / `__REDACTED__`
+- esxi: `__REDACTED__` / `__REDACTED__`
+- redfish/dell: `__REDACTED__` / `calvin`
+- redfish/hpe: `__REDACTED__` / `__REDACTED__`
+- redfish/lenovo: `__REDACTED__` / `__REDACTED__`
+- redfish/supermicro: `__REDACTED__` / `__REDACTED__`
+- redfish/cisco: `__REDACTED__` / `__REDACTED__`
 
 **문제 본질**: Git history에 평문 잔존 → public repo 시 즉시 leak. 그러나 force-push 또는 history rewrite는 cycle-011에서 **사용자 명시 결정**으로 옵션 A1 (평문 1회 노출 후 encrypt 분리) 채택. 즉:
 
@@ -47,7 +47,7 @@ ansible-vault encrypt --vault-password-file <pwd> \
   vault/redfish/supermicro.yml vault/redfish/cisco.yml
 ```
 
-vault password = `Goodmit0802!` (운영팀 결정).
+vault password = `__REDACTED__` (운영팀 결정).
 
 ### 2. Jenkins credential 등록
 
@@ -55,7 +55,7 @@ vault password = `Goodmit0802!` (운영팀 결정).
 |---|---|
 | credential ID | `server-gather-vault-password` |
 | credential type | **Secret File** |
-| 파일 내용 | vault password 1줄 (`Goodmit0802!\n`) |
+| 파일 내용 | vault password 1줄 (`__REDACTED__\n`) |
 
 ### 3. Jenkinsfile×3 binding
 

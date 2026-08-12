@@ -11,8 +11,8 @@
 | 실행 일시 | 2026-05-07 KST (08:46~08:54 UTC) |
 | Jenkins 에이전트 | 10.100.64.155 (cloviradmin) — Ubuntu 6.8 / Java 21 / Ansible 2.20.3 / Python 3.12 venv `/opt/ansible-env/` |
 | 코드 배포 | rsync 로 로컬 main 코드를 `~/se-realtest-2026-05-07/` 로 push |
-| 자격증명 | vault/{linux,windows,esxi}.yml + vault/redfish/{vendor}.yml (5 vendor 통일 — primary `infraops/Passw0rd1!Infra` + recovery list, cycle 2026-04-29~2026-05-06) |
-| vault 비밀번호 | `Goodmit0802!` (사용자 통일) |
+| 자격증명 | vault/{linux,windows,esxi}.yml + vault/redfish/{vendor}.yml (5 vendor 통일 — primary `infraops/__REDACTED__Infra` + recovery list, cycle 2026-04-29~2026-05-06) |
+| vault 비밀번호 | `__REDACTED__` (사용자 통일) |
 
 ## 3. 대상 장비 (사용자 제공)
 
@@ -52,7 +52,7 @@
 
 ```bash
 # Step 1: 에이전트 SSH 확인
-sshpass -p 'Goodmit0802!' ssh cloviradmin@10.100.64.155 'hostname; ansible-playbook --version'
+sshpass -p '__REDACTED__' ssh cloviradmin@10.100.64.155 'hostname; ansible-playbook --version'
 
 # Step 2: 로컬 코드 rsync
 cd C:/github/server-exporter
@@ -60,7 +60,7 @@ rsync -az --exclude='.git/' --exclude='*.pyc' --exclude='docs/ai/incoming-review
   ./ cloviradmin@10.100.64.155:~/se-realtest-2026-05-07/
 
 # Step 3: vault 비밀번호 파일 (1회)
-echo 'Goodmit0802!' > ~/.vault_pass_se_test
+echo '__REDACTED__' > ~/.vault_pass_se_test
 chmod 600 ~/.vault_pass_se_test
 
 # Step 4: 채널별 ansible-playbook (병렬)

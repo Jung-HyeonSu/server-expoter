@@ -39,9 +39,9 @@ lab inventory 의 모든 호스트 (Jenkins/agent 제외, 19대) 동시 빌드.
 - 사용자 요구사항 #8 (Disk summary multi-tier) 두 채널 모두 검증 ✅
 
 ### Recovery fallback 흐름
-- **Dell**: 4 attempt (infraops fail → root/Dellidrac1! fail → root/calvin fail → **lab_root success**)
-- **HPE**: 3 attempt (infraops fail → admin/hpinvent1! fail → **lab_hpe_admin success**)
-- **Lenovo**: 3 attempt (infraops fail → USERID/Passw0rd1! fail → **lab_lenovo_userid success**)
+- **Dell**: 4 attempt (infraops fail → root/__REDACTED__ fail → root/calvin fail → **lab_root success**)
+- **HPE**: 3 attempt (infraops fail → admin/__REDACTED__ fail → **lab_hpe_admin success**)
+- **Lenovo**: 3 attempt (infraops fail → USERID/__REDACTED__ fail → **lab_lenovo_userid success**)
 - 사용자 요구사항 #3 (recovery fallback) 3 vendor 모두 검증 ✅
 
 ### 한국어 실패 메시지 명확성

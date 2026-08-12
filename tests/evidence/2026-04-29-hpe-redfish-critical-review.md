@@ -22,7 +22,7 @@
 
 ## 검증 절차
 
-1. Agent (`10.100.64.154`) SSH 접속 후 `curl -sk -u admin:VMware1!` 으로 6개 endpoint 실 dump:
+1. Agent (`10.100.64.154`) SSH 접속 후 `curl -sk -u admin:__REDACTED__` 으로 6개 endpoint 실 dump:
    - `/redfish/v1/Systems/1` (top-level + Oem.Hpe.Bios)
    - `/redfish/v1/Managers/1` (Oem.Hpe keys 검증)
    - `/redfish/v1/Managers/1/NetworkProtocol`

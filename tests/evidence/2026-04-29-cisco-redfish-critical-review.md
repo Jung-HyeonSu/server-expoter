@@ -125,7 +125,7 @@ ansible-playbook 4 host 동시 실행 (`-f 4`) — INVENTORY_JSON에 cisco/dell/
 
 - ServiceRoot 무인증 GET OK (Vendor=Dell 응답)
 - `/redfish/v1/Systems/System.Embedded.1` 인증 시 `HTTP 401`
-- vault `dell.yml`의 `root / GoodskInfra1!` 자격증명 만료/잠금/변경 추정
+- vault `dell.yml`의 `root / __REDACTED__` 자격증명 만료/잠금/변경 추정
 - **운영 issue** — 우리 fix와 무관. 별도 vault 회전 필요 (`rotate-vault` skill)
 - 후속: Dell BMC 비밀번호 확인 + vault 갱신 후 재검증
 

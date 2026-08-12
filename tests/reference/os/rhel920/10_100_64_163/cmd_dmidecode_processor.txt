@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:43:57.128312+00:00
 #
-Goodmit0802!
+__REDACTED__
 # dmidecode 3.3
 Getting SMBIOS data from sysfs.
 SMBIOS 2.7 present.

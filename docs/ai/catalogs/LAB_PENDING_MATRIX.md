@@ -43,7 +43,7 @@
 | iDRAC7 (legacy) | [PENDING] | [PENDING] | [PENDING] — "Dell iDRAC7 lab 검증" | [PENDING] |
 | iDRAC8 | [PENDING] | [PENDING] | [PENDING] — "Dell iDRAC8 lab 검증" (PowerSubsystem fallback W1) | [PENDING] |
 | iDRAC9 | [PENDING] | [PENDING] | [PENDING] — "Dell iDRAC9 lab 검증" (3 variants — 3.x / 5.x / 7.x) | [PENDING] |
-| iDRAC10 (R770 포함) | [DONE] | [DONE] | [DONE] (사이트 검증 commit `0a485823`) | [DONE] (M-A5 primary infraops/Password123! + recovery root/calvin) |
+| iDRAC10 (R770 포함) | [DONE] | [DONE] | [DONE] (사이트 검증 commit `0a485823`) | [DONE] (M-A5 primary infraops/__REDACTED__ + recovery root/calvin) |
 
 ### HPE (iLO7 외 — 4 generation lab 미도입 + Superdome + CSUS)
 

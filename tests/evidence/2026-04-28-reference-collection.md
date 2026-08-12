@@ -68,7 +68,7 @@
 
 - **발견**: targets.yaml 초안에 `user: admin` (사용자 채팅 전달분 그대로)
 - **실측**: 10.100.15.27/28/31/33/34 모두 `admin` HTTP 401, `root` HTTP 200
-- **사용자 확인**: 2026-04-28 채팅 — "10.100.15.27 (dell) (root / Goodmit0802!) ... 이다. 맞다."
+- **사용자 확인**: 2026-04-28 채팅 — "10.100.15.27 (dell) (root / __REDACTED__) ... 이다. 맞다."
 - **수정**: targets.yaml의 Dell user 모두 `root`로 정정
 - **rule**: 12 R1 (vendor 경계) — 예외 아님, 단순 자격 정정
 
@@ -76,7 +76,7 @@
 
 - **발견**: 사용자 label "dell + GPU 카드 설치"
 - **실측**: ServiceRoot 응답 `Product: AMI Redfish Server`, `Oem: ['Ami']` (Supermicro/AMI 계열)
-- **자격**: admin/Goodmit0802!, root/Goodmit0802!, ADMIN/ADMIN, admin/admin, admin/(empty) 모두 401
+- **자격**: admin/__REDACTED__, root/__REDACTED__, ADMIN/ADMIN, admin/admin, admin/(empty) 모두 401
 - **현재**: targets.yaml에 `skip_reason: auth_unknown_vendor_mismatch`로 skip
 - **사용자 확인 필요**: (a) 실 vendor 무엇 (Dell vs Supermicro), (b) 정확한 자격
 - **rule**: 96 R2 (외부 계약 디버깅 시 사용자 질의 우선)
@@ -84,7 +84,7 @@
 ### F3. Cisco 10.100.15.1 / 15.3 도달 불가
 
 - **발견**: 15.1 HTTP 503, 15.3 connect timeout (15초)
-- **15.2는 정상**: TA-UNODE-G1 (Cisco Systems Inc) — admin/Goodmit1! OK
+- **15.2는 정상**: TA-UNODE-G1 (Cisco Systems Inc) — admin/__REDACTED__ OK
 - **현재**: 15.2만 수집, 15.1/15.3 skip
 - **사용자 확인 필요**: 15.1/15.3 가동 상태
 

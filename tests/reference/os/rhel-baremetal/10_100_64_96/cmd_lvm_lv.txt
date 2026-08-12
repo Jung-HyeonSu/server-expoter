@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:48.034451+00:00
 #
-Goodmit0802!
+__REDACTED__
 
   LV        VG        Attr       LSize    Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
   ubuntu-lv ubuntu-vg -wi-ao---- <444.02g                                                    

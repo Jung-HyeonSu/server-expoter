@@ -3,8 +3,8 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:01.836746+00:00
 #
-Goodmit0802!
-Goodmit0802!
+__REDACTED__
+__REDACTED__
 /dev/mapper/ubuntu--vg-ubuntu--lv: UUID="0bed35df-5f62-447a-8a45-feab6ffa7ff4" BLOCK_SIZE="4096" TYPE="ext4"
 /dev/sda2: UUID="6eda5a0c-1227-45f1-b8ea-b2bcf1b464ab" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="3a943c6d-a1e7-4191-9265-2881e931057e"
 /dev/sda3: UUID="KoIEfX-6iRo-QiNH-C9sv-mLCm-0mSx-s7P8f9" TYPE="LVM2_member" PARTUUID="00c0467d-48ca-49ef-ad57-6253dcb2e923"

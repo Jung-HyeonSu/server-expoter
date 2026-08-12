@@ -79,7 +79,7 @@ infraops (primary) → dell_root_dellidrac1 (recovery) → dell_root_calvin (rec
   "slot_uri": null
 }
 ```
-dryrun=true 가 default 이므로 실 생성 안 함. dryrun=false 로 override 시 실제 `infraops/Passw0rd1!` 생성 흐름 동작 (코드 검증됨, 실 trigger 는 운영 결정).
+dryrun=true 가 default 이므로 실 생성 안 함. dryrun=false 로 override 시 실제 `infraops/__REDACTED__` 생성 흐름 동작 (코드 검증됨, 실 trigger 는 운영 결정).
 
 ### CPU summary multi-model (Build #50)
 ```json
@@ -122,7 +122,7 @@ rule 10 R4 (Linux 2-tier) 의 raw fallback 분기 실 환경 검증.
 | # | 요구사항 | 검증 빌드 | 결과 |
 |---|---|---|---|
 | 1 | JSON 항상 출력 | #39, #45, #46 | ✅ failed/UNSTABLE 시에도 13 필드 envelope 보장 |
-| 2 | Redfish 공통계정 | #50 | ✅ accounts[0]=infraops/Passw0rd1! primary 시도 |
+| 2 | Redfish 공통계정 | #50 | ✅ accounts[0]=infraops/__REDACTED__ primary 시도 |
 | 3 | recovery fallback | #50 | ✅ 4 후보 순차 (attempted_count=4) |
 | 4 | AccountService 생성 | #50 | ✅ recovery 인증 후 invoke (dryrun=true 메타 노출) |
 | 5 | OS/ESXi 다중계정 | #43, #47, #49 | ✅ attempted_count, used_label, fallback_used 메타 |

@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:47.393849+00:00
 #
-Goodmit0802!
+__REDACTED__
 
   PV             VG        Fmt  Attr PSize    PFree
   /dev/nvme0n1p3 ubuntu-vg lvm2 a--  <444.02g    0 

@@ -7,7 +7,7 @@
 | Jenkins | 10.100.64.152 (`hshwang-gather` build #133) |
 | Branch | main (HEAD = `1387b505` fix: hpe_ilo7 Gen12 2-part firmware version 매치 보강) |
 | 대상 BMC | 10.50.11.231 |
-| 자격증명 | admin / VMware1! |
+| 자격증명 | admin / __REDACTED__ |
 | Product | HPE ProLiant DL380 Gen11 |
 | Manager.Model | iLO 6 |
 | Manager.FirmwareVersion | `iLO 6 v1.73` (literal string) |

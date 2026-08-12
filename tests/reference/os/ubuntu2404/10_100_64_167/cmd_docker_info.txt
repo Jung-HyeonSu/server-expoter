@@ -3,8 +3,8 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:33.631060+00:00
 #
-Goodmit0802!
-Goodmit0802!
+__REDACTED__
+__REDACTED__
 bash: line 1: docker: command not found
 bash: line 1: docker: command not found
 bash: line 1: docker: command not found

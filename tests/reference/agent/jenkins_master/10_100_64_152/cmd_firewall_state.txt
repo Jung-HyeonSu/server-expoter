@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:47:18.509218+00:00
 #
-Goodmit0802!
+__REDACTED__
 
 bash: line 1: firewall-cmd: command not found
 Chain INPUT (policy ACCEPT)

@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:06.059292+00:00
 #
-Goodmit0802!
+__REDACTED__
 /dev/mapper/rhel-root: UUID="baef7fad-ff22-4369-94a8-5f4bfbb8b77d" TYPE="xfs"
 /dev/sda3: UUID="AzecMc-1SDk-hByg-XoSf-8XIa-ngLp-88qMdW" TYPE="LVM2_member" PARTUUID="bf808e6e-7527-4c2e-a814-626e51fb9c0c"
 /dev/mapper/rhel-swap: UUID="b6c5b934-1e75-4928-a312-faf5e9f7e13f" TYPE="swap"

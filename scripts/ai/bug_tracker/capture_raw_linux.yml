@@ -27,16 +27,16 @@
       - { slug: hostname_etc,           cmd: "cat /etc/hostname 2>&1; echo ---; cat /etc/hosts | head -10" }
       - { slug: hostnamectl,            cmd: "hostnamectl 2>&1" }
       # B19/B80 hardware (baremetal vs VM) — sudo via -S with stdin password
-      - { slug: dmi_chassis,            cmd: "echo Goodmit0802! | sudo -S dmidecode -t chassis 2>&1 | head -30" }
-      - { slug: dmi_system,             cmd: "echo Goodmit0802! | sudo -S dmidecode -t system 2>&1 | head -30" }
-      - { slug: dmi_baseboard,          cmd: "echo Goodmit0802! | sudo -S dmidecode -t baseboard 2>&1 | head -25" }
-      - { slug: dmi_bios,               cmd: "echo Goodmit0802! | sudo -S dmidecode -t bios 2>&1 | head -30" }
+      - { slug: dmi_chassis,            cmd: "echo {{ ansible_become_password }} | sudo -S dmidecode -t chassis 2>&1 | head -30" }
+      - { slug: dmi_system,             cmd: "echo {{ ansible_become_password }} | sudo -S dmidecode -t system 2>&1 | head -30" }
+      - { slug: dmi_baseboard,          cmd: "echo {{ ansible_become_password }} | sudo -S dmidecode -t baseboard 2>&1 | head -25" }
+      - { slug: dmi_bios,               cmd: "echo {{ ansible_become_password }} | sudo -S dmidecode -t bios 2>&1 | head -30" }
       # B22 cpu
       - { slug: cpu_lscpu,              cmd: "lscpu" }
       - { slug: cpu_max_mhz_sys,        cmd: "cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq 2>&1 || echo ABSENT" }
       - { slug: cpu_proc_cpuinfo,       cmd: "head -30 /proc/cpuinfo" }
       # B23/B91 memory mfg JEDEC
-      - { slug: dmi_memory,             cmd: "echo Goodmit0802! | sudo -S dmidecode -t memory 2>&1 | head -120" }
+      - { slug: dmi_memory,             cmd: "echo {{ ansible_become_password }} | sudo -S dmidecode -t memory 2>&1 | head -120" }
       # B25 disk capacity
       - { slug: lsblk_disks,            cmd: "lsblk -b -o NAME,KNAME,SIZE,TYPE,MODEL,VENDOR,ROTA,TRAN,SERIAL 2>&1" }
       - { slug: sys_block_size,         cmd: "for d in /sys/block/*; do bn=$(basename $d); s=$(cat $d/size 2>/dev/null); r=$(cat $d/queue/rotational 2>/dev/null); echo \"$bn size_blocks=$s rotational=$r\"; done" }
@@ -54,10 +54,10 @@
       - { slug: lspci_nic,              cmd: "lspci -k -d ::0200 2>&1 || lspci -k 2>&1 | grep -i ethernet" }
       - { slug: lspci_full,             cmd: "lspci 2>&1 | head -50" }
       # B78 VM serial
-      - { slug: dmi_serial,             cmd: "echo Goodmit0802! | sudo -S dmidecode -s system-serial-number 2>&1" }
-      - { slug: dmi_uuid,               cmd: "echo Goodmit0802! | sudo -S dmidecode -s system-uuid 2>&1" }
-      - { slug: dmi_manuf,              cmd: "echo Goodmit0802! | sudo -S dmidecode -s system-manufacturer 2>&1" }
-      - { slug: dmi_product,            cmd: "echo Goodmit0802! | sudo -S dmidecode -s system-product-name 2>&1" }
+      - { slug: dmi_serial,             cmd: "echo {{ ansible_become_password }} | sudo -S dmidecode -s system-serial-number 2>&1" }
+      - { slug: dmi_uuid,               cmd: "echo {{ ansible_become_password }} | sudo -S dmidecode -s system-uuid 2>&1" }
+      - { slug: dmi_manuf,              cmd: "echo {{ ansible_become_password }} | sudo -S dmidecode -s system-manufacturer 2>&1" }
+      - { slug: dmi_product,            cmd: "echo {{ ansible_become_password }} | sudo -S dmidecode -s system-product-name 2>&1" }
       # B99 listening ports
       - { slug: ss_tcp_listen,          cmd: "ss -tnlpH 2>&1" }
       - { slug: ss_udp_listen,          cmd: "ss -unlpH 2>&1" }

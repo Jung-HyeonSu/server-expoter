@@ -1,4 +1,4 @@
-# cmd: echo Goodmit0802! | sudo -S dmidecode -t memory 2>&1 | head -120
+# cmd: echo __REDACTED__ | sudo -S dmidecode -t memory 2>&1 | head -120
 # rc: 0
 [sudo] password for cloviradmin: # dmidecode 3.5
 Getting SMBIOS data from sysfs.

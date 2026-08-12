@@ -3,8 +3,8 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:35.268393+00:00
 #
-Goodmit0802!
-Goodmit0802!
+__REDACTED__
+__REDACTED__
 Apr 09 00:31:30 gathertest-ubuntu2404 kernel: ITS: WARNING: ITS mitigation depends on retpoline and rethunk support
 Apr 09 00:31:31 gathertest-ubuntu2404 kernel: piix4_smbus 0000:00:07.3: SMBus base address uninitialized - upgrade BIOS or use force_addr=0xaddr
 Apr 13 23:42:05 gathertest-ubuntu2404 sshd[14497]: error: Received disconnect from 10.11.20.12 port 56511:13: Unable to authenticate [preauth]

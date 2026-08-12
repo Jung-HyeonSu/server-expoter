@@ -1,4 +1,4 @@
-# cmd: echo Goodmit0802! | sudo -S dmidecode -s system-manufacturer 2>&1
+# cmd: echo __REDACTED__ | sudo -S dmidecode -s system-manufacturer 2>&1
 # rc: 0
 VMware, Inc.
 

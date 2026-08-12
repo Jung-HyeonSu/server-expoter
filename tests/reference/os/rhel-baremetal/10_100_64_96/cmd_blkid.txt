@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:46.084518+00:00
 #
-Goodmit0802!
+__REDACTED__
 
 /dev/nvme0n1p3: UUID="0NB3J5-dhJg-OKcA-INJs-hrcg-iID9-5kEFtW" TYPE="LVM2_member" PARTUUID="ef110056-7273-4d2c-8e32-3c4c533ae5d4"
 /dev/nvme0n1p1: UUID="E724-7ED6" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="ecc57db6-8e56-4afd-88dc-514c843cc5d2"

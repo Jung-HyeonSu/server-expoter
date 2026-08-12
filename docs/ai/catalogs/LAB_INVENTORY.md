@@ -50,7 +50,7 @@
 >
 > **cycle-016 Phase K 정정 (2026-04-29 사용자 직접 정정)**: cycle-015 의 Cisco IP 매핑 오류 정정
 > - 제거 (사내 부재 / non-Redfish): **10.100.15.1** (lab 부재 또는 Redfish 미지원), **10.100.15.3** (ping fail 부재)
-> - 추가 (실 작동 BMC): **10.100.15.2** (Cisco TA-UNODE-G1, admin/Goodmit1!) — 빌드 #91 SUCCESS 검증 / DDR4 64GB×16=1TB / SSD SATA 18.2TB
+> - 추가 (실 작동 BMC): **10.100.15.2** (Cisco TA-UNODE-G1, admin/__REDACTED__) — 빌드 #91 SUCCESS 검증 / DDR4 64GB×16=1TB / SSD SATA 18.2TB
 
 > **2026-08-12 실측 정정 (Location Vault Pilot — `tests/evidence/2026-08-12-location-vault-jenkins-pilot.md`)**
 > - **10.100.64.135 는 Windows 가 아니다.** 실측 결과 RHEL 계열 Linux

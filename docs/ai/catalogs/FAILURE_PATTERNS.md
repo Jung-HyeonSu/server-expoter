@@ -411,7 +411,7 @@
 - 카테고리: ansible-unreachable-escapes-rescue
 - 발견 위치: `os-gather/tasks/try_one_credential.yml` (linux ssh / windows winrm probe)
 - 증상: gatherOS #27~#29 FAILURE, `gather_output.json` 0바이트(Stashed 0), 콘솔엔 무해 경고 2줄(`_os_failed` could not match + `reset_connection when`)만. #26은 53 host 중 27개가 envelope 없이 증발(나머지 26개만 status:failed).
-- 원인: SSH 인증 실패는 ansible에서 `failed`가 아니라 `unreachable`로 분류됨. probe에 `failed_when:false`만 있고 `ignore_unreachable:true` 누락 → 첫 후보(`infra/infra1234`)에서 unreachable 발생 시 host가 block/rescue/always(OUTPUT)를 **우회**하고 play에서 제거 → 2번째 후보(`cloviradmin/Goodmit0802!`) 미시도 → 0 envelope + 비정상 exit. `json_only` 콜백이 `v2_runner_on_unreachable`/`on_failed`를 OUTPUT task 외 전부 suppress → 사유 비가시.
+- 원인: SSH 인증 실패는 ansible에서 `failed`가 아니라 `unreachable`로 분류됨. probe에 `failed_when:false`만 있고 `ignore_unreachable:true` 누락 → 첫 후보(`infra/__REDACTED__`)에서 unreachable 발생 시 host가 block/rescue/always(OUTPUT)를 **우회**하고 play에서 제거 → 2번째 후보(`cloviradmin/__REDACTED__`) 미시도 → 0 envelope + 비정상 exit. `json_only` 콜백이 `v2_runner_on_unreachable`/`on_failed`를 OUTPUT task 외 전부 suppress → 사유 비가시.
 - 영향: 인증 실패 host가 graceful failed envelope 없이 전량 증발 + fallback 후보 미시도. 모든 host가 unreachable이면 빌드 FAILURE(callback 빈 파일).
 - 수정: probe 2종에 `ignore_unreachable:true` 추가 (commit `abe94783`) → unreachable host 보존 → 후보 loop 계속 → 정상 fallback 또는 graceful failed envelope. 검증: 빌드 #30 SUCCESS, 161/165 `status:success`, `auth.fallback_used:true`(infra 실패→cloviradmin 성공).
 - 재발 방지: SSH/WinRM 연결성 probe·gather task에는 `ignore_unreachable:true` 필수. json_only가 unreachable/failed를 stderr로 표면화하도록 개선은 후속(NEXT_ACTIONS).

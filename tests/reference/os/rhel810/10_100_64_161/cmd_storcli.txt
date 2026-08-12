@@ -3,6 +3,6 @@
 # requires_root: True
 # fetched: 2026-04-28T06:43:03.106725+00:00
 #
-Goodmit0802!
+__REDACTED__
 bash: /opt/MegaRAID/storcli/storcli64: No such file or directory
 bash: storcli: command not found

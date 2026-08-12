@@ -3,8 +3,101 @@
 # requires_root: True
 # fetched: 2026-04-28T06:43:14.444658+00:00
 #
-DMIGoodmit0802!
-   SMP   PA-RISC       device-tree           SPD   memory      /proc/cpuinfo             CPUID     PCI (sysfs)           ISA PnP       PnP (sysfs)           PCMCIA      PCMCIA      Virtual I/O (VIRTIO) devices                            IBM Virtual I/O (VIO)                     kernel device tree (sysfs)                          USB   IDE   SCSI    NVMe    MMC   sound     graphics        input     S/390 devices             Network interfaces                  Framebuffer devices                   Display       CPUFreq       ABI   H/W path             Device      Class      Description
+
+
+DMI
+__REDACTED__
+
+   
+SMP
+
+   
+PA-RISC
+
+       
+device-tree
+
+           
+SPD
+
+   
+memory
+
+      
+/proc/cpuinfo
+
+             
+CPUID
+
+     
+PCI (sysfs)
+
+           
+ISA PnP
+
+       
+PnP (sysfs)
+
+           
+PCMCIA
+
+      
+PCMCIA
+
+      
+Virtual I/O (VIRTIO) devices
+
+                            
+IBM Virtual I/O (VIO)
+
+                     
+kernel device tree (sysfs)
+
+                          
+USB
+
+   
+IDE
+
+   
+SCSI
+
+    
+NVMe
+
+    
+MMC
+
+   
+sound
+
+     
+graphics
+
+        
+input
+
+     
+S/390 devices
+
+             
+Network interfaces
+
+                  
+Framebuffer devices
+
+                   
+Display
+
+       
+CPUFreq
+
+       
+ABI
+
+   
+
+H/W path             Device      Class      Description
 =======================================================
                                  system     VMware7,1
 /0                               bus        440BX Desktop Reference Platform

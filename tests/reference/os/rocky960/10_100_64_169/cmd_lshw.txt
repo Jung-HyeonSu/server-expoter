@@ -3,8 +3,101 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:57.327204+00:00
 #
-Goodmit0802!
-DMI   SMP   PA-RISC       device-tree           SPD   memory      /proc/cpuinfo             CPUID     PCI (sysfs)           ISA PnP       PnP (sysfs)           PCMCIA      PCMCIA      Virtual I/O (VIRTIO) devices                            IBM Virtual I/O (VIO)                     kernel device tree (sysfs)                          USB   IDE   SCSI    NVMe    MMC   sound     graphics        input     S/390 devices             Network interfaces                  Framebuffer devices                   Display       CPUFreq       ABI   {
+__REDACTED__
+
+
+DMI
+
+   
+SMP
+
+   
+PA-RISC
+
+       
+device-tree
+
+           
+SPD
+
+   
+memory
+
+      
+/proc/cpuinfo
+
+             
+CPUID
+
+     
+PCI (sysfs)
+
+           
+ISA PnP
+
+       
+PnP (sysfs)
+
+           
+PCMCIA
+
+      
+PCMCIA
+
+      
+Virtual I/O (VIRTIO) devices
+
+                            
+IBM Virtual I/O (VIO)
+
+                     
+kernel device tree (sysfs)
+
+                          
+USB
+
+   
+IDE
+
+   
+SCSI
+
+    
+NVMe
+
+    
+MMC
+
+   
+sound
+
+     
+graphics
+
+        
+input
+
+     
+S/390 devices
+
+             
+Network interfaces
+
+                  
+Framebuffer devices
+
+                   
+Display
+
+       
+CPUFreq
+
+       
+ABI
+
+   
+
+{
   "id" : "localhost.localdomain",
   "class" : "system",
   "claimed" : true,

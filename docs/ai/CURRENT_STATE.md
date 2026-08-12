@@ -1,5 +1,45 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-12 (r) — 표준 비밀번호 회전 수렴 + Repair 실증 + 평문 Secret 정리
+
+> 정본: `tests/evidence/2026-08-12-standard-password-convergence.md`,
+> `tests/evidence/2026-08-12-plaintext-secret-sanitization.md`
+
+- **전역 표준 계정 비밀번호를 회전하고 git Redfish 4대에 수렴**시켰다. Credential Contract
+  불변: 전역 표준은 `vault/common/redfish/standard.yml` 1벌, Vendor Vault 는 recovery 전용,
+  최종 수집은 표준 계정. Vault 49개 decrypt/YAML 전량 성공, Redfish `role: primary` 정확히 1개.
+- **1·2차 실행 모두 4대 전부** `status=success` / `used_role=primary` / `attempts=1` /
+  **Account Write 0** — Password Convergence 성공.
+- **Repair 경로 첫 실장비 완주 (Lenovo XCC)** — 표준 401 → recovery 인증 → `present` →
+  `patch_existing` → `write_accepted` → **표준 자격 재인증 성공(`verification=verified`)** →
+  표준 계정으로 수집 → 2차 실행 Write 0. Case B 를 `PROVEN` 으로 올렸다.
+- **Dell Password Strength HOLD → CLOSED.** 회전된 값으로 1·2차 표준 인증 성공 + Write 0.
+  BMC 정책은 건드리지 않았다. 다만 "Dell 은 선언된 규칙만으로 수용 여부를 알 수 없다"는
+  계약은 유효하게 남긴다 (`Security.1.MinimumPasswordScore` 만 활성).
+- **HPE iLO 쓰기 계약 결함 발견·수정.** 실장비 통제 실험으로 확정: iLO 는 `Password` 가
+  다른 속성과 같은 PATCH 에 오면 **검사도 적용도 하지 않고 버리면서 200 `AccountModified`
+  를 준다.** 같은 잘못된 값이 단독일 때는 400 으로 걸린다. 응답으로는 구분 불가라
+  Family 가 쓰기 전에 방식을 정해야 한다 → `hpe_ilo5plus.isolated_write_patch = True`.
+  부수 2건도 고쳤다: `Locked` 를 **실제 잠김일 때만** 전송(쓰기 1회 감소),
+  재인증 간격을 장비 선언값(`AuthFailureDelayTimeSeconds`)에서 산출.
+  검증 의무화(audit H-1)가 없었다면 이 결함은 "쓰기 성공"으로 보고됐을 것이다.
+- **Dell 세대 판정 버그 수정.** `10.100.15.34` 는 iDRAC9(FW 7.10.70.00)인데 Family 가
+  `dell_idrac10_slot_patch` 였다. 원인은 adapter 오선택(무인증 probe → fact 없음 →
+  priority 로 결정) + 그 hint 를 세대 근거로 그대로 사용(`Manager.Model` 조건은 Dell 에서
+  죽은 조건). **이름만의 차이가 아니다** — `reserved_slot_ids` 가 `{1}` vs `{1,2}` 라
+  빈 슬롯이 2번일 때 PATCH 대상 URI 가 갈린다. 세대 근거를 Firmware major 로 교정.
+  Adapter 오선택 자체는 별도 과제로 남았다(NEXT_ACTIONS PWC-4).
+- **저장소 평문 Secret 전량 제거.** tracked 391개 파일에 실 자격증명 10종이 평문으로
+  있었고(이번 cycle 이 만든 것이 아니라 사전 존재), 그중 8개가 **누출 방지 테스트 자신**
+  이었다. 가드를 sha256 digest 대조로 바꾸고(`tests/secret_guard.py`) 입력 자격은 합성
+  canary 로 교체했다. tracked 17,982개 전수 검사 **digest 0건 / literal 0건**.
+  Secret Leak Gate(`scripts/ai/verify_no_plaintext_secret.py`) 신설.
+  **Git history 와 rotation 은 사용자 지시(§12/§13)로 범위 밖** — NEXT_ACTIONS PWC-1/2.
+- 테스트: unit+regression 2007 / e2e 590 / integration 243 = **2840 passed**. 게이트 전량 통과
+  (3채널 syntax-check 포함).
+
+---
+
 ## 일자: 2026-08-12 (q) — Credential Vault 정리 + git Location 실장비 검증
 
 > 정본: `tests/evidence/2026-08-12-git-location-live-verification.md`
@@ -866,7 +906,7 @@
 
 ## 일자: 2026-06-18 (Jenkinsfile_portal vault → Jenkins Credentials 플러그인 방식)
 
-- **대상/방법**: `Jenkinsfile_portal` Gather 단계의 임시 하드코딩 vault 패스워드(`24677f57`, 평문 `'Goodmit0802!'`)
+- **대상/방법**: `Jenkinsfile_portal` Gather 단계의 임시 하드코딩 vault 패스워드(`24677f57`, 평문 `'__REDACTED__'`)
   를 제거하고, 메인 `Jenkinsfile` 과 동일한 **Jenkins Credentials Binding 플러그인** 방식으로 교체.
   `withCredentials([string(credentialsId: 'server-gather-vault-password', variable: 'VAULT_PASSWORD')])` 로
   주입(콘솔 마스킹) → `sh` 내 런타임 임시파일(`mktemp`/chmod 600/`trap` 삭제) → `--vault-password-file`.
@@ -2060,26 +2100,26 @@
 
 ### 사용자 명시 (2026-05-11 cycle 진입)
 - "Dell R770 사이트를 참고해서 지금 Dell R770가 지원되는지 확인해줘. 벤더 default 계정 생성이 안되고있어."
-- 결정: M-A1~A6 전체 / vault password `Goodmit0802!` / primary infraops 비밀번호 `Password123!` / R770 lab 후속은 vault만 처리
+- 결정: M-A1~A6 전체 / vault password `__REDACTED__` / primary infraops 비밀번호 `__REDACTED__` / R770 lab 후속은 vault만 처리
 
 ### 적용 변경 (vault 9 + docs 1)
 
 | 영역 | 변경 |
 |---|---|
-| **5 기존 vendor vault** | primary `infraops/Passw0rd1!Infra` → `infraops/Password123!` 통일 + Supermicro recovery 신규 (ADMIN/ADMIN) + HPE/Lenovo/Cisco 공장 기본 recovery append (Additive — rule 92 R2) |
+| **5 기존 vendor vault** | primary `infraops/__REDACTED__Infra` → `infraops/__REDACTED__` 통일 + Supermicro recovery 신규 (ADMIN/ADMIN) + HPE/Lenovo/Cisco 공장 기본 recovery append (Additive — rule 92 R2) |
 | **4 신규 vendor vault** | `vault/redfish/huawei.yml` (Administrator/Admin@9000) / `inspur.yml` `fujitsu.yml` `quanta.yml` (admin/admin) 신설 — lab 부재 (rule 96 R1-A web sources) |
-| **docs/21** | §6.5 9 vendor recovery 매트릭스 + Password123! 정책 + account_service 자동 생성 메커니즘 절 추가 |
+| **docs/21** | §6.5 9 vendor recovery 매트릭스 + __REDACTED__ 정책 + account_service 자동 생성 메커니즘 절 추가 |
 
 ### 검증 결과
 
 - 9 vault 모두 encrypted (`$ANSIBLE_VAULT;1.1;AES256` header hit)
-- decrypt round-trip 9건 PASS — primary `infraops/Password123!` 9건 + recovery 합계 17건 (Dell 4 / HPE 3 / Lenovo 3 / Cisco 2 / Supermicro 1 / Huawei 1 / Inspur 1 / Fujitsu 1 / Quanta 1)
+- decrypt round-trip 9건 PASS — primary `infraops/__REDACTED__` 9건 + recovery 합계 17건 (Dell 4 / HPE 3 / Lenovo 3 / Cisco 2 / Supermicro 1 / Huawei 1 / Inspur 1 / Fujitsu 1 / Quanta 1)
 - adapter `dell_idrac10.yml` recovery_accounts label (`dell_root_calvin`) ↔ vault label (`dell_fallback_2`) **label mismatch 발견** — username 매칭 fallback 으로 동작 (account_service.yml:31-41 label 우선 → username 매칭 chain). 별도 cycle 권장 (M-A7 후속)
 
 ### Dell R770 (iDRAC10) 적용 효과
 
 - adapter `dell_idrac10.yml` priority=120 매칭 (R770 model_pattern 포함)
-- vault `dell.yml` multi-account fallback (5 accounts) 시도 → account_service.yml → infraops/Password123! 자동 provision
+- vault `dell.yml` multi-account fallback (5 accounts) 시도 → account_service.yml → infraops/__REDACTED__ 자동 provision
 - **lab 검증**: 0건 (R770 fixture/baseline 부재 — 별도 cycle, NEXT_ACTIONS 유지)
 
 ---
@@ -2407,15 +2447,15 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 
 ### infraops 공통계정 password 통일
 
-5 vault primary password 통일 → `Passw0rd1!Infra` (Dell Strengthen Policy 호환 = 가장 엄격):
+5 vault primary password 통일 → `__REDACTED__Infra` (Dell Strengthen Policy 호환 = 가장 엄격):
 
 | vault | 이전 | 신 (cycle 2026-05-06) |
 |---|---|---|
-| dell.yml | Passw0rd1! | **Passw0rd1!Infra** (phase 1) |
-| hpe.yml | Passw0rd1! | **Passw0rd1!Infra** (phase 2) |
-| lenovo.yml | Passw0rd1! | **Passw0rd1!Infra** (phase 2) |
-| cisco.yml | Passw0rd1! | **Passw0rd1!Infra** (phase 2) |
-| supermicro.yml | Passw0rd1! | **Passw0rd1!Infra** (phase 2) |
+| dell.yml | __REDACTED__ | **__REDACTED__Infra** (phase 1) |
+| hpe.yml | __REDACTED__ | **__REDACTED__Infra** (phase 2) |
+| lenovo.yml | __REDACTED__ | **__REDACTED__Infra** (phase 2) |
+| cisco.yml | __REDACTED__ | **__REDACTED__Infra** (phase 2) |
+| supermicro.yml | __REDACTED__ | **__REDACTED__Infra** (phase 2) |
 
 ### BMC 동기화 (실 적용)
 
@@ -2427,7 +2467,7 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 | 10.50.11.232 | lenovo | slot 4 PATCH password 갱신 | 인증 200 |
 | 10.100.15.2 | cisco | slot 2 POST 생성 | 인증 200 |
 
-**5/5 BMC 모두 `infraops/Passw0rd1!Infra` HTTP 200 통일 검증 완료**.
+**5/5 BMC 모두 `infraops/__REDACTED__Infra` HTTP 200 통일 검증 완료**.
 
 ### 검증
 
@@ -2442,7 +2482,7 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 ### 사용자 명시
 - "redfish 공통계정 생성이 안 되는 것 같다. 로직 + vault 확인 + 사이트 실측 + web 호환성 + 코드 개선 + 자동화 모두 진행."
 - "Jenkins 잡 생성해서 직접 테스트, curl 직접 검증."
-- "vault 비밀번호: Goodmit0802!"
+- "vault 비밀번호: __REDACTED__"
 
 ### Root cause (사용자 사이트 실측 — rule 25 R7-A-1)
 
@@ -2450,12 +2490,12 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 
 1. **Vault label-mismatch (logic bug)** — `account_service.yml` 의 `_rf_recovery_account_resolved`
    가 username 만으로 vault lookup. Dell vault 에 `root` 4개 (서로 다른 password) →
-   첫 entry (Dellidrac1!) 잡혀 password mismatch → AccountService GET 401 → recovered=False.
+   첫 entry (__REDACTED__) 잡혀 password mismatch → AccountService GET 401 → recovered=False.
 2. **Dell slot 1 anonymous reserved (BMC 정책)** — UserName='', Enabled=false 인 placeholder.
    기존 `_find_empty_slot()` 가 첫번째 빈 slot (=slot 1) 에 PATCH 시도 → 거부.
 3. **Dell silent password fail (펌웨어 정책)** — iDRAC9 7.10.70.00 Security Strengthen
-   Policy. `Passw0rd1!` (10자) PATCH 200 OK 응답이지만 실제 password 미적용 (silent skip).
-   `Passw0rd1!Infra` (15자) 부터 정상 적용.
+   Policy. `__REDACTED__` (10자) PATCH 200 OK 응답이지만 실제 password 미적용 (silent skip).
+   `__REDACTED__Infra` (15자) 부터 정상 적용.
 
 ### F49 Fix 매트릭스
 
@@ -2467,7 +2507,7 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 | PATCH 후 verify _get | 동상 | silent fail 감지 + 다음 슬롯 fallback |
 | Lenovo PasswordChangeRequired retry | 동상 | XCC 펌웨어 password policy |
 | HPE Oem.Hpe.Privileges 3차 retry | 동상 | iLO 일부 펌웨어 |
-| Dell vault password 강화 | `vault/redfish/dell.yml` | Passw0rd1! → Passw0rd1!Infra (15자) |
+| Dell vault password 강화 | `vault/redfish/dell.yml` | __REDACTED__ → __REDACTED__Infra (15자) |
 | Jenkins job 등록 | `jenkins/jobs/redfish-account-provision-verify/config.xml` | DRYRUN/TARGET 파라미터 + agent 실행 |
 | 회귀 테스트 7건 | `tests/unit/test_account_provision_f49_vendor_compat.py` | 7종 시나리오 회귀 |
 
@@ -2620,7 +2660,7 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 | F-CYCLE-018-2 | field_dictionary doc stale 8 파일 | 46 entries → 65 entries (분류 체계 유지: 39 Must + 20 Nice + 6 Skip) |
 | F-CYCLE-018-3 | adapter doc stale 3 파일 | 25개 → 27개 (Redfish 14 → 16) |
 | F-CYCLE-018-4 | `_vendor_count()` 명명 오용 | docstring 명시 (실 normalized vendor 5 vs adapter 변종 15) |
-| F-CYCLE-018-5 | untracked 잔재 9 + vault_decrypt_check.py | `.gitignore` 영구 ignore (Goodmit0802! 평문 leak 차단) |
+| F-CYCLE-018-5 | untracked 잔재 9 + vault_decrypt_check.py | `.gitignore` 영구 ignore (__REDACTED__ 평문 leak 차단) |
 
 ### 검증
 - pytest **94/94 PASS**
@@ -2808,7 +2848,7 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 
 ### 진짜 비즈니스 로직 (site.yml + account_service.yml 확인 결과)
 
-- `primary` (= infraops/Passw0rd1!) = **provision target** — server-exporter가 모든 BMC에 생성/유지하는 표준 운영 계정
+- `primary` (= infraops/__REDACTED__) = **provision target** — server-exporter가 모든 BMC에 생성/유지하는 표준 운영 계정
 - `recovery` (vendor마다 다름) = **provision 진입 자격** — BMC에 이미 존재하는 자격증명. primary가 아직 없을 때 recovery로 BMC 접속 후 primary 생성 (POST AccountService)
 - `_rf_accounts` list 순서대로 시도 → 어느 자격이든 succeed → 만약 succeed가 recovery면 → primary 자동 생성/갱신 → primary로 rotate 후 재수집
 
@@ -2817,21 +2857,21 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 ### 사용자 명시 = recovery 후보들 안에서의 우선순위 (정정)
 
 **Dell (vault/redfish/dell.yml)** — primary 1번 + recovery 사용자 명시 우선순위:
-1. common_infraops (infraops/Passw0rd1!) ← primary (default, provision target)
-2. dell_fallback_1 (root/Dellidrac1!) ← recovery 1순위 (사용자 명시)
+1. common_infraops (infraops/__REDACTED__) ← primary (default, provision target)
+2. dell_fallback_1 (root/__REDACTED__) ← recovery 1순위 (사용자 명시)
 3. dell_fallback_2 (root/calvin) ← recovery 2순위 (사용자 명시)
-4. dell_current (root/GoodskInfra1!)
-5. lab_dell_root (root/Goodmit0802!)
+4. dell_current (root/__REDACTED__)
+5. lab_dell_root (root/__REDACTED__)
 
 **Lenovo (vault/redfish/lenovo.yml)** — primary 1번 + recovery 사용자 명시:
-1. common_infraops (infraops/Passw0rd1!) ← primary
-2. lenovo_fallback (USERID/Passw0rd1!) ← recovery 1순위
-3. lenovo_current (USERID/VMware1!)
+1. common_infraops (infraops/__REDACTED__) ← primary
+2. lenovo_fallback (USERID/__REDACTED__) ← recovery 1순위
+3. lenovo_current (USERID/__REDACTED__)
 
 **HPE (vault/redfish/hpe.yml)** — primary 1번 + recovery 사용자 명시:
-1. common_infraops (infraops/Passw0rd1!) ← primary
-2. hpe_fallback (admin/hpinvent1!) ← recovery 1순위
-3. hpe_current (admin/VMware1!)
+1. common_infraops (infraops/__REDACTED__) ← primary
+2. hpe_fallback (admin/__REDACTED__) ← recovery 1순위
+3. hpe_current (admin/__REDACTED__)
 
 role / ansible_user / ansible_password 미변경. list 순서만 변경.
 
@@ -2848,7 +2888,7 @@ role / ansible_user / ansible_password 미변경. list 순서만 변경.
 
 ## 요약 (vendor-detect-robustness 전체 — 2026-04-30)
 
-사용자 명시 요청 진행: "이 장비는 redfish 지원 안 함" + "Lenovo 벤더 null" + "Dell `Dellidrac1!` 401 계정 틀림". Web 조사 (DMTF DSP0266 v1.15 / HPE iLO / Lenovo XCC / Dell iDRAC / Cisco CIMC) → 현재 코드 gap **G1~G7 전체 적용** + Dell multi-account fallback 보강.
+사용자 명시 요청 진행: "이 장비는 redfish 지원 안 함" + "Lenovo 벤더 null" + "Dell `__REDACTED__` 401 계정 틀림". Web 조사 (DMTF DSP0266 v1.15 / HPE iLO / Lenovo XCC / Dell iDRAC / Cisco CIMC) → 현재 코드 gap **G1~G7 전체 적용** + Dell multi-account fallback 보강.
 
 ### 적용 변경 (3 파일)
 
@@ -2904,7 +2944,7 @@ role / ansible_user / ansible_password 미변경. list 순서만 변경.
 
 **Vault 갱신 8 파일** (사용자 명세 + lab fallback):
 - `vault/{linux,windows,esxi}.yml` — Windows gooddit 제거 (사용자 명시 사내 부재)
-- `vault/redfish/{dell,hpe,lenovo,cisco,supermicro}.yml` — Dell `dell_current=root/GoodskInfra1!` 추가, Lenovo 순서 정정 (current 우선)
+- `vault/redfish/{dell,hpe,lenovo,cisco,supermicro}.yml` — Dell `dell_current=root/__REDACTED__` 추가, Lenovo 순서 정정 (current 우선)
 
 **검증 결과 8 채널/타겟**:
 
@@ -3100,7 +3140,7 @@ agent 10.100.64.154 SSH 접속 + raw facts 진단 (`tests/scripts/diag_esxi_raw.
 - **Jenkins (T11)**:
   - `Jenkinsfile`: per-stage timeout (Validate 2m / Gather 20m / Schema 2m / E2E 5m), Stage 4 `fileExists` when 제거 (mandatory), archiveArtifacts 활성
   - `Jenkinsfile_portal`: Stage 3 catchError 제거 (rule 80 R1 hard gate), Callback `error` → `unstable` (rule 31 R2)
-- **Secrets (T12)**: tests/scripts/{os_esxi_verify,identifier_verify}.sh + scripts/ai/*.py 5종 — 'Goodmit0802!' 하드코딩 13곳 제거 → 환경변수 강제 (자격증명 회전 권고)
+- **Secrets (T12)**: tests/scripts/{os_esxi_verify,identifier_verify}.sh + scripts/ai/*.py 5종 — '__REDACTED__' 하드코딩 13곳 제거 → 환경변수 강제 (자격증명 회전 권고)
 
 **검증**:
 - pytest **148/148 PASS** (이전 147/147 + remote_identifier_test.py main() guard)
@@ -3183,7 +3223,7 @@ cycle-015 Phase F (자율 매트릭스 일괄 — 사용자 "남아있는 작업
 - **F-1 Cleanup**: Jenkinsfile_grafana 삭제 + 모든 참조 정리 (rule 80/13/31/00 + JENKINS_PIPELINES + CLAUDE.md + LAB_INVENTORY + ai-context + policy + hooks). 호스트 정정 (10.100.15.32 / 10.100.15.2 / 10.100.64.120 제거 + Win Server 2022 IP 132→**10.100.64.135** 정정). 호스트 카운트 26→23.
 - **F-2 OPS-3 partial**: lab credentials BMC password가 7/9 BMC와 sync — Dell × 5 + HPE + Lenovo 모두 200 OK ServiceRoot+Systems+Managers (`bmc-auth-probe-2026-04-29.json`). Cisco 1, 3은 503/timeout (OPS-11 잔여).
 - **F-2 AI-13 Linux raw fallback**: 6/6 SSH PASS. **RHEL 8.10 Python 3.6.8 → python_incompatible** = rule 10 R4 분기 실증 (`linux-probe-2026-04-29.json`).
-- **F-2 AI-14 Browser E2E login 활성**: cloviradmin/Goodmit0802!로 Jenkins master login PASS — `test_master_login_then_dashboard[chromium]`.
+- **F-2 AI-14 Browser E2E login 활성**: cloviradmin/__REDACTED__로 Jenkins master login PASS — `test_master_login_then_dashboard[chromium]`.
 - **F-2 AI-12 Dell × 5 Round 11 endpoint coverage**: 5/5 PowerEdge R760 BIOS 2.3.5 / Xeon Silver 4510 / Systems+Storage+NIC+FW+Accounts 모두 응답 (`dell-round11-endpoint-coverage.json`).
 - **F-2 WinRM Win 2022**: 정정된 IP (10.100.64.135) administrator/NTLM PASS. OS Build 20348 / PS 5.1 / Xeon Silver 4510 / 8GB.
 - **closed (cycle-015)**: OPS-10 (firewall) / OPS-12 (Dell 32) / OPS-13 (Cisco 2) / OPS-15 (Grafana) / AI-13 / AI-14 / AI-15 (obviated)
@@ -3247,7 +3287,7 @@ cycle-012 변경 (이번 세션, 2026-04-29):
   - **schema 갱신** — `schema/sections.yml` storage/network 에 hbas/infiniband/adapters/ports/virtual_switches/portgroups/driver_map/summary 사용 가능 sub-key 명시. `schema/field_dictionary.yml` 12 entries Nice 추가 (cpu/memory/storage/network.summary, network.adapters/ports/virtual_switches/driver_map, storage.hbas/infiniband, system.runtime)
 - **검증**: 145 기존 e2e + 50 신규 fixture = 195 PASS. harness 일관성 PASS (28/43/49/9). vendor boundary PASS (rule 12 R1 nosec). field_dictionary PASS.
 - **PR**: `feature/3channel-expansion` GitHub push 완료, PR 사용자 직접 생성 (옵션 A1).
-- **잔여 사용자 작업**: (1) 평문 commit된 password 6종 회전 (Passw0rd1!/Goodmit0802!/Dellidrac1!/calvin/hpinvent1!/VMware1!), (2) `.vault_pass` 결정 → `bash scripts/bootstrap_vault_encrypt.sh`, (3) Jenkins credentials store 등록 (`ansible-vault-password` Secret File), (4) lab 검증 (P1 vendor 5종 → P2 dryrun ON Dell+HPE → 후 OFF), (5) baseline_v1/* 7개 실측 갱신 (P3/P4 schema 변경 정합).
+- **잔여 사용자 작업**: (1) 평문 commit된 password 6종 회전 (__REDACTED__/__REDACTED__/__REDACTED__/calvin/__REDACTED__/__REDACTED__), (2) `.vault_pass` 결정 → `bash scripts/bootstrap_vault_encrypt.sh`, (3) Jenkins credentials store 등록 (`ansible-vault-password` Secret File), (4) lab 검증 (P1 vendor 5종 → P2 dryrun ON Dell+HPE → 후 OFF), (5) baseline_v1/* 7개 실측 갱신 (P3/P4 schema 변경 정합).
 
 cycle-011 변경 (이전 세션):
 

@@ -88,7 +88,7 @@ bf247266 fix: Jinja2 expression 안 {# #} 주석 syntax error 정정 (cycle-014)
 
 ServiceRoot 무인증 GET = 4 vendor 모두 **HTTP 200 OK** (Redfish 서비스 정상). 인증 자격만 wrong.
 
-**해석**: cycle-012 P1 vault accounts list 도입 시 commit된 password들 (cycle-012 NEXT_ACTIONS OPS-3: Passw0rd1!/Goodmit0802!/Dellidrac1!/calvin/hpinvent1!/VMware1!)이 실 BMC와 sync 안 됨. OPS-3 회전 작업 의존.
+**해석**: cycle-012 P1 vault accounts list 도입 시 commit된 password들 (cycle-012 NEXT_ACTIONS OPS-3: __REDACTED__/__REDACTED__/__REDACTED__/calvin/__REDACTED__/__REDACTED__)이 실 BMC와 sync 안 됨. OPS-3 회전 작업 의존.
 
 ### [INFO] redfish 공통계정 자동 생성 (P2 account_service) 진입 안 함
 
@@ -127,7 +127,7 @@ ServiceRoot 무인증 GET = 4 vendor 모두 **HTTP 200 OK** (Redfish 서비스 �
 # agent 154 (cloviradmin) 에서:
 WS=/home/cloviradmin/jenkins-agent/workspace/hshwang-gather@2
 cd $WS && git fetch origin main && git reset --hard origin/main
-echo -n 'Goodmit0802!' > /tmp/.vault_pass_se && chmod 600 /tmp/.vault_pass_se
+echo -n '__REDACTED__' > /tmp/.vault_pass_se && chmod 600 /tmp/.vault_pass_se
 
 export INVENTORY_JSON='[{"ip":"10.50.11.162"},{"ip":"10.50.11.231"},{"ip":"10.50.11.232"},{"ip":"10.100.15.2"}]'
 export REPO_ROOT=$WS

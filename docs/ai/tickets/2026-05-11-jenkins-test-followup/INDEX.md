@@ -97,9 +97,9 @@ T-02 는 hook 추가 (script-only, ansible 환경 불필요).
 
 | 항목 | 값 |
 |---|---|
-| Jenkins master | `10.100.64.152:8080` (cloviradmin / Goodmit0802!) |
+| Jenkins master | `10.100.64.152:8080` (cloviradmin / __REDACTED__) |
 | 테스트 job | `hshwang-gather` (loc=git, hshwang1994 본인 job) |
-| HPE 검증 host | `10.50.11.231` (DL380 Gen11, iLO 6 v1.73, admin/VMware1!) |
+| HPE 검증 host | `10.50.11.231` (DL380 Gen11, iLO 6 v1.73, admin/__REDACTED__) |
 | 검증 fixture | `tests/fixtures/redfish/hpe_ilo6_v1_73/` (ServiceRoot + Manager + System) |
 | Branch | `main` (HEAD = `80b280be`) |
 | origin remote | github + gitlab (push 1번 = 두 곳 동시) |

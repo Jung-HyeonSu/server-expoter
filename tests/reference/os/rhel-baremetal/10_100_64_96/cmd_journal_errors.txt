@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:45:09.791484+00:00
 #
-Goodmit0802!
+__REDACTED__
 
 Dec 07 04:48:09 r760-6 kernel: x86/cpu: SGX disabled by BIOS.
 Dec 07 04:48:09 r760-6 kernel: dmar12 SVM disabled, incompatible paging mode

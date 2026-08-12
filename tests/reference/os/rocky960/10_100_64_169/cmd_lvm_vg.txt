@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:47.123543+00:00
 #
-Goodmit0802!
+__REDACTED__
   VG      #PV #LV #SN Attr   VSize   VFree  
   rl        1   2   0 wz--n-  48.41g      0 
   vg_data   1   1   0 wz--n- <50.00g <20.00g

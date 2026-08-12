@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:45:05.846451+00:00
 #
-Goodmit0802!
+__REDACTED__
 
 #
 # This file MUST be edited with the 'visudo' command as root.

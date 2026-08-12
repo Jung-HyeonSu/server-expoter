@@ -44,7 +44,7 @@ production-readiness 관점의 **edge case + cross-channel 일관성 + vendor �
 - Jenkinsfile_portal: Stage 3 catchError 제거 (rule 80 R1 — schema FAIL이 callback POST 차단 보장), Callback `error` → `unstable` (rule 31 R2 — 통보 실패가 빌드 fail 유발 금지)
 
 ### Secrets (T12)
-- tests/scripts/{os_esxi_verify,identifier_verify}.sh — 'Goodmit0802!' 13곳 환경변수화
+- tests/scripts/{os_esxi_verify,identifier_verify}.sh — '__REDACTED__' 13곳 환경변수화
 - scripts/ai/*.py 5종 — 마이그레이션 스크립트 password 제거 (`__REDACTED__` 플레이스홀더)
 - tests/scripts/remote_identifier_test.py — `SE_ANSIBLE_PASS` env var 사용 (main() 시점 검증)
 - tests/e2e/test_envelope_failure_modes.py SECRET_PATTERN은 의도된 defense (보존)
@@ -64,7 +64,7 @@ production-readiness 관점의 **edge case + cross-channel 일관성 + vendor �
 - 4 docs/ai 문서 갱신 (CURRENT_STATE / NEXT_ACTIONS / TEST_HISTORY / FAILURE_PATTERNS)
 
 ### 보존된 한계 (사용자 결정 / 외부 의존)
-1. **자격증명 git history 잔존** — 'Goodmit0802!' 이전 commits에 잔존. 회전 후 filter-branch / repo rewrite는 사용자 결정
+1. **자격증명 git history 잔존** — '__REDACTED__' 이전 commits에 잔존. 회전 후 filter-branch / repo rewrite는 사용자 결정
 2. **Supermicro vendor 0 fixture** — 3 adapter (`supermicro_bmc/x9/x11.yml`) 정의되어 있으나 실장비 검증 부재
 3. **ESXi 8.0u3 baseline 부재** — reference dump만 존재
 4. **Linux raw_fallback pytest 부재** — RHEL 8.10 (py3.6) evidence만 보유

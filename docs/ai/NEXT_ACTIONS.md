@@ -7,21 +7,41 @@
 
 ---
 
-## git Location 실장비 검증 후속 (2026-08-12)
+## 표준 비밀번호 회전 수렴 cycle 후속 (2026-08-12, 2차)
 
-> 정본: `tests/evidence/2026-08-12-git-location-live-verification.md`
+> 정본: `tests/evidence/2026-08-12-standard-password-convergence.md`,
+> `tests/evidence/2026-08-12-plaintext-secret-sanitization.md`
 
 | # | 항목 | 상태 | 내용 |
 |---|---|---|---|
-| GIT-1 | **Dell 표준 비밀번호 강도 점수 미달** | [HOLD / 운영 결정] | `Security.1.MinimumPasswordScore="Weak Protection"` 하나만 남은 강제 조건이고 길이·문자종류·정규식은 전부 비활성이다. 비밀번호를 강도 높은 값으로 바꾸거나 해당 정책을 낮추는 **운영 결정**이 필요하다. 코드로 해결하지 않는다 |
+| PWC-1 | **현재 유효 자격 6종 rotation** | [CRIT / 운영 결정] | 평문은 tracked content 에서 제거했지만 **git history 와 commit 메시지(약 13개)에는 남아 있다.** 따라서 아래는 여전히 노출된 것으로 취급해야 한다: vault master(`428829ae`, git OS/ESXi/Dell recovery 겸용 — **최우선**), chj·ich·yi HPE/Lenovo recovery(`9892c533`), git HPE/Lenovo recovery(`2b3b6862`), 전 Location Cisco recovery(`9477272a`), ich·yi Dell recovery(`f28b309b`), chj·ich·yi OS(`f3e3f831`). 영향 범위는 evidence §6.2 참조. **사용자 지시 §12 로 이번 cycle 에서 rotation 하지 않았다** |
+| PWC-2 | Git history purge | [HOLD / 운영 결정] | 사용자 지시 §13 이 자동 재작성을 금지했다. PWC-1 rotation 이 선행되면 history purge 없이도 위험이 크게 줄어든다. purge 를 택하면 두 remote(github/gitlab) 협업자 전원 재클론이 필요하다 |
+| PWC-3 | untracked 로컬 잔여물 | [LOW / 운영자] | `.vault_pass`, `vault/.lab-credentials.yml`, `tests/reference/local/*`, `__pycache__/*.pyc` 에 값이 남아 있다. `.gitignore` 대상이라 저장소에는 없지만 작업 머신 로컬에는 있다 |
+| PWC-4 | **Adapter 세대 오선택 (근본 원인)** | [MED] | Adapter 선택이 **무인증 probe** 단계라 `model`/`firmware` fact 가 비어 priority 로만 결정된다. Family 판정은 Firmware 기준으로 교정했지만 `adapter_id` 자체는 여전히 틀린다(수집 tasks 는 동일해 수집 데이터 영향 없음). 근본 해결은 **인증 후 adapter 재선택**이며 collect/normalize/vendor 표시값에 모두 영향을 주는 별도 변경이다. GIT-4 와 동일 항목 |
+| PWC-5 | HPE Repair 완주 재현 | [PENDING / 조건 부재] | iLO 쓰기 결함(비밀번호 단독 PATCH)은 실장비 통제 실험으로 확정하고 고쳤으나, **수정 후 제품 경로의 Repair 완주**는 재현하지 않았다. 계정을 다시 불일치로 만들어야 하는데 조건을 인위적으로 만들지 않았다. 다음 표준 비밀번호 회전 때 자연히 검증된다 |
+| PWC-6 | `hpe_ilo4` 쓰기 계약 미확인 | [LOW] | iLO5+ 는 `Password` 단독 PATCH 가 필수임을 실측했다. iLO4 는 lab 부재라 종전 동작을 유지했다(근거 없는 vendor 예외 금지). iLO4 장비 확보 시 동일 실험 필요 |
+| PWC-7 | Lenovo hint 우선순위 | [LOW] | Cisco 는 capability > hint 가 지켜지지만 Lenovo 분기는 `'xcc3' in hint` 를 capability 보다 먼저 본다. 현재 사고는 없으나 Cisco 와 계약이 다르다. 정합 여부 검토 필요 |
+
+---
+
+## git Location 실장비 검증 후속 (2026-08-12)
+
+> 정본: `tests/evidence/2026-08-12-git-location-live-verification.md`
+>
+> **2026-08-12 (2차) 갱신**: GIT-1(Dell HOLD) / GIT-6(HPE 2차 Write 0) / GIT-8(평문 노출)
+> 은 아래 표 이후 상태가 바뀌었다. 위 "표준 비밀번호 회전 수렴 cycle 후속" 절이 최신이다.
+
+| # | 항목 | 상태 | 내용 |
+|---|---|---|---|
+| GIT-1 | **Dell 표준 비밀번호 강도 점수 미달** | [CLOSED 2026-08-12] | `Security.1.MinimumPasswordScore="Weak Protection"` 하나만 남은 강제 조건이고 길이·문자종류·정규식은 전부 비활성이다. 비밀번호를 강도 높은 값으로 바꾸거나 해당 정책을 낮추는 **운영 결정**이 필요했다. **2026-08-12 회전된 표준 비밀번호로 1·2차 실행 모두 표준 인증 성공 + Write 0 → HOLD 해소.** BMC 정책은 건드리지 않았다. 다만 "Dell 은 선언된 규칙(길이/문자군/Regex)만으로 수용 여부를 판단할 수 없다" 는 사실은 유효하므로 향후 값 선정 시 유의 |
 | GIT-2 | **Account Create 경로 실장비 미검증** | [PENDING / 조건 부재] | git 4대 모두 표준 계정이 이미 존재해 `presence=absent` 가 발생하지 않았다. 계정을 지워 조건을 만들지 않았다. 표준 계정이 없는 신규 장비 투입 시 검증 |
 | GIT-3 | Inspur live 확인 | [LIVE TEST NOT AVAILABLE] | git 에 Inspur 장비 없음 + git Inspur Recovery Credential 미제공. 기존 vault 항목은 factory default placeholder. 다른 Location Credential 대체 사용 금지 |
 | GIT-4 | adapter 세대 오선택 2건 | [MED] | 10.100.15.34 는 iDRAC9(FW 7.10.70.00)인데 `redfish_dell_idrac10` 선택. 10.100.15.2 는 CIMC 4.1(2g)인데 `redfish_cisco_ucs_xseries` 선택. 계정 경로는 Capability 우선 판정으로 방어되지만 adapter 선택 자체는 별도 과제 |
 | GIT-5 | Dell 반복 Write 억제 | [MED] | 표준 인증이 계속 401 이면 매 실행마다 같은 PATCH 가 나간다(audit M-6, run 간 기억 없음). GIT-1 해소 전까지 Dell 대상은 dry-run 권장 |
-| GIT-6 | HPE 2차 실행 Write 0 미확인 | [LOW] | Lenovo·Cisco 는 확인했고 HPE 는 1회만 실행했다. 동일 계약이라 위험은 낮다 |
+| GIT-6 | HPE 2차 실행 Write 0 미확인 | [CLOSED 2026-08-12] | **2026-08-12 4대 전부 1·2차 Write 0 확인.** 그 과정에서 iLO 쓰기 결함(비밀번호를 다른 속성과 묶으면 조용히 버림)이 드러나 수정했다 — evidence 2026-08-12-standard-password-convergence.md §3 |
 | GIT-7 | chj / ich / yi 실장비 미검증 | [PENDING] | 이번 cycle 은 사용자 지시로 **git 만** 실장비 검증했다. 나머지 3 Location 은 Vault 값만 반영 |
 
-### GIT-8 [CRIT] 저장소에 **현재 유효한** 자격이 평문으로 남아 있다 — 사전 존재, 실측 정량화
+### GIT-8 [부분 CLOSED 2026-08-12] 저장소 평문 자격 — tracked content 정리 완료, history 잔존
 
 2026-08-12 Vault 정리 후 tracked 파일 전수 스캔 결과. **이번 cycle 이 만든 것이 아니다**
 (이번에 추가한 185 라인 중 평문 0건, 신규 문서 2종도 0건). 기존 문서·증거·캡처에 남아 있던 것이다.
@@ -39,7 +59,8 @@
 - 위 값들은 **이번에 배포한 자격과 동일**하다. 즉 저장소 읽기 권한 = 전 lab 자격 획득이다.
 - 기존 `[CRIT]` 항목(본 파일 아래쪽, `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md`)과 같은
   문제이며 이번 실측으로 **범위가 정량화**됐다.
-- **이번 작업에서 제거하지 않았다.** CLAUDE.md §12 — 사용자 요청 없이 Secret Rotation /
+- **2026-08-12 갱신: tracked content 는 전량 제거했다** (17,982 파일 전수 digest+literal 검사 0건). Secret Leak Gate `scripts/ai/verify_no_plaintext_secret.py` + `tests/secret_guard.py` 로 재발을 막는다. **남은 것은 git history 와 commit 메시지, 그리고 rotation** → 위 PWC-1 / PWC-2.
+- (종전 기록) 직전 cycle 시점에는 제거하지 않았다. CLAUDE.md §12 — 사용자 요청 없이 Secret Rotation /
   Vault Rekey / Git History Cleanup 으로 범위를 확대하지 않는다. 또한 working tree 만
   지우는 것은 git 히스토리가 남아 실효가 없다.
 - **결정 필요 (사용자)**: (a) 자격 회전 후 (b) 문서/캡처 평문 제거 (c) 히스토리 purge.
@@ -517,7 +538,7 @@
 
 | 우선 | 항목 | 분류 | 결정 주체 |
 |---|---|---|---|
-| **[CRIT]** | vault 마스터 암호(`Goodmit0802!`) + 자격 회전 + (선택) git 히스토리 purge | 보안 | **사용자** — `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md` |
+| **[CRIT]** | vault 마스터 암호(`__REDACTED__`) + 자격 회전 + (선택) git 히스토리 purge | 보안 | **사용자** — `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md` |
 | **[HIGH]** | BMC/AD lockout 회피 (detect 선인증 4-GET / OS backoff 부재 / account_service dryrun=false) | `[AUTH][LAB]` | 사용자+lab — AUDIT §1 |
 | MED | esxi vendor 정규화 substring fallback 누락 (`vendor` 필드 divergence 버그) | `[ANSIBLE]` | AUDIT §4 AR-1 |
 | MED | perf: CSUS 대표 partition 2회 fetch / firmware fetch-then-discard / SSL ctx 재생성 | `[LAB]` | AUDIT §2 |
@@ -683,7 +704,7 @@
 
 | 카테고리 | 추적 위치 |
 |---|---|
-| 보안 회전 (Goodmit0802! / vault) | archive OPS-AUDIT-1 / OPS-DELL-VAULT-1 |
+| 보안 회전 (__REDACTED__ / vault) | archive OPS-AUDIT-1 / OPS-DELL-VAULT-1 |
 | 운영팀 결정 (vault timing / repo private / dryrun OFF) | archive OPS-3 / OPS-5 / OPS-9 |
 | 실 hardware 점검 (Lenovo PSU1) | archive OPS-LENOVO-PSU1 |
 | WinRM / Win Server 2022 안정성 | archive AI-22 reopen / OPS-RESIDUAL-1 |
@@ -734,7 +755,7 @@
 
 | 우선 | 항목 | 사유 | 결정 주체 |
 |---|---|---|---|
-| HIGH | `vault/linux.yml` primary 계정 교정 | 현재 primary=`infra/infra1234` (161/165에서 인증 실패 → 매 host가 secondary fallback에 의존). 실 동작 계정은 `cloviradmin/Goodmit0802!`(secondary). primary를 실 계정으로 교체하면 host당 1차 인증실패 지연 제거. 사용자가 기대한 `admin` 계정은 vault에 부재 | **사용자** (vault 보호경로 + rule 50/27, "적용하지말고" 지시) |
+| HIGH | `vault/linux.yml` primary 계정 교정 | 현재 primary=`infra/__REDACTED__` (161/165에서 인증 실패 → 매 host가 secondary fallback에 의존). 실 동작 계정은 `cloviradmin/__REDACTED__`(secondary). primary를 실 계정으로 교체하면 host당 1차 인증실패 지연 제거. 사용자가 기대한 `admin` 계정은 vault에 부재 | **사용자** (vault 보호경로 + rule 50/27, "적용하지말고" 지시) |
 | MED | `json_only` unreachable/failed stderr 표면화 | 현재 OUTPUT 외 실패 전부 suppress → 사고 시 콘솔 무정보(이번 진단 난항의 근본). non-OUTPUT failed/unreachable을 stderr 구조화 출력(no_log 존중, stdout 계약 불변) | AI 가능(additive) — 승인 시 진행 |
 | LOW | `accounts` 빈 배열 edge case | accounts 비면 `abort if all credentials failed` skip → 본 gather task에서 unreachable 재발 가능 | AI 가능 — 별도 검토 |
 

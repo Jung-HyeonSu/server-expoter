@@ -3,8 +3,8 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:31.960986+00:00
 #
-Goodmit0802!
-Goodmit0802!
+__REDACTED__
+__REDACTED__
 apparmor module is loaded.
 119 profiles are loaded.
 24 profiles are in enforce mode.

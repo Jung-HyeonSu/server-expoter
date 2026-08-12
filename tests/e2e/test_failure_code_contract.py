@@ -21,6 +21,14 @@ import socket
 from typing import Any
 
 import pytest
+
+# 2026-08-12: 누출 가드가 검사 대상인 **진짜 비밀번호를 소스에 그대로** 적어 두고 있었다.
+#   가드 파일 자체가 누출 지점이라, 평문 대신 sha256 앞 8자리로 대조하는 공용 가드로
+#   바꾼다. 입력으로 넣던 실 자격증명도 합성 canary 로 바꾼다 (검사 의미는 동일).
+from tests.secret_guard import (  # noqa: E402
+    CANARY_PASSWORD, CANARY_RECOVERY, CANARY_TARGET, assert_no_secret,
+)
+
 import yaml
 
 from tests.e2e.test_failure_reason_contract import (
@@ -498,9 +506,11 @@ def test_auth_detail_carries_no_credentials(monkeypatch):
         pb, "http_get",
         lambda *_a, **_k: (False, "HTTP 401", {"status_code": 401, "json": None}),
     )
-    pb._try_redfish_auth("192.0.2.10", 443, "svc_admin", "Goodmit0802!", 8.0, False, result)
+    pb._try_redfish_auth("192.0.2.10", 443, "svc_admin", "zzz-canary-password-zzz", 8.0, False, result)
     blob = " ".join(str(result.get(k)) for k in ("detail", "failure_reason", "failure_code"))
-    for secret in ("Goodmit0802!", "svc_admin", "Basic ", "password="):
+    # 알려진 실 자격증명이 섞였는지 digest 로 대조한다 (평문을 저장하지 않는 가드).
+    assert_no_secret(blob, "auth detail")
+    for secret in (CANARY_PASSWORD, "svc_admin", "Basic ", "password="):
         assert secret not in blob, f"민감정보 노출: {secret!r}"
 
 

@@ -3,8 +3,8 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:28.764957+00:00
 #
-Goodmit0802!
-Goodmit0802!
+__REDACTED__
+__REDACTED__
 /etc/cron.d:
 total 20
 drwxr-xr-x   2 root root 4096 Feb 10 00:34 .

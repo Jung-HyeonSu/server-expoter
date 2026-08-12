@@ -5,7 +5,7 @@
 ## 컨텍스트 (Why)
 
 server-exporter 명세서 (cycle-016 사용자 요구사항 #2 / #3 / #4):
-- Redfish 공통계정 `infraops/Passw0rd1!` 가 모든 BMC에 존재해야 함 (provision target)
+- Redfish 공통계정 `infraops/__REDACTED__` 가 모든 BMC에 존재해야 함 (provision target)
 - 없으면 만들기 (POST AccountService 또는 Dell PATCH empty slot)
 - 있는데 사용 못 하면 (disabled / locked / password mismatch) → enable + 갱신
 

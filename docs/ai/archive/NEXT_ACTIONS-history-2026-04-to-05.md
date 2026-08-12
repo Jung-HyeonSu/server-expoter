@@ -32,7 +32,7 @@
 
 | 항목 | 분류 | 차단 사유 |
 |---|---|---|
-| **OPS-AUDIT-1** Goodmit0802! 자격증명 회전 | 사용자 결정 (보안) | 자격증명이 git history 잔존 — 회전 후 filter-branch / repo rewrite 결정 필요 |
+| **OPS-AUDIT-1** __REDACTED__ 자격증명 회전 | 사용자 결정 (보안) | 자격증명이 git history 잔존 — 회전 후 filter-branch / repo rewrite 결정 필요 |
 | **OPS-AUDIT-2** Supermicro 실장비 fixture 확보 | 외부 의존 | 3 adapter 정의 (`supermicro_bmc/x9/x11.yml`) 에 0 fixture / 0 baseline → `LAB_PENDING_MATRIX.md` Supermicro 행 참조 |
 | **OPS-AUDIT-3** ESXi 8.0u3 baseline 생성 | 외부 의존 | tests/reference/esxi/ 3종 모두 ESXi 7.0.3. 8.0u3 reference 미존재 |
 | **OPS-AUDIT-5** Cisco UCS C-series (cisco_bmc) 실장비 검증 | 외부 의존 | cisco_bmc.yml fallback adapter — TA-UNODE-G1 외 일반 CIMC 검증 필요 |
@@ -49,7 +49,7 @@
 | **OPS-HPE-REVIEW-2** Dell baseline 재검토 | 운영 작업 | `_hoist_oem_extras` 적용으로 Dell `hardware.bios_date` 채워짐. 실 Dell 검증 후 baseline 갱신 |
 | **OPS-CISCO-REVIEW-1** Cisco baseline 재수집 (10.100.15.2) | 운영 작업 | cisco-critical-review fix 5건 적용 후. dynamic 필드 (`power_consumed_watts/avg/max`, `bmc.datetime`) 정책 결정 (nullify vs realtime) 후 재캡처. evidence: `tests/evidence/2026-04-29-cisco-redfish-critical-review.md` |
 | **OPS-CISCO-REVIEW-2** Cisco baseline `data.bmc` Phase M/N 신규 8 필드 보강 | 운영 작업 | `cisco_baseline.json` `data.bmc` cycle-016 Phase M/N 이전 stale. 코드 fix 후 재수집 시 자연 반영 — OPS-CISCO-REVIEW-1 묶음 |
-| **OPS-DELL-VAULT-1** Dell BMC vault 자격증명 회전 (10.50.11.162) | 운영 작업 (보안) | vault `dell.yml` (root/GoodskInfra1!) BMC 인증 시 HTTP 401. ServiceRoot 무인증 GET 정상. BMC 자격증명 만료/잠금/변경 추정. `rotate-vault` skill |
+| **OPS-DELL-VAULT-1** Dell BMC vault 자격증명 회전 (10.50.11.162) | 운영 작업 (보안) | vault `dell.yml` (root/__REDACTED__) BMC 인증 시 HTTP 401. ServiceRoot 무인증 GET 정상. BMC 자격증명 만료/잠금/변경 추정. `rotate-vault` skill |
 | **OPS-LENOVO-PSU1** Lenovo 10.50.11.232 PSU1 hardware 점검 | 운영 작업 (실 hardware) | 회귀 검사에서 PSU1 `Health=Critical`, `InputRanges[0].OutputWattage=null`. 실 PSU 고장 또는 커넥터 분리. PSU 교체 또는 커넥터 점검 필요 |
 
 ---

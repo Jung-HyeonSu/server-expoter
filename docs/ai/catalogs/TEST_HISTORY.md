@@ -1182,9 +1182,9 @@ DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` �
     + 인증 200. **이전 not_supported 결론 정정**.
   - HPE 10.50.11.231: PATCH /Accounts/3 password → 200 (slot 3 = infraops)
   - Lenovo 10.50.11.232: PATCH /Accounts/4 password → 200 (slot 4 = infraops)
-  - 5 BMC 모두 infraops/Passw0rd1!Infra HTTP 200 통일 검증
+  - 5 BMC 모두 infraops/__REDACTED__Infra HTTP 200 통일 검증
 - vault 4종 통일: hpe / lenovo / cisco / supermicro
-  - primary password Passw0rd1! → Passw0rd1!Infra (Dell 1차 cycle 2026-05-06 와 동기)
+  - primary password __REDACTED__ → __REDACTED__Infra (Dell 1차 cycle 2026-05-06 와 동기)
 - 코드 변경: vendor='cisco' early-return 제거 + POST 변형 분기
   (Id 자동 검색 + RoleId mapping)
 - 신규 회귀 3건:
@@ -1211,7 +1211,7 @@ DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` �
   - 10.50.11.231 (HPE iLO) — 이미 infraops primary, recovery 진입 안 함
   - 10.50.11.232 (Lenovo XCC) — 이미 infraops primary
   - 10.100.15.2 (Cisco CIMC) — not_supported graceful
-- vault 갱신: `vault/redfish/dell.yml` 의 primary password Passw0rd1! → Passw0rd1!Infra (15자)
+- vault 갱신: `vault/redfish/dell.yml` 의 primary password __REDACTED__ → __REDACTED__Infra (15자)
 - Jenkins job 등록: `redfish-account-provision-verify` (10.100.64.152 master)
 - 자동화: `scripts/verify_account_provision.sh` (CLI 엔트리)
 - 정적 검증:
@@ -1648,3 +1648,40 @@ DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` �
   템플릿 추출 + Jinja 렌더로 대체했다 (실제 플레이북 실행 아님).
 - Evidence: `tests/evidence/2026-08-12-errors-message-contract.md`
 
+
+## 2026-08-12 (2차) — Global Standard Password 회전 수렴 + 평문 Secret 정리
+
+- 기준 Commit: `26394474`
+- 실행: `pytest` 를 디렉터리 분리 호출 (conftest 모듈명 충돌 — `Jenkinsfile:234-236` 과 동일 이유)
+
+| 대상 | 결과 |
+|---|---|
+| `tests/unit` + `tests/regression` | **2007 passed, 7 xfailed** (직전 1979 → +28) |
+| `tests/e2e` | **590 passed, 6 skipped** |
+| `tests/integration` | **243 passed, 4 skipped** |
+| 합계 | **2840 passed** |
+
+- 신설: `tests/unit/test_account_password_isolation_and_verify_pacing.py` (22) ·
+  `tests/unit/test_secret_guard.py` (16) · `tests/secret_guard.py` (공용 가드 모듈)
+- 보강: `test_account_family_and_write_contract.py` +7 (Dell 세대 4 / Cisco capability-vs-hint 3) ·
+  `test_redfish_standard_recovery_contract.py` +1 (미등록 se_location 차단 절)
+- 의도된 기대값 변경 3건 (회귀 아님):
+  - `test_dell_200_with_locked_rejection_triggers_retry_without_locked` — `Locked` 가 이제
+    **실제로 잠긴 계정에만** 실리므로, 같은 계약을 잠긴 계정 조건에서 검증하도록 재앵커
+  - `test_policy_never_records_password_length` / `test_policy_fields_parse_from_vendor_fixture` —
+    policy 에 `auth_failure_delay_seconds` / `auth_failures_before_delay` 추가
+  - `test_dell_idrac10_protects_reserved_root_slot` — 세대 근거를 adapter hint → Firmware 로 재앵커
+- 게이트 전량 통과:
+  - `ansible-playbook --syntax-check` 3채널 (WSL Ubuntu / ansible-core 2.20.7) — **실행함**
+  - `python -m py_compile` (redfish_gather / precheck_bundle / secret_guard / 신규 게이트)
+  - `verify_vendor_boundary.py` exit 0 · `verify_harness_consistency.py` exit 0
+    (rules 28 / skills 51 / agents 60 / policies 10)
+  - `output_schema_drift_check.py` exit 0 (sections=11 fd_paths=176)
+  - `tests/validate_field_dictionary.py` PASS (10 checks / 8 passed / 0 failed)
+  - `scripts/ai/vault_decrypt_check.py` **[PASS] 전량 통과** (49 vault)
+  - `scripts/ai/verify_no_plaintext_secret.py --all --vault-password-file` →
+    **digest 0건 / literal 0건** (tracked 17,982)
+- 실장비: git Location Redfish 4대 × 2회 실행. 전부 `status=success` / `used_role=primary` /
+  **Account Write 0**. Lenovo 에서 **Repair 경로 첫 실장비 완주** 확인.
+- Evidence: `tests/evidence/2026-08-12-standard-password-convergence.md`,
+  `tests/evidence/2026-08-12-plaintext-secret-sanitization.md`

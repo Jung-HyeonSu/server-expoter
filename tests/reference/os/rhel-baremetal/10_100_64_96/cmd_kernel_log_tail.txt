@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:45:02.237392+00:00
 #
-Goodmit0802!
+__REDACTED__
 
 [Wed Apr 22 12:46:00 2026] audit: type=1400 audit(1776861960.229:14460): apparmor="DENIED" operation="mknod" class="file" profile="ubuntu_pro_esm_cache" name="/usr/lib/python3/dist-packages/uaclient/__pycache__/secret_manager.cpython-312.pyc.140092879738928" pid=809316 comm="python3" requested_mask="c" denied_mask="c" fsuid=0 ouid=0
 [Wed Apr 22 12:46:00 2026] audit: type=1400 audit(1776861960.234:14461): apparmor="DENIED" operation="mknod" class="file" profile="ubuntu_pro_esm_cache" name="/usr/lib/python3/dist-packages/uaclient/__pycache__/system.cpython-312.pyc.140092879740976" pid=809316 comm="python3" requested_mask="c" denied_mask="c" fsuid=0 ouid=0

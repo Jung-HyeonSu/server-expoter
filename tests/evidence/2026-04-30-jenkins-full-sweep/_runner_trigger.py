@@ -23,7 +23,7 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
 
 MASTER = "10.100.64.152"
 SSH_USER = "cloviradmin"
-SSH_PASS = os.environ.get("LAB_SSH_PASS", "Goodmit0802!")
+SSH_PASS = os.environ.get("LAB_SSH_PASS", "__REDACTED__")
 JK_URL = "http://localhost:8080"
 JK_USER = "cloviradmin"
 JK_PASS = SSH_PASS

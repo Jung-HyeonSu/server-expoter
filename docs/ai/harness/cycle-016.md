@@ -17,7 +17,7 @@ cycle-015 가 lab 권한 정책 + Browser E2E 만 다뤘다면, cycle-016 은 **
 | # | 요구사항 | 상태 | 검증 방법 |
 |---|---|---|---|
 | 1 | JSON 항상 출력 (성공/실패 무관) | ✅ | 빌드 #39 (Dell BMC auth fail) — JSON envelope 13 필드 정상, status=failed |
-| 2 | Redfish 공통계정 (`infraops/Passw0rd1!`) | ✅ | `vault/redfish/*.yml` accounts[] 구조 기존 구현 검증 |
+| 2 | Redfish 공통계정 (`infraops/__REDACTED__`) | ✅ | `vault/redfish/*.yml` accounts[] 구조 기존 구현 검증 |
 | 3 | Redfish recovery 후보 fallback | ✅ | `try_one_account.yml` 순차 시도 |
 | 4 | Redfish AccountService 공통계정 생성 | ✅ | `redfish_gather.py` L1235-1369 (벤더별 slot/POST 분기) |
 | 5 | OS/ESXi 다중 계정 fallback | ✅ | 빌드 #44 — `attempted_count=2, used_label=linux_legacy, fallback_used=false` 노출 |
@@ -262,7 +262,7 @@ lab inventory 의 모든 호스트 (Jenkins/agent 제외, 19대) 일괄 빌드 �
 ## Phase K — Cisco IP 매핑 정정 (사용자 직접 정정)
 
 ### 사용자 정정
-> "10.100.15.1, 3 이 제거된거고 10.100.15.2 (cisco) (admin / Goodmit1!)가 붙을 수 있는장비이다"
+> "10.100.15.1, 3 이 제거된거고 10.100.15.2 (cisco) (admin / __REDACTED__)가 붙을 수 있는장비이다"
 
 cycle-015 의 Cisco IP 매핑이 사실과 반대로 기록됨:
 - 잘못된 기록: 1/3 = cisco (작동), 2 = 부재
@@ -290,7 +290,7 @@ storage.summary: {
 auth: {attempted_count:2, used_label:"lab_cisco_admin", used_role:"recovery", fallback_used:true}
 ```
 
-핵심 검증: Cisco CIMC (TA-UNODE-G1) 가 vault 에 등록된 admin/Goodmit1! 로 정상 인증, 1TB DDR4 + 18.2TB multi-tier SSD SATA 모두 grouping 정상 산출.
+핵심 검증: Cisco CIMC (TA-UNODE-G1) 가 vault 에 등록된 admin/__REDACTED__ 로 정상 인증, 1TB DDR4 + 18.2TB multi-tier SSD SATA 모두 grouping 정상 산출.
 
 ### 최종 lab 가용 매트릭스 (Cisco IP 정정 반영)
 

@@ -634,7 +634,7 @@ server-exporter envelope: `data.bmc.oem.{idrac_ipmi_version, idrac_last_inventor
 | POST /Accounts (표준 body) | HTTP 400 | 'Id' 필드 1-15 필수 (vendor-specific) |
 | POST /Accounts (Id='2' + RoleId='Administrator') | HTTP 400 | 'Administrator' Cisco enum 거부 |
 | POST /Accounts (Id='2' + RoleId='admin') | **HTTP 201** | 정상 생성 |
-| auth as new infraops/Passw0rd1!Infra | HTTP 200 | 인증 통과 |
+| auth as new infraops/__REDACTED__Infra | HTTP 200 | 인증 통과 |
 | GET /AccountService/Roles | 200 + admin/user/readonly/SNMPOnly | Cisco enum |
 
 ### F50 server-exporter 대응
@@ -645,14 +645,14 @@ server-exporter envelope: `data.bmc.oem.{idrac_ipmi_version, idrac_last_inventor
 
 ### infraops 공통계정 password 통일 (사용자 명시)
 
-5 vault 모두 `Passw0rd1!Infra` (15자, Dell Strengthen Policy 호환):
+5 vault 모두 `__REDACTED__Infra` (15자, Dell Strengthen Policy 호환):
 - vault/redfish/dell.yml (cycle 2026-05-06 1차 갱신)
 - vault/redfish/hpe.yml (cycle 2026-05-06 2차)
 - vault/redfish/lenovo.yml (cycle 2026-05-06 2차)
 - vault/redfish/cisco.yml (cycle 2026-05-06 2차)
 - vault/redfish/supermicro.yml (cycle 2026-05-06 2차)
 
-5 BMC 모두 infraops/Passw0rd1!Infra HTTP 200 검증 완료.
+5 BMC 모두 infraops/__REDACTED__Infra HTTP 200 검증 완료.
 
 ---
 
@@ -679,7 +679,7 @@ server-exporter envelope: `data.bmc.oem.{idrac_ipmi_version, idrac_last_inventor
 - `account_service_find_empty_slot()` 에 `skip_slot_ids={'1'}` 적용 (Dell 한정)
 - Dell PATCH 후 `_get('Systems', target_user, target_pass)` 로 실 인증 verify
 - silent fail 감지 시 다음 빈 슬롯으로 자동 fallback (최대 3 슬롯)
-- vault `Passw0rd1!` (10자) → `Passw0rd1!Infra` (15자) 강화
+- vault `__REDACTED__` (10자) → `__REDACTED__Infra` (15자) 강화
 
 ### 외부 계약 변동 trigger
 
@@ -1266,3 +1266,77 @@ cycle-015 첫 연결성 검증에서 사용자 라벨 vs 실 Manufacturer drift 
 - `docs/ai/references/python/pyvmomi.md`
 - `docs/ai/references/vmware/community-vmware-modules.md`
 - `.claude/ai-context/external/integration.md`
+
+---
+
+## 2026-08-12 (2차) — 실장비 통제 실험으로 확정한 벤더 쓰기 계약
+
+정본: `tests/evidence/2026-08-12-standard-password-convergence.md`
+
+### HPE iLO — `Password` 는 반드시 **단독 PATCH** (실측 확정)
+
+- 대상: `10.50.11.231` / iLO 6 / ProLiant DL380 Gen11 / Redfish 1.20.0 /
+  `#AccountService.v1_15_0` / `#ManagerAccount.v1_12_1`
+- source: 사이트 실측 (통제 실험). 벤더 문서에 이 동작에 대한 기술 없음.
+
+| PATCH 본문 | 응답 |
+|---|---|
+| `{Password:<길이위반>}` | HTTP **400** `iLO.2.36.InvalidPasswordLength` |
+| `{Password:<길이위반>, Enabled, RoleId}` | HTTP **200** `Base.1.19.AccountModified` |
+| `{Enabled, RoleId}` (Password 없음) | HTTP **200** `Base.1.19.AccountModified` |
+| `{Password, Enabled, Locked, RoleId}` | HTTP **400** `iLO.2.36.PropertyNotWritableOrUnknown ['Locked']` |
+| `{Password}` (정상 값) | HTTP **200** → 표준 자격 재인증 성공 |
+
+- **계약 1**: iLO 는 `Password` 가 다른 속성과 함께 오면 **검사도 적용도 하지 않고 버린다.**
+  같은 잘못된 값이 단독일 때는 400 으로 걸리고 묶이면 200 으로 통과한다.
+- **계약 2**: `Base.1.19.AccountModified` 는 **비밀번호 적용의 증거가 아니다.** 아무 속성도
+  바뀌지 않는 본문도 같은 메시지를 준다. 응답만으로는 성공과 구분할 수 없다
+  → 재인증 검증이 유일한 판정 수단이다.
+- **계약 3**: `Locked` 는 iLO ManagerAccount 에 **존재하지 않는 속성**이라 실으면 요청
+  전체가 400 이 된다 (부분 적용 아님).
+- 반영: `_ACCOUNT_FAMILIES['hpe_ilo5plus'].isolated_write_patch = True`, `evidence: proven`.
+- **iLO4 는 미확인** (lab 부재) — 근거 없는 vendor 예외를 넣지 않기 위해 종전 동작 유지.
+
+### HPE iLO — 인증 실패 패널티를 장비가 선언한다
+
+```
+Oem.Hpe.AuthFailuresBeforeDelay     = 1
+Oem.Hpe.AuthFailureDelayTimeSeconds = 10
+Oem.Hpe.AuthFailureLoggingThreshold = 3
+Oem.Hpe.EnforcePasswordComplexity   = False
+MinPasswordLength                   = 8
+```
+
+**첫 실패 직후부터** 그 계정의 인증이 10초간 막힌다. 표준 인증 1회 실패 후 복구하는
+흐름에서는 패널티가 이미 켜져 있으므로, 고정 6초 안의 재인증은 비밀번호를 옳게 썼어도
+전부 401 이다. → 재인증 확인 간격을 장비 선언값에서 끌어온다(`account_verify_delays`).
+표준 AccountService 에는 해당 항목이 없어 벤더가 Oem 에 둔다. 코드는 **namespace 이름을
+보지 않고 키 이름(`AuthFailureDelayTimeSeconds`)으로만** 읽는다 (rule 12 R1).
+
+### Dell iDRAC — 선언된 규칙만으로 비밀번호 수용 여부를 알 수 없다
+
+- 대상: `10.100.15.34` / iDRAC9 / PowerEdge R760 (16G) / FW `7.10.70.00` / Redfish 1.20.1
+- 읽을 수 있는 정책은 전부 허용적이었다: `MinPasswordLength=0`, `MaxPasswordLength=127`,
+  `Security.1.PasswordRequire*` 전부 Disabled, Regex 빈 값.
+- 그럼에도 특정 값이 "Security Strengthen Policy" 를 이유로 거부됐다. 활성 제약은
+  `Security.1.MinimumPasswordScore = "Weak Protection"` 하나뿐이며, Dell 은 그 점수
+  산출 알고리즘도 사전 검증 endpoint 도 노출하지 않는다.
+- 회전된 값은 수용됐다(1·2차 실행 표준 인증 성공). **즉 값에 따라 재발할 수 있다.**
+- 계약: Dell 대상 비밀번호는 선언된 규칙 통과만으로 안전하다고 볼 수 없고, 거부는
+  **쓰기 응답으로만** 확정된다.
+
+### Cisco CIMC — Roles 어휘가 RoleId 계약이다 (재확인)
+
+- 대상: `10.100.15.2` / TA-UNODE-G1 / `#AccountService.v1_6_0` / Redfish 1.2.0
+- `Roles`: `admin` / `user` / `readonly` / `SNMPOnly` — **`Administrator` 없음**
+- `MinPasswordLength=1`, `MaxPasswordLength=20`, ETag 미제공, `Locked` 속성 없음
+- Adapter 가 `redfish_cisco_ucs_xseries` 로 오선택돼도 Family/RoleId 는 이 어휘로
+  옳게 결정된다 (`cisco_cimc_collection_post_id` / `admin`). 회귀 테스트 3건으로 고정.
+
+### Lenovo XCC — `Locked` 는 노출하지만 read-only
+
+- 대상: `10.50.11.232` / XCC / `#AccountService.v1_10_0` / Redfish 1.15.0
+- `Locked=false` 를 **노출은 하지만** PATCH 로 설정하면 거부된다.
+  `MaxPasswordLength=32`, ETag 제공(strong).
+- 비밀번호를 다른 속성과 함께 보내는 것은 정상 동작한다 (HPE 와 반대) — 오히려 단독
+  PATCH 는 과거 권한 cache 손상 사례가 있어 묶어서 보낸다.

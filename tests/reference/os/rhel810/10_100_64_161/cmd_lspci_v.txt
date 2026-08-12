@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:43:10.318665+00:00
 #
-Goodmit0802!
+__REDACTED__
 00:00.0 Host bridge: Intel Corporation 440BX/ZX/DX - 82443BX/ZX/DX Host bridge (rev 01)
 	Subsystem: VMware Virtual Machine Chipset
 	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-

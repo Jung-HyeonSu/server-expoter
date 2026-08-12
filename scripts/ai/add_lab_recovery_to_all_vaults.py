@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""cycle-016 후속 — 모든 redfish vault + linux/windows/esxi vault 에 lab recovery 추가.
+"""[DEPRECATED 2026-08-12] 평문 자격증명을 담고 있어 환경변수 기반으로 바꿨다.
+   대상 경로(vault/redfish/*.yml)는 flat vault 제거(adc99570) 로 더는 존재하지 않는다.
+   실행 전 SE_LAB_RECOVERY_PASS 를 설정해야 한다.
+
+cycle-016 후속 — 모든 redfish vault + linux/windows/esxi vault 에 lab recovery 추가.
 
 기존 add_lab_recovery_to_dell_vault.py 의 일반화. vault/.lab-credentials.yml
 에 정의된 lab 자격증명을 각 vault 의 accounts[] 에 recovery role 로 주입.
@@ -9,6 +13,7 @@ agent 154 SSH → ansible-vault decrypt → accounts list 끝에 새 entry appen
 Idempotent: lab_* label 이 있으면 skip.
 """
 from __future__ import annotations
+import os
 import sys
 import paramiko
 
@@ -20,13 +25,13 @@ WS = '/home/cloviradmin/jenkins-agent/workspace/hshwang-gather'
 # 각 vault 에 추가할 lab recovery 자격
 TARGETS: list[tuple[str, list[dict]]] = [
     ('vault/redfish/hpe.yml', [
-        {'username': 'admin', 'password': 'VMware1!', 'label': 'lab_hpe_admin', 'role': 'recovery'},
+        {'username': 'admin', 'password': os.environ.get('SE_LAB_RECOVERY_PASS', ''), 'label': 'lab_hpe_admin', 'role': 'recovery'},
     ]),
     ('vault/redfish/lenovo.yml', [
-        {'username': 'USERID', 'password': 'VMware1!', 'label': 'lab_lenovo_userid', 'role': 'recovery'},
+        {'username': 'USERID', 'password': os.environ.get('SE_LAB_RECOVERY_PASS', ''), 'label': 'lab_lenovo_userid', 'role': 'recovery'},
     ]),
     ('vault/redfish/cisco.yml', [
-        {'username': 'admin', 'password': 'Goodmit1!', 'label': 'lab_cisco_admin', 'role': 'recovery'},
+        {'username': 'admin', 'password': os.environ.get('SE_LAB_RECOVERY_PASS', ''), 'label': 'lab_cisco_admin', 'role': 'recovery'},
     ]),
 ]
 

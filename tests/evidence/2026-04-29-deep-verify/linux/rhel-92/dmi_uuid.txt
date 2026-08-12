@@ -1,4 +1,4 @@
-# cmd: echo Goodmit0802! | sudo -S dmidecode -s system-uuid 2>&1
+# cmd: echo __REDACTED__ | sudo -S dmidecode -s system-uuid 2>&1
 # rc: 0
 898f0442-6209-33bd-0e91-3b4463035ef8
 

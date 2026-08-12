@@ -35,7 +35,7 @@ ip=10.50.11.231 vendor=hpe adapter=redfish_hpe_ilo7 sections=8/10 status=success
 
 ## 검증 근거
 
-직전 세션 무인증 curl (`https://10.50.11.231/redfish/v1/` admin/VMware1! 미사용):
+직전 세션 무인증 curl (`https://10.50.11.231/redfish/v1/` admin/__REDACTED__ 미사용):
 
 ```
 ServiceRoot:

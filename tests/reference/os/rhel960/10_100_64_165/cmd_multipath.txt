@@ -6,5 +6,5 @@
 1663946.497332 | /etc/multipath.conf does not exist, blacklisting all devices.
 1663946.497383 | You can run "/sbin/mpathconf --enable" to create
 1663946.497395 | /etc/multipath.conf. See man mpathconf(8) for more details
-Goodmit0802!
+__REDACTED__
 1663946.509617 | DM multipath kernel driver not loaded

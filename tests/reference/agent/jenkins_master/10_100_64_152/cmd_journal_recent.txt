@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:47:33.898694+00:00
 #
-Goodmit0802!
+__REDACTED__
 
 Mar 18 17:57:05 jenkins-master-ops kernel: ITS: WARNING: ITS mitigation depends on retpoline and rethunk support
 Mar 18 17:57:51 jenkins-master-ops kernel: piix4_smbus 0000:00:07.3: SMBus Host Controller not enabled!

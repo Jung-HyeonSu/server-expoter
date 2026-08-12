@@ -3,7 +3,7 @@
 # requires_root: True
 # fetched: 2026-04-28T06:43:08.393050+00:00
 #
-Goodmit0802!
+__REDACTED__
 Chain INPUT (policy ACCEPT 134K packets, 28M bytes)
  pkts bytes target     prot opt in     out     source               destination         
  134K   28M LIBVIRT_INP  all  --  *      *       0.0.0.0/0            0.0.0.0/0           

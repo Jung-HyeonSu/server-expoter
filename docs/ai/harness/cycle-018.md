@@ -38,7 +38,7 @@ drift 4건 + 부수 2건에 대한 diff-수준 명세 작성. 라인 번호 일�
 ### Stage 3 — Reviewer (자가 승인 금지)
 
 architect 명세 비판 검수:
-- **CRITICAL 발견**: `scripts/ai/vault_decrypt_check.py:97` 하드코딩 password "Goodmit0802!" — NEXT_ACTIONS OPS-AUDIT-1 (자격증명 회전 보류)과 직결. "그대로 add" 옵션 REJECT
+- **CRITICAL 발견**: `scripts/ai/vault_decrypt_check.py:97` 하드코딩 password "__REDACTED__" — NEXT_ACTIONS OPS-AUDIT-1 (자격증명 회전 보류)과 직결. "그대로 add" 옵션 REJECT
 - 라인 번호 정정 반영
 - Drift 2 분류 체계 (Must/Nice/Skip) 유지 여부 → 메인이 실측으로 확인 (must=39, nice=20, skip=6 분포 INTACT)
 
@@ -104,7 +104,7 @@ ADR 불필요 — rule 70 R8 trigger 미해당 (rule 본문 의미 변경 0 / �
 - F-CYCLE-018-5: untracked 로그 9건 + vault_decrypt_check.py → `.gitignore`로 영구 ignore
 
 ### 후속 (외부 의존, AI 자체 불가)
-- OPS-AUDIT-1: Goodmit0802! 자격증명 회전 — vault_decrypt_check.py에 잔재. 회전 후 fallback 평문 제거 권장
+- OPS-AUDIT-1: __REDACTED__ 자격증명 회전 — vault_decrypt_check.py에 잔재. 회전 후 fallback 평문 제거 권장
 - (기존 NEXT_ACTIONS P2/P3 잔존 — 변동 없음)
 
 ## 정본 reference 갱신

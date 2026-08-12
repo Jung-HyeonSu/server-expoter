@@ -51,13 +51,13 @@ cycle-014에서 4 vendor BMC 모두 401이었음. cycle-015 lab credentials의 p
 
 | Vendor | IP | ServiceRoot | Systems | Managers | Note |
 |---|---|---|---|---|---|
-| Dell | 10.100.15.27 | 200 | 200 | 200 | iDRAC9 (Goodmit0802!) |
+| Dell | 10.100.15.27 | 200 | 200 | 200 | iDRAC9 (__REDACTED__) |
 | Dell | 10.100.15.28 | 200 | 200 | 200 | iDRAC9 |
 | Dell | 10.100.15.31 | 200 | 200 | 200 | iDRAC9 |
 | Dell | 10.100.15.33 | 200 | 200 | 200 | iDRAC9 (OS=10.100.64.96) |
 | Dell | 10.100.15.34 | 200 | 200 | 200 | iDRAC9 |
-| HPE | 10.50.11.231 | 200 | 200 | 200 | ProLiant DL380 Gen11 (VMware1!) |
-| Lenovo | 10.50.11.232 | 200 | 200 | 200 | XCC (VMware1!) |
+| HPE | 10.50.11.231 | 200 | 200 | 200 | ProLiant DL380 Gen11 (__REDACTED__) |
+| Lenovo | 10.50.11.232 | 200 | 200 | 200 | XCC (__REDACTED__) |
 | Cisco | 10.100.15.1 | 503 | 502 | 502 | Bad Gateway — OPS-11 |
 | Cisco | 10.100.15.3 | -1 | -1 | -1 | URLError — OPS-11 |
 
@@ -87,7 +87,7 @@ raw fallback 의존 프리미티브 모두 가용:
 ### [PASS] WinRM Win Server 2022 (정정된 IP)
 
 - 10.100.64.135 (정정 후) WinRM 5985 OPEN
-- administrator/Goodmit0802! NTLM 인증 PASS
+- administrator/__REDACTED__ NTLM 인증 PASS
 - Get-CimInstance / Get-NetAdapter / $PSVersionTable 모두 응답
 - OS: Microsoft Windows Server 2022 Standard Evaluation build 20348
 - PS: 5.1.20348.558

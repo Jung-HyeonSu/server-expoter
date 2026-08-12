@@ -81,7 +81,7 @@ source /opt/ansible-env/bin/activate
 # inventory 작성 (또는 기존 사용)
 cat > /tmp/win.ini << 'EOF'
 [win]
-10.100.64.120 ansible_user=administrator ansible_password=Goodmit0802! ansible_connection=winrm ansible_winrm_server_cert_validation=ignore ansible_winrm_transport=ntlm
+10.100.64.120 ansible_user=administrator ansible_password=__REDACTED__ ansible_connection=winrm ansible_winrm_server_cert_validation=ignore ansible_winrm_transport=ntlm
 EOF
 
 # setup module 통한 수집

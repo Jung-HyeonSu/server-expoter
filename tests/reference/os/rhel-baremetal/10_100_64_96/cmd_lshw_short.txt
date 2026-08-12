@@ -3,9 +3,102 @@
 # requires_root: True
 # fetched: 2026-04-28T06:44:58.625427+00:00
 #
-Goodmit0802!
+__REDACTED__
 
-DMI   SMP   PA-RISC       device-tree           SPD   memory      /proc/cpuinfo             CPUID     PCI (sysfs)           ISA PnP       PnP (sysfs)           PCMCIA      PCMCIA      Virtual I/O (VIRTIO) devices                            IBM Virtual I/O (VIO)                     kernel device tree (sysfs)                          USB   IDE   SCSI    NVMe    MMC   sound     graphics        input     S/390 devices             Network interfaces                  Framebuffer devices                   Display       CPUFreq       ABI   H/W path          Device         Class          Description
+
+
+DMI
+
+   
+SMP
+
+   
+PA-RISC
+
+       
+device-tree
+
+           
+SPD
+
+   
+memory
+
+      
+/proc/cpuinfo
+
+             
+CPUID
+
+     
+PCI (sysfs)
+
+           
+ISA PnP
+
+       
+PnP (sysfs)
+
+           
+PCMCIA
+
+      
+PCMCIA
+
+      
+Virtual I/O (VIRTIO) devices
+
+                            
+IBM Virtual I/O (VIO)
+
+                     
+kernel device tree (sysfs)
+
+                          
+USB
+
+   
+IDE
+
+   
+SCSI
+
+    
+NVMe
+
+    
+MMC
+
+   
+sound
+
+     
+graphics
+
+        
+input
+
+     
+S/390 devices
+
+             
+Network interfaces
+
+                  
+Framebuffer devices
+
+                   
+Display
+
+       
+CPUFreq
+
+       
+ABI
+
+   
+
+H/W path          Device         Class          Description
 ===========================================================
                                  system         PowerEdge R760 (SKU=0A6B;ModelNa
 /0                               bus            0024FG

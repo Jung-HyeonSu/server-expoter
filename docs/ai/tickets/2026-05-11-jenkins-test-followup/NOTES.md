@@ -9,7 +9,7 @@
 | TCP/443 | OK (`http_code=503, time=1.5s`) |
 | Redfish API | **HTTP 503 Service Unavailable** |
 | 인증 | 시도 불가 (503 응답으로 인증 단계 진입 불가) |
-| 사용자 제공 자격증명 | admin / Goodmit1! (검증 못 함) |
+| 사용자 제공 자격증명 | admin / __REDACTED__ (검증 못 함) |
 
 **증상 해석**: BMC TCP 포트 응답하지만 Redfish 서비스가 down 또는 busy 상태. BMC 재부팅 또는 Redfish 서비스 재시작 필요 가능.
 

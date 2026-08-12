@@ -25,7 +25,8 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
 
 AGENT_HOST = os.environ.get("SE_AGENT_HOST", "10.100.64.154")
 AGENT_USER = os.environ.get("SE_AGENT_USER", "cloviradmin")
-AGENT_PASS = os.environ.get("SE_AGENT_PASS", "Goodmit0802!")
+# 2026-08-12: 평문 기본값 제거. 자격증명은 환경변수로만 받는다.
+AGENT_PASS = os.environ.get("SE_AGENT_PASS", "")
 AGENT_WS = os.environ.get(
     "SE_AGENT_WORKSPACE", "/home/cloviradmin/jenkins-agent/workspace/hshwang-gather"
 )
@@ -33,6 +34,9 @@ BRANCH = os.environ.get("SE_BRANCH", "fix/output-quality-99bugs-2026-04-29")
 
 
 def _client() -> paramiko.SSHClient:
+    if not AGENT_PASS:
+        raise SystemExit(
+            'SE_AGENT_PASS 환경변수가 필요합니다 (저장소에 자격증명을 두지 않습니다).')
     c = paramiko.SSHClient()
     c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     c.connect(

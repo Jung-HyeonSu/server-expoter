@@ -9,7 +9,7 @@
 - AI에게 모든 권한 (하네스 + 실 장비)
 - 하네스 차단 시 하네스 자체 수정
 - e2e Chrome 자동화 가능
-- Jenkins master 152/153 + agent 154/155 자격 (cloviradmin / Goodmit0802!)
+- Jenkins master 152/153 + agent 154/155 자격 (cloviradmin / __REDACTED__)
 - "벤더당 1개씩 검증 필요" → 4 vendor BMC (Dell/HPE/Lenovo/Cisco) — Supermicro baseline 부재로 별도 cycle
 
 cycle-013 종료 후 cycle-012 P2 redfish 공통계정 자동 생성 코드 (account_service_provision)의 실 BMC 검증.
@@ -64,7 +64,7 @@ curl HTTP code 검증 (자격 transcript 노출 0):
 - **vault primary (infraops)**: 4 vendor 모두 HTTP 401
 - **vault recovery (USERID/root/admin)**: 4 vendor 모두 HTTP 401
 
-= cycle-012 P1 vault commit 시점 평문 password 6종 (`Passw0rd1!`, `Goodmit0802!`, `Dellidrac1!`, `calvin`, `hpinvent1!`, `VMware1!`)이 실 BMC와 sync 안 됨. **OPS-3 회전 매트릭스 의존**.
+= cycle-012 P1 vault commit 시점 평문 password 6종 (`__REDACTED__`, `__REDACTED__`, `__REDACTED__`, `calvin`, `__REDACTED__`, `__REDACTED__`)이 실 BMC와 sync 안 됨. **OPS-3 회전 매트릭스 의존**.
 
 ### Phase 5 — redfish 공통계정 자동 생성 미진입 (의도된 동작)
 
