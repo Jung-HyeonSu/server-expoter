@@ -73,16 +73,75 @@ def test_family_is_deterministic_and_defaults_to_generic():
     assert rg.resolve_account_family("no_such_vendor", d, None)[0]["id"] == fam["id"]
 
 
+def _dell_mgr(firmware, model):
+    return {"firmware_version": firmware, "model": model, "manager_type": "BMC"}
+
+
 def test_dell_idrac10_protects_reserved_root_slot():
     """iDRAC10 은 ID 1(IPMI anonymous) 뿐 아니라 ID 2(default root)도 예약이다.
 
     source: dell.com/.../idrac10_1.20.xx_ug/configuring-local-users
+
+    2026-08-12: 세대 근거를 adapter hint 가 아니라 **Firmware** 로 고정했으므로
+    이 테스트도 장비가 주는 값으로 다시 앵커한다 (iDRAC10 = 1.x, iDRAC9 = 4.x~7.x).
     """
-    fam, _ = rg.resolve_account_family("dell", _disc(_slots(16)), "redfish_dell_idrac10")
+    fam, _ = rg.resolve_account_family(
+        "dell", _disc(_slots(16), manager=_dell_mgr("1.20.55.10", "17G Monolithic")), None)
     assert fam["id"] == "dell_idrac10_slot_patch"
     assert set(fam["reserved_slot_ids"]) == {"1", "2"}
-    old, _ = rg.resolve_account_family("dell", _disc(_slots(16)), "redfish_dell_idrac9")
+    old, _ = rg.resolve_account_family(
+        "dell", _disc(_slots(16), manager=_dell_mgr("7.10.70.00", "16G Monolithic")), None)
     assert set(old["reserved_slot_ids"]) == {"1"}
+
+
+def test_dell_generation_comes_from_firmware_not_adapter_hint():
+    """실장비 회귀 (git 10.100.15.34, 2026-08-12).
+
+    실제는 iDRAC9 / PowerEdge R760 / FW 7.10.70.00 인데 Adapter 가
+    redfish_dell_idrac10 을 골랐고(무인증 probe 라 model/firmware fact 가 비어
+    priority 만으로 결정됨), 그 adapter_id 가 그대로 Family 세대 근거로 쓰여
+    dell_idrac10_slot_patch 가 선택됐다. 예약 슬롯이 {1} 이 아니라 {1,2} 가 되어
+    **쓰기 대상 슬롯 URI 가 달라진다** (이 장비에선 slot 2 를 root 가 써서 가려졌을 뿐).
+    """
+    disc = _disc(_slots(16), manager=_dell_mgr("7.10.70.00", "16G Monolithic"))
+    fam, reasons = rg.resolve_account_family("dell", disc, "redfish_dell_idrac10")
+    assert fam["id"] == "dell_slot_patch", "adapter hint 가 Firmware 를 이겼다"
+    assert set(fam["reserved_slot_ids"]) == {"1"}
+    assert fam["evidence"] == "proven"
+    assert any("fw_major=7" in r for r in reasons), f"세대 근거가 안 남았다: {reasons}"
+
+
+def test_dell_idrac10_detected_from_firmware_even_with_idrac9_hint():
+    """반대 방향도 성립해야 한다 — hint 가 idrac9 여도 Firmware 1.x 면 iDRAC10."""
+    disc = _disc(_slots(16), manager=_dell_mgr("1.20.55.10", "17G Monolithic"))
+    fam, _ = rg.resolve_account_family("dell", disc, "redfish_dell_idrac9")
+    assert fam["id"] == "dell_idrac10_slot_patch"
+    assert set(fam["reserved_slot_ids"]) == {"1", "2"}
+
+
+def test_dell_falls_back_to_hint_only_when_device_gives_no_generation_signal():
+    """Firmware/Model 을 못 읽으면 그때만 hint 를 쓴다 (기존 동작 유지 — 회귀 0)."""
+    disc = _disc(_slots(16))
+    assert rg.resolve_account_family("dell", disc, "redfish_dell_idrac10")[0]["id"] \
+        == "dell_idrac10_slot_patch"
+    assert rg.resolve_account_family("dell", disc, None)[0]["id"] == "dell_slot_patch"
+
+
+def test_dell_generation_changes_the_write_target_slot():
+    """두 Family 는 이름만 다른 게 아니다 — 예약 슬롯이 달라 PATCH 대상이 갈린다."""
+    # slot 1 예약, slot 2 만 비어 있는 상태.
+    accounts = _slots(16, filled=("", "", "u3", "u4", "u5", "u6", "u7", "u8",
+                                  "u9", "u10", "u11", "u12", "u13", "u14", "u15", "u16"))
+    for a in accounts:
+        if a["id"] == "1":
+            a["username"] = "reserved"
+    fam9, _ = rg.resolve_account_family(
+        "dell", _disc(accounts, manager=_dell_mgr("7.10.70.00", "16G Monolithic")), None)
+    fam10, _ = rg.resolve_account_family(
+        "dell", _disc(accounts, manager=_dell_mgr("1.20.55.10", "17G Monolithic")), None)
+    assert "2" not in set(fam9["reserved_slot_ids"])
+    assert "2" in set(fam10["reserved_slot_ids"]), \
+        "iDRAC10 이 slot 2 를 예약하지 않으면 default root 슬롯을 덮어쓸 수 있다"
 
 
 def test_cisco_family_comes_from_observed_role_vocabulary():
@@ -103,6 +162,42 @@ def test_cisco_xseries_without_evidence_stays_generic():
     fam, _ = rg.resolve_account_family("cisco", _disc(), "redfish_cisco_ucs_xseries")
     assert fam["id"] == "generic_collection_post"
     assert fam["evidence"] == "unverified"
+
+
+# ── Capability > adapter hint (실측으로 확인된 계약을 assertion 으로 고정) ─────
+#
+# 2026-08-12 감사에서 드러난 공백: Cisco 계약은 코드로는 옳지만, 기존 테스트는
+#   (a) Role 어휘 + adapter_id=None 또는 (b) adapter hint + 빈 어휘
+# 두 경우만 다뤘다. 즉 **어휘와 hint 가 서로 다른 것을 가리키는** 실제 사이트 상황이
+# 한 건도 없었다. 그 상태로 hint 검사를 어휘 검사보다 위로 옮겨도 전 테스트가 통과한다.
+def test_cisco_role_vocabulary_beats_conflicting_adapter_hint():
+    """실측 10.100.15.2: adapter 는 ucs_xseries 로 오선택됐지만 Family 는 CIMC 로 옳게 잡혔다.
+
+    장비가 준 Roles 어휘 = admin/user/readonly/SNMPOnly (Administrator 없음).
+    """
+    d = _disc(role_ids=["admin", "user", "readonly", "SNMPOnly"])
+    fam, why = rg.resolve_account_family("cisco", d, "redfish_cisco_ucs_xseries")
+    assert fam["id"] == "cisco_cimc_collection_post_id"
+    assert fam["needs_explicit_id"] is True
+    assert rg.choose_role_id(fam, "Administrator", d) == "admin"
+    assert any("roles" in r for r in why), f"hint 이 아니라 어휘 근거라는 흔적이 없다: {why}"
+
+
+def test_cisco_modern_bmc_is_not_forced_to_cimc_admin_by_hint():
+    """반대 방향 — 과거처럼 모든 Cisco 에 RoleId=admin 을 강제하면 안 된다."""
+    d = _disc(role_ids=["Administrator", "Operator", "ReadOnly"])
+    fam, _ = rg.resolve_account_family("cisco", d, "redfish_cisco_cimc")
+    assert fam["id"] == "cisco_bmc_dynamic"
+    assert rg.choose_role_id(fam, "Administrator", d) == "Administrator"
+    assert "Id" not in rg.build_create_payload(fam, "infraops", "<pw>", "Administrator")
+
+
+def test_cisco_exposing_both_role_names_prefers_modern_family():
+    """`admin` 과 `Administrator` 를 동시에 노출하면 표준 이름 쪽을 쓴다."""
+    d = _disc(role_ids=["admin", "Administrator"])
+    fam, _ = rg.resolve_account_family("cisco", d, None)
+    assert fam["id"] == "cisco_bmc_dynamic"
+    assert rg.choose_role_id(fam, "Administrator", d) == "Administrator"
 
 
 def test_lenovo_purley_detected_by_prepopulated_slots():
@@ -347,7 +442,8 @@ def test_policy_never_records_password_length(monkeypatch):
         "Administrator", 5, False, dryrun=False)
     assert set(out["policy"]) == {
         "min_password_length", "max_password_length", "lockout_threshold",
-        "lockout_duration", "supported_account_types", "within_declared_bounds"}
+        "lockout_duration", "auth_failure_delay_seconds",
+        "supported_account_types", "within_declared_bounds"}
     assert "password_length" not in str(out["policy"]).replace("min_password_length", "") \
         .replace("max_password_length", "")
 

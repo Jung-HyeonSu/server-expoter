@@ -178,10 +178,14 @@ def test_policy_fields_parse_from_vendor_fixture(path):
     assert set(policy) == {
         "service_enabled", "min_password_length", "max_password_length",
         "lockout_threshold", "lockout_duration", "lockout_counter_reset",
+        # 2026-08-12: 장비가 Oem 에 선언하는 '인증 실패 후 지연'. 재인증 확인 간격을
+        #   여기서 끌어온다 (HPE iLO 는 AuthFailureDelayTimeSeconds=10 을 선언한다).
+        "auth_failure_delay_seconds", "auth_failures_before_delay",
         "supported_account_types",
     }
     for key in ("min_password_length", "max_password_length",
-                "lockout_threshold", "lockout_duration"):
+                "lockout_threshold", "lockout_duration",
+                "auth_failure_delay_seconds", "auth_failures_before_delay"):
         assert policy[key] is None or isinstance(policy[key], int)
     # 없는 값을 0 으로 접지 않는다 — "정책 없음" 과 "0" 은 다른 사실이다.
     if "MinPasswordLength" not in body:

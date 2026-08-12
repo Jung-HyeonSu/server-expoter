@@ -461,6 +461,36 @@ MAX_EXTENDED_INFO_LEN = 300
 # 합계 6초 — 무한 대기가 되지 않도록 값 자체로 상한을 고정한다.
 ACCOUNT_VERIFY_DELAYS = (0, 1, 5)
 
+# 재인증 확인 총 대기 상한(초). 장비가 선언한 패널티가 아무리 길어도 이 값을 넘지 않는다.
+ACCOUNT_VERIFY_MAX_TOTAL_SECONDS = 45
+
+
+def account_verify_delays(policy):
+    """장비가 **스스로 선언한** 인증 실패 패널티보다 짧게 확인하지 않는다.
+
+    2026-08-12 사이트 실측 (HPE iLO6 / ProLiant DL380 Gen11):
+      AccountService 가 ``AuthFailureDelayTimeSeconds=10``, ``AuthFailuresBeforeDelay=1`` 을
+      선언한다. 즉 **첫 실패 직후부터** 그 계정의 인증이 10초간 막힌다. 표준 자격 인증이
+      한 번 실패한 뒤 복구하는 흐름에서는 패널티가 이미 켜져 있으므로, 고정 6초(0/1/5) 안의
+      재인증은 비밀번호를 올바로 썼더라도 전부 401 이 된다. 그러면 성공한 쓰기가
+      'verification=failed' 로 보고되고, 사람을 계정 삭제/재생성 쪽으로 몰아간다.
+
+    그래서 확인 간격을 장비가 준 값에서 끌어온다. 정책을 바꾸지 않고 **읽기만** 한다.
+    """
+    delays = list(ACCOUNT_VERIFY_DELAYS)
+    penalty = 0
+    for key in ('auth_failure_delay_seconds', 'lockout_duration'):
+        value = (policy or {}).get(key)
+        if isinstance(value, int) and not isinstance(value, bool) and value > penalty:
+            penalty = value
+    if penalty <= 0:
+        return tuple(delays)
+    remaining = ACCOUNT_VERIFY_MAX_TOTAL_SECONDS - sum(delays)
+    extra = min(penalty + 2, remaining)
+    if extra > 0:
+        delays.append(extra)
+    return tuple(delays)
+
 # 계정 PATCH 에서 **빼도 되는** 속성. 이 목록에 없는 속성(Password / UserName)은
 # 빼는 순간 요청의 의미가 달라지므로 자동 제거 대상이 아니다.
 ACCOUNT_OPTIONAL_PATCH_PROPS = ("Locked", "Enabled", "RoleId")
@@ -4815,6 +4845,22 @@ def _account_policy_of(service):
     def _num(key):
         v = service.get(key)
         return v if isinstance(v, int) and not isinstance(v, bool) else None
+    def _oem_num(key):
+        """Oem 하위 namespace 를 **이름으로 분기하지 않고** 훑어 정수 항목을 찾는다.
+
+        표준 AccountService 에는 '인증 실패 후 지연' 항목이 없어서 벤더가 Oem 에 둔다
+        (HPE: Oem.Hpe.AuthFailureDelayTimeSeconds). namespace 이름을 하드코딩하면
+        rule 12 R1 위반이자 새 벤더마다 코드가 늘어난다. 키 이름만 보고 값을 읽는다.
+        """
+        oem = service.get('Oem')
+        if not isinstance(oem, dict):
+            return None
+        for section in oem.values():
+            if isinstance(section, dict):
+                v = section.get(key)
+                if isinstance(v, int) and not isinstance(v, bool):
+                    return v
+        return None
     supported = _safe(service, 'SupportedAccountTypes', default=None)
     return {
         'service_enabled':        _safe(service, 'ServiceEnabled', default=None),
@@ -4823,6 +4869,9 @@ def _account_policy_of(service):
         'lockout_threshold':      _num('AccountLockoutThreshold'),
         'lockout_duration':       _num('AccountLockoutDuration'),
         'lockout_counter_reset':  _num('AccountLockoutCounterResetAfter'),
+        # 장비가 선언한 '인증 실패 후 지연'. 재인증 확인 간격을 여기서 끌어온다.
+        'auth_failure_delay_seconds': _oem_num('AuthFailureDelayTimeSeconds'),
+        'auth_failures_before_delay': _oem_num('AuthFailuresBeforeDelay'),
         'supported_account_types': [s for s in _as_list(supported) if isinstance(s, str)] or None,
     }
 
@@ -5062,7 +5111,18 @@ _ACCOUNT_FAMILIES = {                                                          #
     'hpe_ilo4':                 {'oem_privileges_namespace': 'Hp',             # nosec rule12-r1
                                  'evidence': 'documented'},
     # HPE iLO5+ — RoleId 로 충분. source: servermanagementportal.ext.hpe.com/.../managingusers
-    'hpe_ilo5plus':             {'evidence': 'documented'},                    # nosec rule12-r1
+    #
+    # isolated_write_patch: 2026-08-12 사이트 실측 (10.50.11.231 / iLO6 /
+    #   ProLiant DL380 Gen11 / Redfish 1.20.0). 같은 계정·같은 값으로 통제 실험:
+    #     {Password} 단독            -> HTTP 400 iLO.2.36.InvalidPasswordLength (길이 검사됨)
+    #     {Password,Enabled,RoleId}  -> HTTP 200 Base.1.19.AccountModified (같은 잘못된 값인데 통과)
+    #   즉 iLO 는 Password 가 다른 속성과 함께 오면 **검사도 적용도 하지 않고 조용히 버린다.**
+    #   그런데도 응답은 200 + AccountModified 라 성공과 구분되지 않는다
+    #   (속성이 하나도 안 바뀌는 {Enabled,RoleId} PATCH 도 똑같이 AccountModified 를 준다).
+    #   그래서 이 Family 는 비밀번호를 **단독 PATCH** 로 쓴다. 무작위 재시도가 아니라
+    #   Family 가 미리 확정하는 쓰기 계약이다.
+    'hpe_ilo5plus':             {'isolated_write_patch': True,              # nosec rule12-r1
+                                 'evidence': 'proven'},
     # Supermicro X12/H12 계열 — 공식 Reference Guide 의 /AccountService/Accounts POST
     # source: supermicro.com/manuals/other/redfish-ref-guide-html/.../account-service.htm
     'supermicro_legacy':        {'evidence': 'documented'},                    # nosec rule12-r1
@@ -5134,9 +5194,42 @@ def resolve_account_family(vendor, discovery, adapter_id=None):
     v = (vendor or '').lower()
 
     if v == 'dell':                                                            # nosec rule12-r1
-        # iDRAC10 은 slot 2 도 예약이다. 세대 근거는 adapter hint 또는 Manager Model.
-        gen10 = 'idrac10' in hint or 'idrac10' in (mgr.get('model') or '').lower()
-        reasons.append(f'vendor=dell prepopulated={_has_prepopulated_slots(accounts)} idrac10={gen10}')  # nosec rule12-r1
+        # iDRAC10 은 slot 1 뿐 아니라 slot 2 도 예약이라, 세대를 잘못 잡으면 **쓰기 대상
+        # 슬롯이 달라진다.** payload 와 method 는 같지만 URI 가 갈린다.
+        #
+        # 2026-08-12 실측 사고 (10.100.15.34): 실제로는 iDRAC9 / PowerEdge R760 /
+        #   Firmware 7.10.70.00 인데 Family 가 dell_idrac10_slot_patch 로 잡혔다.
+        #   원인은 두 겹이다.
+        #     (a) Adapter 선택이 **무인증 probe** 단계라 model/firmware fact 가 비어 있고,
+        #         비어 있는 fact 는 실격이 아니라 skip 이라 priority 만으로 정해진다
+        #         (dell_idrac10 priority 120 > dell_idrac9 100). → adapter_id 가 idrac10.
+        #     (b) 여기서 그 adapter_id 를 그대로 세대 근거로 썼다. 나머지 한쪽인
+        #         Manager.Model 은 Dell 에서 '<NN>G Monolithic' 형태(이 장비는 16G)라
+        #         'idrac10' 이 절대 들어가지 않는 죽은 조건이었다. 결국 **adapter hint
+        #         단독으로** Family 가 결정됐다 — 이 함수의 계약(hint 는 마지막 순위) 위반.
+        #   이번 장비에서 관측 가능한 차이가 0 이었던 것은 slot 2 를 root 가 쓰고 있어
+        #   예약 슬롯 차이가 드러나지 않았기 때문이지, 동작이 같아서가 아니다.
+        #
+        # 그래서 세대는 **장비가 준 값**에서 정한다: Firmware major 가 유일하게 신뢰할 수
+        # 있는 신호다 (iDRAC9 = 4.x~7.x, iDRAC10 = 1.x — adapters/redfish/dell_idrac{9,10}.yml
+        # 의 firmware_patterns 와 같은 계약). Model 은 보조, hint 는 근거가 없을 때만.
+        # source: dell.com/.../idrac10_1.20.xx_ug/configuring-local-users (ID 1,2 reserved)
+        #
+        # 주의: _has_prepopulated_slots() 는 세대를 가르지 못한다. 두 Family 모두
+        #   slot_patch 이고 16 슬롯 prepopulated 는 iDRAC9/10 양쪽 모두 참이다.
+        mdl = (mgr.get('model') or '').lower()
+        fw_match = re.match(r'\s*(\d+)\.', str(firmware or ''))
+        fw_major = int(fw_match.group(1)) if fw_match else None
+        if fw_major in (4, 5, 6, 7):
+            gen10 = False                    # Firmware 가 iDRAC9 를 확정한다 — hint 보다 우선
+        elif fw_major == 1 or 'idrac10' in mdl:
+            gen10 = True
+        else:
+            gen10 = 'idrac10' in hint        # 근거 없음 → hint 는 마지막 순위
+        reasons.append(                                                        # nosec rule12-r1
+            f'vendor=dell fw_major={fw_major} model={mdl!r} '
+            f'hint_idrac10={"idrac10" in hint} '
+            f'prepopulated={_has_prepopulated_slots(accounts)} → idrac10={gen10}')
         return account_family('dell_idrac10_slot_patch' if gen10 else 'dell_slot_patch'), reasons
 
     if v == 'cisco':                                                           # nosec rule12-r1
@@ -5557,10 +5650,14 @@ def account_service_provision(
     def _spend_auth(username):
         out['auth_budget'][username] = out['auth_budget'].get(username, 0) + 1
 
+    # Capability Discovery 로 장비가 선언한 인증 실패 패널티를 읽은 뒤 확정된다(아래 1) 단계).
+    # 그 전에 호출될 일은 없지만, 미할당 상태가 남지 않게 기본값으로 먼저 묶어 둔다.
+    verify_schedule = ACCOUNT_VERIFY_DELAYS
+
     def _verify_standard_credential():
         """쓴 뒤 표준 자격으로 실제 인증되는지 확인. (ok, code, err, attempts)"""
         code_v, err_v = None, None
-        for attempt, delay in enumerate(ACCOUNT_VERIFY_DELAYS):
+        for attempt, delay in enumerate(verify_schedule):
             if delay:
                 time.sleep(delay)
             code_v, _, err_v = _get(bmc_ip, 'Systems', target_username, target_password,
@@ -5568,7 +5665,7 @@ def account_service_provision(
             if code_v == 200 and not err_v:
                 return True, code_v, None, attempt + 1
             _spend_auth(target_username)
-        return False, code_v, err_v, len(ACCOUNT_VERIFY_DELAYS)
+        return False, code_v, err_v, len(verify_schedule)
 
     # 1) Capability Discovery — 이 호출이 곧 복구 자격의 인증 시험이다.
     #    2026-08-12: AccountService URI 를 하드코딩하지 않고 ServiceRoot 가 알려주는
@@ -5640,10 +5737,14 @@ def account_service_provision(
         'max_password_length': max_len,
         'lockout_threshold':   policy.get('lockout_threshold'),
         'lockout_duration':    policy.get('lockout_duration'),
+        'auth_failure_delay_seconds': policy.get('auth_failure_delay_seconds'),
         'supported_account_types': policy.get('supported_account_types'),
         # 비밀번호 길이 자체는 남기지 않는다 (탐색 공간을 줄여 주는 약한 누출).
         'within_declared_bounds': within,
     }
+    # 재인증 확인 간격을 장비가 선언한 패널티에 맞춰 넓힌다 (정책은 읽기만 한다).
+    verify_schedule = account_verify_delays(policy)
+    out['verify_schedule_seconds'] = list(verify_schedule)
     if within is False:
         # 사용자 결정 2026-08-12: 여기서 **차단하지 않는다.** 시도하고 응답으로 확정한다.
         out['errors'].append(_err(
@@ -5725,15 +5826,23 @@ def account_service_provision(
         if dryrun:
             out['verification'] = 'skipped'
             return out
-        # F50 phase 4 (cycle 2026-05-06): full body PATCH 의무 (Password + Enabled +
-        # Locked + RoleId 항상 함께). 사이트 실측 (10.50.11.232 Lenovo XCC):
-        # password 단독 PATCH 시 권한 cache 손상 (RoleId='Administrator' 표시되지만
-        # /Managers AccessDenied). full body PATCH 시 권한 유지 정상.
+        # F50 phase 4 (cycle 2026-05-06): 기본은 full body PATCH 다 (Password + Enabled +
+        # RoleId 함께). 사이트 실측 (10.50.11.232 Lenovo XCC): password 단독 PATCH 시
+        # 권한 cache 손상 (RoleId='Administrator' 표시되지만 /Managers AccessDenied).
+        # full body PATCH 시 권한 유지 정상.
         # source: 사이트 실측 + Lenovo XCC ManagerAccount.v1_8_1 동작.
+        #
+        # 2026-08-12: Locked 를 무조건 싣던 것을 **실제로 잠겨 있을 때만** 싣도록 좁힌다.
+        #   잠기지 않은 계정에 Locked:false 를 보내는 것은 의미상 no-op 인데, 펌웨어가
+        #   이를 거부하면 요청 전체가 죽는다. 실측 4대 중 2대가 거부했다:
+        #     iLO6  -> HTTP 400 iLO.2.36.PropertyNotWritableOrUnknown ['Locked']
+        #             (ManagerAccount 에 Locked 속성 자체가 없음 → 본문 전체 거부)
+        #     XCC   -> Locked 는 노출하지만 read-only 라 거부 → drop 후 retry 로만 통과
+        #   즉 no-op 하나 때문에 쓰기를 한 번 더 쓰고 있었다 (Lockout 예산 낭비).
+        #   잠긴 계정을 푸는 경로는 그대로 살아 있다 — 그때는 Locked:false 가 실린다.
         body_full = {
             'Password': target_password,
             'Enabled':  True,
-            'Locked':   False,
             # 2026-08-12: RoleId 문자열을 vendor 이름으로 추측하지 않는다. Roles Collection
             #   또는 기존 계정이 실제로 쓰는 값 중에서 고른다 (choose_role_id). Cisco IMC 는
             #   'admin', 최신 Cisco BMC 는 'Administrator' 라 remap 을 고정하면 한쪽이 깨진다.
@@ -5750,6 +5859,9 @@ def account_service_provision(
         # 장비가 그 속성을 실제로 노출할 때만 끈다 (미지원 속성을 추측해 보내지 않는다).
         if existing.get('password_change_required') is True:
             body_full['PasswordChangeRequired'] = False
+        # 잠금 해제는 **실제로 잠겨 있을 때만** 요청한다 (위 2026-08-12 주석 참조).
+        if existing.get('locked') is True:
+            body_full['Locked'] = False
         patch_headers = None
         if family.get('etag_required'):
             # Inspur M6 공식 계약: GET 으로 ETag 를 받고 PATCH 에 If-Match 로 실어야 한다.
@@ -5757,6 +5869,21 @@ def account_service_provision(
                                       current_username, current_password, timeout, verify_ssl)
             if etag:
                 patch_headers = {'If-Match': etag}
+        # Family 계약: 비밀번호를 다른 속성과 같은 PATCH 에 담으면 **조용히 버리는** 펌웨어가
+        # 있다 (HPE iLO — 위 _ACCOUNT_FAMILIES['hpe_ilo5plus'] 주석의 통제 실험 참조).
+        # 그런 Family 는 비밀번호를 단독으로 쓰고, 나머지 속성은 **실제로 달라진 것만**
+        # 뒤이어 쓴다. 실패 후 다른 payload 로 갈아타는 무작위 재시도가 아니라, 쓰기 전에
+        # Family 가 확정하는 순서다 (재시도 사다리 금지 원칙과 충돌하지 않는다).
+        followup_body = {}
+        if family.get('isolated_write_patch'):
+            followup = {k: v for k, v in body_full.items() if k != 'Password'}
+            if followup.get('Enabled') is True and existing.get('enabled') is True:
+                followup.pop('Enabled', None)
+            if 'RoleId' in followup and existing.get('role_id') == followup.get('RoleId'):
+                followup.pop('RoleId', None)
+            body_full = {'Password': target_password}
+            followup_body = followup
+            out['isolated_write'] = True
         code, patch_resp, err = _patch_account(
             bmc_ip, _p(existing['slot_uri']), body_full,
             current_username, current_password, timeout, verify_ssl, patch_headers,
@@ -5815,6 +5942,25 @@ def account_service_provision(
                 ) if x),
             ))
             return out
+        if followup_body:
+            # 비밀번호는 이미 적용됐다. 남은 속성(권한/활성)만 맞춘다. 여기서 실패해도
+            # 비밀번호 수렴 자체를 되돌리지 않는다 — 최종 판정은 아래 재조회 + 재인증이다.
+            f_code, f_resp, f_err = _patch_account(
+                bmc_ip, _p(existing['slot_uri']), followup_body,
+                current_username, current_password, timeout, verify_ssl, patch_headers,
+            )
+            f_ok, f_reason = interpret_write_response(family, f_code, f_resp, f_err)
+            out['followup_properties'] = sorted(followup_body)
+            out['followup_accepted'] = f_ok
+            if not f_ok:
+                out['errors'].append(_err(
+                    'account_service',
+                    '표준 계정 비밀번호는 적용됐지만 계정 속성(권한/활성) 동기화는 거부됐습니다.',
+                    detail=' | '.join(x for x in (
+                        f'properties={",".join(sorted(followup_body))}',
+                        f_reason, _extended_info(f_resp),
+                    ) if x),
+                ))
         # F50 phase 4: PATCH 후 실 인증 verify — silent fail / 권한 cache 손상 감지.
         # 1차 verify: 새 자격으로 /Systems GET. 401 이면 권한 손상.
         # fallback: DELETE + POST 재생성 (Lenovo XCC 권한 cache 클린 상태 보장).

@@ -77,6 +77,12 @@
       policy:          null
       auth_budget:     {}
       dryrun_reason:   null
+      # 2026-08-12: 비밀번호를 단독 PATCH 로 쓰는 Family 인지 / 뒤이어 맞춘 속성은 무엇인지 /
+      #   재인증 확인 간격을 장비 선언값으로 얼마나 늘렸는지.
+      isolated_write: null
+      followup_properties: null
+      followup_accepted: null
+      verify_schedule_seconds: null
   no_log: true
 
 - name: "redfish | account_service | abort if no primary target"
@@ -175,6 +181,13 @@
           # auth_budget: 이번 실행에서 소비한 실패 인증 횟수 (username 별). lockout 추적용.
           auth_budget:     "{{ (_rf_acct_result.account_service | default({})).auth_budget | default({}) }}"
           dryrun_reason:   "{{ (_rf_acct_result.account_service | default({})).dryrun_reason | default(none) }}"
+          # isolated_write: 비밀번호를 다른 속성과 묶으면 조용히 버리는 Family 라
+          #   단독 PATCH 로 썼는가. followup_* 는 그 뒤 맞춘 속성과 그 결과.
+          isolated_write: "{{ (_rf_acct_result.account_service | default({})).isolated_write | default(none) }}"
+          followup_properties: "{{ (_rf_acct_result.account_service | default({})).followup_properties | default(none) }}"
+          followup_accepted: "{{ (_rf_acct_result.account_service | default({})).followup_accepted | default(none) }}"
+          # verify_schedule_seconds: 장비가 선언한 인증 실패 패널티에 맞춰 넓힌 재확인 간격.
+          verify_schedule_seconds: "{{ (_rf_acct_result.account_service | default({})).verify_schedule_seconds | default(none) }}"
       no_log: true
 
     # ── 2026-08-12 (C3 / N49 / N71): 계정 처리 실패를 결과에 남긴다 ──────────

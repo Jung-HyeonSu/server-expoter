@@ -39,6 +39,70 @@ Dell 은 유일하게 reconcile 조건이 발생했고(표준 401 + 계정 prese
 **Create 경로는 어떤 Family 에서도 실행되지 않았다** — git 4대 모두 표준 계정이 이미 존재해
 `presence=absent` 조건이 발생하지 않았고, 조건을 만들려면 계정을 지워야 하므로 하지 않았다.
 
+### 2026-08-12 (2차) 갱신 — Global Standard Password 회전 + Repair 실증
+
+정본: `tests/evidence/2026-08-12-standard-password-convergence.md`
+
+전역 표준 계정 비밀번호를 교체하고 git Location 4대에 수렴시켰다. 그 과정에서
+**Repair 경로가 실장비에서 처음으로 완주**했고, HPE 에서 벤더 쓰기 계약 결함이 드러나
+수정했다. Dell HOLD 는 **CLOSED** 다.
+
+| 대상 | 1차 | Repair 실행 | 2차 | 판정 |
+|---|---|---|---|---|
+| Lenovo XCC (10.50.11.232) | 표준 401 → recovery 인증 → `present` → `patch_existing` | `write_accepted=true`, **`verification=verified`**, 표준 재인증 성공 | Write 0 | **Case B PROVEN** |
+| HPE iLO6 (10.50.11.231) | 표준 401 → recovery 인증 → `present` → `patch_existing` | 쓰기는 수락됐으나 **비밀번호가 적용되지 않음** (아래 결함) | 수정 후 Write 0 | Case A PROVEN / Repair 는 코드 수정 + 실측 근거 |
+| Cisco CIMC (10.100.15.2) | 표준 인증 성공 | 불필요 | Write 0 | **Case A PROVEN** |
+| Dell iDRAC9 (10.100.15.34) | 표준 인증 성공 | 불필요 | Write 0 | **Case A PROVEN — HOLD CLOSED** |
+
+#### HPE iLO — Password 는 반드시 단독 PATCH (실측 확정, 2026-08-12)
+
+`10.50.11.231` / iLO 6 / ProLiant DL380 Gen11 / Redfish 1.20.0 에서 같은 계정·같은 값으로
+통제 실험한 결과:
+
+| PATCH 본문 | 응답 |
+|---|---|
+| `{Password:<길이위반>}` | HTTP **400** `iLO.2.36.InvalidPasswordLength` |
+| `{Password:<길이위반>, Enabled, RoleId}` | HTTP **200** `Base.1.19.AccountModified` |
+| `{Enabled, RoleId}` (Password 없음) | HTTP **200** `Base.1.19.AccountModified` |
+| `{Password, Enabled, Locked, RoleId}` | HTTP **400** `iLO.2.36.PropertyNotWritableOrUnknown ['Locked']` |
+| `{Password}` (정상 값) | HTTP **200** → 표준 자격 재인증 **성공** |
+
+→ iLO 는 `Password` 가 다른 속성과 함께 오면 **검사도 적용도 하지 않고 버린다.** 그런데
+응답은 성공과 동일하다 (아무것도 바뀌지 않는 본문도 `AccountModified` 를 준다). 응답만으로는
+절대 구분할 수 없으므로 **Family 가 쓰기 전에** 방식을 정해야 한다.
+반영: `_ACCOUNT_FAMILIES['hpe_ilo5plus'].isolated_write_patch = True`, `evidence: proven`.
+
+부수 결함 2건도 같은 실측에서 확정해 고쳤다.
+- `Locked: false` 를 **무조건** 실었다. 잠기지 않은 계정에는 no-op 인데 iLO 는 본문 전체를
+  400 으로 거부하고(속성 자체가 없음), Lenovo XCC 는 read-only 로 거부한다. 이제 **실제로
+  잠겨 있을 때만** 싣는다 → 실측 4대 모두 쓰기 1회 감소.
+- 재인증 확인 간격이 고정 `(0,1,5)`=6초였다. iLO 는 `AuthFailureDelayTimeSeconds=10` /
+  `AuthFailuresBeforeDelay=1` 을 **스스로 선언**한다. 즉 표준 인증이 한 번 실패한 뒤의
+  재인증은 비밀번호를 옳게 써도 6초 안에는 전부 401 이다. 이제 장비가 선언한 값에서
+  간격을 끌어온다(`account_verify_delays`, 상한 45초).
+
+#### Dell 세대 판정 — adapter hint 단독 결정 제거 (2026-08-12)
+
+`10.100.15.34` 는 실제로 **iDRAC9 / PowerEdge R760 / FW 7.10.70.00** 인데 Family 가
+`dell_idrac10_slot_patch` 로 잡혔다. 원인은 두 겹이다.
+
+1. Adapter 선택이 **무인증 probe** 단계라 `model` / `firmware` fact 가 비어 있고, 빈 fact 는
+   실격이 아니라 skip 이라 priority 만으로 결정된다 (`dell_idrac10` 120 > `dell_idrac9` 100).
+   실측 점수: 빈 fact 에서 idrac10 120520 > idrac9 100320. fact 가 차면 idrac10/idrac8 은
+   `-9999` 로 실격되고 idrac9 가 100345 로 옳게 이긴다.
+2. `resolve_account_family` 가 그 `adapter_id` 를 그대로 세대 근거로 썼다. 나머지 한쪽인
+   `Manager.Model` 은 Dell 에서 `<NN>G Monolithic` 형태라 `idrac10` 이 들어갈 수 없는
+   죽은 조건이었다 → **adapter hint 단독으로** Family 가 결정됐다.
+
+이름만의 문제가 아니다. 두 Family 는 `reserved_slot_ids` 가 `{1}` vs `{1,2}` 로 달라
+**빈 슬롯이 2번일 때 PATCH 대상 URI 가 갈린다.** 이번 장비에서 차이가 보이지 않은 것은
+slot 2 를 `root` 가 쓰고 있었기 때문이지 동작이 같아서가 아니다.
+
+조치: 세대 근거를 **Firmware major**(iDRAC9 = 4~7.x, iDRAC10 = 1.x)로 바꾸고 Model 은 보조,
+hint 는 근거가 없을 때만 쓰도록 되돌렸다. 회귀 테스트 4건 추가.
+**Adapter 오선택 자체(1번)는 남아 있다** — 인증 후 adapter 재선택이 필요한 별도 변경이라
+이번 cycle 범위 밖이며 `docs/ai/NEXT_ACTIONS.md` 에 등재돼 있다.
+
 ### 이번 cycle 에서 실제로 낮아진 불확실성
 
 `tests/reference/redfish/**` 의 **실장비 미러**(Dell 5호스트 / HPE 1 / Lenovo 1 / Cisco 1)를
@@ -273,26 +337,34 @@ Login Interface 는 이번에 구현하지 않았다. 그것을 켜는 OEM 필�
 
 ## 3. 요약 매트릭스
 
-| Vendor | Family 수 | PROVEN (Case A) | PARTIAL | UNVERIFIED | HOLD |
-|---|---:|---:|---:|---:|---:|
-| Dell | 3 | 0 | 0 | 2 (iDRAC7/8, iDRAC10) | **1 (iDRAC9)** |
-| HPE | 4 | **1 (iLO5+)** | 1 (iLO4) | 2 (CSUS, Superdome) | 0 |
-| Lenovo | 6 | **1 (XCC2/3)** | 4 | 1 (IMM2) | 0 |
-| Cisco | 4 | **1 (IMC 4.x/6.0)** | 1 | 2 (IMC 3.x, X-Series) | 0 |
-| Supermicro | 5 | 0 | 2 | 3 | 0 |
-| Fujitsu | 3 | 0 | 0 | 3 | 0 |
-| Huawei | 1 | 0 | 1 | 0 | 0 |
-| Inspur | 3 | 0 | 1 (M6) | 2 | 0 |
-| Quanta | 3 | 0 | 0 | 3 | 0 |
-| **합계** | **32** | **3** | **10** | **18** | **1** |
+| Vendor | Family 수 | PROVEN Case A | PROVEN Case B (Repair) | PARTIAL | UNVERIFIED | HOLD |
+|---|---:|---:|---:|---:|---:|---:|
+| Dell | 3 | **1 (iDRAC9)** | 0 | 0 | 2 (iDRAC7/8, iDRAC10) | 0 |
+| HPE | 4 | **1 (iLO5+)** | 0 | 1 (iLO4) | 2 (CSUS, Superdome) | 0 |
+| Lenovo | 6 | **1 (XCC2/3)** | **1 (XCC2/3)** | 4 | 1 (IMM2) | 0 |
+| Cisco | 4 | **1 (IMC 4.x/6.0)** | 0 | 1 | 2 (IMC 3.x, X-Series) | 0 |
+| Supermicro | 5 | 0 | 0 | 2 | 3 | 0 |
+| Fujitsu | 3 | 0 | 0 | 0 | 3 | 0 |
+| Huawei | 1 | 0 | 0 | 1 | 0 | 0 |
+| Inspur | 3 | 0 | 0 | 1 (M6) | 2 | 0 |
+| Quanta | 3 | 0 | 0 | 0 | 3 | 0 |
+| **합계** | **32** | **4** | **1** | **9** | **18** | **0** |
 
-`PROVEN` 3건은 전부 **Case A(표준 인증 성공 → Write 0 → 표준 계정 수집)** 한정이며,
-검증된 Model + Firmware 범위로만 인정한다.
+- **Case A** = 표준 인증 성공 → Account Write 0 → 표준 계정 수집. 4 Family 가 1·2차 실행
+  모두에서 증명됐다 (검증된 Model + Firmware 범위 한정).
+- **Case B (Repair)** = 표준 401 → recovery 인증 → 계정 존재 확인 → `patch_existing` →
+  계정 재조회 → **표준 자격 재인증 성공** → 표준 계정 수집. `lenovo_xcc_accounttypes`
+  1건이 실장비에서 완주했다 (2026-08-12). Repair 가 실장비로 증명된 것은 이번이 처음이다.
+- **Dell HOLD 는 CLOSED.** 종전 HOLD 사유는 "표준 비밀번호가 iDRAC Security Strengthen
+  Policy 에 거부됨" 이었다. 회전된 비밀번호로 1·2차 모두 표준 인증 성공 + Write 0 이므로
+  더는 막혀 있지 않다. 다만 **거부 사실 자체는 유효한 관측**이다 — 회전 전 값은 읽을 수
+  있는 규칙(길이/문자군/Regex)을 전부 만족하는데도 거부됐고, 활성 제약은
+  `Security.1.MinimumPasswordScore` 뿐이었다. 값에 따라 재발할 수 있으므로
+  "Dell 은 선언된 규칙만으로 수용 여부를 판단할 수 없다" 는 계약으로 남긴다.
 
 **Account Create 경로는 여전히 어느 Family 에서도 실장비로 증명되지 않았다.**
 git 4대 모두 표준 계정이 이미 존재해 `presence=absent` 조건 자체가 발생하지 않았고,
-조건을 만들려면 운영 계정을 지워야 하므로 하지 않았다.
-**Repair 경로는 Dell 에서 전 단계가 동작했으나 비밀번호 정책으로 최종 수렴에 실패했다.**
+조건을 만들려면 운영 계정을 지워야 하므로 하지 않았다 (사용자 지시 §9).
 
 ---
 

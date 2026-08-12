@@ -423,6 +423,27 @@ def test_14_standard_vault_missing_is_an_explicit_abort():
     assert "credential_set_missing" in when and "credential_set_undecryptable" in when
 
 
+def test_14b_unknown_location_aborts_before_gathering():
+    """미등록 se_location 은 표준 계정이 전역이어도 수집으로 진행되면 안 된다.
+
+    2026-08-12 감사에서 드러난 공백: 이 gate 의 `or` 두 항 중 `_cred_standard_outcome`
+    쪽만 테스트가 잡고 있었다. `_cred_reason` 항은 **미등록 Location 이 전역 표준 자격으로
+    수집되는 것을 막는 유일한 런타임 가드**인데, 그 절을 지워도 전 테스트가 통과했다.
+    표준 계정이 Location 을 보지 않는 전역 1벌이라 더더욱 필요한 가드다.
+    """
+    task = None
+    for t in _tasks_of("redfish-gather/site.yml"):
+        if "abort if credential set unavailable" in (t.get("name") or ""):
+            task = t
+    assert task is not None
+    when = str(task.get("when"))
+    assert "_cred_reason" in when, "unknown_location 이 gate 에 반영되지 않는다"
+    assert "'resolved'" in when and "'vendor_unresolved'" in when, (
+        "reason 허용목록이 없다 — 미등록 Location 이 표준 자격으로 수집될 수 있다"
+    )
+    assert "not in" in when, "허용목록이 아니라 부분 비교면 새 reason 이 그냥 통과한다"
+
+
 def test_15_recovery_set_missing_is_recorded_not_silent():
     """복구 세트 부재는 실패 원인이 다르므로 결과에 남아야 한다 (§15)."""
     names = [t.get("name") or "" for t in _tasks_of("redfish-gather/site.yml")]
@@ -549,6 +570,10 @@ def test_dell_200_with_locked_rejection_triggers_retry_without_locked(monkeypatc
     계정 PATCH 에 **200** 을 주면서 본문으로 거부했다. Password 도 적용되지 않는데
     코드는 성공으로 보고 넘어가, 이후 401 을 "비밀번호 정책 미충족" 으로 추측했다.
     종전 재시도 경로는 400/405 에서만 켜져 이 펌웨어에 닿지 않았다.
+
+    2026-08-12 (후속): Locked 는 이제 **계정이 실제로 잠겼을 때만** 실린다. 이 테스트가
+    지키려는 계약("200 + 본문 거부 → 거부 속성만 빼고 재시도하되 Password 는 유지")은
+    그대로이므로, Locked 가 실제로 실리는 조건(잠긴 계정)에서 검증한다.
     """
     responses = [(_IDRAC_LOCKED_REJECT, 200), ({}, 200)]
     sent = []
@@ -558,7 +583,9 @@ def test_dell_200_with_locked_rejection_triggers_retry_without_locked(monkeypatc
         resp, code = responses[min(len(sent) - 1, len(responses) - 1)]
         return code, resp, None
 
-    monkeypatch.setattr(rg, "account_service_discover", _as_discovery(lambda *a, **k: ({}, _dell_accounts("infraops"), [])))
+    locked_accounts = _dell_accounts("infraops")
+    locked_accounts[-1]["locked"] = True
+    monkeypatch.setattr(rg, "account_service_discover", _as_discovery(lambda *a, **k: ({}, locked_accounts, [])))
     monkeypatch.setattr(rg, "_patch", fake_patch)
     monkeypatch.setattr(rg, "_get", lambda *a, **k: (200, {}, None))
     monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
