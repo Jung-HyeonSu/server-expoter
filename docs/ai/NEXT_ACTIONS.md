@@ -776,3 +776,61 @@ envelope 과 `errors[].message` 는 정상 생성됐는데 **Portal 이 아예 �
 - [ ] **[검토] `pre_commit_jinja_compile_check.py` 를 advisory → blocking 승격** (`JINJA_COMPILE_BLOCKING=1`).
       pytest 게이트가 생겼으므로 우선순위는 낮아졌다.
 
+
+---
+
+## Location 기반 Credential Resolver — 후속 (2026-08-12, commit `70744c76`)
+
+설계 정본: `docs/ai/VAULT-CREDENTIAL-RESOLVER-DESIGN-2026-08-12.md`
+검증 증거: `tests/evidence/2026-08-12-location-credential-resolver.md`
+
+### E. 실장비 Pilot (이것이 끝나기 전에는 flat vault 를 삭제하지 않는다)
+
+- [ ] **P1 Location 별 실제 vault 작성 + 복호화 검증** — 실제 계정 값은 운영 담당자만 안다.
+      검증 도중 쓴 mock 은 평문 YAML 이었으므로 **ansible-vault 암호문 복호화 경로는 미검증**이다.
+      절차: `docs/21_vault-operations.md` §3.4
+- [ ] **P2 OS Linux / Windows 실장비 1대씩** — `credential_scope == <loc>/os/<type>`, become / WinRM
+- [ ] **P3 ESXi 실장비 1대** — `credential_scope == <loc>/esxi`, lockdown 환경
+- [ ] **P4 Redfish vendor 별 최소 1대** — 실제 BMC Manufacturer 표기 → canonical 기대값 확인
+- [ ] **P5 Jenkins `built-in` 노드 SCM checkout 가부** — `Resolve Location` stage 성립 조건.
+      불가 시 설계 §12.5 의 2안(choice 파라미터)으로 전환
+- [ ] **P6 미등록 Location 빌드** → agent 대기 없이 즉시 실패하는지
+- [ ] **P7 Redfish reconcile (Account Write)** — credential 경로 변경 후에도 진입 게이트 불변인지.
+      **dry-run 과 실제 write 를 구분해 보고할 것**
+- [ ] **P8 Portal 의 미지 `failure_code` 처리** — `CREDENTIAL_SET_UNAVAILABLE` 수신 시 동작 (외부 시스템)
+- [ ] **P9 flat vault 제거** — P1~P4 확인 후 **별도 커밋**.
+      대상: `vault/{linux,windows,esxi}.yml`, `vault/redfish/*.yml` 9개
+      (`vault/.lab-credentials.yml` 제외)
+
+### F. 사용자 결정 대기
+
+- [ ] **`Jenkinsfile` 삭제** — E2E Regression 게이트(`Jenkinsfile:208-236`, `pytest tests/e2e/` +
+      `tests/integration/ -m "not live"`) 를 `Jenkinsfile_portal` 로 옮길지 / 별도 CI 로 뺄지 /
+      포기할지 확정 후. 현재는 보류 상태로 두고, 남아 있는 동안 깨지지 않게
+      `-e se_location` 만 최소 전달해 두었다 (agent 할당 이전 Location 검증은 top-level agent
+      구조라 불가 — 운영 경로는 `Jenkinsfile_portal`).
+- [ ] **`Jenkinsfile_portal_test` 삭제** — `Jenkinsfile_portal` 과 1줄(`defaultValue: 'not-json'`)
+      차이뿐이라 잃는 기능이 없다. 이번에는 삭제하지 않고 portal 과 동기화만 해 두었다.
+- [ ] **`scripts/ai/vault_decrypt_check.py` gitignore 해제 여부** — cycle-018 에서 gitignore 한
+      사유(마스터 키 하드코딩)를 2026-08-12 에 제거했다(`SE_VAULT_PASSWORD` / `--password-file`
+      로만 수령, 재발 방지 테스트 고정). 이관 runbook 이 참조하는 도구라 추적 대상으로 올릴지 결정 필요.
+      현재는 부재 시 관련 테스트가 skip 되도록 처리해 뒀다.
+- [ ] **role 기반 후보 정렬** — 이번에 도입하지 않았다(순서 = 시도 순서 계약 보존).
+      **선행: 암호화 vault 의 실제 `accounts` 배열 순서 실측** (recovery-first 파일이 있는지)
+- [ ] **Location 별 Master Password(설계 §11 B안)** — 이번 범위 제외. 도입 시 전 vault rekey 필요
+- [ ] **Adapter `credentials:` 제거 (Phase B)** — 이번 범위 제외. YAML 필드는 남겨 뒀고
+      production 소비 코드는 0건이다
+- [ ] **OS/ESXi backoff** — 이번 범위 제외. 단 `pam_faillock`(RHEL STIG 기본 deny=3) /
+      AD 계정 잠금(흔히 5회)은 **오늘 이미 존재하는 위험**이다 (이번 변경이 후보 수를 늘리지는 않았다)
+
+### G. 이번 작업 중 발견한 pre-existing 결함 (범위 밖 — 기록만)
+
+- [ ] **마스터 키 평문이 git history 와 워킹트리 다수 파일에 잔존** —
+      `.vault_pass`, `docs/ai/archive/**`, `docs/ai/CURRENT_STATE.md` 등.
+      이미 `OPS-AUDIT-1` 로 등재된 사용자 결정 사항이며, CLAUDE.md §12 에 따라
+      Secret Rotation / History Cleanup 으로 범위를 넓히지 않았다.
+      이번에는 내가 수정한 파일(`scripts/ai/vault_decrypt_check.py`)의 하드코딩만 제거했다.
+- [ ] **`os-gather/site.yml` 의 `ansible_become_pass` play var 가 사실상 죽은 값** —
+      `try_one_credential.yml` 이 host fact 으로 덮어써 vault 의 `ansible_become_password` 가
+      무시되고 SSH 비밀번호가 sudo 비밀번호로 쓰인다. 동작 변경이라 이번에 섞지 않았다.
+      값의 출처만 `_cred_become_password` 로 옮겨 두어, 고칠 때 값을 잃지 않게 했다.
