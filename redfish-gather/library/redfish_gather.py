@@ -5461,6 +5461,59 @@ def _fw_at_least(firmware, major, minor):
         return None
 
 
+# ── HPE Password isolation 의 Firmware 별 근거 ────────────────────────────────
+# HPE Customer Advisory a00159600en_us (2026-05-12):
+#   iLO6 v1.73 / v1.74, iLO7 v1.19 / v1.20 에서 UserAccount PATCH 가 일부 파라미터를
+#   무시한다. 해결 버전은 iLO6 v1.75+ / iLO7 v1.21+.
+#
+# 왜 Family 를 쪼개지 않는가:
+#   쓰기 **동작**은 전 iLO5/6/7 에서 같다 — Password 단독 PATCH 는 HPE 공식 문서가
+#   지원하는 동작이고, 이 저장소는 그것을 안전 전략으로 채택한다. 갈리는 것은 동작이
+#   아니라 **그 선택의 근거 수준**이다. 그래서 Family 는 하나로 두고 근거만 분리한다.
+#
+#   이 구분을 잃으면 iLO6 v1.73 한 대에서 얻은 LIVE-PROVEN 이 iLO5 전체와 Advisory 가
+#   이미 고친 v1.75+ 까지 번진다. 그건 조사 결과를 과대표기하는 것이다.
+HPE_PATCH_ADVISORY = 'a00159600en_us'
+
+# 근거 수준 3종
+ISOLATION_LIVE_PROVEN = 'live_proven'          # 이 저장소 실장비에서 직접 재현
+ISOLATION_ADVISORY = 'advisory_derived'        # HPE 공식 Advisory 영향 Firmware
+ISOLATION_SAFETY = 'safety_strategy'           # Vendor 필수 계약이 아닌 Repository 선택
+
+_ILO_FW_RE = re.compile(r'iLO\s*(\d+)', re.IGNORECASE)
+_ILO_VER_RE = re.compile(r'v?(\d+)\.(\d+)')
+
+
+def hpe_isolation_evidence(firmware, model=None):
+    """HPE Password 단독 PATCH 의 **근거 수준**을 Firmware 로 판정한다.
+
+    반환: (isolation_basis, evidence, advisory_id)
+
+    동작(단독 PATCH 여부)은 바꾸지 않는다 — 라벨만 정확히 한다.
+    Firmware 를 읽지 못하면 과대주장하지 않고 `safety_strategy` / `documented` 로 둔다.
+    """
+    text = ' '.join(x for x in (firmware, model) if isinstance(x, str))
+    gen_m = _ILO_FW_RE.search(text)
+    gen = int(gen_m.group(1)) if gen_m else None
+    ver_m = _ILO_VER_RE.search(firmware if isinstance(firmware, str) else '')
+    ver = (int(ver_m.group(1)), int(ver_m.group(2))) if ver_m else None
+
+    if gen == 6 and ver:
+        if ver == (1, 73):
+            # 2026-08-12 사이트 실측(10.50.11.231 / DL380 Gen11)에서 직접 재현한 유일한 버전.
+            return ISOLATION_LIVE_PROVEN, 'proven', HPE_PATCH_ADVISORY
+        if ver == (1, 74):
+            return ISOLATION_ADVISORY, 'documented', HPE_PATCH_ADVISORY
+        # v1.75+ 는 Advisory 가 해결했다고 명시한 버전이다. 구버전 결함을 가정하지 않는다.
+        return ISOLATION_SAFETY, 'documented', None
+    if gen == 7 and ver:
+        if ver in ((1, 19), (1, 20)):
+            return ISOLATION_ADVISORY, 'documented', HPE_PATCH_ADVISORY
+        return ISOLATION_SAFETY, 'documented', None
+    # iLO5 전체, 세대/버전 미상 — Advisory 대상이 아니고 실측 근거도 없다.
+    return ISOLATION_SAFETY, 'documented', None
+
+
 def resolve_account_family(vendor, discovery, adapter_id=None):
     """Write 전에 **읽기만으로** Account Family 를 확정한다.
 
@@ -5568,8 +5621,19 @@ def resolve_account_family(vendor, discovery, adapter_id=None):
         if 'hp' in oem_keys and 'hpe' not in oem_keys:  # nosec rule12-r1
             reasons.append('AccountService.Oem 에 Hp 만 존재 → iLO4 계열')
             return account_family('hpe_ilo4'), reasons
-        reasons.append('iLO5+ (RoleId 기반)')
-        return account_family('hpe_ilo5plus'), reasons
+        # Family 는 하나다 — 갈리는 것은 동작이 아니라 **근거 수준**이다.
+        # Password 단독 PATCH 는 iLO5/6/7 모두에서 그대로 수행하고, 그것을
+        # LIVE-PROVEN 이라고 부를 수 있는 범위만 Firmware 로 좁힌다.
+        fam = account_family('hpe_ilo5plus')
+        basis, evidence, advisory = hpe_isolation_evidence(firmware, mgr.get('model'))
+        fam['isolation_basis'] = basis
+        fam['evidence'] = evidence
+        fam['firmware_advisory'] = advisory
+        reasons.append(                                                        # nosec rule12-r1
+            f'iLO5+ (RoleId 기반) firmware={firmware!r} '
+            f'isolation_basis={basis} evidence={evidence}'
+            + (f' advisory={advisory}' if advisory else ''))
+        return fam, reasons
 
     if v == 'supermicro':                                                      # nosec rule12-r1
         # 계정 분리 세대는 Generation 이 아니라 Firmware 가 경계다.
@@ -6103,6 +6167,10 @@ def account_service_provision(
     out['create_method']  = family['create_method']
     out['evidence']       = family['evidence']
     out['family_reasons'] = family_reasons
+    # 쓰기 동작을 고른 **근거 수준**. live_proven / advisory_derived / safety_strategy 를
+    # 구분해 남기지 않으면, 한 대에서 얻은 실측이 Vendor 전체로 번져 보인다.
+    out['isolation_basis']   = family.get('isolation_basis')
+    out['firmware_advisory'] = family.get('firmware_advisory')
     role_id = choose_role_id(family, target_role, discovery)
 
     # 2) 기존 사용자 검색

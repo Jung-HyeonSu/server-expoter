@@ -90,6 +90,11 @@
       verify_resource: null
       create_uri: null
       create_uri_kind: null
+      # isolation_basis: Password 단독 PATCH 를 고른 근거 수준.
+      #   live_proven(실장비 재현) / advisory_derived(벤더 Advisory) / safety_strategy(저장소 선택)
+      isolation_basis: null
+      firmware_advisory: null
+      write_rejections: null
   no_log: true
 
 - name: "redfish | account_service | abort if no primary target"
@@ -202,6 +207,12 @@
           # create_uri / create_uri_kind: 어디에 만들었는가. Accounts 열거 URI 와 다른 개념이다.
           create_uri: "{{ (_rf_acct_result.account_service | default({})).create_uri | default(none) }}"
           create_uri_kind: "{{ (_rf_acct_result.account_service | default({})).create_uri_kind | default(none) }}"
+          # isolation_basis: 이 Family 의 쓰기 방식을 무슨 근거로 골랐는가.
+          #   실장비 실측(live_proven)과 벤더 Advisory 추론(advisory_derived)을 합치지 않는다.
+          isolation_basis: "{{ (_rf_acct_result.account_service | default({})).isolation_basis | default(none) }}"
+          firmware_advisory: "{{ (_rf_acct_result.account_service | default({})).firmware_advisory | default(none) }}"
+          # write_rejections: 장비가 지목한 거부 항목 (속성 / 종류 / MessageId / Severity).
+          write_rejections: "{{ (_rf_acct_result.account_service | default({})).write_rejections | default(none) }}"
       no_log: true
 
     # ── 2026-08-12 (C3 / N49 / N71): 계정 처리 실패를 결과에 남긴다 ──────────

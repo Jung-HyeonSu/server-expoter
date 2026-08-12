@@ -62,7 +62,8 @@ def _account(**over):
     return a
 
 
-def _disc(accounts, role_ids=("Administrator", "Operator", "ReadOnly"), service=None):
+def _disc(accounts, role_ids=("Administrator", "Operator", "ReadOnly"), service=None,
+          manager=None):
     return {
         "service_uri": "AccountService", "accounts_uri": "AccountService/Accounts",
         "roles_uri": "AccountService/Roles",
@@ -70,16 +71,17 @@ def _disc(accounts, role_ids=("Administrator", "Operator", "ReadOnly"), service=
         "policy": rg._account_policy_of(service),
         "role_ids": list(role_ids), "accounts": list(accounts),
         "member_total": len(accounts), "member_read": len(accounts),
-        "enumeration": rg.ENUM_COMPLETE, "manager": None, "errors": [],
+        "enumeration": rg.ENUM_COMPLETE, "manager": manager, "errors": [],
         "auth_status": 200,
     }
 
 
-def _install(monkeypatch, accounts, service=None, role_ids=("Administrator", "Operator", "ReadOnly")):
+def _install(monkeypatch, accounts, service=None, role_ids=("Administrator", "Operator", "ReadOnly"),
+             manager=None):
     """PATCH 본문을 기록하고, 재조회/재인증은 항상 통과시키는 seam."""
     bodies = []
     monkeypatch.setattr(rg, "account_service_discover",
-                        lambda *a, **k: _disc(accounts, role_ids, service))
+                        lambda *a, **k: _disc(accounts, role_ids, service, manager))
     monkeypatch.setattr(rg, "_patch",
                         lambda ip, path, body, u, p, t, v, extra_headers=None:
                         (bodies.append(dict(body)), (200, {}, None))[1])
@@ -276,3 +278,63 @@ def test_auth_failure_delay_ignores_non_integer():
     assert rg._account_policy_of(
         {"Oem": {"Hpe": {"AuthFailureDelayTimeSeconds": True}}}
     )["auth_failure_delay_seconds"] is None
+
+
+# ── HPE Firmware 별 Evidence 구분 (2026-08-12 rev.2) ─────────────────────────
+#
+# 왜 필요한가:
+#   `hpe_ilo5plus` 하나가 iLO5/6/7 전 Firmware 를 덮으면서 evidence='proven' 이었다.
+#   실제로 재현한 것은 **iLO6 v1.73 한 버전**뿐이다. HPE Advisory a00159600en_us 는
+#   iLO6 1.73/1.74 + iLO7 1.19/1.20 을 영향 버전으로, iLO6 1.75+ / iLO7 1.21+ 를
+#   **해결 버전**으로 명시한다. iLO5 는 어느 쪽 근거도 없다.
+#
+#   쓰기 동작(Password 단독 PATCH)은 전 세대에서 그대로 둔다 — HPE 공식 문서가 지원하는
+#   동작이고 저장소의 안전 전략이다. 갈리는 것은 **그 선택을 무엇으로 정당화하는가** 다.
+
+@pytest.mark.parametrize("firmware,basis,evidence,advisory", [
+    # 이 저장소 실장비에서 직접 재현한 유일한 버전
+    ("iLO 6 v1.73", rg.ISOLATION_LIVE_PROVEN, "proven", rg.HPE_PATCH_ADVISORY),
+    # HPE Advisory 영향 버전 — defect 는 OFFICIAL 이지만 우리 payload 조합은 미검증
+    ("iLO 6 v1.74", rg.ISOLATION_ADVISORY, "documented", rg.HPE_PATCH_ADVISORY),
+    ("iLO 7 v1.19", rg.ISOLATION_ADVISORY, "documented", rg.HPE_PATCH_ADVISORY),
+    ("iLO 7 v1.20", rg.ISOLATION_ADVISORY, "documented", rg.HPE_PATCH_ADVISORY),
+    # Advisory 해결 버전 — 구버전 결함을 가정하지 않는다
+    ("iLO 6 v1.75", rg.ISOLATION_SAFETY, "documented", None),
+    ("iLO 6 v2.10", rg.ISOLATION_SAFETY, "documented", None),
+    ("iLO 7 v1.21", rg.ISOLATION_SAFETY, "documented", None),
+    # Advisory 이전 버전 / iLO5 / 판독 불가 — 근거 없음
+    ("iLO 6 v1.55", rg.ISOLATION_SAFETY, "documented", None),
+    ("iLO 5 v3.09", rg.ISOLATION_SAFETY, "documented", None),
+    ("", rg.ISOLATION_SAFETY, "documented", None),
+    (None, rg.ISOLATION_SAFETY, "documented", None),
+])
+def test_hpe_isolation_evidence_is_scoped_to_firmware(firmware, basis, evidence, advisory):
+    got_basis, got_evidence, got_advisory = rg.hpe_isolation_evidence(firmware)
+    assert got_basis == basis
+    assert got_evidence == evidence
+    assert got_advisory == advisory
+
+
+@pytest.mark.parametrize("firmware", ["iLO 5 v3.09", "iLO 6 v1.73", "iLO 6 v1.75",
+                                      "iLO 7 v1.21", ""])
+def test_hpe_write_behaviour_is_identical_across_firmware(monkeypatch, firmware):
+    """Evidence 는 갈려도 **쓰기 동작은 같다** — 라벨만 정확해진 것이지 기능이 변한 게 아니다."""
+    bodies = _install(monkeypatch, [_account()],
+                      manager={"firmware_version": firmware})
+    out = _provision("hpe")
+    assert out["family"] == "hpe_ilo5plus"
+    assert out["isolated_write"] is True
+    assert list(bodies[0]) == ["Password"], "Firmware 에 따라 쓰기 방식이 달라졌다"
+
+
+def test_hpe_proven_label_does_not_spread_beyond_the_tested_firmware(monkeypatch):
+    """iLO6 v1.73 에서 얻은 `proven` 이 다른 Firmware 로 번지지 않는다."""
+    _install(monkeypatch, [_account()], manager={"firmware_version": "iLO 6 v1.73"})
+    proven = _provision("hpe")
+    _install(monkeypatch, [_account()], manager={"firmware_version": "iLO 5 v3.09"})
+    other = _provision("hpe")
+    assert proven["evidence"] == "proven"
+    assert proven["isolation_basis"] == rg.ISOLATION_LIVE_PROVEN
+    assert other["evidence"] == "documented"
+    assert other["isolation_basis"] == rg.ISOLATION_SAFETY
+    assert other["firmware_advisory"] is None
