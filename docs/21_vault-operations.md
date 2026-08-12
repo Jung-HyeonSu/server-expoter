@@ -35,7 +35,8 @@ Credential 선택 Contract:
 ```
 OS      = location + os_type   →  vault/<location>/os/<linux|windows>.yml
 ESXi    = location             →  vault/<location>/esxi.yml
-Redfish = location + vendor    →  vault/<location>/redfish/<vendor>.yml
+Redfish 표준 = 전역           →  vault/common/redfish/standard.yml      (수집에 쓰는 계정)
+Redfish 복구 = location+vendor →  vault/<location>/redfish/<vendor>.yml  (표준 계정 복구용)
 ```
 
 Generation / Model / Firmware 는 **선택축이 아니다** (세대를 아는 시점이 인증 이후라 순환이다).
@@ -47,7 +48,8 @@ Generation / Model / Firmware 는 **선택축이 아니다** (세대를 아는 �
 | Linux | `vault/<loc>/os/linux.yml` | location + os_type |
 | Windows | `vault/<loc>/os/windows.yml` | location + os_type |
 | ESXi | `vault/<loc>/esxi.yml` | location |
-| Redfish | `vault/<loc>/redfish/<vendor>.yml` | location + vendor (canonical 9종) |
+| Redfish (표준 수집) | `vault/common/redfish/standard.yml` | **없음 — 전역 1벌** |
+| Redfish (복구) | `vault/<loc>/redfish/<vendor>.yml` | location + vendor (canonical 9종) |
 
 - `<location>` 은 `common/vars/locations.yml` 에 등록된 ID 만 쓸 수 있다. Jenkins 가
   `-e se_location=<id>` 로 전달하고, resolver 가 registry 에 없는 값이면 **경로를 만들지 않는다.**
@@ -57,7 +59,7 @@ Generation / Model / Firmware 는 **선택축이 아니다** (세대를 아는 �
 
 **vendor 9종**: dell / hpe / lenovo / supermicro / cisco / huawei / inspur / fujitsu / quanta
 
-### 3.2 이전 flat 경로 (제거 예정)
+### 3.2 이전 flat 경로 (2026-08-12 삭제 완료)
 
 | 채널 | 이전 경로 |
 |---|---|
@@ -70,8 +72,10 @@ Generation / Model / Firmware 는 **선택축이 아니다** (세대를 아는 �
 "조용히 옛 파일로 성공" 하는 대신 명시적으로 실패한다
 (`failure_code=CREDENTIAL_SET_UNAVAILABLE`). 이관 실패를 감추지 않기 위한 의도된 설계다.
 
-flat 파일은 **실장비 Pilot 검증 전까지 삭제하지 않는다** — 코드 rollback 만으로
-이전 동작을 즉시 복원할 수 있게 남겨 둔다 (§3.4 4단계).
+**2026-08-12 삭제 완료.** 실장비 6대 재검증 후 제거했고, 제거 후에도 정상 수집을 확인했다
+(`tests/evidence/2026-08-12-redfish-standard-account-separation.md`).
+`vault/.lab-credentials.yml` 은 resolver 대상이 아니라 유지한다.
+이전 동작 복원이 필요하면 git 이력에서 되살린다.
 
 ### 3.3 Location 추가 절차
 
@@ -81,13 +85,35 @@ flat 파일은 **실장비 Pilot 검증 전까지 삭제하지 않는다** — �
 
 **코드 수정 0줄.** Python / Playbook / Jenkinsfile 어느 것도 바뀌지 않는다.
 
+### 3.3.1 Redfish 는 계정 축이 둘이다 (2026-08-12)
+
+```
+vault/common/redfish/standard.yml   ← 표준 수집 계정 (role: primary 1개) — **전역 1벌**
+vault/<loc>/redfish/<vendor>.yml    ← 복구 계정 (role: recovery 만)
+```
+
+- **표준 수집 계정**: 모든 Location + 모든 Vendor 공통. 최종 Gathering 은 **반드시** 이
+  계정으로 수행된다. 이 파일 하나만 고치면 전 사이트·전 벤더에 반영된다.
+- **복구 계정**: 목적이 수집이 아니라 **표준 계정을 만들거나 되살리는 것**이다.
+  Location + Vendor 별로 다르다.
+- 복구 계정으로 수집한 결과가 정상 결과로 나가는 경로는 **없다.** 복구가 확인되면
+  표준 계정으로 재인증·재수집한다.
+- 복구 vault 에 `role: primary` 나 legacy `ansible_user` 를 두지 마라 — 표준 계정
+  중복이 되고, 코드는 그것을 표준 대용으로 쓰지 않는다.
+
+OS / ESXi 는 축이 하나뿐이라 구조가 그대로다 (`<loc>/os/<type>`, `<loc>/esxi`).
+
+비밀번호를 바꿀 때: 표준 계정은 `vault/common/redfish/standard.yml` **1곳**,
+복구 계정은 해당 Location+Vendor 파일만 고친다.
+
 ### 3.4 flat → Location 이관 절차 (4단계)
 
-> **현재 상태 (2026-08-12)**: 사내 테스트 환경은 **Pilot 단계**로 4 Location
-> (`ich / chj / yi / git`) × 12 = 48개가 존재하며, **4곳 모두 flat 과 같은 값**이다
-> (암호문 파일을 그대로 복사 — 아래 "Pilot 예외" 참조).
-> 아래 절차는 **운영 값으로 분리할 때**의 정본이다. flat 12개는 아직 삭제하지 않았다.
-> Pilot 결과: `tests/evidence/2026-08-12-location-vault-jenkins-pilot.md`
+> **현재 상태 (2026-08-12)**: 4 Location (`ich / chj / yi / git`) × 12 = 48개 +
+> 전역 표준 1개 = **49개**. flat 12개는 삭제됐다.
+> 복구 자격은 아직 **4곳이 같은 값**이다 (Pilot 단계). 아래 절차는 **운영 값으로
+> 분리할 때**의 정본이다.
+> Pilot 결과: `tests/evidence/2026-08-12-location-vault-jenkins-pilot.md`,
+> 표준/복구 분리: `tests/evidence/2026-08-12-redfish-standard-account-separation.md`
 >
 > **Pilot 예외가 정당했던 이유**: Pilot 의 검증 목표는 값이 아니라 **경로 분기**
 > (`loc` → agent label → `se_location` → vault 경로 → 복호화 → 인증) 였다. 값을 4벌로
@@ -158,21 +184,21 @@ vault 변경 시 다음 run 자동 반영을 보장하는 3 단서. 회전 후 /
 #### 단서 1: include_vars cacheable 옵션 부재
 
 ```bash
-grep -rn 'cacheable' redfish-gather/tasks/load_vault.yml
+grep -rn 'cacheable' common/tasks/credential/
 # 기대: 0 결과
 ```
 
 - `cacheable: yes` 시 fact_cache (Redis) 에 host facts 로 저장 → 다음 run 에서도 stale vault 사용 위험
-- 정본: `redfish-gather/tasks/load_vault.yml:29-36` (`include_vars` 호출에 `cacheable` 옵션 없음 — 매 run 디스크 read)
+- 정본: `common/tasks/credential/load_one.yml` (`include_vars` 호출에 `cacheable` 옵션 없음 — 매 run 디스크 read)
 
 #### 단서 2: set_fact host facts 미등록
 
 ```bash
-grep -rn 'cacheable' redfish-gather/tasks/load_vault.yml common/tasks/normalize/
+grep -rn 'cacheable' common/tasks/credential/ redfish-gather/tasks/ common/tasks/normalize/
 # 기대: 0 결과
 ```
 
-- `_rf_accounts` / `_rf_vault_data` 변수는 task scope 만
+- `_cl_vault_data` / `_cred_accounts` / `_rf_accounts` 변수는 task scope 만
 - host facts (`ansible_facts.*`) 또는 `cacheable: yes` 등록 금지
 - 정본: `redfish-gather/tasks/load_vault.yml:64-81` (`set_fact` 에 `cacheable` 옵션 없음)
 

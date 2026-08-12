@@ -808,11 +808,39 @@ Job: `clovirone-server-gather-vault-pilot` (운영 Job config 복제, `Jenkinsfi
 10.50.11.231 이 TCP 443 timeout (ich / yi 두 Location 각각 1회). 같은 대역
 10.50.11.232(Lenovo) 는 정상 → BMC 자체 미응답. BMC 복구 후 재시도 필요.
 
-#### E-2. Dell primary credential drift [운영 조치 필요]
+#### E-2. Dell primary credential drift [원인 규명됨 → E-6 으로 이관]
 
-10.100.15.34 iDRAC 에서 `common_infraops`(primary) 인증이 401 이고 `lab_dell_root`(recovery)
-로만 붙는다. Location 변경과 무관한 **기존 drift**. vault 값과 장비 값 중 어느 쪽을 맞출지
-운영 결정 필요. 방치하면 매 Redfish 수집마다 reconcile write 가 시도된다 (E-3).
+10.100.15.34 iDRAC 에서 표준 계정 인증이 401 이고 `lab_dell_root`(recovery) 로만 붙는다.
+2026-08-12 원인 규명: 표준 계정 비밀번호가 장비 **암호 정책** 을 충족하지 못해 동기화
+자체가 거부된다. 조치 선택지는 **E-6** 참조.
+
+#### E-0. 표준 계정 전역화 완료 (2026-08-12, `adc99570`)
+
+증거: `tests/evidence/2026-08-12-redfish-standard-account-separation.md`
+
+- [x] 표준 수집 계정 전역화 — `vault/common/redfish/standard.yml` (36벌 → 1벌)
+- [x] 복구 계정 Location+Vendor 분리 — `vault/<loc>/redfish/<vendor>.yml` (recovery 만)
+- [x] 최종 Gathering 은 반드시 표준 계정 — 실장비 6/6, recovery 수집 0건
+- [x] Dell reconcile Root Cause 규명 (2층: `Locked` read-only 200 거부 → 암호 정책 미달)
+- [x] flat vault 12개 삭제 + runtime 참조 0건
+- [x] `diagnosis.details.recovery_credential_scope` 신설
+
+#### E-6. **Dell 표준 계정 비밀번호가 장비 암호 정책 미달** [운영 결정 필요 — HIGH]
+
+10.100.15.34 (iDRAC10) 가 표준 계정 PATCH 를 거부하며 직접 통보:
+`"the password entered does not comply to the Security Strengthen Policy standards"`.
+
+- [ ] **선택지 (a)** 표준 계정 비밀번호 강화 → 전 BMC 재동기화. 값이 바뀌면
+      **모든 Location · 모든 Vendor** 에 영향 (vault/common/redfish/standard.yml 1곳 수정 +
+      각 장비 반영 필요)
+- [ ] **선택지 (b)** 해당 iDRAC 의 Security Strengthen Policy 완화
+- 해소 전까지 Dell 은 표준 계정으로 수집할 수 없다 → 결과가 `failed` 로 나간다.
+      **이관 전에는 (잘못이지만) recovery 수집으로 `success` 였으므로 Portal 표시가 달라진다.**
+
+#### E-7. 표준 계정 **생성** 경로 실장비 미검증 [HOLD]
+
+이번 검증 대상은 전부 표준 계정이 이미 존재했다 (`account_existed: true`).
+"계정 부재 → 생성 → 재인증" 경로는 모듈 단위 테스트로만 확인했다.
 
 #### E-3. **Pilot 중 실제 Account Write 1건 발생** [CRIT — 보고 완료]
 
@@ -821,9 +849,10 @@ Job: `clovirone-server-gather-vault-pilot` (운영 Job config 복제, `Jenkinsfi
 돌린 절차 실수다. 사후 dry-run 관측 결과 계정 슬롯은 그대로이고 인증 동작도 write 전후
 동일. 상세: 위 evidence §7.
 
-- [ ] **운영에서 reconcile write 를 기본 차단할지 결정** — 차단하려면
-      `Jenkinsfile_portal` 에 `-e _rf_account_service_dryrun=true`. 운영 동작 변경이라
-      Pilot 범위에서 반영하지 않았다
+- [x] **운영에서 reconcile write 를 기본 차단할지 결정** — 2026-08-12 사용자 명시:
+      **차단하지 않는다.** Account Reconcile 은 제품의 의도된 기능이다. 대신 쓰기 성공
+      조건을 조였다 (write 2xx ≠ 성공, 재인증까지 확인) 와 "복구 자격 미인증 시 쓰기 0" 을
+      코드로 강제했다
 - [ ] **이후 Pilot / 실험성 Redfish 실행은 dry-run 강제 후 시작** (절차 고정)
 
 #### E-4. Location 별 값 분리 미검증
