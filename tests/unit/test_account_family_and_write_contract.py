@@ -259,7 +259,12 @@ def test_inspur_m6_requires_etag_and_oem_status():
     fam, _ = rg.resolve_account_family(
         "inspur", _disc(service={"Oem": {"Public": {"PasswordComplexityCheckEnabled": 1}}}), None)
     assert fam["id"] == "inspur_m6"
-    assert fam["etag_required"] is True
+    # ETag 는 Family 공통 boolean 이 아니라 **Operation 단위** 계약이다.
+    #   M6 공식: Create = POST Collection (If-Match 없음) / Repair = PATCH + If-Match
+    # 하나의 boolean 으로 두면 Create 에도 붙여야 하는 것처럼 읽힌다.
+    # source: 浪潮英信服务器 Redfish用户手册 V1.2 §4.4(Create) / §4.6(Update)
+    assert rg.account_if_match(fam, "repair") is True
+    assert rg.account_if_match(fam, "create") is False
     assert fam["write_success"] == "inspur_oem_status"
 
 

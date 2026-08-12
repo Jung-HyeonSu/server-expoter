@@ -83,6 +83,13 @@
       followup_properties: null
       followup_accepted: null
       verify_schedule_seconds: null
+      # 2026-08-12 (rev.2): Write Convergence 단계 분리.
+      #   HTTP 2xx 는 transport 수락일 뿐이라 write_accepted(=property 수락) 와 나눠 남긴다.
+      #   create_uri 는 Accounts 열거 URI 와 다른 개념이라 어디에 만들었는지 따로 남긴다.
+      write_http_status: null
+      verify_resource: null
+      create_uri: null
+      create_uri_kind: null
   no_log: true
 
 - name: "redfish | account_service | abort if no primary target"
@@ -188,6 +195,13 @@
           followup_accepted: "{{ (_rf_acct_result.account_service | default({})).followup_accepted | default(none) }}"
           # verify_schedule_seconds: 장비가 선언한 인증 실패 패널티에 맞춰 넓힌 재확인 간격.
           verify_schedule_seconds: "{{ (_rf_acct_result.account_service | default({})).verify_schedule_seconds | default(none) }}"
+          # write_http_status: transport 수락. write_accepted(=property 수락) 와 별개 축이다.
+          write_http_status: "{{ (_rf_acct_result.account_service | default({})).write_http_status | default(none) }}"
+          # verify_resource: 표준 자격 재인증에 실제로 사용한 리소스.
+          verify_resource: "{{ (_rf_acct_result.account_service | default({})).verify_resource | default(none) }}"
+          # create_uri / create_uri_kind: 어디에 만들었는가. Accounts 열거 URI 와 다른 개념이다.
+          create_uri: "{{ (_rf_acct_result.account_service | default({})).create_uri | default(none) }}"
+          create_uri_kind: "{{ (_rf_acct_result.account_service | default({})).create_uri_kind | default(none) }}"
       no_log: true
 
     # ── 2026-08-12 (C3 / N49 / N71): 계정 처리 실패를 결과에 남긴다 ──────────

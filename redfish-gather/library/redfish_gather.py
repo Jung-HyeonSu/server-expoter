@@ -5058,19 +5058,76 @@ def account_presence(discovery, target_username):
 #   documented  = vendor 공식 문서로 Write 계약이 확인된 Family (실장비 미검증)
 #   unverified  = 공식 Write 계약 미확보 → **현행 동작을 그대로 유지**한다
 #                 (사용자 결정 2026-08-12: 근거 부족 Family 는 현행 유지 + 라벨)
+
+# ── Property Write Contract ───────────────────────────────────────────────────
+# 왜 데이터로 두는가:
+#   같은 Property 라도 Family 마다 쓰기 가능 여부가 다르다. 9 Vendor 조사 결과:
+#     Locked                 : HPE iLO 는 속성 자체가 없고, Lenovo XCC 는 read-only,
+#                              Huawei/Cisco BMC 는 writable, TSM 도 writable
+#     PasswordChangeRequired : HPE/Cisco BMC(기존계정)/OpenBMC 는 read-only,
+#                              Lenovo XCC1 Whitley·XCC2 는 writable, XCC3 는 목록에 없음
+#     AccountTypes           : HPE 는 verify-only, Lenovo XCC2/3 는 writable
+#   이 차이를 본문 조건문으로 표현하면 Family 가 늘 때마다 분기가 늘고, 어느 Family 가
+#   무엇을 보내는지 한눈에 볼 수 없다. 그래서 **표로 선언하고 코드는 표를 읽는다.**
+#
+# 상태 5종:
+#   writable    쓸 수 있다. 단 실제 drift 가 있을 때만 보낸다(no-op write 금지).
+#   read_only   장비가 노출하지만 쓸 수 없다. 보내지 않고 대조만 한다.
+#   verify_only 쓰기 대상이 아니지만 **반드시 확인**해야 한다 (예: Redfish 접근권).
+#   unsupported 해당 Family 에 존재하지 않는다. 보내지도 대조하지도 않는다.
+#   unverified  공식 계약을 확보하지 못했다. **자동으로 쓰지 않는다.** 관측만 한다.
+#
+# 기본값 정책:
+#   최종 기본값은 `unverified` 다 — 모르는 Property 를 writable 로 가정하지 않는다.
+#   다만 이번 단계(P1)는 **행동 변화 0** 이 합격 조건이라 현재 동작을 그대로 옮긴 값을
+#   쓴다. Family 별 선언을 채운 뒤 기본값을 `unverified` 로 좁힌다(P2).
+_ACCOUNT_PROP_DEFAULTS = {
+    'Password':               {'create': 'writable',    'repair': 'writable'},
+    'RoleId':                 {'create': 'writable',    'repair': 'writable'},
+    'Enabled':                {'create': 'writable',    'repair': 'writable'},
+    # 생성 payload 에는 Locked 를 실은 적이 없다 — 그 사실을 그대로 적는다.
+    'Locked':                 {'create': 'unsupported', 'repair': 'writable'},
+    'PasswordChangeRequired': {'create': 'writable',    'repair': 'writable'},
+    'AccountTypes':           {'create': 'writable',    'repair': 'writable'},
+}
+
+# 계약을 확보하지 못한 Property 의 최종 상태. P2 에서 `_ACCOUNT_PROP_DEFAULTS` 미선언
+# Property 의 기본값이 된다.
+PROP_UNVERIFIED = 'unverified'
+
 _ACCOUNT_FAMILY_DEFAULTS = {
     'create_method':            'collection_post',
+    # 생성 대상 URI 종류. **Accounts 열거 URI 와 같은 개념이 아니다.**
+    #   accounts_collection  : discovery 가 알려준 Accounts Collection 에 POST (현행 기본)
+    #   account_service_root : AccountService 자체에 POST (최신 Supermicro 공식 계약)
+    #   account_instance     : 개별 Account URI 에 POST (Cisco IMC 3.x)
+    # 어떤 경우에도 하나를 실패하면 다른 것으로 갈아타지 않는다.
+    'create_uri':               'accounts_collection',
     'needs_explicit_id':        False,
     'id_range':                 None,
     'role_map':                 {},
     'account_types':            None,
+    # 쓰지는 않지만 **반드시 있어야 하는** AccountTypes (예: Redfish 접근권 검증).
+    'account_types_required':   None,
     'password_change_required': None,   # None=보내지 않음 / False=명시적으로 끈다
     'oem_privileges_namespace': None,
     'reserved_slot_ids':        (),
-    'etag_required':            False,
+    # If-Match 는 Family 공통 boolean 이 아니라 **Operation 단위** 계약이다.
+    #   Inspur M6: Create = POST Collection (If-Match 없음)
+    #              Repair = PATCH Instance + GET ETag → If-Match
+    # 하나의 boolean 으로 두면 Create 에도 붙여야 하는 것처럼 읽힌다.
+    # source: 浪潮英信服务器 Redfish用户手册 V1.2 §4.4(Create) / §4.6(Update)
+    'if_match':                 {'create': False, 'repair': False},
     'write_success':            'generic',
     'evidence':                 'unverified',
     'legacy_post_retry':        False,
+    # 비밀번호를 다른 속성과 같은 PATCH 에 담으면 조용히 버리는 Family (HPE iLO).
+    'isolated_write_patch':     False,
+    # 비밀번호 단독 PATCH 가 권한 cache 를 손상시키는 Family (Lenovo XCC 사이트 실측).
+    # 그런 Family 는 drift 최소화보다 full body 유지가 우선이다.
+    'full_body_patch':          False,
+    # Family 별 Property 쓰기 계약. 미선언 Property 는 _ACCOUNT_PROP_DEFAULTS 를 따른다.
+    'props':                    {},
 }
 
 _ACCOUNT_FAMILIES = {                                                          # nosec rule12-r1
@@ -5132,7 +5189,10 @@ _ACCOUNT_FAMILIES = {                                                          #
                                  'evidence': 'documented'},
     # Inspur M6 / ISBMC — HTTP 200 + Oem.Public.Status 0 이어야 성공. PATCH 는 If-Match.
     # source: 浪潮英信服务器 Redfish用户手册 V1.2 §4.4 / §4.6
-    'inspur_m6':                {'etag_required': True,                        # nosec rule12-r1
+    # Create 는 Collection POST 이고 **If-Match 를 쓰지 않는다.** Repair(Instance PATCH)만
+    # GET 으로 ETag 를 받아 If-Match 로 싣는다. 두 Operation 의 계약이 서로 다르다.
+    'inspur_m6':                {'if_match': {'create': False,                 # nosec rule12-r1
+                                              'repair': True},
                                  'write_success': 'inspur_oem_status',
                                  'evidence': 'documented'},
     # Huawei iBMC — Collection POST + Instance PATCH 가 2019 MM920 / 2025 Kunpeng 양쪽 공식.
@@ -5151,6 +5211,42 @@ def account_family(family_id):
     rec.update(_ACCOUNT_FAMILIES.get(family_id) or _ACCOUNT_FAMILIES['generic_collection_post'])
     rec['id'] = family_id if family_id in _ACCOUNT_FAMILIES else 'generic_collection_post'
     return rec
+
+
+def account_prop_contract(family, prop, operation):
+    """(Family, Property, create|repair) → 쓰기 계약 5-상태 중 하나.
+
+    Family 가 선언한 값이 우선이고, 없으면 `_ACCOUNT_PROP_DEFAULTS`, 그것도 없으면
+    `unverified` 다. **모르는 Property 를 writable 로 가정하지 않는다.**
+    """
+    declared = (family or {}).get('props') or {}
+    entry = declared.get(prop)
+    if isinstance(entry, dict) and operation in entry:
+        return entry[operation]
+    fallback = _ACCOUNT_PROP_DEFAULTS.get(prop) or {}
+    return fallback.get(operation, PROP_UNVERIFIED)
+
+
+def account_prop_writable(family, prop, operation):
+    """그 Property 를 이 Operation 에서 **보내도 되는가**.
+
+    `writable` 만 True 다. read_only / verify_only / unsupported / unverified 는
+    전부 False — 특히 `unverified` 는 "일단 보내 보고 거부되면 뺀다" 가 아니라
+    **애초에 보내지 않는다** 는 뜻이다 (추측성 재시도 금지).
+    """
+    return account_prop_contract(family, prop, operation) == 'writable'
+
+
+def account_if_match(family, operation):
+    """이 Operation 에서 If-Match 를 실어야 하는가 (Family 계약).
+
+    Family 공통 boolean 이 아니라 Operation 단위다 — Inspur M6 는 Repair 만 요구하고
+    Create 는 요구하지 않는다.
+    """
+    spec = (family or {}).get('if_match')
+    if isinstance(spec, dict):
+        return bool(spec.get(operation, False))
+    return False
 
 
 def _has_prepopulated_slots(accounts):
@@ -5366,15 +5462,34 @@ def interpret_write_response(family, code, body, err):
     return True, None
 
 
-def _accounts_write_uri(discovery):
-    """계정 생성 POST 대상 URI.
+def _create_target_uri(family, discovery, explicit_id=None):
+    """계정 **생성** 대상 URI. 열거 URI 와 같은 개념이 아니다.
 
     2026-08-12: 종전에는 5곳 모두 리터럴 'AccountService/Accounts' 를 썼다. 열거는
     `AccountService.Accounts.@odata.id` 를 따르면서 쓰기만 하드코딩 경로로 나가면,
     컬렉션이 표준 경로가 아닌 펌웨어(Dell 구세대의 Manager-scoped 경로 등)에서
     "읽기는 되는데 생성은 404" 가 된다. 링크가 없을 때만 종전 경로로 되돌아간다.
+
+    2026-08-12 (rev.2): Vendor 에 따라 **Create URI 자체가 Accounts Collection 이 아니다.**
+      최신 Supermicro : POST /redfish/v1/AccountService        (AccountService 루트)
+      Cisco IMC 3.x   : POST /redfish/v1/AccountService/Accounts/<ID>  (Instance)
+    그래서 "Accounts 를 어디서 읽었는가" 와 "어디에 만드는가" 를 분리한다.
+
+    **하나가 실패하면 다른 URI 로 갈아타지 않는다.** 어느 것을 쓸지는 쓰기 전에
+    Family 가 확정한다 (05 §34: 두 Create URI 를 fallback 으로 시도하는 것은 금지).
     """
-    return (discovery or {}).get('accounts_uri') or 'AccountService/Accounts'
+    d = discovery or {}
+    accounts_uri = d.get('accounts_uri') or 'AccountService/Accounts'
+    kind = (family or {}).get('create_uri') or 'accounts_collection'
+    if kind == 'account_service_root':
+        return d.get('service_uri') or 'AccountService'
+    if kind == 'account_instance':
+        # Instance POST 는 대상 Id 가 있어야 의미가 있다. 없으면 Collection 으로 두고
+        # 호출자가 Id 미확정 실패를 그대로 보고하게 한다 (URI 를 추측하지 않는다).
+        if explicit_id is None:
+            return accounts_uri
+        return f'{accounts_uri.rstrip("/")}/{explicit_id}'
+    return accounts_uri
 
 
 def _confirm_account_state(bmc_ip, slot_uri, target_username, family,
@@ -5428,18 +5543,25 @@ def _confirm_account_state(bmc_ip, slot_uri, target_username, family,
 
 def build_create_payload(family, target_username, target_password, role_id,
                          explicit_id=None):
-    """Family 가 확정된 뒤 **한 번에** 만드는 생성 payload. 순차 retry 로 채우지 않는다."""
-    body = {
-        'UserName': target_username,
-        'Password': target_password,
-        'Enabled':  True,
-        'RoleId':   role_id,
-    }
+    """Family 가 확정된 뒤 **한 번에** 만드는 생성 payload. 순차 retry 로 채우지 않는다.
+
+    각 Property 는 Family Property Contract(`props`)가 `writable` 이라고 말할 때만 실린다.
+    read_only / unsupported / unverified Property 는 **애초에 보내지 않는다** — 보내고
+    거부되면 빼는 방식은 추측성 재시도라 금지한다.
+    """
+    body = {'UserName': target_username}
+    if account_prop_writable(family, 'Password', 'create'):
+        body['Password'] = target_password
+    if account_prop_writable(family, 'Enabled', 'create'):
+        body['Enabled'] = True
+    if account_prop_writable(family, 'RoleId', 'create'):
+        body['RoleId'] = role_id
     if family.get('needs_explicit_id') and explicit_id is not None:
         body['Id'] = explicit_id
-    if family.get('password_change_required') is False:
+    if family.get('password_change_required') is False \
+            and account_prop_writable(family, 'PasswordChangeRequired', 'create'):
         body['PasswordChangeRequired'] = False
-    if family.get('account_types'):
+    if family.get('account_types') and account_prop_writable(family, 'AccountTypes', 'create'):
         body['AccountTypes'] = list(family['account_types'])
     ns = family.get('oem_privileges_namespace')
     if ns:
@@ -5640,6 +5762,20 @@ def account_service_provision(
         # "적용하지 않았다 / 정책 미충족" 을 담는다. 종전에는 body 를 통째로 버려서
         # 쓰기가 왜 무효였는지 알 근거가 남지 않았다 (2026-08-12 Dell 사례).
         'write_response_info': None,
+        # ── Write Convergence 단계 분리 (2026-08-12 rev.2) ────────────────────
+        # HTTP 2xx 는 transport 수락일 뿐이다. 아래 축을 각각 남겨야 "무엇까지 됐는지"
+        # 를 사람이 구분할 수 있다.
+        #   write_http_status  transport accepted
+        #   write_accepted     property accepted (벤더 계약 기준)
+        #   post_write_state   resource state converged
+        #   verification       credential fresh-auth verified
+        #   verify_resource    재인증에 실제로 사용한 리소스
+        #   (gathering 검증은 Ansible Phase 3 재수집이 담당한다)
+        'write_http_status': None,
+        'verify_resource':   None,
+        # 생성 대상 URI 와 그 종류 (Accounts Collection / AccountService 루트 / Instance).
+        'create_uri':        None,
+        'create_uri_kind':   None,
         'errors':          [],
     }
 
@@ -5655,7 +5791,12 @@ def account_service_provision(
     verify_schedule = ACCOUNT_VERIFY_DELAYS
 
     def _verify_standard_credential():
-        """쓴 뒤 표준 자격으로 실제 인증되는지 확인. (ok, code, err, attempts)"""
+        """쓴 뒤 표준 자격으로 실제 인증되는지 확인. (ok, code, err, attempts)
+
+        확인 대상 리소스를 결과에 남긴다 — "인증만 됐다" 와 "필요한 리소스에 실제로
+        접근된다" 는 다른 주장이고, 어느 쪽을 확인했는지 결과에서 보여야 한다.
+        """
+        out['verify_resource'] = 'Systems'
         code_v, err_v = None, None
         for attempt, delay in enumerate(verify_schedule):
             if delay:
@@ -5850,21 +5991,27 @@ def account_service_provision(
         }
         # 최신 Lenovo XCC2/3 · Supermicro 계정분리 세대는 AccountTypes 에 Redfish 가 없으면
         # 계정이 살아 있어도 Redfish 인증이 막힌다. Family 가 요구할 때만 함께 맞춘다.
-        if family.get('account_types') and existing.get('account_types') is not None:
+        if family.get('account_types') and existing.get('account_types') is not None \
+                and account_prop_writable(family, 'AccountTypes', 'repair'):
             want = set(family['account_types'])
             if not want.issubset(set(existing.get('account_types') or [])):
                 body_full['AccountTypes'] = sorted(
                     set(existing.get('account_types') or []) | want)
         # PasswordChangeRequired 가 켜져 있으면 비밀번호를 바꿔도 접근이 막힌다.
-        # 장비가 그 속성을 실제로 노출할 때만 끈다 (미지원 속성을 추측해 보내지 않는다).
-        if existing.get('password_change_required') is True:
+        # 장비가 그 속성을 실제로 노출하고 **Family 계약이 writable 일 때만** 끈다.
+        #   HPE iLO5/6/7 · Cisco BMC 1.1(기존 계정) · upstream OpenBMC 는 read-only 라
+        #   여기에 실으면 요청 전체가 거부된다. 거부된 뒤 빼고 다시 쓰는 것은 금지다.
+        if existing.get('password_change_required') is True \
+                and account_prop_writable(family, 'PasswordChangeRequired', 'repair'):
             body_full['PasswordChangeRequired'] = False
         # 잠금 해제는 **실제로 잠겨 있을 때만** 요청한다 (위 2026-08-12 주석 참조).
-        if existing.get('locked') is True:
+        # Locked 가 read-only 인 Family(HPE iLO / Lenovo XCC)에서는 보내지 않는다.
+        if existing.get('locked') is True and account_prop_writable(family, 'Locked', 'repair'):
             body_full['Locked'] = False
         patch_headers = None
-        if family.get('etag_required'):
+        if account_if_match(family, 'repair'):
             # Inspur M6 공식 계약: GET 으로 ETag 를 받고 PATCH 에 If-Match 로 실어야 한다.
+            # **Repair 전용이다** — 같은 Family 의 Create(Collection POST)는 요구하지 않는다.
             etag = _get_response_etag(bmc_ip, _p(existing['slot_uri']),
                                       current_username, current_password, timeout, verify_ssl)
             if etag:
@@ -5888,8 +6035,9 @@ def account_service_provision(
             bmc_ip, _p(existing['slot_uri']), body_full,
             current_username, current_password, timeout, verify_ssl, patch_headers,
         )
-        if code == 412 and family.get('etag_required'):
+        if code == 412 and account_if_match(family, 'repair'):
             # ETag 가 그 사이 바뀐 경우만 1회 재획득 후 재시도한다 (그 외 재시도 없음).
+            # 동일 URI + 동일 Payload + 새 ETag — payload 를 바꾸는 재시도가 아니다.
             etag = _get_response_etag(bmc_ip, _p(existing['slot_uri']),
                                       current_username, current_password, timeout, verify_ssl)
             if etag:
@@ -5928,6 +6076,8 @@ def account_service_provision(
         out['write_response_info'] = _extended_info(patch_resp) or out.get('write_response_info')
         # 2026-08-12: 성공 판정을 HTTP status 하나로 통일하지 않는다 (Family 계약).
         #   Dell iDRAC10 = 200 + 본문 거부, Inspur M6 = 200 + Oem.Public.Status 0.
+        #   transport 수락(status)과 property 수락(accepted)을 각각 남긴다.
+        out['write_http_status'] = code
         accepted, reject_reason = interpret_write_response(family, code, patch_resp, err)
         out['write_accepted'] = accepted
         out['vendor_status'] = reject_reason
@@ -6060,14 +6210,16 @@ def account_service_provision(
             return out
         # POST 재생성 (DELETE 후). PATCH existing 경로만 여기 도달하므로 표준 POST body 를
         # 만들고, vendor=='cisco' 면 RoleId enum remap + Id 필드를 추가한다.
+        repost_id = (existing.get('id') or '2') if family.get('needs_explicit_id') else None
         body_post = build_create_payload(
             family, target_username, target_password, role_id,
-            explicit_id=(existing.get('id') or '2') if family.get('needs_explicit_id') else None,
+            explicit_id=repost_id,
         )
         post_code, post_data, post_err = _post(
-            bmc_ip, _accounts_write_uri(discovery), body_post,
+            bmc_ip, _create_target_uri(family, discovery, repost_id), body_post,
             current_username, current_password, timeout, verify_ssl,
         )
+        out['write_http_status'] = post_code
         accepted_r, reason_r = interpret_write_response(family, post_code, post_data, post_err)
         out['write_accepted'] = accepted_r
         out['vendor_status'] = reason_r
@@ -6165,6 +6317,7 @@ def account_service_provision(
         # 2026-08-12: 생성 PATCH 응답의 본문 거부(Dell iDRAC10 의 200+read-only)를
         #   여기서도 본다. 종전에는 기존 계정 경로에만 이 검사가 있어, 같은 펌웨어의
         #   같은 거부를 생성 경로에서는 성공으로 읽고 넘어갔다.
+        out['write_http_status'] = code
         accepted, reject_reason = interpret_write_response(family, code, patch_resp, err)
         out['write_accepted'] = accepted
         out['vendor_status'] = reject_reason
@@ -6214,14 +6367,19 @@ def account_service_provision(
             ))
         return out
 
-    # ── 3-b) Collection POST 로 생성 ──────────────────────────────────────
-    accounts_uri = _accounts_write_uri(discovery)
+    # ── 3-b) POST 로 생성 ─────────────────────────────────────────────────
+    # 대상 URI 는 Family 가 확정한다 (Accounts Collection / AccountService 루트 /
+    # Account Instance). 실패해도 **다른 URI 로 갈아타지 않는다.**
+    accounts_uri = _create_target_uri(family, discovery, explicit_id)
+    out['create_uri'] = accounts_uri
+    out['create_uri_kind'] = family.get('create_uri')
     body_base = build_create_payload(family, target_username, target_password, role_id,
                                      explicit_id=explicit_id)
     code, resp_data, err = _post(
         bmc_ip, accounts_uri, body_base,
         current_username, current_password, timeout, verify_ssl,
     )
+    out['write_http_status'] = code
     accepted, reject_reason = interpret_write_response(family, code, resp_data, err)
     out['write_response_info'] = _extended_info(resp_data) or out['write_response_info']
 
