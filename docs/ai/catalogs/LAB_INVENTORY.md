@@ -38,6 +38,18 @@
 > - 제거 (사내 부재 / non-Redfish): **10.100.15.1** (lab 부재 또는 Redfish 미지원), **10.100.15.3** (ping fail 부재)
 > - 추가 (실 작동 BMC): **10.100.15.2** (Cisco TA-UNODE-G1, admin/Goodmit1!) — 빌드 #91 SUCCESS 검증 / DDR4 64GB×16=1TB / SSD SATA 18.2TB
 
+> **2026-08-12 실측 정정 (Location Vault Pilot — `tests/evidence/2026-08-12-location-vault-jenkins-pilot.md`)**
+> - **10.100.64.135 는 Windows 가 아니다.** 실측 결과 RHEL 계열 Linux
+>   (`auto-install-test02.gooddi.lab`, Python 3.9.21, adapter `os_linux_rhel`). 위 cycle-015
+>   기록("Windows Server 2022 = 10.100.64.135")은 그 사이 환경이 바뀌어 stale.
+> - **10.100.64.120 은 살아 있다.** cycle-015 가 "사내 부재" 로 제거했지만 Windows 수집이
+>   정상 동작한다(7 sections, adapter `os_windows_*`). 2026-06-22 evidence 와도 일치하므로
+>   **현재 유일하게 확인된 Windows 대상**이다.
+> - **10.50.11.231 (HPE iLO6) 미응답** — TCP 443 timeout. 같은 대역 10.50.11.232(Lenovo XCC)
+>   는 정상이므로 라우팅이 아니라 BMC 자체 문제. Round 12 는 이 장비 복구 후에나 가능.
+> - **Jenkins agent 는 1대다** — `jenkins-agent-ops` 한 노드가 `ich/chj/yi/git` 4 label 을
+>   모두 갖는다. Location 별 물리 분리는 현재 없다.
+
 ## 3. 네트워크 zone
 
 | Zone | CIDR | 용도 |

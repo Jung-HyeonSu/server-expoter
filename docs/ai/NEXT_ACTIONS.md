@@ -784,23 +784,57 @@ envelope 과 `errors[].message` 는 정상 생성됐는데 **Portal 이 아예 �
 설계 정본: `docs/ai/VAULT-CREDENTIAL-RESOLVER-DESIGN-2026-08-12.md`
 검증 증거: `tests/evidence/2026-08-12-location-credential-resolver.md`
 
-### E. 실장비 Pilot (이것이 끝나기 전에는 flat vault 를 삭제하지 않는다)
+### E. 실장비 Pilot — 2026-08-12 수행 (`d09ff344`)
 
-- [ ] **P1 Location 별 실제 vault 작성 + 복호화 검증** — 실제 계정 값은 운영 담당자만 안다.
-      검증 도중 쓴 mock 은 평문 YAML 이었으므로 **ansible-vault 암호문 복호화 경로는 미검증**이다.
-      절차: `docs/21_vault-operations.md` §3.4
-- [ ] **P2 OS Linux / Windows 실장비 1대씩** — `credential_scope == <loc>/os/<type>`, become / WinRM
-- [ ] **P3 ESXi 실장비 1대** — `credential_scope == <loc>/esxi`, lockdown 환경
-- [ ] **P4 Redfish vendor 별 최소 1대** — 실제 BMC Manufacturer 표기 → canonical 기대값 확인
-- [ ] **P5 Jenkins `built-in` 노드 SCM checkout 가부** — `Resolve Location` stage 성립 조건.
-      불가 시 설계 §12.5 의 2안(choice 파라미터)으로 전환
-- [ ] **P6 미등록 Location 빌드** → agent 대기 없이 즉시 실패하는지
-- [ ] **P7 Redfish reconcile (Account Write)** — credential 경로 변경 후에도 진입 게이트 불변인지.
-      **dry-run 과 실제 write 를 구분해 보고할 것**
+증거: `tests/evidence/2026-08-12-location-vault-jenkins-pilot.md`
+Job: `clovirone-server-gather-vault-pilot` (운영 Job config 복제, `Jenkinsfile_portal`).
+
+- [x] **P1 Location vault 구성 + 복호화** — 4 Location × 12 = 48개. flat 암호문 그대로 복사
+      (git index blob 48/48 원본 동일). **실제 ansible-vault 복호화 경로 검증됨** — Jenkins
+      credential `server-gather-vault-password` 로 풀어 실장비 인증 성공
+- [x] **P2 OS Linux / Windows** — `ich/os/linux`, `git/os/linux`, `chj/os/linux`, `chj/os/windows`
+- [x] **P3 ESXi** — `yi/esxi`
+- [x] **P4 Redfish** — Dell `git/redfish/dell`, Lenovo `chj|git/redfish/lenovo`, Cisco `yi/redfish/cisco`
+- [x] **P5 built-in SCM checkout** — 가능. 설계 1안 성립, 2안(choice 파라미터) 불필요
+- [x] **P6 미등록 Location** — 18초 FAILURE, agent 대기 없음
+- [x] **P7 reconcile gate** — 경로 변경 후에도 게이트 불변 확인. dry-run 시 `verification: skipped`
 - [ ] **P8 Portal 의 미지 `failure_code` 처리** — `CREDENTIAL_SET_UNAVAILABLE` 수신 시 동작 (외부 시스템)
-- [ ] **P9 flat vault 제거** — P1~P4 확인 후 **별도 커밋**.
+- [ ] **P9 flat vault 제거** — **아직 아니다.** 아래 E-1~E-3 해소 후 별도 커밋.
       대상: `vault/{linux,windows,esxi}.yml`, `vault/redfish/*.yml` 9개
       (`vault/.lab-credentials.yml` 제외)
+
+#### E-1. HPE Redfish 미검증 [HOLD — 장비]
+
+10.50.11.231 이 TCP 443 timeout (ich / yi 두 Location 각각 1회). 같은 대역
+10.50.11.232(Lenovo) 는 정상 → BMC 자체 미응답. BMC 복구 후 재시도 필요.
+
+#### E-2. Dell primary credential drift [운영 조치 필요]
+
+10.100.15.34 iDRAC 에서 `common_infraops`(primary) 인증이 401 이고 `lab_dell_root`(recovery)
+로만 붙는다. Location 변경과 무관한 **기존 drift**. vault 값과 장비 값 중 어느 쪽을 맞출지
+운영 결정 필요. 방치하면 매 Redfish 수집마다 reconcile write 가 시도된다 (E-3).
+
+#### E-3. **Pilot 중 실제 Account Write 1건 발생** [CRIT — 보고 완료]
+
+빌드 #3 에서 Dell slot 3 에 `PATCH`(password_sync)가 실제로 나갔다. 지시 §13 은 dry-run 을
+요구했는데, dry-run 변수(`_rf_account_service_dryrun`)를 **확인하기 전에** Redfish 빌드를
+돌린 절차 실수다. 사후 dry-run 관측 결과 계정 슬롯은 그대로이고 인증 동작도 write 전후
+동일. 상세: 위 evidence §7.
+
+- [ ] **운영에서 reconcile write 를 기본 차단할지 결정** — 차단하려면
+      `Jenkinsfile_portal` 에 `-e _rf_account_service_dryrun=true`. 운영 동작 변경이라
+      Pilot 범위에서 반영하지 않았다
+- [ ] **이후 Pilot / 실험성 Redfish 실행은 dry-run 강제 후 시작** (절차 고정)
+
+#### E-4. Location 별 값 분리 미검증
+
+이번 Pilot 은 4 Location 이 **같은 Credential** 을 가리킨 상태다. Location 마다 실제 값이
+갈린 뒤 재검증 필요 (그때 flat vault 가 참조 자료로 필요할 수 있어 P9 를 앞당기지 않는다).
+
+#### E-5. 물리 Runner 분리 미검증
+
+`ich/chj/yi/git` 4 label 이 **단일 노드** `jenkins-agent-ops` 에 모두 붙어 있다. Location →
+label → 노드 배정 경로는 검증됐지만 망 분리는 검증되지 않았다.
 
 ### F. 사용자 결정 대기
 
