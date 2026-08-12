@@ -507,6 +507,9 @@
                                        | combine({'credential_scope': (_cred_scope | default('')) or none,
                                                   'recovery_credential_scope':
                                                     (_cred_recovery_scope | default('')) or none,
+                                                  'auth': _rf_attempts_meta | default({}),
+                                                  'account_service':
+                                                    _rf_account_service_meta | default({}),
                                                   'notices':
                                            ((_rf_raw_collect | default({})).notices | default([]))})}) }}
           when: ((_diagnosis | default({}, true)).failure_reason | default(none)) is none

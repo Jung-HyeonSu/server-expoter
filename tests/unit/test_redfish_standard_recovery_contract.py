@@ -473,3 +473,22 @@ def test_19_account_service_meta_has_no_secret():
         blob = repr(meta)
         assert "password" not in blob.lower() or "write_response" in blob
         assert "username" not in blob.lower()
+
+
+def test_failed_envelope_exposes_account_service_meta():
+    """복구가 실패한 결과에서도 **무엇을 시도했는지** 보여야 한다 (2026-08-12).
+
+    최초 구현에서는 성공 경로에만 `account_service` 를 넣었다. 그런데 이 정보가 가장
+    필요한 때는 **실패했을 때**다 — 복구를 시도했는지, 복구 자격으로 접속은 됐는지,
+    썼는지, 확인이 됐는지가 결과에 없으면 Jenkins 콘솔을 열어야 알 수 있다.
+    (콘솔은 json_only 가 OUTPUT 외 전부 억제해서 사실상 볼 수 없다.)
+    """
+    rescue = None
+    for task in _tasks_of("redfish-gather/site.yml"):
+        facts = task.get("ansible.builtin.set_fact") or {}
+        tpl = facts.get("_diagnosis")
+        if isinstance(tpl, str) and "failure_reason" in tpl and "AUTH_PROBE_FAILED" in tpl:
+            rescue = tpl
+    assert rescue, "rescue 의 _diagnosis 템플릿을 찾지 못했다"
+    for key in ("credential_scope", "recovery_credential_scope", "account_service", "auth"):
+        assert f"'{key}'" in rescue, f"실패 envelope details 에 {key} 누락"
