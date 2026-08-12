@@ -67,6 +67,37 @@
         - name: "redfish | detect vendor"
           ansible.builtin.include_tasks: tasks/detect_vendor.yml
 
+        # ── Credential 선택 (2026-08-12) ─────────────────────────────────
+        # (se_location, canonical vendor) → vault/<loc>/redfish/<vendor>.yml
+        #
+        # adapter 선택 **앞**에 둔다. 데이터 의존은 이미 끊겼지만, 순서를 앞에 두면
+        # "adapter 결과를 볼 수 없으므로 참조할 수 없다" 가 구조로 강제된다.
+        # 종전에는 adapter 의 `credentials.profile` 이 vault 를 골랐다 —
+        # Adapter(어떻게 수집하는가) 와 Credential(누구로 인증하는가) 이 결합돼 있었다.
+        - name: "redfish | resolve credentials"
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/credential/resolve_and_load.yml"
+          vars:
+            _cred_target_type: "redfish"
+            _cred_vendor: "{{ _rf_detected_vendor | default('') }}"
+
+        - name: "redfish | load vault"
+          ansible.builtin.include_tasks: tasks/load_vault.yml
+
+        # vendor 를 식별하지 못한 경우(`vendor_unresolved`)는 여기서 멈추지 않는다 —
+        # 정체 미상 장비에 대한 빈 자격 1회 best-effort 를 유지한다 (collect_standard.yml).
+        # 반대로 vendor 를 아는데 credential set 을 못 연 것은 명시적 실패다.
+        - name: "redfish | abort if credential set unavailable"
+          ansible.builtin.fail:
+            msg: >-
+              Credential set 을 열 수 없습니다 (scope={{ _cred_scope | default('') | ternary(_cred_scope, _cred_reason) }},
+              outcome={{ _cred_load_outcome | default('not_resolved') }}).
+              se_location 값과 해당 Location 의 vault 파일, ansible-vault 복호화 키를 확인하세요.
+          when: >-
+            (_cred_reason | default('unknown_location')) not in ['resolved', 'vendor_unresolved']
+            or (_cred_load_outcome | default('not_resolved'))
+               in ['credential_set_missing', 'credential_set_undecryptable']
+
         # ── select adapter (Phase 2) ─────────────────────────────────────
         - name: "redfish | select adapter"
           ansible.builtin.set_fact:
@@ -90,10 +121,6 @@
           ansible.builtin.set_fact:
             _rf_adapter_manager_layout: >-
               {{ ((_selected_adapter | default({})).vendor_notes | default({})).manager_layout | default('') }}
-
-        # ── load vault (adapter 기반) ────────────────────────────────────
-        - name: "redfish | load vault"
-          ansible.builtin.include_tasks: tasks/load_vault.yml
 
         # ── collect standard ─────────────────────────────────────────────
         - name: "redfish | collect standard"
@@ -129,7 +156,7 @@
               {%- else -%}
               Redfish 정보 수집에 실패했습니다 ({{ _rf_ip }}).
               네트워크/포트/Redfish API 는 정상 확인됨 (Redfish {{ d.details.redfish_version | default('?') }} / {{ d.details.product | default('Unknown') }}).
-              가능한 원인은 (1) 자격증명 불일치 (vault/redfish/{{ _rf_vendor | default('<vendor>') }}.yml, 시도된 계정 수 {{ (_rf_attempts_meta | default({})).attempted_count | default('?') }}개),
+              가능한 원인은 (1) 자격증명 불일치 (credential scope={{ _cred_scope | default('?') }}, 시도된 계정 수 {{ (_rf_attempts_meta | default({})).attempted_count | default('?') }}개),
               (2) 계정 권한 부족, (3) 펌웨어 호환성 또는 OEM 경로 문제입니다.
               자세한 기술 오류는 errors 항목을 확인하세요.
               {%- endif -%}
@@ -246,6 +273,7 @@
                                 if (((_diagnosis | default({}, true)).details | default({}))
                                     is mapping) else {}) | combine({
                      'adapter_candidate': _selected_adapter.adapter_id | default(none),
+                     'credential_scope': (_cred_scope | default('')) or none,
                      'auth': _rf_attempts_meta | default({}),
                      'account_service': _rf_account_service_meta | default({}),
                      'multi_node_layout': (_rf_adapter_manager_layout | default('')) or none,
@@ -348,12 +376,23 @@
               {%- set ok_obs = st | select('ge', 200) | select('lt', 400) | list | length -%}
               {%- set tried = ((_rf_auth_observations | default([])) | length)
                               + ((_rf_failed_attempt_notes | default([])) | length) -%}
+              {#- 2026-08-12: credential set 자체를 열지 못한 경우를 별도 관측값으로 분리한다.
+                  '인증을 시도했는데 거부됐다'(rejected)와 '인증을 시도조차 못 했다'를 같은
+                  code 로 만들면 소비 시스템이 구분할 수 없다. 후보가 0개이고 credential set
+                  로딩이 실패했을 때만 성립한다 (vendor 미상은 여기 해당하지 않는다 — 그 경로는
+                  빈 자격 1회 시도로 가므로 tried > 0 이 된다). -#}
+              {%- set cred_na = ((_cred_load_outcome | default(''))
+                                 in ['not_resolved', 'credential_set_missing',
+                                     'credential_set_undecryptable'])
+                                and ((_cred_reason | default('')) != 'vendor_unresolved') -%}
               {%- if (_rf_collect_ok | default(false) | bool) or ok_obs > 0 -%}
               passed
               {%- elif _rf_auth_rejected | default(false) | bool -%}
               rejected
               {%- elif tried > 0 -%}
               unknown
+              {%- elif cred_na -%}
+              credential_unavailable
               {%- else -%}
               not_attempted
               {%- endif -%}
@@ -364,6 +403,15 @@
         #   rejected      → auth / AUTH_PROBE_FAILED / false / 4번. 401 실증을 함께 남긴다.
         #   unknown       → auth / AUTH_PROBE_FAILED / null / 4번. 자격 요청은 보냈지만
         #                   원인을 확정하지 못했다 (timeout / TLS / 403 / 5xx).
+        #   credential_unavailable
+        #                 → auth / CREDENTIAL_SET_UNAVAILABLE / null / 4번 (2026-08-12 신설).
+        #                   해당 Location/Vendor 의 credential set 을 열지 못해 **인증을 시도조차
+        #                   못 했다.** AUTH_PROBE_FAILED 와 반드시 구분한다 — 후자는 자격을 실어
+        #                   보냈는데 통하지 않은 것이고, 이것은 보낼 자격 자체가 없던 것이다.
+        #                   운영자의 조치도 다르다 (BMC 계정 점검 vs vault 배치 점검).
+        #                   stage 는 auth 를 유지한다 — stage 는 원인이 아니라 **멈춘 위치**이고
+        #                   (CLAUDE.md §9) 멈춘 곳은 자격증명 단계가 맞다.
+        #                   auth_success 는 null 이다 (미시도). false 는 '구조화된 명시적 거부'다.
         #   not_attempted → gather / GATHER_FAILED / null / 5번. 자격 요청 자체를 보내기
         #                   **전에** 멈췄다 (adapter 선택 / vault 로드 / vendor 정규화 예외 등).
         #                   CLAUDE.md §9 — failure_stage 는 '워크플로가 멈춘 위치' 다.
@@ -383,7 +431,9 @@
                            if ((_diagnosis | default({}, true)) is mapping) else {})
                  | combine({'failure_stage': ('gather' if at_gather else 'auth'),
                             'failure_code': ('GATHER_FAILED' if at_gather
-                                             else 'AUTH_PROBE_FAILED'),
+                                             else ('CREDENTIAL_SET_UNAVAILABLE'
+                                                   if outcome == 'credential_unavailable'
+                                                   else 'AUTH_PROBE_FAILED')),
                             'auth_success': (true if outcome == 'passed'
                                              else (false if outcome == 'rejected' else none)),
                             'failure_reason': (_fr_gather_failed if at_gather
@@ -392,7 +442,8 @@
                                         if (((_diagnosis | default({}, true)).details | default({}))
                                             is mapping)
                                         else {})
-                                       | combine({'notices':
+                                       | combine({'credential_scope': (_cred_scope | default('')) or none,
+                                                  'notices':
                                            ((_rf_raw_collect | default({})).notices | default([]))})}) }}
           when: ((_diagnosis | default({}, true)).failure_reason | default(none)) is none
 

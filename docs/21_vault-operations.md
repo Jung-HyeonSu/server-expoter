@@ -28,16 +28,114 @@ server-exporter 가 SSH / WinRM / vSphere / Redfish 에 접속할 때 쓰는 **�
 
 ## 3. Vault 종류
 
-| 채널 | vault 파일 | 용도 |
-|---|---|---|
-| Linux | `vault/linux.yml` | SSH 자격증명 (host 공통) |
-| Windows | `vault/windows.yml` | WinRM 자격증명 (host 공통) |
-| ESXi | `vault/esxi.yml` | vSphere 자격증명 (host 공통) |
-| Redfish | `vault/redfish/{vendor}.yml` | BMC 자격증명 (vendor별) |
+### 3.1 현재 코드가 여는 경로 (2026-08-12~) — Location 축
 
-**vendor 9 vault** (cycle 2026-05-11 시점 — M-A1~A6 적용 완료):
-- dell.yml, hpe.yml, lenovo.yml, supermicro.yml, cisco.yml (5 base vendor — primary `infraops` 통일, 비밀번호는 vault 안에만)
-- huawei.yml, inspur.yml, fujitsu.yml, quanta.yml (cycle 2026-05-11 신설 4 vendor — primary infraops + recovery vendor 공장 기본)
+Credential 선택 Contract:
+
+```
+OS      = location + os_type   →  vault/<location>/os/<linux|windows>.yml
+ESXi    = location             →  vault/<location>/esxi.yml
+Redfish = location + vendor    →  vault/<location>/redfish/<vendor>.yml
+```
+
+Generation / Model / Firmware 는 **선택축이 아니다** (세대를 아는 시점이 인증 이후라 순환이다).
+
+디렉터리 깊이 = 선택축 개수. ESXi 만 평 파일인 이유는 2번째 축이 없기 때문이다.
+
+| 채널 | 경로 | 선택축 |
+|---|---|---|
+| Linux | `vault/<loc>/os/linux.yml` | location + os_type |
+| Windows | `vault/<loc>/os/windows.yml` | location + os_type |
+| ESXi | `vault/<loc>/esxi.yml` | location |
+| Redfish | `vault/<loc>/redfish/<vendor>.yml` | location + vendor (canonical 9종) |
+
+- `<location>` 은 `common/vars/locations.yml` 에 등록된 ID 만 쓸 수 있다. Jenkins 가
+  `-e se_location=<id>` 로 전달하고, resolver 가 registry 에 없는 값이면 **경로를 만들지 않는다.**
+- `<vendor>` 는 `common/vars/vendor_aliases.yml` 의 canonical 키만 쓸 수 있다.
+- **다른 Location / 다른 Vendor 로 넘어가는 폴백 경로는 코드에 존재하지 않는다.**
+  `ich + dell` 이 실패해도 `chj + dell` 이나 `ich + hpe` 를 시도하지 않는다.
+
+**vendor 9종**: dell / hpe / lenovo / supermicro / cisco / huawei / inspur / fujitsu / quanta
+
+### 3.2 이전 flat 경로 (제거 예정)
+
+| 채널 | 이전 경로 |
+|---|---|
+| Linux | `vault/linux.yml` |
+| Windows | `vault/windows.yml` |
+| ESXi | `vault/esxi.yml` |
+| Redfish | `vault/redfish/{vendor}.yml` |
+
+**현재 코드는 이 경로를 읽지 않는다.** 런타임 폴백도 없다 — 신규 경로가 준비되지 않으면
+"조용히 옛 파일로 성공" 하는 대신 명시적으로 실패한다
+(`failure_code=CREDENTIAL_SET_UNAVAILABLE`). 이관 실패를 감추지 않기 위한 의도된 설계다.
+
+flat 파일은 **실장비 Pilot 검증 전까지 삭제하지 않는다** — 코드 rollback 만으로
+이전 동작을 즉시 복원할 수 있게 남겨 둔다 (§3.4 4단계).
+
+### 3.3 Location 추가 절차
+
+1. `common/vars/locations.yml` 에 3줄 추가 (`<id>: { agent_label: <label> }`)
+2. `vault/<id>/...` 생성 + 암호화
+3. Jenkins 에 해당 label agent 등록
+
+**코드 수정 0줄.** Python / Playbook / Jenkinsfile 어느 것도 바뀌지 않는다.
+
+### 3.4 flat → Location 이관 절차 (4단계)
+
+Location 별 실제 계정 값이 서로 다를 수 있으므로 이관은 **파일 이동이 아니라 신규 작성**이다.
+기존 flat vault 를 3벌 복사하는 것은 잘못된 값을 3곳에 심는 일이다.
+
+**1단계 — 신규 Vault 작성** (운영 담당자)
+
+```bash
+# Location × 채널별 실제 계정 값을 확정한 뒤 각각 신규 생성
+mkdir -p vault/<loc>/os vault/<loc>/redfish
+ansible-vault create vault/<loc>/os/linux.yml
+ansible-vault create vault/<loc>/esxi.yml
+ansible-vault create vault/<loc>/redfish/dell.yml
+# ... 필요한 vendor 만큼
+```
+
+파일 내부 스키마는 **바뀌지 않았다** (§6). 바뀐 것은 파일이 놓이는 경로뿐이다.
+`accounts` 배열 **순서 = 인증 시도 순서**다 — 코드가 재정렬하지 않는다.
+
+**2단계 — 구조 / 암호화 검증**
+
+```bash
+# 어떤 경로가 아직 비었는지 (복호화 없이)
+python scripts/ai/vault_decrypt_check.py --layout-only
+
+# 복호화 + accounts 스키마 + role + label 정합 (Secret 값은 출력하지 않는다)
+SE_VAULT_PASSWORD='<마스터 키>' python scripts/ai/vault_decrypt_check.py
+```
+
+> `scripts/ai/vault_decrypt_check.py` 는 `.gitignore` 대상 **로컬 도구**다 (cycle-018 결정 —
+> 당시 마스터 키가 코드에 하드코딩돼 있었다). 2026-08-12 에 하드코딩을 제거하고 키를
+> `SE_VAULT_PASSWORD` / `--password-file` 로만 받도록 바꿨다. gitignore 해제 여부는
+> 사용자 결정 사항으로 남겨 두었으므로, fresh clone 에는 이 파일이 없을 수 있다.
+
+검사 항목: `$ANSIBLE_VAULT` 헤더 / 복호화 성공 / `accounts[]` 각 항목의
+`username·password·label·role` / `role ∈ {primary, recovery, secondary}` /
+`primary` 1개 이상 / Redfish label 이 vendor 허용 집합(§6.5)과 정합 /
+`accounts[0].role != primary` 경고.
+
+**3단계 — 실장비 Pilot**
+
+Location 1곳 × 채널별 1대씩 실제 수집을 돌려 확인한다:
+
+- `diagnosis.details.credential_scope` 가 기대 값인가 (`<loc>/os/linux` 등)
+- 요청 target 수 == 결과 envelope 수 (rule 11)
+- 실패 경로: 없는 Location 으로 빌드 → `Resolve Location` stage 에서 즉시 실패
+  (agent 대기 없음)
+
+**Unit test 통과는 실장비 검증이 아니다.**
+
+**4단계 — flat vault 제거** (별도 커밋)
+
+3단계가 확인된 뒤에만. 삭제 대상: `vault/linux.yml`, `vault/windows.yml`,
+`vault/esxi.yml`, `vault/redfish/*.yml` 9개.
+(`vault/.lab-credentials.yml` 은 제외 — resolver 대상이 아닌 lab 전용 평문 파일)
 
 ## 4. Vault 자동 반영 메커니즘 (rule 27 R6)
 

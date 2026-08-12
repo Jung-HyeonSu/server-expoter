@@ -725,6 +725,15 @@ def _normalize_vendor_from_aliases(mfr_lower):
     2차: 내장 fallback 맵
     3차: 부분 매칭 (substring)
     """
+    # 2026-08-12: 빈 입력 방어. 아래 부분 매칭의 `mfr_lower in key` 는 mfr_lower 가
+    #   '' 이면 **모든 key 에 대해 참**이라, 공백-only Manufacturer("   ") 가 dict 첫
+    #   항목의 vendor 로 확정되는 오탐이 있었다 (:1216 이 `mfr.strip().lower()` 로 호출).
+    #   종전에는 그 오탐이 adapter 선택에만 영향했지만, Credential Vault 경로가 vendor
+    #   에서 파생되면서 **다른 vendor 의 자격증명을 시도**하는 결과로 이어진다.
+    #   빈 alias 방어(`if key and ...`)는 이미 있었고 빈 입력 방어만 없었다.
+    if not mfr_lower:
+        return 'unknown'
+
     # vendor_aliases.yml 시도 (primary)
     aliases = _load_vendor_aliases_file()
     # aliases (YAML primary) 우선, fallback dict는 보조

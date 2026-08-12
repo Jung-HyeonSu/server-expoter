@@ -33,12 +33,23 @@
 - name: "redfish | collect_standard | warn no accounts"
   ansible.builtin.debug:
     msg: >-
-      vault accounts 비어 있음 (vault/redfish/{{ _rf_vault_profile | default('?') }}.yml).
-      자격증명 없이 수집 시도.
+      인증 후보 0개 (credential scope={{ _rf_vault_scope | default('?') }},
+      reason={{ _cred_reason | default('?') }}).
   when: (_rf_accounts | default([])) | length == 0
 
-# 후보가 전혀 없으면 빈 자격으로 1회 시도 (legacy 호환)
-- when: (_rf_accounts | default([])) | length == 0
+# ── 빈 자격 1회 시도 ────────────────────────────────────────────────────────
+# 2026-08-12: 트리거를 "후보가 0개" 에서 **"vendor 를 식별하지 못함"** 으로 옮겼다.
+#
+#   종전: generic adapter 가 선택되면 profile 이 빈 문자열이라 후보가 0개가 되고,
+#         그 결과로 빈 자격 시도가 일어났다. 즉 "Dell 인 줄 알면서도 빈 자격으로 찔러
+#         보는" 경로가 존재했다 — 무의미한 인증 시도이고 lockout 카운터만 올린다.
+#   현재: 정체를 **모르는** 장비에 대해서만 best-effort 1회 시도한다 (오픈 BMC /
+#         표준 준수 장비에서 무인증 수집이 실제로 되는 경우가 있어 가치가 있다).
+#
+#   vendor 는 알지만 credential set 이 없거나 accounts 가 비었으면 여기로 오지 않는다.
+#   그 경우는 명시적 실패로 보고한다 — 조용히 빈 자격으로 시도해서 "수집 실패" 로
+#   뭉개면 운영자가 원인(자격증명 미배치)을 볼 수 없다.
+- when: (_cred_reason | default('vendor_unresolved')) == 'vendor_unresolved'
   block:
     - name: "redfish | collect_standard | empty-credential attempt"
       # cycle 2026-05-12 (ADR-2026-05-12): manager_layout 인자 전달 (Additive — 빈 자격 경로).

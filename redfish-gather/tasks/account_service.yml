@@ -75,7 +75,7 @@
   ansible.builtin.debug:
     msg: >-
       account_service skip — vault accounts 에 role=primary 후보 없음.
-      vault/redfish/{{ _rf_vault_profile }}.yml 갱신 후 재시도.
+      credential scope={{ _rf_vault_scope | default('?') }} 갱신 후 재시도.
   when: (_rf_target_account | default({})).username | default('') == ''
 
 # 2026-08-12 (NEW-6): 위 debug 는 callback 이 캡처하지 않아 Portal 에 아무 흔적이 없다.
@@ -96,7 +96,7 @@
         _errors_fragment:
           - section: "account_service"
             message: "대상 서버에 사용할 표준 관리 계정 정보가 등록되어 있지 않습니다. 계정 설정을 확인하세요."
-            detail: "vault profile={{ _rf_vault_profile | default('unknown') }}; role=primary candidate=0"
+            detail: "credential scope={{ _rf_vault_scope | default('unknown') }}; role=primary candidate=0"
 
     - name: "redfish | account_service | no primary target 누적 (merge_fragment)"
       ansible.builtin.include_tasks:
