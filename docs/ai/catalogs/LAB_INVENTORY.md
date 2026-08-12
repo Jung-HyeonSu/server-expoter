@@ -3,6 +3,20 @@
 > 정본: `inventory/lab/*.json` (gitignored — 실 IP) + `vault/.lab-credentials.yml` (gitignored — 자격증명).
 > 본 catalog는 sanitized 메타. 작성: 2026-04-29 cycle-015.
 
+
+> **2026-08-12 (git Location 실장비 검증) 정정** — 정본:
+> `tests/evidence/2026-08-12-git-location-live-verification.md`
+> - **10.50.11.231 (HPE iLO6) 는 도달 가능하다.** 종전 "TCP 443 timeout / BMC-side 미응답"
+>   기록은 stale. 실측 TCP 443 OPEN + Redfish 200 + 수집 success(9/11).
+>   ProLiant DL380 Gen11 / iLO 6 v1.73 / hostname `test0004.hynix.com`.
+> - **10.100.15.2 (Cisco CIMC) 는 존재한다.** `TA-UNODE-G1` / CIMC `4.1(2g)` /
+>   hostname `C220-FCH2116V1V0`. cycle-015 의 "사내 부재" 기록은 stale.
+> - **10.100.15.34 는 iDRAC9 다** (16G Monolithic / FW 7.10.70.00 / Redfish 1.20.1).
+>   adapter 는 `redfish_dell_idrac10` 을 고르지만 장비는 iDRAC10 이 아니다.
+> - 검증에 사용한 git Location 대상: Linux 10.100.64.161 / Windows 10.100.64.120 /
+>   ESXi 10.100.64.1 / Lenovo 10.50.11.232 / HPE 10.50.11.231 / Cisco 10.100.15.2 /
+>   Dell 10.100.15.34. 통제 노드(Windows)와 WSL 양쪽에서 3개 대역 전부 도달 확인.
+
 ## 1. 권한 정책
 
 사용자 명시 결정 (2026-04-29 채팅):

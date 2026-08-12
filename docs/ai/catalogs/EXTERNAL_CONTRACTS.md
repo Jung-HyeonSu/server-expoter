@@ -2,6 +2,55 @@
 
 > 외부 시스템 (Redfish / IPMI / SSH / WinRM / vSphere) 계약 카탈로그. rule 28 #11 측정 대상 (TTL 90일). rule 96 origin 주석 정본.
 
+## 일자: 2026-08-12 — Dell iDRAC 비밀번호 정책 실측 (git 10.100.15.34 / 10.100.15.27)
+
+> 정본: `tests/evidence/2026-08-12-git-location-live-verification.md` §4
+> 대상: iDRAC9 / 16G Monolithic / FW **7.10.70.00** / Redfish 1.20.1 /
+>       `#AccountService.v1_15_1.AccountService`
+
+Redfish 표준 AccountService (읽기 전용 실측):
+
+```text
+MinPasswordLength = 0        MaxPasswordLength = 127
+AccountLockoutThreshold = 0  AccountLockoutDuration = 0  CounterResetAfter = 0
+AuthFailureLoggingThreshold = 2   LocalAccountAuth = Fallback
+SupportedAccountTypes    = Redfish, SNMP, OEM, HostConsole, ManagerConsole,
+                           IPMI, KVMIP, VirtualMedia, WebUI
+SupportedOEMAccountTypes = IPMI, SOL, WSMAN, UI, Racadm
+Roles                    = Administrator, Operator, ReadOnly, None
+ETag                     = AccountService / 각 ManagerAccount 모두 제공
+```
+
+OEM 보안 Attribute (`/redfish/v1/Managers/iDRAC.Embedded.1/Attributes`):
+
+```text
+Security.1.MinimumPasswordScore     = Weak Protection     ← 유일하게 활성인 제약
+Security.1.PasswordMinimumLength    = 0
+Security.1.PasswordRequireUpperCase = Disabled
+Security.1.PasswordRequireNumbers   = Disabled
+Security.1.PasswordRequireSymbols   = Disabled
+Security.1.PasswordRequireRegex     = (빈 문자열)
+IPBlocking.1.BlockEnable = Enabled  FailCount = 3  FailWindow = 60  PenaltyTime = 60
+```
+
+Attribute Registry (`/redfish/v1/Registries/ManagerAttributeRegistry`) 정의:
+
+```text
+Security.1.MinimumPasswordScore : Enumeration ['0','1','2','3']
+    HelpText "Password must have this minimum strength score."
+Security.1.PasswordMinimumLength: Integer, LowerBound 0, UpperBound 20
+```
+
+**핵심 계약 사실**: Dell 의 `Security Strengthen Policy` 거부는 길이/문자종류/정규식
+**규칙이 아니라 강도 점수** 검사에서 나올 수 있다. 규칙 property 가 전부 비활성인데도
+쓰기가 거부되는 상태를 실측했다. 점수 산출 알고리즘과 사전 검증 endpoint 는 노출되지 않는다.
+
+⇒ 코드가 `MinPasswordLength`/`MaxPasswordLength` 만 보고 "정책 호환" 이라고 단정하면 안 된다.
+   현재 구현은 그 값을 `within_declared_bounds` 로만 남기고 **차단하지 않으며**, 실제 거부는
+   쓰기 응답(`@Message.ExtendedInfo`)으로 확정한다 — 이번 실측이 그 설계를 뒷받침한다.
+
+Password History 전용 property 는 이 펌웨어의 Attribute 목록에 **존재하지 않는다**.
+
 ## 일자: 2026-08-12 — 9 Vendor 계정 Write 계약 origin (공식 조사 반영)
 
 > 정본 매트릭스: `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`

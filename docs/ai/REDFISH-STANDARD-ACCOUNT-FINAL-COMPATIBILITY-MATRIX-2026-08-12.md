@@ -19,12 +19,25 @@
 | `BROKEN` | 코드가 공식 계약과 어긋나 있다 |
 | `HOLD` | 코드 문제가 아니라 운영 결정이 선행돼야 한다 |
 
-### 이번 cycle 에서 `PROVEN` 이 늘지 않은 이유
+### 2026-08-12 갱신 — git Location 실장비 검증 반영
 
-**이 작업에서 실장비 요청은 0건이다.** 통제 노드(Windows)에서 BMC 로 나가는 경로가 없고,
-사용자 지시 §18 이 요구하는 순서(read-only probe → dry-run → 통제된 1대 Write)는 사용자
-환경에서만 수행할 수 있다. 따라서 아래 어떤 Family 도 이번 작업만으로 `PROVEN` 으로
-올리지 않았다. 실장비 검증 절차는 `tests/evidence/2026-08-12-redfish-standard-account-final-compatibility.md` §5 에 있다.
+정본: `tests/evidence/2026-08-12-git-location-live-verification.md`
+
+lab 접근이 가능해져 **git Location 4대에서 실제 수집을 수행**했다. 그 결과 아래 3 Family 의
+**Case A(표준 인증 성공 → Account Write 0 → 표준 계정 수집)** 만 `PROVEN` 으로 올린다.
+검증된 것은 정확히 그 Model + Firmware 범위이며, **Create / Repair 는 여전히 미증명**이다.
+
+| Family | 검증 대상 | Firmware | 증명된 것 |
+|---|---|---|---|
+| `lenovo_xcc_accounttypes` | XClarity Controller (10.50.11.232) | `AFBT58B 5.70 2025-08-11` | Case A + 2차 실행 Write 0 |
+| `hpe_ilo5plus` | ProLiant DL380 Gen11 / iLO 6 (10.50.11.231) | `iLO 6 v1.73` | Case A |
+| `cisco_cimc_collection_post_id` | TA-UNODE-G1 / CIMC (10.100.15.2) | `4.1(2g)` | Case A + 2차 실행 Write 0 + **Roles 어휘 기반 Family/RoleId 판정** |
+
+Dell 은 유일하게 reconcile 조건이 발생했고(표준 401 + 계정 present) Repair 경로가 설계대로
+전부 동작했지만 **비밀번호가 iDRAC Security Strengthen Policy 에 거부**되어 `HOLD` 를 유지한다.
+
+**Create 경로는 어떤 Family 에서도 실행되지 않았다** — git 4대 모두 표준 계정이 이미 존재해
+`presence=absent` 조건이 발생하지 않았고, 조건을 만들려면 계정을 지워야 하므로 하지 않았다.
 
 ### 이번 cycle 에서 실제로 낮아진 불확실성
 
@@ -96,8 +109,8 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 | Write 성공 계약 | 2xx **AND** 본문 거부 없음 | 동일 | **200 + 본문 read-only 거부** 를 실패로 처리 |
 | Repository Strategy | `dell_slot_patch` | `dell_slot_patch` | `dell_idrac10_slot_patch` |
 | Fixture Evidence | 없음 | 실미러 `10_100_15_27/28/31/33` | 실미러 `10_100_15_34` |
-| Live Evidence | 없음 | 수집은 확인 / 계정 Write 미확인 | **Write 시도 2회 — 둘 다 실패(원인 규명됨)** |
-| Status | `UNVERIFIED` | `PARTIAL` | **`HOLD`** |
+| Live Evidence | 없음 | **2026-08-12 git: 10.100.15.34 / FW 7.10.70.00 — Repair 경로 전 단계 동작, 비밀번호만 거부. 계정 상태 변화 0** | 대상 부재 (lab 의 `.34` 는 실제로 iDRAC9) |
+| Status | `UNVERIFIED` | **`HOLD`** (Repair 경로 검증됨 / 비밀번호 정책 미해소) | `UNVERIFIED` |
 | Remaining Gap | iDRAC7/8 실미러 부재 | Create 실장비 미검증 | 표준 비밀번호가 Security Strengthen Policy 미충족 — **운영 결정(E-6)** |
 
 **iDRAC10 HOLD 사유** (`tests/evidence/2026-08-12-redfish-standard-account-separation.md` §6.1):
@@ -121,8 +134,8 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 | Lockout | — | AccountLockoutThreshold/Duration/CounterResetAfter | AccountLockoutDuration PATCH 가능 | 미확인 |
 | Repository Strategy | `hpe_ilo4` | `hpe_ilo5plus` | `generic_collection_post` | `generic_collection_post` |
 | Fixture Evidence | 없음 | 실미러 `10_50_11_231` (iLO6) + 에뮬레이터 | fixture 만 (mock) | fixture 만 (mock) |
-| Live Evidence | 없음 | 수집 확인 / 계정 Write 미확인 | 없음 | 없음 |
-| Status | `PARTIAL` | `PARTIAL` | `UNVERIFIED` | `UNVERIFIED` |
+| Live Evidence | 없음 | **2026-08-12 git: 10.50.11.231 DL380 Gen11 / iLO 6 v1.73 — Case A PROVEN** | 없음 | 없음 |
+| Status | `PARTIAL` | **`PROVEN` (Case A만)** / Create·Repair `UNVERIFIED` | `UNVERIFIED` | `UNVERIFIED` |
 | Remaining Gap | iLO4 실장비/미러 부재 | Create 실장비 미검증 | RMC ServiceRoot 실미러 + create payload | 동일 |
 
 이번 변경의 핵심: **CSUS / Superdome 을 iLO 로 처리하지 않는다.** adapter hint 가
@@ -141,7 +154,8 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 | Repository Strategy | `generic_collection_post` | `lenovo_purley_slot_patch` | `lenovo_collection_post` | `lenovo_xcc_accounttypes` | `lenovo_xcc_accounttypes` | `lenovo_collection_post` |
 | Family 판정 근거 | adapter hint | **pre-populated 빈 slot 관측** | dynamic members | adapter hint `xcc2` | adapter hint `xcc3` | (TSM 전용 hint 없음 — POST + PCR=false 로 공통) |
 | Fixture Evidence | 없음 | 없음 | 실미러 `10_50_11_232` (XCC 1.15) | 없음 | 없음 | 없음 |
-| Status | `UNVERIFIED` | `PARTIAL` | `PARTIAL` | `PARTIAL` | `PARTIAL` | `PARTIAL` |
+| Live Evidence | 없음 | 없음 | 없음 | **2026-08-12 git: 10.50.11.232 FW AFBT58B 5.70 — Case A PROVEN + 2차 Write 0** | 동일 Family 판정 | 없음 |
+| Status | `UNVERIFIED` | `PARTIAL` | `PARTIAL` | **`PROVEN` (Case A만)** | `PARTIAL` | `PARTIAL` |
 | Remaining Gap | Redfish AccountService 지원 근거 자체가 없음 | Purley 실미러 | Create 실장비 | XCC2 실미러 | XCC3 실미러 | TSM 실미러 + 특수 ID 보호 실측 |
 
 핵심 변경: **Purley 를 Collection POST 로 만들던 것을 빈 slot PATCH 로 바로잡았다.**
@@ -163,8 +177,8 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 | Repository Strategy | `generic_collection_post` | `cisco_cimc_collection_post_id` | `cisco_bmc_dynamic` | `generic_collection_post` |
 | Family 판정 근거 | — | **Roles 어휘에 `admin`** | **Roles 어휘에 `Administrator`** | 근거 없음 → generic |
 | Fixture Evidence | 없음 | 실미러 `10_100_15_2` (CIMC v1_6_0) | 없음 | 없음 |
-| Live Evidence | 없음 | **Create 201 + 신규 자격 인증 200 (2026-05-06 실측)** | 없음 | 없음 |
-| Status | `UNVERIFIED` | `PARTIAL` (실측 있음, 현 코드로 재검증 필요) | `PARTIAL` | `UNVERIFIED` |
+| Live Evidence | 없음 | **2026-08-12 git: 10.100.15.2 CIMC 4.1(2g) — Case A PROVEN + 2차 Write 0 + Roles 어휘로 Family/RoleId 판정 확인** (2026-05-06 Create 201 실측도 유효) | 없음 | 없음 |
+| Status | `UNVERIFIED` | **`PROVEN` (Case A만)** / Create 는 2026-05-06 실측 기준 `PARTIAL` | `PARTIAL` | `UNVERIFIED` |
 | Remaining Gap | instance POST 실측 | 현 Family 코드로 재실측 | 실미러 + RoleId 실측 | AccountService 계약 자체 |
 
 핵심 변경: **전 Cisco 에 `Administrator→admin` remap + Id 2..15 스캔을 적용하던 것을 끊었다.**
@@ -259,21 +273,26 @@ Login Interface 는 이번에 구현하지 않았다. 그것을 켜는 OEM 필�
 
 ## 3. 요약 매트릭스
 
-| Vendor | Family 수 | PROVEN | PARTIAL | UNVERIFIED | HOLD |
+| Vendor | Family 수 | PROVEN (Case A) | PARTIAL | UNVERIFIED | HOLD |
 |---|---:|---:|---:|---:|---:|
-| Dell | 3 | 0 | 1 (iDRAC9) | 1 (iDRAC7/8) | 1 (iDRAC10) |
-| HPE | 4 | 0 | 2 (iLO4, iLO5+) | 2 (CSUS, Superdome) | 0 |
-| Lenovo | 6 | 0 | 5 | 1 (IMM2) | 0 |
-| Cisco | 4 | 0 | 2 | 2 (IMC 3.x, X-Series) | 0 |
+| Dell | 3 | 0 | 0 | 2 (iDRAC7/8, iDRAC10) | **1 (iDRAC9)** |
+| HPE | 4 | **1 (iLO5+)** | 1 (iLO4) | 2 (CSUS, Superdome) | 0 |
+| Lenovo | 6 | **1 (XCC2/3)** | 4 | 1 (IMM2) | 0 |
+| Cisco | 4 | **1 (IMC 4.x/6.0)** | 1 | 2 (IMC 3.x, X-Series) | 0 |
 | Supermicro | 5 | 0 | 2 | 3 | 0 |
 | Fujitsu | 3 | 0 | 0 | 3 | 0 |
 | Huawei | 1 | 0 | 1 | 0 | 0 |
 | Inspur | 3 | 0 | 1 (M6) | 2 | 0 |
 | Quanta | 3 | 0 | 0 | 3 | 0 |
-| **합계** | **32** | **0** | **14** | **17** | **1** |
+| **합계** | **32** | **3** | **10** | **18** | **1** |
 
-`PROVEN` 이 0인 것이 이 매트릭스의 가장 중요한 사실이다. 실장비 계정 생성 경로는
-아직 어느 Family 에서도 E2E 로 증명되지 않았다.
+`PROVEN` 3건은 전부 **Case A(표준 인증 성공 → Write 0 → 표준 계정 수집)** 한정이며,
+검증된 Model + Firmware 범위로만 인정한다.
+
+**Account Create 경로는 여전히 어느 Family 에서도 실장비로 증명되지 않았다.**
+git 4대 모두 표준 계정이 이미 존재해 `presence=absent` 조건 자체가 발생하지 않았고,
+조건을 만들려면 운영 계정을 지워야 하므로 하지 않았다.
+**Repair 경로는 Dell 에서 전 단계가 동작했으나 비밀번호 정책으로 최종 수렴에 실패했다.**
 
 ---
 

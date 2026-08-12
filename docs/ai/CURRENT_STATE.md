@@ -1,5 +1,43 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-12 (q) — Credential Vault 정리 + git Location 실장비 검증
+
+> 정본: `tests/evidence/2026-08-12-git-location-live-verification.md`
+
+- **Vault 26개 갱신** — 사용자 제공 Credential 을 기존 Schema 그대로 반영.
+  표준 계정은 `vault/common/redfish/standard.yml` **1벌**, Redfish vendor vault 36개는
+  전부 `role: recovery` 단독. 사용자가 제공하지 않은 20개 파일은 확인만 하고 변경 0.
+  `vault_decrypt_check.py` 전량 통과(마스터 키 제공, exit=0).
+- **후보 정리 부수 효과** — git Dell 4→1 / Lenovo 3→1 / HPE 3→1 후보. 실측에서 전 채널
+  `attempted_count=1`, `fallback_used=false` — 실패 인증 0회로 lockout 위험이 줄었다.
+- **git Location 실장비 7대상 검증** (WSL ansible-core 2.20.7, production 과 동일 호출).
+  Linux 10.100.64.161 / Windows 10.100.64.120 / ESXi 10.100.64.1 / Lenovo 10.50.11.232 /
+  HPE 10.50.11.231 / Cisco 10.100.15.2 / Dell 10.100.15.34.
+  - OS·ESXi 3대: `success`, scope `git/os/{linux,windows}` · `git/esxi`, used_role=primary
+  - Redfish Lenovo·HPE·Cisco: `success`, **`credential_scope=common/redfish/standard`,
+    used_role=primary, Account Write 0**. Lenovo·Cisco 는 **2차 실행도 Write 0** 확인
+  - Dell: 표준 401 → 복구 인증 성공 → `presence=present` → `patch_existing` →
+    `Locked` read-only 재시도 → **비밀번호가 Security Strengthen Policy 로 거부** →
+    `verification=failed`. **계정 상태 변화 0건**(16 slot 전수 전후 비교)
+- **Family 판정이 Adapter 오선택을 이겼다** — Cisco 10.100.15.2 는 adapter 가
+  `redfish_cisco_ucs_xseries` 를 골랐지만, 장비가 노출한 Roles 어휘
+  (`admin/user/readonly/SNMPOnly`)를 근거로 `cisco_cimc_collection_post_id` + `RoleId=admin`
+  으로 확정했다. "실제 Capability > Adapter hint" 설계가 실장비에서 동작한다.
+- **Dell 비밀번호 거부 원인 규명** — 길이/대문자/숫자/특수문자/정규식 규칙이 **전부 비활성**
+  (`PasswordMinimumLength=0`, `Require*=Disabled`, `Regex=""`, `MaxPasswordLength=127`)인데도
+  거부된다. 남은 강제 조건은 `Security.1.MinimumPasswordScore="Weak Protection"` 하나이며
+  Registry 가 이를 *"Password must have this minimum strength score"* 로 정의한다.
+  → 규칙이 아니라 **강도 점수(사전/패턴 기반)** 검사가 원인일 가능성이 높다(LIKELY).
+  점수 산출 알고리즘·검증 endpoint 는 노출되지 않아 확정 불가(UNKNOWN).
+- **lockout 예산 실측** — Dell 실패 경로에서 `auth_budget={'infraops': 3}`. 종전 구조라면
+  최대 9회였고 Dell IP Blocking 기본값(FailCount 3 / FailWindow 60s)을 넘겼을 값이다.
+- **Compatibility Matrix 갱신** — `hpe_ilo5plus` / `lenovo_xcc_accounttypes` /
+  `cisco_cimc_collection_post_id` 3 Family 를 **Case A 한정 `PROVEN`** 으로 승격
+  (검증된 Model+Firmware 범위만). Dell iDRAC9 는 `HOLD`.
+  **Account Create 경로는 여전히 어느 Family 에서도 실장비 미증명** — git 4대 모두 표준
+  계정이 이미 존재해 `presence=absent` 조건이 발생하지 않았다.
+- **Production 승격 없음** (사용자 지시).
+
 ## 일자: 2026-08-12 (p) — Redfish 계정 Reconcile: Capability Discovery + Family Strategy
 
 > 정본 기록: `tests/evidence/2026-08-12-redfish-standard-account-final-compatibility.md`

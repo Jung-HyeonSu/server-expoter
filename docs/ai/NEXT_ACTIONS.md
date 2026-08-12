@@ -7,6 +7,46 @@
 
 ---
 
+## git Location 실장비 검증 후속 (2026-08-12)
+
+> 정본: `tests/evidence/2026-08-12-git-location-live-verification.md`
+
+| # | 항목 | 상태 | 내용 |
+|---|---|---|---|
+| GIT-1 | **Dell 표준 비밀번호 강도 점수 미달** | [HOLD / 운영 결정] | `Security.1.MinimumPasswordScore="Weak Protection"` 하나만 남은 강제 조건이고 길이·문자종류·정규식은 전부 비활성이다. 비밀번호를 강도 높은 값으로 바꾸거나 해당 정책을 낮추는 **운영 결정**이 필요하다. 코드로 해결하지 않는다 |
+| GIT-2 | **Account Create 경로 실장비 미검증** | [PENDING / 조건 부재] | git 4대 모두 표준 계정이 이미 존재해 `presence=absent` 가 발생하지 않았다. 계정을 지워 조건을 만들지 않았다. 표준 계정이 없는 신규 장비 투입 시 검증 |
+| GIT-3 | Inspur live 확인 | [LIVE TEST NOT AVAILABLE] | git 에 Inspur 장비 없음 + git Inspur Recovery Credential 미제공. 기존 vault 항목은 factory default placeholder. 다른 Location Credential 대체 사용 금지 |
+| GIT-4 | adapter 세대 오선택 2건 | [MED] | 10.100.15.34 는 iDRAC9(FW 7.10.70.00)인데 `redfish_dell_idrac10` 선택. 10.100.15.2 는 CIMC 4.1(2g)인데 `redfish_cisco_ucs_xseries` 선택. 계정 경로는 Capability 우선 판정으로 방어되지만 adapter 선택 자체는 별도 과제 |
+| GIT-5 | Dell 반복 Write 억제 | [MED] | 표준 인증이 계속 401 이면 매 실행마다 같은 PATCH 가 나간다(audit M-6, run 간 기억 없음). GIT-1 해소 전까지 Dell 대상은 dry-run 권장 |
+| GIT-6 | HPE 2차 실행 Write 0 미확인 | [LOW] | Lenovo·Cisco 는 확인했고 HPE 는 1회만 실행했다. 동일 계약이라 위험은 낮다 |
+| GIT-7 | chj / ich / yi 실장비 미검증 | [PENDING] | 이번 cycle 은 사용자 지시로 **git 만** 실장비 검증했다. 나머지 3 Location 은 Vault 값만 반영 |
+
+### GIT-8 [CRIT] 저장소에 **현재 유효한** 자격이 평문으로 남아 있다 — 사전 존재, 실측 정량화
+
+2026-08-12 Vault 정리 후 tracked 파일 전수 스캔 결과. **이번 cycle 이 만든 것이 아니다**
+(이번에 추가한 185 라인 중 평문 0건, 신규 문서 2종도 0건). 기존 문서·증거·캡처에 남아 있던 것이다.
+
+| 자격 | 노출 파일 수 | 주 위치 |
+|---|---:|---|
+| vault 마스터 암호 (= Redis fact_caching 암호와 동일) | **373** | `tests/reference/agent/**` 289 (Jenkins agent `ansible.cfg` 덤프의 `fact_caching_connection = <host>:6379:0:<pw>`), `tests/evidence/**` 61, `docs/ai/**` 12 |
+| ich·chj HPE/Lenovo 복구 | 17 | docs / evidence |
+| git Lenovo·HPE 복구 | 14 | docs / evidence / ticket |
+| git Cisco 복구 | 8 | LAB_INVENTORY 포함 |
+| ich·yi Dell 복구 | 7 | docs / evidence |
+| 전역 표준 계정 | 3 | LAB_PENDING_MATRIX 등 |
+| chj·ich·yi OS | 2 | docs |
+
+- 위 값들은 **이번에 배포한 자격과 동일**하다. 즉 저장소 읽기 권한 = 전 lab 자격 획득이다.
+- 기존 `[CRIT]` 항목(본 파일 아래쪽, `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md`)과 같은
+  문제이며 이번 실측으로 **범위가 정량화**됐다.
+- **이번 작업에서 제거하지 않았다.** CLAUDE.md §12 — 사용자 요청 없이 Secret Rotation /
+  Vault Rekey / Git History Cleanup 으로 범위를 확대하지 않는다. 또한 working tree 만
+  지우는 것은 git 히스토리가 남아 실효가 없다.
+- **결정 필요 (사용자)**: (a) 자격 회전 후 (b) 문서/캡처 평문 제거 (c) 히스토리 purge.
+  특히 `tests/reference/agent/**` 의 agent `ansible.cfg` 덤프는 캡처 단계에서 마스킹해야 한다.
+
+---
+
 ## Redfish 계정 Reconcile 후속 (2026-08-12) — Family Strategy 도입 이후
 
 > 정본: `tests/evidence/2026-08-12-redfish-standard-account-final-compatibility.md`

@@ -12,6 +12,16 @@
 
 ---
 
+
+> **2026-08-12 (git Location cycle)** — Inspur: `LIVE TEST NOT AVAILABLE`.
+> git Location 에 Inspur 장비가 없고 git Inspur Recovery Credential 도 제공되지 않았다.
+> 기존 `vault/git/redfish/inspur.yml` 은 factory default placeholder 다. 다른 Location
+> Credential 로 대체 검증하지 않았다 (사용자 지시). → `NEXT_ACTIONS` GIT-3.
+>
+> 같은 cycle 에서 **Case A(표준 인증 성공 → Write 0 → 표준 수집)** 가 실장비로 확인된 범위:
+> Lenovo XCC(`AFBT58B 5.70`) / HPE iLO6(`v1.73`, DL380 Gen11) / Cisco CIMC(`4.1(2g)`).
+> **Create / Repair 는 어느 Family 도 미증명** — GIT-2.
+
 ## 7 단계 후속 cycle 진입 절차 (공통)
 
 1. lab 도입 vendor / generation 결정 (사용자 협의)

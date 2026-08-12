@@ -2,6 +2,25 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-12 (q) — Vault 갱신 후 전량 회귀 + git 실장비 검증
+
+- **정적 회귀**: unit **1792** / regression **169 (+7 xfailed)** / e2e **590 (+6 skipped)** /
+  integration(not live) **243 (+3 skipped)** = **2794 passed**, 실패 0.
+  (Vault 값 변경이 코드 회귀를 유발하지 않음을 확인)
+- **py_compile**: `redfish_gather.py`, `precheck_bundle.py`, `credential_common.py`,
+  `credential_resolver.py`, `credential_accounts.py` — 전부 OK.
+- **ansible syntax-check** (WSL ansible-core 2.20.7): os / esxi / redfish 전부 exit=0.
+- **Gate**: verify_vendor_boundary 0 / verify_harness_consistency 0 /
+  output_schema_drift_check 0 / validate_field_dictionary PASS /
+  **vault_decrypt_check 전량 통과(exit=0)**.
+- **실장비 7대상 (git Location)** — production 과 동일한 ansible-playbook 호출.
+  성공 6 / HOLD 1(Dell). Redfish 3대는 `credential_scope=common/redfish/standard` +
+  used_role=primary + **Account Write 0**, Lenovo·Cisco 는 **2차 실행 Write 0** 까지 확인.
+- **read-only Redfish probe** — Dell 2대(.34/.27), Lenovo, HPE, Cisco 의 ServiceRoot /
+  Manager / AccountService / Roles / Accounts / OEM Attributes / Attribute Registry 를
+  쓰기 0건으로 수집. Dell 비밀번호 정책 규명의 근거.
+- 정본: `tests/evidence/2026-08-12-git-location-live-verification.md`
+
 ## 2026-08-12 (p) — Redfish 계정 Reconcile Family Strategy 회귀
 
 - **기준선(변경 전 직접 측정)**: unit+regression 1907 passed / 7 xfailed (66.55s),
