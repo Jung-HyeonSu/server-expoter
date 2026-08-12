@@ -12,8 +12,11 @@
   → 같은 원본(`_e_raw_listening_ports`)을 이어받도록 수정. **실장비 검증: esxi02 13개 포트 관측.**
 - **BUG-2 Redfish vendor OEM include 경로** — `{{ playbook_dir }}` 는 `<repo>/redfish-gather`
   이고 그 아래 `common/` 이 없다. 실측 `exit=2 Could not find or access …`.
-  cisco/fujitsu/hpe/huawei/inspur/quanta 6건의 OEM fragment 가 **한 번도 병합되지 않았다.**
-  → 저장소 정식 방식(`REPO_ROOT` 기준)으로 통일.
+  영향은 병합 누락보다 크다 — site.yml OEM block 의 rescue 가 발동해 **OEM 데이터가 버려지고
+  가짜 오류 1건이 매번 추가**됐다 (재현 실측: errors 1→0, OEM 소실→보존, collected []→['hardware']).
+  adapter 전수 파싱 결과 실제 영향은 **HPE 7 adapter 전 세대** / Fujitsu / Huawei / Inspur /
+  Quanta. `cisco/collect_oem.yml` 은 어떤 adapter 도 참조하지 않는 dead file.
+  → 저장소 정식 방식(`REPO_ROOT` 기준)으로 통일. 벤더별 실장비 확인은 lab 부재로 미수행.
 - **회귀 신설** — `test_fragment_overwrite_and_include_paths.py`(84) /
   `test_auth_evidence_contract.py`(4). 두 버그 주입 실험에서 `exit=1` 검출 확인.
 - **3채널 syntax-check** os/esxi/redfish 모두 exit=0 (ansible-core 2.20.7).

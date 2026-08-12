@@ -93,20 +93,31 @@ B. 정식 방식   include: {{ lookup('env','REPO_ROOT') }}/common/tasks/normali
 
 즉 해당 벤더의 **OEM fragment 가 한 번도 병합되지 않았다.**
 
-### 실제 영향 — fragment 미병합보다 크다
+### 실제 영향 — fragment 미병합보다 크다 (실측)
 
 문제의 `include_tasks` 는 벤더 task 파일의 **최상위**에 있고, 그 파일을 부르는
 `redfish-gather/site.yml:176` 의 OEM block 에는 rescue 가 달려 있다
-(`OEM (graceful — 실패해도 표준 섹션 보존)`). 따라서 include 실패는:
+(`OEM (graceful — 실패해도 표준 섹션 보존)`). site.yml 의 block/rescue 구조를 그대로 옮기고
+저장소의 진짜 `merge_fragment.yml` 을 써서 실제 ansible-core 로 관측했다:
 
-1. OEM block 의 **rescue 를 발동**시키고
-2. rescue 가 `_data_fragment: {}` 로 **리셋** → 벤더가 만든 OEM 데이터가 버려지고
-3. rescue 가 `errors[]` 에 `"일부 제조사 확장 정보를 수집하지 못했습니다…"` 를 **1건 추가**한다
+```
+A. 수정 전 (playbook_dir 기준 — 깨진 경로)
+   errors=1
+   message=일부 제조사 확장 정보를 수집하지 못했습니다. 대상 상태와 수집 로그를 확인하세요.
+   detail=[task: vendor OEM] OEM 수집/정규화 예외
+   merged_data_oem=없음                    ← 벤더가 만든 OEM 데이터 소실
+   collected=[]
+
+B. 수정 후 (REPO_ROOT 기준)
+   errors=0
+   merged_data_oem={'serial_number': 'OEM-TEST-1234', 'platform': 'TestPlatform'}
+   collected=['hardware']
+```
 
 rescue 가 graceful 이라 `status` 는 success/partial 로 남는다. 그래서 **아무도 눈치채지
-못한 채, 해당 6개 벤더는 매 수집마다 실제 원인 없는 OEM 오류 1건을 항상 내보내고 있었다.**
-이는 직전 작업(2026-08-12 errors.message 4계층 분리)의 목표 중 "정보성/성공 fallback 을
-오류로 취급하지 않는다" 와 정면으로 충돌하는 상시 가짜 오류였다.
+못한 채, 해당 벤더는 매 수집마다 실제 원인 없는 OEM 오류 1건을 항상 내보내면서 OEM
+데이터를 통째로 잃고 있었다.** 이는 직전 작업(2026-08-12 errors.message 4계층 분리)의 목표
+중 "정보성/성공 fallback 을 오류로 취급하지 않는다" 와 정면으로 충돌하는 상시 가짜 오류다.
 
 ### 영향 파일 (6건 — 전수)
 
@@ -118,6 +129,26 @@ redfish-gather/tasks/vendors/huawei/collect_oem.yml
 redfish-gather/tasks/vendors/inspur/collect_oem.yml
 redfish-gather/tasks/vendors/quanta/normalize_oem.yml
 ```
+
+### 어느 adapter 가 실제로 이 파일들을 부르는가 (실측)
+
+| 고친 파일 | 참조 adapter | 실제 영향 |
+|---|---|---|
+| `hpe/normalize_oem.yml` | `hpe_ilo`, `hpe_ilo4`, `hpe_ilo5`, `hpe_ilo6`, `hpe_ilo7`, `hpe_csus_3200`, `hpe_superdome_flex` (**7종**) | **HPE 전 세대** |
+| `fujitsu/normalize_oem.yml` | `fujitsu_irmc` | Fujitsu |
+| `huawei/collect_oem.yml` | `huawei_ibmc` | Huawei |
+| `inspur/collect_oem.yml` | `inspur_isbmc` | Inspur |
+| `quanta/normalize_oem.yml` | `quanta_qct_bmc` | Quanta |
+| `cisco/collect_oem.yml` | **없음** | 없음 — 어떤 adapter 의 `oem_tasks` 도 이 파일을 가리키지 않는다 (dead file) |
+
+> **정정**: 처음에 10.100.15.2(Cisco UCS C220 M4)로 A/B 를 돌려 "차이 없음" 이 나왔다.
+> 원인은 수정 효과가 없어서가 아니라, 그 대상이 선택하는 adapter(`redfish_cisco_ucs_xseries`)에
+> `oem_tasks` 자체가 없어서 **되돌린 파일이 실행되지 않았기** 때문이다. 위 매트릭스는 그 뒤
+> adapter YAML 전수를 파싱해 확인한 것이다.
+
+lab 에 HPE / Fujitsu / Huawei / Inspur / Quanta 장비가 없어 **벤더별 실장비 확인은 못 했다.**
+위 rescue 재현은 site.yml 과 동일한 구조로 메커니즘을 관측한 것이고, 각 벤더에서 실제로
+어떤 OEM 필드가 복구되는지는 장비 확보 후 확인이 필요하다 (NEXT_ACTIONS 등재).
 
 ### 수정
 

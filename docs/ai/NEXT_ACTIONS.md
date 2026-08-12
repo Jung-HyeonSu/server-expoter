@@ -15,7 +15,8 @@
 |---|---|---|---|
 | 1 | Jenkins 실제 checkout SHA | `10.100.64.153:8080` API 가 HTTP 403 — 세션에 Jenkins 자격증명 없음 | 해당 Job 의 SCM 설정(Repository/Branch)과 최근 빌드의 `GIT_COMMIT` 을 Jenkins UI 에서 확인. push 성공만으로 반영 단정 금지 (CLAUDE.md §14) |
 | 2 | Redfish Account Reconciliation **실제 Write** | dry-run 만 수행. 승인/검증 정책을 세션에서 확인 불가 | 승인된 lab 대상에서 `-e _rf_account_service_dryrun=false` 로 1대 검증 후 `account_service.verification` 이 `skipped` 아닌 값인지 확인 |
-| 3 | BUG-2 수정의 벤더별 실장비 확인 | cisco 외 fujitsu/hpe/huawei/inspur/quanta 는 lab 부재 | 각 벤더 장비 확보 시 OEM 섹션이 실제로 채워지는지 확인 (수정 전에는 병합 자체가 안 됐음) |
+| 3 | BUG-2 수정의 벤더별 실장비 확인 | HPE(7 adapter 전 세대) / Fujitsu / Huawei / Inspur / Quanta 모두 lab 부재 | 장비 확보 시 `data.*.oem` 이 채워지고 `errors[]` 의 가짜 OEM 오류가 사라지는지 확인. 메커니즘은 site.yml block/rescue 재현으로 관측 완료(errors 1→0, OEM 소실→보존) |
+| 4 | `redfish-gather/tasks/vendors/cisco/collect_oem.yml` 정리 판단 | 어떤 adapter 의 `oem_tasks` 도 이 파일을 참조하지 않는다 (dead file) | Cisco adapter(`cisco_ucs_xseries` 등)에 `oem_tasks` 를 연결할지, 파일을 정리할지 사용자 결정 필요 |
 
 ## Dell 대표 시리얼 교정 후속 (2026-08-11) — lab 부재로 미검증
 
