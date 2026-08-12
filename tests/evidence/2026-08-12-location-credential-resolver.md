@@ -1,7 +1,7 @@
 # Location 기반 Credential Resolver — 구현 검증 증거
 
 - **일시**: 2026-08-12
-- **대상 commit**: `70744c76` (feat: Location 기반 Credential Resolver 도입)
+- **대상 commit**: `70744c76` (feat) + `117c5190` (fix: OS credential_scope 누락 보완)
 - **설계 정본**: `docs/ai/VAULT-CREDENTIAL-RESOLVER-DESIGN-2026-08-12.md`
 - **검증 환경**: Windows 11 (pytest) + WSL Ubuntu 24.04 (ansible-core 2.19.12, venv `~/.se-ansible`)
   - Windows 의 `ansible-playbook` 은 `os.get_blocking` 부재로 실행 불가 → WSL 사용
@@ -133,3 +133,95 @@ TEST-NET(RFC 5737) 2개 대상 → **envelope 정확히 2개**. 둘 다
 | P8 | Portal 소비자의 미지 `failure_code` 처리 | 외부 시스템. `CREDENTIAL_SET_UNAVAILABLE` 수신 시 동작 확인 |
 
 **mock BMC 검증은 실장비 검증이 아니다.** 위 8건이 끝나기 전에는 flat vault 를 삭제하지 않는다.
+
+
+---
+
+## 6. Phase 7 전체 검증 — 14개 항목 (2026-08-12, commit `117c5190` 기준)
+
+| # | 항목 | 결과 | 증거 |
+|---|---|---|---|
+| 1 | `ansible-playbook --syntax-check` × 3 | [PASS] | os/esxi/redfish `exit=0` (WSL) |
+| 2 | 전체 pytest | [PASS] | **2638 passed** / 10 skipped / 7 xfailed |
+| 3 | `validate_field_dictionary.py` | [PASS] | `10 checks, 8 passed, 0 failed` |
+| 4 | `output_schema_drift_check.py` | [PASS] | `sections=11 fd_paths=175 fd_section_prefixes=18` |
+| 5 | `verify_vendor_boundary.py` | [PASS] | vendor 하드코딩 0건 |
+| 6 | `verify_harness_consistency.py` | [PASS] | 모든 참조 정합 |
+| 7 | Credential Resolver 신규 테스트 | [PASS] | 7파일 **358 passed** |
+| 8 | 기존 Gathering regression | [PASS] | regression 169 / integration(not live) 200 / e2e 587 |
+| 9 | Secret · password 로그 노출 | [PASS] | 아래 6.1 |
+| 10 | 다른 Location/Vendor runtime fallback 부재 | [PASS] | 아래 6.2 |
+| 11 | accounts 후보 순서 보존 | [PASS] | 아래 6.3 |
+| 12 | Redfish 5초 backoff 유지 | [PASS] | `try_one_account.yml:133` + `test_credential_probe_classification.py:85` 고정 |
+| 13 | `CREDENTIAL_SET_UNAVAILABLE` Contract + 기존 code 회귀 | [PASS] | 아래 6.4 |
+| 14 | `credential_scope` 3채널 반영 | [PASS] (**결함 1건 수정 후**) | 아래 6.5 |
+
+### 6.0 Phase 7 에서 발견·수정한 결함
+
+**항목 14 검증 중 OS 성공 경로 2곳의 `credential_scope` 누락을 발견했다.**
+Redfish / ESXi 는 성공·실패 양쪽에 반영됐는데 `os-gather` 는 rescue 에만 들어가 있었다.
+성공 경로에 없으면 "성공한 대상과 실패한 대상이 같은 자격 세트를 썼는가" 를 비교할 수 없어
+원인 범위를 좁히지 못한다. `os-gather/site.yml:343`(linux) / `:629`(windows) 에 추가하고,
+3채널 성공/실패 8곳을 `tests/e2e/test_credential_scope_exposure.py` 로 고정했다.
+수정 후 전체 회귀를 다시 수행했다 (위 표는 재수행 결과다).
+
+### 6.1 Secret 노출 — 정적 + 런타임
+
+정적:
+- vault 내용을 다루는 태스크의 `no_log` 누락 **0건** (11개 파일 AST 검사)
+- 민감 변수를 `debug` 로 출력하는 태스크 **0건**
+- 신규/수정 Python 5종에 평문 자격 하드코딩 **0건**
+
+런타임 (`ANSIBLE_VERBOSITY=2`, mock BMC + 평문 vault 에 canary 값 주입):
+- `CANARYUSER1/2`, `CANARYPASS1/2` — ansible 로그 **0건**, envelope **0건**
+- 이때 자격은 실제로 로드·사용됐다 (`auth_success=false`, 즉 401 을 받을 만큼 전송됨)
+  → "안 읽어서 안 샌 것" 이 아니라 **읽고도 안 샌 것**
+
+### 6.2 교차 fallback 부재 (정적)
+
+- 주석 제외 후 실행 코드의 구 flat vault 경로 참조 **0건**
+- `fallback_profiles` production 코드 **0건** (주석 1건만 — 삭제 사유 기록)
+- `include_vars` + `loop` 조합 **0건** (여러 vault 순회 구조 부재)
+- 순수함수: (location, vendor) 9조합 → distinct 경로 9개, 반환값에 경로 list 필드 없음
+
+### 6.3 후보 순서 보존
+
+- `credential_common.py` / `credential_accounts.py` 에 정렬 코드 **0건**
+- 3채널 `loop:` 이 정규화 결과를 그대로 소비
+  (`try_credentials.yml:36` / `:30` / `collect_standard.yml:90`)
+- recovery-first 포함 3케이스에서 입력 순서 == 출력 순서, 필터 == 순수함수
+
+### 6.4 failure_code Contract
+
+- 기존 7종 **전부 유지**, 삭제 0, 추가 `CREDENTIAL_SET_UNAVAILABLE` 1종
+- `field_dictionary` enum == `REASON_BY_FAILURE_CODE` 키 집합 (양쪽 정본 일치)
+- 기존 7종의 사용자 문장 **변경 0건**
+- 신규 code → 4번 문장 재사용, `failure_reasons.yml` 문장 수 **6개 불변** (신규 문장 없음)
+- Ansible YAML ↔ Python 상수 글자 동일
+- baseline 10건 전부 `failure_code: null` → **영향 없음**
+
+### 6.5 `credential_scope` 3채널 (8곳)
+
+`os-gather:343, 449, 629, 713` / `esxi-gather:236, 310` / `redfish-gather:276, 445`
+= 3채널 × 성공·실패 (OS 는 linux/windows 두 Play).
+`field_dictionary` 등록: `type=string|null`, `channel=[esxi, os, redfish]`.
+미결정 시 `''` 가 아니라 `null` 로 떨어지는 것까지 테스트로 고정.
+
+### 6.6 런타임 시나리오 매트릭스 (mock BMC, 실장비 아님)
+
+| 시나리오 | vendor | credential_scope | failure_code | auth_success |
+|---|---|---|---|---|
+| ServiceRoot 정상 + vault 부재 | dell | `ich/redfish/dell` | `CREDENTIAL_SET_UNAVAILABLE` | `null` |
+| ServiceRoot 정상 + vault 존재, 자격 불일치 | dell | `ich/redfish/dell` | `AUTH_PROBE_FAILED` | `false` |
+| ServiceRoot 정상 + vault 존재, **자격 일치** | dell | `ich/redfish/dell` | (수집 단계) | **`true`** |
+| Manufacturer 미등록(Contoso) + 무인증 응답 | null | **`null`** (vault 미접근) | `null` (success) | `true` |
+| TEST-NET 2대 (미도달) | null | `null` | `TCP_CONNECT_FAILED` | `null` |
+
+3행이 **Location vault 의 자격으로 실제 인증이 통과함**을 보인다 (`first_auth=200`).
+그 실행에서 수집이 0섹션인 것은 DMTF Contoso mockup 에 `Vendor='Dell'` 을 강제로 덮어
+Dell OEM 경로(`ServiceRoot.Oem.Dell.ServiceTag`)와 데이터가 어긋나게 만든 **mock 의 인위적
+조건** 때문이다 — mock 이 404 로 답한 경로는 0건이었고, 같은 recording 을 쓰는 기존
+`tests/integration/test_dmtf_mockup_replay.py` 8건은 통과한다.
+4행은 "정체 미상 장비는 빈 자격 1회 best-effort" 보존 분기가 vault 를 건드리지 않음을 보인다.
+
+**위 표는 전부 mock 이다. 실장비 검증이 아니다** (§5 Pilot 8건 유효).
