@@ -538,11 +538,34 @@ def test_disabled_account_is_repaired_and_reported(monkeypatch):
     assert "비활성" in joined, "비밀번호 불일치와 계정 비활성을 구분해 남기지 않았다"
 
 
-def test_locked_account_is_repaired_and_reported(monkeypatch):
-    out, sent = _repair(monkeypatch, _existing(locked=True))
-    assert sent[0]["Locked"] is False
+def test_locked_account_is_unlocked_only_where_the_vendor_allows_it(monkeypatch):
+    """`Locked` 는 Vendor 마다 계약이 정반대다 — Family Property Contract 가 정한다.
+
+    Huawei 최신 공식 ManagerAccount 는 `Locked` 를 GET/PATCH 로 정의한다. 그래서 실제로
+    잠긴 계정을 풀 수 있다 (07 §5.1). 이 경로를 "Locked 는 위험하니 전부 제거" 로 지우면
+    Huawei 의 공식 기능을 잃는다.
+    """
+    out, sent = _repair(monkeypatch, _existing(locked=True), vendor="huawei")
+    assert sent[0]["Locked"] is False, "Locked 가 writable 인 Family 에서 잠금 해제가 사라졌다"
     joined = " ".join(e.get("message", "") for e in out["errors"])
     assert "잠금" in joined
+
+
+def test_locked_is_not_written_where_the_vendor_calls_it_read_only(monkeypatch):
+    """반대로 Lenovo XCC / HPE iLO / Dell 은 `Locked` 를 쓰지 않는다.
+
+    XCC1/2/3 는 GET 에는 노출하지만 공식 Account Update Property 목록에 없고(03 §14),
+    HPE iLO 는 속성 자체가 없어 실측에서 본문 전체가 400 으로 거부됐으며(01 §9),
+    Dell 은 실측에서 200+본문 read-only 거부였다(02 §8).
+
+    **잠긴 사실은 그대로 보고한다** — 쓰지 않는 것과 모르는 척하는 것은 다르다.
+    """
+    for vendor in ("lenovo", "hpe", "dell"):
+        out, sent = _repair(monkeypatch, _existing(locked=True), vendor=vendor)
+        assert "Locked" not in sent[0], f"{vendor}: read-only 속성을 보냈다"
+        assert len(sent) == 1, f"{vendor}: 거부를 예상하고 여러 번 썼다"
+        joined = " ".join(e.get("message", "") for e in out["errors"])
+        assert "잠금" in joined, f"{vendor}: 잠금 상태를 보고하지 않았다"
 
 
 def test_role_drift_is_written_with_supported_role(monkeypatch):

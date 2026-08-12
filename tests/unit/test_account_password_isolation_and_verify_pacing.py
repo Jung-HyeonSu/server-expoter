@@ -117,9 +117,15 @@ def test_locked_is_not_sent_when_device_does_not_expose_it(monkeypatch):
 
 
 def test_locked_false_is_sent_when_account_is_actually_locked(monkeypatch):
-    """잠금 해제 경로는 그대로 살아 있어야 한다."""
+    """잠금 해제 경로는 **Locked 가 writable 인 Family 에서** 그대로 살아 있어야 한다.
+
+    2026-08-12 (rev.2): vendor 를 lenovo → huawei 로 바꿨다. Lenovo XCC 는 `Locked` 를
+    GET 에만 노출하고 공식 Account Update 목록에는 없어(03 §14) 이제 보내지 않는다.
+    Huawei 최신 iBMC 는 `Locked` 를 GET/PATCH 로 공식 정의한다(07 §5.1).
+    "Locked 를 전 Vendor 에서 제거" 도 "전 Vendor 에 전송" 도 둘 다 틀렸다.
+    """
     bodies = _install(monkeypatch, [_account(locked=True)])
-    _provision("lenovo")
+    _provision("huawei")
     assert bodies[0].get("Locked") is False
 
 

@@ -99,8 +99,14 @@ def test_m_b3_huawei_ibmc_post_200_standard(monkeypatch):
 # ── Inspur ISBMC: 1차 400 → Lenovo retry 활용 ────────────────────────────────
 
 
-def test_m_b3_inspur_isbmc_post_400_then_retry(monkeypatch):
-    """vendor='inspur' (fall-through) + 1차 POST 400 → PasswordChangeRequired retry 201."""
+def test_m_b3_inspur_post_400_writes_once_and_fails(monkeypatch):
+    """vendor='inspur' 이지만 M6 근거가 없으면 generic — POST 400 에서 **끝난다.**
+
+    2026-08-12 (rev.2) 반전. 종전에는 400 뒤 `PasswordChangeRequired:false` 를 덧붙여
+    다시 POST 했다. Inspur 공식 조사(06 §17)는 그 재시도를 명시적으로 금지한다 —
+    M6 공식 Create payload 에 `PasswordChangeRequired` 자체가 없다. 그리고 여기 도달하는
+    Inspur 는 M5/M7 처럼 **계약을 확보하지 못한** 쪽이라 더더욱 추측하면 안 된다.
+    """
     monkeypatch.setattr(rg, "account_service_discover", _as_discovery(_fake_acct_get_empty))
 
     call_log = []
@@ -120,10 +126,11 @@ def test_m_b3_inspur_isbmc_post_400_then_retry(monkeypatch):
         timeout=10, verify_ssl=False, dryrun=False,
     )
 
-    assert out["recovered"] is True, "Inspur Lenovo-style retry 실패"
     assert out["method"] == "post_new"
-    assert len(call_log) == 2, "2 회 호출 — 1차 표준 + 2차 PasswordChangeRequired"
-    assert call_log[1]["PasswordChangeRequired"] is False
+    assert len(call_log) == 1, "추측성 2차 Write 가 발생했다"
+    assert "PasswordChangeRequired" not in call_log[0]
+    assert out["recovered"] is False
+    assert out["write_accepted"] is False
 
 
 # ── Fujitsu iRMC: PRIMERGY 표준 POST ─────────────────────────────────────────

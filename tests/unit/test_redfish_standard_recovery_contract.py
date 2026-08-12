@@ -563,29 +563,50 @@ def test_rejected_patch_properties_reads_the_device_words():
     assert rg.rejected_patch_properties({"@Message.ExtendedInfo": []}) == set()
 
 
-def test_dell_200_with_locked_rejection_triggers_retry_without_locked(monkeypatch):
-    """HTTP 200 + '그 속성은 read only' → Locked 빼고 재시도해야 한다.
+# Dell SYS474 — HTTP 200 + Success 메시지와 함께 오는 **비밀번호 정책 거부**.
+# MessageArgs 가 비어 있고 RelatedProperties 만 대상을 가리키며 Severity 는 Warning 이다.
+# 종전 parser 는 read-only 문장과 PropertyNotWritable 계열 MessageArgs 만 봐서 이것을
+# 성공으로 통과시켰다 (그 뒤 재인증 401 → 원인은 추측으로 남았다).
+# source: Dell Error and Event Message Guide (SYS474), 사이트 실측 10.100.15.34 (02 §11/§12)
+_IDRAC_SYS474_REJECT = {"@Message.ExtendedInfo": [
+    {"MessageId": "Base.1.12.Success",
+     "Message": "Successfully Completed Request.",
+     "Severity": "OK", "MessageArgs": []},
+    {"MessageId": "IDRAC.2.9.SYS413",
+     "Message": "The operation successfully completed.",
+     "Severity": "OK", "MessageArgs": []},
+    {"MessageId": "IDRAC.2.9.SYS474",
+     "Message": ("Unable to set the password because the password entered does not "
+                 "comply to the Security Strengthen Policy standards."),
+     "Severity": "Warning", "MessageArgs": [],
+     "RelatedProperties": ["#/Password"],
+     "Resolution": "Enter a password that complies with the policy and retry."},
+]}
 
-    2026-08-12 실측 (10.100.15.34 / iDRAC10 / Redfish 1.20.1): iDRAC 는 Locked 가 든
-    계정 PATCH 에 **200** 을 주면서 본문으로 거부했다. Password 도 적용되지 않는데
-    코드는 성공으로 보고 넘어가, 이후 401 을 "비밀번호 정책 미충족" 으로 추측했다.
-    종전 재시도 경로는 400/405 에서만 켜져 이 펌웨어에 닿지 않았다.
 
-    2026-08-12 (후속): Locked 는 이제 **계정이 실제로 잠겼을 때만** 실린다. 이 테스트가
-    지키려는 계약("200 + 본문 거부 → 거부 속성만 빼고 재시도하되 Password 는 유지")은
-    그대로이므로, Locked 가 실제로 실리는 조건(잠긴 계정)에서 검증한다.
+def test_dell_never_sends_read_only_locked_even_when_account_is_locked(monkeypatch):
+    """Dell 은 `Locked` 가 read-only 라 **잠긴 계정에도 보내지 않는다.**
+
+    2026-08-12 (rev.2). 종전 이 테스트는 "Locked 를 보내고 200+본문 거부를 받으면
+    Locked 만 빼고 재시도한다" 를 고정했다. 그 재시도는 "보내 보고 거부되면 뺀다" 는
+    추측성 fallback 이고, 9 Vendor 조사가 공통으로 금지한 패턴이다.
+
+    올바른 층은 **쓰기 전**이다. Dell 공식 Updatable Property 목록에 Locked 가 없고
+    사이트 실측(10.100.15.34)에서도 read-only 로 거부됐으므로, Family Property Contract
+    가 `Locked: repair=read_only` 로 선언한다 → 애초에 실리지 않는다 → 거부도 재시도도
+    발생하지 않는다. 잠금 사실은 errors[] 로 사람에게 보고한다.
+    source: 02 §8 / dell.com/.../manageraccount Updatable Properties
     """
-    responses = [(_IDRAC_LOCKED_REJECT, 200), ({}, 200)]
     sent = []
 
     def fake_patch(bmc_ip, path, body, u, p, t, v):
         sent.append(dict(body))
-        resp, code = responses[min(len(sent) - 1, len(responses) - 1)]
-        return code, resp, None
+        return 200, {}, None
 
     locked_accounts = _dell_accounts("infraops")
     locked_accounts[-1]["locked"] = True
-    monkeypatch.setattr(rg, "account_service_discover", _as_discovery(lambda *a, **k: ({}, locked_accounts, [])))
+    monkeypatch.setattr(rg, "account_service_discover",
+                        _as_discovery(lambda *a, **k: ({}, locked_accounts, [])))
     monkeypatch.setattr(rg, "_patch", fake_patch)
     monkeypatch.setattr(rg, "_get", lambda *a, **k: (200, {}, None))
     monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
@@ -596,26 +617,37 @@ def test_dell_200_with_locked_rejection_triggers_retry_without_locked(monkeypatc
         target_username="infraops", target_password="<tgt>",
         target_role="Administrator", timeout=5, verify_ssl=False, dryrun=False,
     )
-    assert len(sent) == 2, "거부 응답을 받고도 재시도하지 않았다"
-    assert "Locked" in sent[0]
-    assert "Locked" not in sent[1], "재시도에서 거부된 속성을 그대로 다시 보냈다"
-    assert "Password" in sent[1], "재시도에서 Password 까지 빠지면 의미가 없다"
-    assert out["dropped_properties"] == ["Locked"]
+    assert len(sent) == 1, "read-only 속성 때문에 쓰기를 두 번 했다"
+    assert "Locked" not in sent[0], "read-only 로 선언된 속성을 보냈다"
+    assert "Password" in sent[0]
+    # 잠긴 사실 자체는 사람이 알아야 한다 — 조용히 넘어가지 않는다.
+    joined = " ".join(str(e.get("message")) for e in out["errors"])
+    assert "잠금" in joined
     assert out["recovered"] is True
     assert out["verification"] == "verified"
 
 
-def test_persistent_200_rejection_is_a_write_failure_not_a_verify_failure(monkeypatch):
-    """재시도해도 계속 거부하면 '쓰기 실패' 로 끝낸다 — 재인증을 헛돌지 않는다."""
+def test_dell_password_policy_rejection_with_200_is_a_write_failure(monkeypatch):
+    """HTTP 200 + Success 메시지 + SYS474 → **쓰기 실패**. 재인증을 헛돌지 않는다.
+
+    같은 응답에 `Base.1.12.Success` 와 `SYS413` 성공 메시지가 함께 온다. 그래서
+    "성공 메시지가 있으니 성공" 도, "HTTP 200 이니 성공" 도 성립하지 않는다.
+    판정 근거는 `RelatedProperties` 가 **우리가 실제로 보낸 Password** 를 가리킨다는 사실이다.
+    """
     verify_calls = {"n": 0}
+    writes = {"n": 0}
 
     def fake_get(*a, **k):
         verify_calls["n"] += 1
         return 401, {}, "HTTP 401"
 
-    monkeypatch.setattr(rg, "account_service_discover", _as_discovery(lambda *a, **k: ({}, _dell_accounts("infraops"), [])))
-    monkeypatch.setattr(rg, "_patch",
-                        lambda *a, **k: (200, _IDRAC_LOCKED_REJECT, None))
+    def fake_patch(*a, **k):
+        writes["n"] += 1
+        return 200, _IDRAC_SYS474_REJECT, None
+
+    monkeypatch.setattr(rg, "account_service_discover",
+                        _as_discovery(lambda *a, **k: ({}, _dell_accounts("infraops"), [])))
+    monkeypatch.setattr(rg, "_patch", fake_patch)
     monkeypatch.setattr(rg, "_get", fake_get)
     monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
 
@@ -626,6 +658,13 @@ def test_persistent_200_rejection_is_a_write_failure_not_a_verify_failure(monkey
         target_role="Administrator", timeout=5, verify_ssl=False, dryrun=False,
     )
     assert out["recovered"] is False
+    assert out["write_accepted"] is False, "200 + Success 메시지에 속아 수락으로 봤다"
+    assert out["write_http_status"] == 200, "transport 수락 사실은 따로 남아야 한다"
+    assert writes["n"] == 1, "거부된 뒤 추측성 재시도를 했다"
     assert verify_calls["n"] == 0, "쓰기가 거부됐는데 재인증을 시도했다"
-    joined = " ".join(f"{e.get('detail')}" for e in out["errors"])
-    assert "rejected properties" in joined
+    kinds = {r["kind"] for r in out["write_rejections"]}
+    props = {r["property"] for r in out["write_rejections"]}
+    assert kinds == {"policy_rejected"}
+    assert props == {"Password"}
+    joined = " ".join(str(e.get("detail")) for e in out["errors"])
+    assert "SYS474" in joined, "장비가 준 MessageId 가 진단에서 사라졌다"

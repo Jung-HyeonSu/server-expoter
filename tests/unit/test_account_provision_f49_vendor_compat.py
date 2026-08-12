@@ -467,13 +467,19 @@ def test_provision_dell_no_empty_slots_after_skip(monkeypatch):
     assert any("빈 계정 슬롯이 없어" in m for m in msgs)
 
 
-def test_unverified_family_keeps_the_legacy_post_retry(monkeypatch):
-    """공식 Write 계약을 확보하지 못한 Family 는 **현행 동작을 그대로 둔다.**
+def test_unverified_family_writes_once_and_never_retries(monkeypatch):
+    """공식 Write 계약을 확보하지 못한 Family 도 **한 번만 쓴다.**
 
-    사용자 결정 2026-08-12: 근거 부족 Family(Fujitsu / Quanta / X-Series / IMM2 /
-    Supermicro X9 / Inspur M5·M7 / HPE RMC)는 현행 유지 + UNVERIFIED 라벨.
-    근거 없이 동작을 바꾸면 지금 되던 장비가 조용히 안 되게 될 수 있다.
-    근거가 있는 Family 는 위 테스트들처럼 단일 payload 로 확정한다.
+    2026-08-12 (rev.2) 반전. 종전 이 테스트는 "UNVERIFIED Family 는 400/405 뒤
+    `PasswordChangeRequired:false` 를 덧붙여 한 번 더 POST 한다" 를 고정하고 있었다.
+    그런데 그 Family 에 속한 Vendor 들(Fujitsu / Quanta / Cisco X-Series / Lenovo IMM2 /
+    Supermicro X9 / Inspur M5·M7 / HPE RMC)이 공식 조사에서 **하나같이 바로 그 재시도를
+    금지**했다.
+        05 §19/§39-D, 06 §17/§31-F, 07 §17/§40-E, 08 §17/§32-C, 09 §19/§45-D
+
+    UNVERIFIED 의 뜻은 "여러 번 시도해 본다" 가 아니다:
+        read-only discovery → 완전 열거 → **한 번의 결정적 쓰기** → 재조회 → 재인증
+    계약을 모르면 추측하지 말고 한 번 쓰고 결과를 그대로 보고한다.
     """
     monkeypatch.setattr(rg, "account_service_discover", _as_discovery(_fake_acct_get_empty))
 
@@ -481,6 +487,7 @@ def test_unverified_family_keeps_the_legacy_post_retry(monkeypatch):
 
     def fake_post(bmc_ip, path, body, u, p, t, v):
         call_log.append(dict(body))
+        # 종전이라면 2차 요청에서 성공했을 응답. 이제 2차 요청 자체가 없어야 한다.
         if "PasswordChangeRequired" in body:
             return 200, {"@odata.id": "/redfish/v1/AccountService/Accounts/4"}, None
         return 405, {}, "HTTP 405: Method Not Allowed"
@@ -496,5 +503,9 @@ def test_unverified_family_keeps_the_legacy_post_retry(monkeypatch):
     )
     assert out["family"] == "generic_collection_post"
     assert out["evidence"] == "unverified"
-    assert out["recovered"] is True
-    assert len(call_log) == 2, "UNVERIFIED Family 의 종전 retry 가 사라졌다"
+    assert len(call_log) == 1, "UNVERIFIED Family 가 추측성 2차 Write 를 했다"
+    assert "PasswordChangeRequired" not in call_log[0], \
+        "계약 근거가 없는 속성을 추측해서 보냈다"
+    # 한 번의 쓰기가 거부됐으므로 실패다. 성공으로 둔갑시키지 않는다.
+    assert out["recovered"] is False
+    assert out["write_accepted"] is False

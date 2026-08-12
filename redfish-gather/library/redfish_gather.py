@@ -491,9 +491,9 @@ def account_verify_delays(policy):
         delays.append(extra)
     return tuple(delays)
 
-# 계정 PATCH 에서 **빼도 되는** 속성. 이 목록에 없는 속성(Password / UserName)은
-# 빼는 순간 요청의 의미가 달라지므로 자동 제거 대상이 아니다.
-ACCOUNT_OPTIONAL_PATCH_PROPS = ("Locked", "Enabled", "RoleId")
+# 2026-08-12 (rev.2): `ACCOUNT_OPTIONAL_PATCH_PROPS` 를 제거했다. "거부되면 빼도 되는
+# 속성" 이라는 개념 자체가 추측성 재시도를 전제한다. 무엇을 보낼지는 쓰기 **전에**
+# Family Property Contract 가 정한다 (`_ACCOUNT_PROP_DEFAULTS` / `props`).
 
 _READ_ONLY_PROP_RE = re.compile(
     r'property\s+([A-Za-z][A-Za-z0-9_]*)\s+is\s+a?\s*read[\s-]?only', re.IGNORECASE
@@ -515,6 +515,113 @@ _PROPERTY_ARG_MESSAGE_IDS = (
 )
 _PROP_NAME_RE = re.compile(r'\A[A-Za-z][A-Za-z0-9_]*\Z')
 
+# 거부 종류. 셋을 구분해야 "왜 실패했는지" 를 사람이 알 수 있고, 무엇보다
+# **재시도해도 되는 것이 하나도 없다** 는 사실이 분명해진다.
+REJECT_READ_ONLY = 'read_only'        # 그 속성은 쓸 수 없다
+REJECT_VALUE = 'value_rejected'       # 값이 허용 형식/목록에 맞지 않다
+REJECT_POLICY = 'policy_rejected'     # 값이 장비 정책에 걸렸다 (Dell SYS474 등)
+
+# 명시적 거부로 볼 Severity. 정보성 메시지(OK)는 거부가 아니다.
+#   "모든 Warning 을 실패로 처리하는 것도 잘못" (02 §12) 이라 Severity 하나만으로 판단하지
+#   않고, 아래에서 RelatedProperties 가 **우리가 실제로 요청한 속성**을 가리킬 때만 센다.
+_REJECT_SEVERITIES = frozenset({'warning', 'critical', 'error'})
+
+# `#/Password` / `#/Attributes/Foo` 같은 RelatedProperties 항목에서 속성 이름만 뽑는다.
+# DMTF DSP0266: RelatedProperties 는 JSON Pointer fragment 다.
+_RELATED_PROP_RE = re.compile(r'\A#?/(?:.*/)?([A-Za-z][A-Za-z0-9_]*)\Z')
+
+
+def _related_property_names(item):
+    """ExtendedInfo 항목의 `RelatedProperties` → 속성 이름 목록."""
+    names = []
+    for ref in _as_list(item.get('RelatedProperties')):
+        if not isinstance(ref, str):
+            continue
+        m = _RELATED_PROP_RE.match(ref.strip())
+        if m:
+            names.append(m.group(1))
+        elif _PROP_NAME_RE.match(ref.strip()):
+            names.append(ref.strip())
+    return names
+
+
+def write_rejections(body, requested=None):
+    """쓰기 응답이 **명시적으로 거부한** 항목들. `[{property, kind, message_id, severity}]`
+
+    왜 `rejected_patch_properties()` 로 부족한가 (2026-08-12 Dell 실측):
+        Dell 은 비밀번호가 정책에 걸리면 **HTTP 200** 과 함께 다음을 돌려준다.
+            MessageId         = IDRAC.x.SYS474
+            Message           = "Unable to set the password because the password entered
+                                 does not comply to the Security Strengthen Policy standards."
+            Severity          = Warning
+            MessageArgs       = []
+            RelatedProperties = ["#/Password"]
+        종전 parser 는 (a) "그 속성은 read only" 문장과 (b) PropertyNotWritable 계열의
+        `MessageArgs` 만 읽었다. SYS474 는 둘 중 어느 것도 아니라 **성공으로 통과**했고,
+        그 뒤 재인증이 401 이 나면 원인을 "비밀번호 정책쯤" 으로 추측할 수밖에 없었다.
+        같은 응답에 `Base.1.12.Success` / `SYS413` 성공 메시지가 함께 오기 때문에
+        "성공 메시지가 있으니 성공" 도 성립하지 않는다.
+
+    `requested` 를 주면 **우리가 실제로 보낸 속성**을 가리키는 거부만 센다. 응답에 딸려온
+    다른 속성의 정보성 경고를 우리 요청의 실패로 오판하지 않기 위해서다.
+
+    source: DMTF DSP0266 (`@Message.ExtendedInfo`, `RelatedProperties`, `MessageSeverity`),
+            Dell Error and Event Message Guide (SYS474),
+            사이트 실측 (10.100.15.34 iDRAC9 / Redfish 1.20.1)
+    """
+    if not isinstance(body, dict):
+        return []
+    err = body.get('error')
+    scope = err if isinstance(err, dict) else body
+    found = []
+    seen = set()
+
+    def _add(prop, kind, msg_id, severity):
+        key = (prop, kind)
+        if key in seen:
+            return
+        seen.add(key)
+        found.append({'property': prop, 'kind': kind,
+                      'message_id': msg_id, 'severity': severity})
+
+    for item in _dicts(scope.get('@Message.ExtendedInfo')):
+        msg_id = item.get('MessageId') if isinstance(item.get('MessageId'), str) else None
+        sev = item.get('MessageSeverity') or item.get('Severity')
+        sev = sev.lower() if isinstance(sev, str) else None
+
+        # (1) 장비가 문장으로 "그 속성은 read only" 라고 말한 경우 — 가장 강한 신호다.
+        #     단 `requested` 가 주어지면 **우리가 보낸 속성**에 대한 말일 때만 센다.
+        #     보내지도 않은 속성의 경고를 우리 요청의 실패로 읽으면, 정상 쓰기가
+        #     장비의 부수 메시지 하나 때문에 실패로 둔갑한다.
+        text = item.get('Message')
+        if isinstance(text, str):
+            m = _READ_ONLY_PROP_RE.search(text)
+            if m and (requested is None or m.group(1) in requested):
+                _add(m.group(1), REJECT_READ_ONLY, msg_id, sev)
+
+        # (2) MessageId 가 "첫 인자는 property 이름" 계열일 때만 MessageArgs 를 읽는다.
+        if msg_id and any(msg_id.endswith(s) for s in _PROPERTY_ARG_MESSAGE_IDS):
+            for arg in _as_list(item.get('MessageArgs')):
+                if isinstance(arg, str) and _PROP_NAME_RE.match(arg) \
+                        and (requested is None or arg in requested):
+                    _add(arg, REJECT_READ_ONLY, msg_id, sev)
+            continue
+
+        # (3) RelatedProperties 가 우리가 요청한 속성을 가리키고 Severity 가 경고 이상이면
+        #     그것은 정보가 아니라 거부다. read_only 로 이미 잡힌 것은 위에서 처리됐다.
+        if sev in _REJECT_SEVERITIES:
+            for prop in _related_property_names(item):
+                if requested is not None and prop not in requested:
+                    continue
+                _add(prop, REJECT_POLICY, msg_id, sev)
+
+    text = scope.get('message')
+    if isinstance(text, str):
+        m = _READ_ONLY_PROP_RE.search(text)
+        if m:
+            _add(m.group(1), REJECT_READ_ONLY, None, None)
+    return found
+
 
 def rejected_patch_properties(body):
     """쓰기 응답에서 "이 속성은 쓸 수 없다" 고 지목된 속성 이름들.
@@ -532,35 +639,14 @@ def rejected_patch_properties(body):
 
     반환: 응답이 지목한 속성 이름 집합 (없으면 빈 set).
     source: DMTF DSP0266 Error responses (`@Message.ExtendedInfo`, `MessageArgs`),
-            사이트 실측 (10.100.15.34 iDRAC10 / Redfish 1.20.1).
+            사이트 실측 (10.100.15.34 iDRAC9 / Redfish 1.20.1).
+
+    2026-08-12 (rev.2): 본문은 `write_rejections()` 로 옮겼다. 이 함수는 **read-only 거부만**
+    돌려주는 종전 계약을 유지한다 — 정책 거부(SYS474 등)는 "우리가 무엇을 요청했는지" 를
+    알아야 정확히 판정되므로 `write_rejections(body, requested)` 를 직접 써야 한다.
     """
-    if not isinstance(body, dict):
-        return set()
-    err = body.get('error')
-    scope = err if isinstance(err, dict) else body
-    found = set()
-    for item in _dicts(scope.get('@Message.ExtendedInfo')):
-        # (1) 장비가 문장으로 "그 속성은 read only" 라고 말한 경우 — 가장 강한 신호다.
-        text = item.get('Message')
-        if isinstance(text, str):
-            m = _READ_ONLY_PROP_RE.search(text)
-            if m:
-                found.add(m.group(1))
-        # (2) MessageId 가 "첫 인자는 property 이름" 계열일 때만 MessageArgs 를 읽는다.
-        msg_id = item.get('MessageId')
-        if not isinstance(msg_id, str):
-            continue
-        if not any(msg_id.endswith(suffix) for suffix in _PROPERTY_ARG_MESSAGE_IDS):
-            continue
-        for arg in _as_list(item.get('MessageArgs')):
-            if isinstance(arg, str) and _PROP_NAME_RE.match(arg):
-                found.add(arg)
-    text = scope.get('message')
-    if isinstance(text, str):
-        m = _READ_ONLY_PROP_RE.search(text)
-        if m:
-            found.add(m.group(1))
-    return found
+    return {r['property'] for r in write_rejections(body)
+            if r['kind'] == REJECT_READ_ONLY and r['property']}
 
 
 def _extended_info(body, limit=MAX_EXTENDED_INFO_LEN):
@@ -5082,13 +5168,18 @@ def account_presence(discovery, target_username):
 #   다만 이번 단계(P1)는 **행동 변화 0** 이 합격 조건이라 현재 동작을 그대로 옮긴 값을
 #   쓴다. Family 별 선언을 채운 뒤 기본값을 `unverified` 로 좁힌다(P2).
 _ACCOUNT_PROP_DEFAULTS = {
+    # 이 셋은 "표준 계정을 만든다/고친다" 는 동작 자체다. 이것까지 unverified 로 두면
+    # Reconcile 이 아무것도 하지 못한다. 근거를 확보하지 못한 Family 도 이 셋으로
+    # **한 번의 결정적 쓰기**는 수행한다 (프로젝트 UNVERIFIED 정책).
     'Password':               {'create': 'writable',    'repair': 'writable'},
     'RoleId':                 {'create': 'writable',    'repair': 'writable'},
     'Enabled':                {'create': 'writable',    'repair': 'writable'},
-    # 생성 payload 에는 Locked 를 실은 적이 없다 — 그 사실을 그대로 적는다.
-    'Locked':                 {'create': 'unsupported', 'repair': 'writable'},
-    'PasswordChangeRequired': {'create': 'writable',    'repair': 'writable'},
-    'AccountTypes':           {'create': 'writable',    'repair': 'writable'},
+    # 나머지 셋은 Vendor 마다 read-only / 미지원 / writable 이 갈리고, 잘못 보내면
+    # **요청 전체가 거부**된다. 그래서 계약을 선언하지 않은 Family 에서는 보내지 않는다.
+    #   create 는 어느 Family 에서도 이 셋을 실은 적이 없다 — 그 사실을 그대로 적는다.
+    'Locked':                 {'create': 'unsupported', 'repair': 'unverified'},
+    'PasswordChangeRequired': {'create': 'unsupported', 'repair': 'unverified'},
+    'AccountTypes':           {'create': 'unsupported', 'repair': 'unverified'},
 }
 
 # 계약을 확보하지 못한 Property 의 최종 상태. P2 에서 `_ACCOUNT_PROP_DEFAULTS` 미선언
@@ -5120,12 +5211,13 @@ _ACCOUNT_FAMILY_DEFAULTS = {
     'if_match':                 {'create': False, 'repair': False},
     'write_success':            'generic',
     'evidence':                 'unverified',
-    'legacy_post_retry':        False,
     # 비밀번호를 다른 속성과 같은 PATCH 에 담으면 조용히 버리는 Family (HPE iLO).
     'isolated_write_patch':     False,
-    # 비밀번호 단독 PATCH 가 권한 cache 를 손상시키는 Family (Lenovo XCC 사이트 실측).
-    # 그런 Family 는 drift 최소화보다 full body 유지가 우선이다.
-    'full_body_patch':          False,
+    # Repair PATCH 에 drift 없는 writable 속성까지 실을 것인가.
+    # **기본 True(full body)** — 이 저장소의 유일한 실측 근거가 full body 편이다.
+    #   Lenovo XCC 사이트 실측: 비밀번호 단독 PATCH 시 권한 cache 손상.
+    # drift-only 가 안전하다는 실측이 나온 Family 만 False 로 연다.
+    'full_body_patch':          True,
     # Family 별 Property 쓰기 계약. 미선언 Property 는 _ACCOUNT_PROP_DEFAULTS 를 따른다.
     'props':                    {},
 }
@@ -5134,10 +5226,25 @@ _ACCOUNT_FAMILIES = {                                                          #
     # Dell — slot PATCH. slot 1 = IPMI anonymous 예약. iDRAC10 은 slot 2 = root 예약.
     # source: dell.com/.../idrac8_2.70.70.70_ug/configuring-local-users,
     #         dell.com/.../idrac10_1.20.xx_ug/configuring-local-users (ID 1,2 reserved)
+    # Locked: GET 에는 있지만 iDRAC9 7.10.70 실측에서 read-only 로 거부됐고(200+본문),
+    #   공식 Updatable Property 목록(UserName/Password/RoleId/Enabled)에도 없다.
+    # PasswordChangeRequired: 공식 Updatable 목록에 없음 → 보내지 않는다.
+    # source: dell.com/.../idrac_3.18.18.18_redfishapiguide/manageraccount,
+    #         사이트 실측 10.100.15.34 (02 §8/§9)
     'dell_slot_patch':          {'create_method': 'slot_patch',                # nosec rule12-r1
-                                 'reserved_slot_ids': ('1',), 'evidence': 'proven'},
+                                 'reserved_slot_ids': ('1',), 'evidence': 'proven',
+                                 'props': {
+                                     'Locked': {'create': 'unsupported', 'repair': 'read_only'},
+                                     'AccountTypes': {'create': 'unsupported',
+                                                      'repair': 'verify_only'},
+                                 }},
     'dell_idrac10_slot_patch':  {'create_method': 'slot_patch',                # nosec rule12-r1
-                                 'reserved_slot_ids': ('1', '2'), 'evidence': 'documented'},
+                                 'reserved_slot_ids': ('1', '2'), 'evidence': 'documented',
+                                 'props': {
+                                     'Locked': {'create': 'unsupported', 'repair': 'read_only'},
+                                     'AccountTypes': {'create': 'unsupported',
+                                                      'repair': 'verify_only'},
+                                 }},
     # Cisco IMC/CIMC 4.1~6.0 — Collection POST + 명시 Id + Cisco enum RoleId.
     # source: cisco.com/.../b_Cisco_IMC_REST_API_guide_4_1 + 사이트 실측 10.100.15.2
     'cisco_cimc_collection_post_id': {'needs_explicit_id': True,               # nosec rule12-r1
@@ -5148,25 +5255,71 @@ _ACCOUNT_FAMILIES = {                                                          #
                                       'evidence': 'proven'},
     # 최신 Cisco BMC (AMI MegaRAC 기반) — Id 는 BMC 가 정하고 RoleId 는 표준 이름.
     # source: cisco.com/.../b_cisco-bmc-rest-api-guide (1.0/2.0/4.0)
-    'cisco_bmc_dynamic':        {'evidence': 'documented'},                    # nosec rule12-r1
+    # BMC 1.1 공식 ManagerAccount: Locked=Writable(관리자 unlock),
+    #   PasswordChangeRequired=Read Only(기존 계정), AccountTypes=Read Only.
+    #   BMC 2.0 은 Create 에서 PasswordChangeRequired:false 를 지원한다.
+    # source: cisco.com/.../b_cisco-bmc-rest-api-guide-1_1, .../2-0-1 (04 §10.3/§11.1)
+    'cisco_bmc_dynamic':        {'evidence': 'documented',                     # nosec rule12-r1
+                                 'props': {
+                                     'Locked': {'create': 'unsupported', 'repair': 'writable'},
+                                     'PasswordChangeRequired': {'create': 'writable',
+                                                                'repair': 'read_only'},
+                                     'AccountTypes': {'create': 'unsupported',
+                                                      'repair': 'verify_only'},
+                                 }},
     # Lenovo Intel Purley XCC — slot 이 미리 만들어져 있고 UserName=='' 이 빈 슬롯이다.
     # source: pubs.lenovo.com/xcc-restapi/create_an_account_intel_p_based_patch
+    # Purley 는 PasswordChangeRequired 자체를 제공하지 않는다. Locked 는 GET 에만 있고
+    #   공식 Account Update Property 목록에는 없다.
+    # source: pubs.lenovo.com/xcc-restapi/update_userid_password_role_properties_patch (03 §7.3)
     'lenovo_purley_slot_patch': {'create_method': 'slot_patch',                # nosec rule12-r1
-                                 'evidence': 'documented'},
+                                 'evidence': 'documented',
+                                 'props': {
+                                     'Locked': {'create': 'unsupported', 'repair': 'read_only'},
+                                     'PasswordChangeRequired': {'create': 'unsupported',
+                                                                'repair': 'unsupported'},
+                                 }},
     # Lenovo Whitley/AMD/XCC2/XCC3/TSM — Collection POST.
     # PasswordChangeRequired 를 명시하지 않으면 TSM 은 default true 라 생성 직후 막힌다.
     # source: pubs.lenovo.com/xcc-restapi/create_an_account_post,
     #         pubs.lenovo.com/tsm/post_create_new_account
+    # Whitley/AMD 는 PasswordChangeRequired 가 공식 writable 이고, TSM 은 생략 시 true 라
+    #   Create 에서 명시해야 한다. Locked 는 XCC1 이 read-only 인데 TSM 은 writable 이라
+    #   두 계약이 이 Family 에 섞여 있다 — 근거가 갈리므로 **쓰지 않는다**(기본 unverified).
+    # source: pubs.lenovo.com/xcc-restapi/create_an_account_post,
+    #         pubs.lenovo.com/tsm/post_create_new_account, /manager_account (03 §8/§13/§14)
     'lenovo_collection_post':   {'password_change_required': False,            # nosec rule12-r1
-                                 'evidence': 'documented'},
+                                 'evidence': 'documented',
+                                 'props': {
+                                     'PasswordChangeRequired': {'create': 'writable',
+                                                                'repair': 'writable'},
+                                 }},
+    # XCC2/XCC3 는 AccountTypes 가 공식 writable 이다. Locked 는 GET 에만 있고 Update
+    #   목록에는 없다. PasswordChangeRequired 는 XCC2 만 지원한다(XCC3 분리는 P4).
+    # source: pubs.lenovo.com/xcc2-restapi/update_userid_password_role_properties_patch,
+    #         pubs.lenovo.com/xcc3-restapi/resource_account_service_accounts (03 §10/§11/§15/§16)
     'lenovo_xcc_accounttypes':  {'password_change_required': False,            # nosec rule12-r1
                                  'account_types': ('Redfish',),
+                                 'account_types_required': ('Redfish',),
                                  'reserved_slot_ids': ('HostBootStrap',),
-                                 'evidence': 'documented'},
+                                 'evidence': 'documented',
+                                 'props': {
+                                     'Locked': {'create': 'unsupported', 'repair': 'read_only'},
+                                     'PasswordChangeRequired': {'create': 'writable',
+                                                                'repair': 'writable'},
+                                     'AccountTypes': {'create': 'writable', 'repair': 'writable'},
+                                 }},
     # HPE iLO4 — OEM namespace 가 Hpe 가 아니라 Hp 다.
     # source: hewlettpackard.github.io/ilo-rest-api-docs/ilo4/
+    # iLO4 ManagerAccount 에는 Locked / AccountTypes 가 없다.
+    # source: hewlettpackard.github.io/ilo-rest-api-docs/ilo4/ (01 §5)
     'hpe_ilo4':                 {'oem_privileges_namespace': 'Hp',             # nosec rule12-r1
-                                 'evidence': 'documented'},
+                                 'evidence': 'documented',
+                                 'props': {
+                                     'Locked': {'create': 'unsupported', 'repair': 'unsupported'},
+                                     'AccountTypes': {'create': 'unsupported',
+                                                      'repair': 'unsupported'},
+                                 }},
     # HPE iLO5+ — RoleId 로 충분. source: servermanagementportal.ext.hpe.com/.../managingusers
     #
     # isolated_write_patch: 2026-08-12 사이트 실측 (10.50.11.231 / iLO6 /
@@ -5178,15 +5331,36 @@ _ACCOUNT_FAMILIES = {                                                          #
     #   (속성이 하나도 안 바뀌는 {Enabled,RoleId} PATCH 도 똑같이 AccountModified 를 준다).
     #   그래서 이 Family 는 비밀번호를 **단독 PATCH** 로 쓴다. 무작위 재시도가 아니라
     #   Family 가 미리 확정하는 쓰기 계약이다.
+    # PasswordChangeRequired 는 iLO5/6/7 모두 Read Only 다. AccountTypes 는 iLO6 1.64+/
+    #   iLO7 에 존재하지만 Read Only 라 **검증에만** 쓴다. Locked 는 공식 ManagerAccount
+    #   schema 에 없고 실측(iLO6 v1.73)에서 400 PropertyNotWritableOrUnknown 으로 거부됐다.
+    # source: servermanagementportal.ext.hpe.com/.../ilo6_manager_resourcedefns173,
+    #         사이트 실측 10.50.11.231 (01 §9/§10/§11)
     'hpe_ilo5plus':             {'isolated_write_patch': True,              # nosec rule12-r1
-                                 'evidence': 'proven'},
+                                 'evidence': 'proven',
+                                 'account_types_required': ('Redfish',),
+                                 'props': {
+                                     'Locked': {'create': 'unsupported', 'repair': 'unsupported'},
+                                     'PasswordChangeRequired': {'create': 'unsupported',
+                                                                'repair': 'read_only'},
+                                     'AccountTypes': {'create': 'unsupported',
+                                                      'repair': 'verify_only'},
+                                 }},
     # Supermicro X12/H12 계열 — 공식 Reference Guide 의 /AccountService/Accounts POST
     # source: supermicro.com/manuals/other/redfish-ref-guide-html/.../account-service.htm
     'supermicro_legacy':        {'evidence': 'documented'},                    # nosec rule12-r1
     # Supermicro Gen13 01.05.xx+ / Gen14 01.02.xx.xx+ — IPMI/Redfish 계정 분리 세대.
     # source: supermicro.com/en/support/manuals/product/software/redfish-user-guide/.../accounts.htm
+    # 최신 Add Account 는 AccountTypes 를 Create payload 로 공식 지원한다. 반면 기존 계정의
+    #   AccountTypes PATCH 는 최신 매뉴얼에서 확인되지 않아 **검증만** 한다.
+    # source: supermicro.com/en/support/manuals/.../accounts.htm (05 §9/§11/§35)
     'supermicro_split_account': {'account_types': ('Redfish',),                # nosec rule12-r1
-                                 'evidence': 'documented'},
+                                 'account_types_required': ('Redfish',),
+                                 'evidence': 'documented',
+                                 'props': {
+                                     'AccountTypes': {'create': 'writable',
+                                                      'repair': 'verify_only'},
+                                 }},
     # Inspur M6 / ISBMC — HTTP 200 + Oem.Public.Status 0 이어야 성공. PATCH 는 If-Match.
     # source: 浪潮英信服务器 Redfish用户手册 V1.2 §4.4 / §4.6
     # Create 는 Collection POST 이고 **If-Match 를 쓰지 않는다.** Repair(Instance PATCH)만
@@ -5197,11 +5371,25 @@ _ACCOUNT_FAMILIES = {                                                          #
                                  'evidence': 'documented'},
     # Huawei iBMC — Collection POST + Instance PATCH 가 2019 MM920 / 2025 Kunpeng 양쪽 공식.
     # source: Huawei EDOC1100372764 (Kunpeng iBMC Redfish), EDOC1100105860 (MM920/921)
-    'huawei_ibmc':              {'evidence': 'documented'},                    # nosec rule12-r1
+    # Huawei 최신 공식 ManagerAccount 는 Locked 를 GET/PATCH 로 정의한다 — 다른 Vendor 와
+    #   달리 **실제로 잠긴 계정을 풀 수 있다.** 반대로 PasswordChangeRequired 와
+    #   AccountTypes 는 공식 table 에 없어 보내지 않는다 (Huawei 의 축은 Login Interface 다).
+    # source: Huawei EDOC1100372764 Kunpeng iBMC Redfish (07 §5/§11/§17/§18)
+    'huawei_ibmc':              {'evidence': 'documented',                     # nosec rule12-r1
+                                 'props': {
+                                     'Locked': {'create': 'unsupported', 'repair': 'writable'},
+                                     'PasswordChangeRequired': {'create': 'unsupported',
+                                                                'repair': 'unsupported'},
+                                     'AccountTypes': {'create': 'unsupported',
+                                                      'repair': 'unsupported'},
+                                 }},
     # 공식 Write 계약 미확보 Family — 현행 동작(표준 POST + 400/405 retry 사다리)을 그대로 둔다.
     # 대상: Fujitsu iRMC S4/S5/S6, Quanta 전 세대, Cisco UCS X-Series, Lenovo IMM2,
     #       Supermicro X9, Inspur M5/M7, HPE CSUS/Superdome RMC, 그리고 미식별 vendor.
-    'generic_collection_post':  {'legacy_post_retry': True, 'evidence': 'unverified'},
+    # 공식 Write 계약 미확보 Family — **한 번의 결정적 쓰기**만 한다.
+    #   2026-08-12 (rev.2): 종전의 400/405 후 PasswordChangeRequired 추가 재시도를
+    #   제거했다. 이 Family 에 속한 Vendor 들이 바로 그 재시도를 금지한 대상이다.
+    'generic_collection_post':  {'evidence': 'unverified'},
 }
 
 
@@ -5440,18 +5628,28 @@ def choose_role_id(family, target_role, discovery):
     return mapped or target_role
 
 
-def interpret_write_response(family, code, body, err):
+def interpret_write_response(family, code, body, err, requested=None):
     """쓰기 응답을 Family 계약으로 해석한다. (accepted, reason)
 
     HTTP status 하나로 통일하지 않는다:
-      - Dell iDRAC10 은 200 을 주면서 본문으로 요청 전체를 거부한다.
+      - Dell 은 200 을 주면서 본문으로 요청을 거부한다 (read-only 속성 / 비밀번호 정책).
       - Inspur M6 는 200 + Oem.Public.Status 0 이어야 성공이다.
+
+    `requested` 를 주면 우리가 실제로 보낸 속성을 가리키는 거부만 센다.
+
+    **어떤 거부 종류든 여기서 즉시 실패로 끝난다.** 속성을 빼고 다시 쓰거나 payload 를
+    바꿔 재시도하지 않는다 — 그것은 추측성 재시도이고, 9 Vendor 조사가 공통으로 금지한
+    패턴이다. 예상하지 못한 거부는 그대로 기록해서 사람이 보게 한다.
     """
     if err or code not in (200, 201, 204):
         return False, (err or f'HTTP {code}')
-    rejected = rejected_patch_properties(body)
+    rejected = write_rejections(body, requested)
     if rejected:
-        return False, f'rejected properties: {sorted(rejected)}'
+        detail = ', '.join(
+            '{0}={1}{2}'.format(r['property'] or '?', r['kind'],
+                                f"({r['message_id']})" if r['message_id'] else '')
+            for r in rejected)
+        return False, f'rejected: {detail}'
     if family.get('write_success') == 'inspur_oem_status':
         status = _safe(body, 'Oem', 'Public', 'Status', default=None)
         if status is None:
@@ -5529,7 +5727,12 @@ def _confirm_account_state(bmc_ip, slot_uri, target_username, family,
         mismatches.append('Enabled=false')
     if state['password_change_required'] is True:
         mismatches.append('PasswordChangeRequired=true')
-    want_types = set(family.get('account_types') or ())
+    # 2026-08-12 (rev.2): "쓰는 축" 과 "확인해야 하는 축" 을 분리한다.
+    #   HPE iLO6/7 · Cisco BMC 는 AccountTypes 가 read-only 라 쓰지 않지만, 그 계정이
+    #   Redfish 로 접근 가능한지는 **반드시 확인**해야 한다. 쓰지 않는다는 이유로 검증까지
+    #   건너뛰면 "계정은 있는데 Redfish 로는 못 쓰는" 상태를 놓친다 (01 §11, 04 §16, 05 §35).
+    want_types = set(family.get('account_types_required')
+                     or family.get('account_types') or ())
     if want_types and state['account_types'] is not None \
             and not want_types.issubset(set(state['account_types'])):
         mismatches.append(f'AccountTypes={state["account_types"]}')
@@ -5981,14 +6184,31 @@ def account_service_provision(
         #     XCC   -> Locked 는 노출하지만 read-only 라 거부 → drop 후 retry 로만 통과
         #   즉 no-op 하나 때문에 쓰기를 한 번 더 쓰고 있었다 (Lockout 예산 낭비).
         #   잠긴 계정을 푸는 경로는 그대로 살아 있다 — 그때는 Locked:false 가 실린다.
-        body_full = {
-            'Password': target_password,
-            'Enabled':  True,
-            # 2026-08-12: RoleId 문자열을 vendor 이름으로 추측하지 않는다. Roles Collection
-            #   또는 기존 계정이 실제로 쓰는 값 중에서 고른다 (choose_role_id). Cisco IMC 는
-            #   'admin', 최신 Cisco BMC 는 'Administrator' 라 remap 을 고정하면 한쪽이 깨진다.
-            'RoleId':   role_id,
-        }
+        #
+        # 2026-08-12 (rev.2): 각 속성은 **Family Property Contract 가 writable 이라고
+        #   말할 때만** 실린다. read_only / unsupported / unverified 속성은 애초에 보내지
+        #   않는다 — 보내고 거부되면 빼는 방식은 추측성 재시도라 금지한다.
+        #
+        #   drift 여부까지 볼 것인가는 `full_body_patch` 가 정한다. **기본은 full body 다.**
+        #   9 Vendor 문서는 "drift 없는 속성까지 매번 보낼 이유는 없다" 고 권고하지만,
+        #   이 저장소가 가진 **유일한 실측 근거는 그 반대**다 — Lenovo XCC 에서 비밀번호를
+        #   단독으로 PATCH 하자 권한 cache 가 손상됐다(RoleId 는 Administrator 로 보이는데
+        #   /Managers 는 AccessDenied). 권고와 실측이 충돌하면 실측을 따른다(rule 25 R7-A-1).
+        #   실제 위험이었던 "쓸 수 없는 속성 전송" 은 위 Property Contract 가 이미 막는다.
+        #   drift-only 가 안전하다는 실측이 나온 Family 만 full_body_patch=False 로 연다.
+        full_body = family.get('full_body_patch') is not False
+        body_full = {}
+        if account_prop_writable(family, 'Password', 'repair'):
+            body_full['Password'] = target_password
+        if account_prop_writable(family, 'Enabled', 'repair') \
+                and (full_body or existing.get('enabled') is not True):
+            body_full['Enabled'] = True
+        # 2026-08-12: RoleId 문자열을 vendor 이름으로 추측하지 않는다. Roles Collection
+        #   또는 기존 계정이 실제로 쓰는 값 중에서 고른다 (choose_role_id). Cisco IMC 는
+        #   'admin', 최신 Cisco BMC 는 'Administrator' 라 remap 을 고정하면 한쪽이 깨진다.
+        if account_prop_writable(family, 'RoleId', 'repair') \
+                and (full_body or (existing.get('role_id') or '') != role_id):
+            body_full['RoleId'] = role_id
         # 최신 Lenovo XCC2/3 · Supermicro 계정분리 세대는 AccountTypes 에 Redfish 가 없으면
         # 계정이 살아 있어도 Redfish 인증이 막힌다. Family 가 요구할 때만 함께 맞춘다.
         if family.get('account_types') and existing.get('account_types') is not None \
@@ -6046,29 +6266,15 @@ def account_service_provision(
                     current_username, current_password, timeout, verify_ssl,
                     {'If-Match': etag},
                 )
-        # 일부 펌웨어가 Locked 같은 필드를 read-only 로 거부한다. 거부 신호는 두 가지다:
-        #   (a) HTTP 400 / 405
-        #   (b) **HTTP 200 인데 본문에 "그 속성은 read only" 라고 적혀 있다** — Dell iDRAC10.
-        #       (b) 를 놓치면 성공으로 보고 넘어가고, Password 도 적용되지 않은 채
-        #       "인증이 안 된다" 만 남는다 (2026-08-12 사이트 실측 사고).
-        rejected = rejected_patch_properties(patch_resp)
-        droppable = [p for p in ACCOUNT_OPTIONAL_PATCH_PROPS
-                     if p in rejected and p in body_full]
-        if (code not in (200, 204) and code in (400, 405)) or droppable:
-            drop = set(droppable) or {'Locked'}
-            body_retry = {k: v for k, v in body_full.items() if k not in drop}
-            code, patch_resp, err = _patch_account(
-                bmc_ip, _p(existing['slot_uri']), body_retry,
-                current_username, current_password, timeout, verify_ssl, patch_headers,
-            )
-            out['write_response_info'] = _extended_info(patch_resp) or out['write_response_info']
-            out['dropped_properties'] = sorted(drop)
-            if code in (200, 204) and not err and not rejected_patch_properties(patch_resp):
-                out['errors'].append(_err(
-                    'account_service',
-                    f'{"/".join(sorted(drop))} 필드 PATCH 거부 — 해당 필드 빼고 retry 성공 '
-                    f'(BMC 펌웨어가 read-only 로 취급)',
-                ))
+        # 2026-08-12 (rev.2): **거부된 속성을 빼고 다시 쓰던 사다리를 제거했다.**
+        #   종전에는 400/405 이거나 본문이 read-only 를 지목하면 그 속성을 빼고 한 번 더
+        #   PATCH 했다. 이것은 "보내 보고 거부되면 뺀다" 는 추측성 재시도이고, 9 Vendor
+        #   조사가 공통으로 금지한 blind write fallback 과 같은 종류다. 무엇이 쓸 수 있는
+        #   속성인지는 **쓰기 전에** Family Property Contract 가 정한다(위 body_full 조립).
+        #   그래서 이 지점에 도달하는 거부는 "계약이 틀렸거나 펌웨어가 예상 밖" 이라는 뜻이고,
+        #   그때 할 일은 재시도가 아니라 **정확히 기록하고 실패로 끝내는 것**이다.
+        #   허용되는 다중 쓰기는 두 가지뿐이다: (a) 위 ETag 412 재시도(동일 URI·동일 payload),
+        #   (b) Family 가 쓰기 전에 확정한 deterministic sequence(HPE isolated followup).
         # 2026-08-12: 2xx 든 4xx 든 응답 body 의 확장 오류 정보를 **먼저 건진다.**
         #   Dell 은 PATCH 200 과 함께 @Message.ExtendedInfo 로 "무엇을 적용했는지 /
         #   무엇을 거부했는지" 를 돌려준다. 종전에는 body 를 `_` 로 버려서, 쓰기가
@@ -6078,9 +6284,11 @@ def account_service_provision(
         #   Dell iDRAC10 = 200 + 본문 거부, Inspur M6 = 200 + Oem.Public.Status 0.
         #   transport 수락(status)과 property 수락(accepted)을 각각 남긴다.
         out['write_http_status'] = code
-        accepted, reject_reason = interpret_write_response(family, code, patch_resp, err)
+        accepted, reject_reason = interpret_write_response(
+            family, code, patch_resp, err, requested=set(body_full))
         out['write_accepted'] = accepted
         out['vendor_status'] = reject_reason
+        out['write_rejections'] = write_rejections(patch_resp, set(body_full))
         if not accepted:
             # 2xx 인데 본문이 거부를 말하면 그것은 실패다. 여기서 끝내야 재인증 시도
             # 3회를 헛돌지 않고, 원인(어느 속성이 거부됐는지)이 그대로 남는다.
@@ -6380,30 +6588,19 @@ def account_service_provision(
         current_username, current_password, timeout, verify_ssl,
     )
     out['write_http_status'] = code
-    accepted, reject_reason = interpret_write_response(family, code, resp_data, err)
+    accepted, reject_reason = interpret_write_response(
+        family, code, resp_data, err, requested=set(body_base))
     out['write_response_info'] = _extended_info(resp_data) or out['write_response_info']
+    out['write_rejections'] = write_rejections(resp_data, set(body_base))
 
-    # evidence='unverified' Family 만 종전 재시도 사다리를 유지한다.
-    #   근거를 확보하지 못한 Family 의 동작을 이번 변경으로 바꾸지 않기 위한 것이다
-    #   (사용자 결정 2026-08-12 — "현행 유지 + UNVERIFIED 라벨").
-    #   근거가 있는 Family 는 위에서 payload 를 한 번에 결정했으므로 재시도하지 않는다.
-    if not accepted and family.get('legacy_post_retry') and code in (400, 405):
-        body_retry = dict(body_base, PasswordChangeRequired=False)
-        code2, resp2, err2 = _post(
-            bmc_ip, accounts_uri, body_retry,
-            current_username, current_password, timeout, verify_ssl,
-        )
-        accepted2, reason2 = interpret_write_response(family, code2, resp2, err2)
-        if accepted2:
-            code, resp_data, err = code2, resp2, err2
-            accepted, reject_reason = accepted2, reason2
-            out['write_response_info'] = _extended_info(resp2) or out['write_response_info']
-            out['errors'].append(_err(
-                'account_service',
-                'POST 1차 실패 → PasswordChangeRequired:false 추가 후 retry 성공',
-            ))
-        else:
-            reject_reason = reason2 or reject_reason
+    # 2026-08-12 (rev.2): **`PasswordChangeRequired:false` 를 덧붙여 다시 POST 하던 경로를
+    #   제거했다.** 종전에는 evidence='unverified' Family 에서만 그 사다리를 남겼는데,
+    #   바로 그 Family 들(Fujitsu / Quanta / Cisco X-Series / Lenovo IMM2 / Supermicro X9 /
+    #   Inspur M5·M7 / HPE RMC)이 공식 조사에서 **하나같이 이 재시도를 금지**한 대상이다.
+    #     05 §19/§39-D, 06 §17/§31-F, 07 §17/§40-E, 08 §17/§32-C, 09 §19/§45-D
+    #   UNVERIFIED 의 뜻은 "여러 번 시도해 본다" 가 아니라
+    #     read-only discovery → 완전 열거 → **한 번의 결정적 쓰기** → 재조회 → 재인증
+    #   이다. 계약을 모르면 추측하지 말고 한 번 쓰고 결과를 그대로 보고한다.
 
     out['write_accepted'] = accepted
     out['vendor_status'] = reject_reason
