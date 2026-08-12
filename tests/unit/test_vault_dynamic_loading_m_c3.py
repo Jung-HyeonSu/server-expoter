@@ -156,8 +156,8 @@ def test_m_c3_scenario_5_single_run_no_midway_invalidation() -> None:
     content = "\n".join(
         f.read_text(encoding="utf-8") for f in sorted(CRED_DIR.glob("*.yml"))
     )
-    assert "name: _cl_vault_data" in content, (
-        "load_one.yml: include_vars 가 name=_cl_vault_data 로 저장 안 함 "
+    assert "name: _cl_included" in content, (
+        "load_one.yml: include_vars 가 name=_cl_included 로 저장 안 함 "
         "— task scope 분리 깨짐 (vault top-level 키가 host var 로 샌다)"
     )
 

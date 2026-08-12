@@ -175,7 +175,49 @@ def test_uses_include_vars_not_vars_files():
 def test_include_vars_uses_name_scope():
     """`name:` 없이 로드하면 vault 의 top-level 키가 host var 로 흘러든다."""
     inc = _task_named("load_one | include vars")["ansible.builtin.include_vars"]
-    assert inc.get("name") == "_cl_vault_data"
+    assert inc.get("name") == "_cl_included"
+
+
+def test_include_vars_target_is_never_set_fact():
+    """`include_vars` 의 name 을 `set_fact` 로도 쓰면 **영구히 가려진다.**
+
+    Ansible 변수 우선순위에서 set_fact 가 include_vars 보다 높다. 두 이름이 겹치면
+    앞선 초기화 set_fact({}) 가 이후 include_vars 결과를 덮어써서, 파일은 정상적으로
+    읽혔는데 인증 후보가 0개가 된다.
+
+    2026-08-12 실측 사고: 두 이름이 같아 OS / ESXi / Redfish **전 채널**이 후보 0개가
+    됐고, OS 는 자격 없이 접속을 시도해 host unreachable 로 envelope 까지 잃었다.
+    문법 검사와 렌더 테스트로는 잡히지 않는 종류라 여기서 이름 충돌 자체를 금지한다.
+    """
+    include_targets = {
+        (t["ansible.builtin.include_vars"] or {}).get("name")
+        for t in TASKS if "ansible.builtin.include_vars" in t
+    } - {None}
+    set_fact_keys: set[str] = set()
+    for t in TASKS:
+        set_fact_keys |= set((t.get("ansible.builtin.set_fact") or {}).keys())
+    clash = include_targets & set_fact_keys
+    assert not clash, (
+        f"include_vars 대상과 set_fact 대상이 겹친다: {sorted(clash)} — "
+        "set_fact 가 우선하므로 로딩 결과가 가려진다"
+    )
+
+
+def test_loaded_data_is_scoped_to_this_invocation():
+    """직전 호출에서 읽은 내용이 다음 호출로 새면 안 된다.
+
+    Redfish 는 표준/복구 두 번 부른다. 복구 파일이 없을 때 표준 vault 내용이
+    복구 후보로 흘러가면 "복구 세트가 없는데 있는 것처럼" 동작한다.
+    """
+    tpl = _set_fact_template("load_one | expose", "_cl_vault_data")
+    assert "_cl_outcome == 'loaded'" in tpl, (
+        "이번 호출에서 실제로 읽었는지 확인하지 않고 노출한다"
+    )
+    assert _render(tpl, {"_cl_included": {"accounts": [1]}, "_cl_outcome": "loaded"}) == {
+        "accounts": [1]
+    }
+    assert _render(tpl, {"_cl_included": {"accounts": [1]},
+                         "_cl_outcome": "credential_set_missing"}) == {}
 
 
 def test_only_one_include_vars_implementation():
