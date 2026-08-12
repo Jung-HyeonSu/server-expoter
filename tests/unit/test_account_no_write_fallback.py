@@ -133,7 +133,11 @@ _READ_ONLY_ON_ROLEID = {"@Message.ExtendedInfo": [
     (200, _READ_ONLY_ON_ROLEID),   # 2xx 인데 본문이 거부 — 종전 사다리가 켜지던 지점
 ])
 def test_repair_never_drops_a_property_and_retries(monkeypatch, code, body):
-    """거부된 속성을 빼고 다시 PATCH 하던 사다리는 제거됐다."""
+    """거부된 속성을 빼고 다시 PATCH 하던 사다리는 제거됐다.
+
+    RoleId 가 어긋난 계정을 쓴다 — 그래야 RoleId 가 실제로 전송되고(drift-only 기본),
+    장비의 "RoleId 는 read only" 거부가 **우리가 보낸 속성**에 대한 것이 된다.
+    """
     patches = []
 
     def fake_patch(bmc_ip, path, b, u, p, t, v, extra_headers=None):
@@ -141,7 +145,8 @@ def test_repair_never_drops_a_property_and_retries(monkeypatch, code, body):
         return code, body, (None if code == 200 else f"HTTP {code}")
 
     monkeypatch.setattr(rg, "account_service_discover",
-                        _as_discovery(lambda *a, **k: ({}, [_account()], [])))
+                        _as_discovery(lambda *a, **k: (
+                            {}, [_account(role_id="ReadOnly")], [])))
     monkeypatch.setattr(rg, "_patch", fake_patch)
     monkeypatch.setattr(rg, "_get", lambda *a, **k: (401, {}, "HTTP 401"))
     monkeypatch.setattr(rg.time, "sleep", lambda *_: None)

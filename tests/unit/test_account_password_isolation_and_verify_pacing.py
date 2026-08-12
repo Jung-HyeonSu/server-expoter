@@ -159,12 +159,66 @@ def test_hpe_followup_patch_only_carries_properties_that_differ(monkeypatch):
     assert out["followup_properties"] == ["Enabled", "RoleId"]
 
 
-def test_non_isolated_family_still_bundles_password(monkeypatch):
-    """Lenovo XCC 사이트 실측(비밀번호 단독 PATCH 시 권한 cache 손상)을 회귀시키지 않는다."""
+def test_lenovo_xcc_bundles_password_because_of_its_own_live_evidence(monkeypatch):
+    """Lenovo XCC 사이트 실측(비밀번호 단독 PATCH 시 권한 cache 손상)을 회귀시키지 않는다.
+
+    2026-08-12 (rev.2): 이것은 **그 Family 한정 예외**다. 기본 Repair 는 drift-only 이고,
+    `full_body_patch=True` 는 LIVE 근거가 있는 Family 에만 명시한다. 실측 장비
+    10.50.11.232 는 `lenovo_xcc_accounttypes` 로 판정되므로 그 Family 에만 붙어 있다.
+    """
     bodies = _install(monkeypatch, [_account()])
-    out = _provision("lenovo")
+    out = _provision("lenovo", adapter_id="redfish_lenovo_xcc3")
+    assert out["family"] == "lenovo_xcc_accounttypes"
     assert out.get("isolated_write") in (None, False)
     assert "Password" in bodies[0] and "Enabled" in bodies[0] and "RoleId" in bodies[0]
+
+
+def test_full_body_exception_does_not_spread_to_other_lenovo_families(monkeypatch):
+    """같은 Vendor 라도 근거가 없는 Family 는 drift-only 다.
+
+    한 Family 의 실측을 Vendor 전체의 기본 동작으로 일반화하지 않는다.
+    """
+    bodies = _install(monkeypatch, [_account()])
+    out = _provision("lenovo")          # adapter hint 없음 → lenovo_collection_post
+    assert out["family"] == "lenovo_collection_post"
+    assert list(bodies[0]) == ["Password"], \
+        f"근거 없는 Family 에 full body 예외가 번졌다: {sorted(bodies[0])}"
+
+
+def test_unverified_family_never_inherits_the_full_body_exception(monkeypatch):
+    """UNVERIFIED Family 는 full_body_patch 예외를 상속하지 않는다."""
+    bodies = _install(monkeypatch, [_account()])
+    out = _provision("fujitsu")
+    assert out["family"] == "generic_collection_post"
+    assert out["evidence"] == "unverified"
+    assert list(bodies[0]) == ["Password"]
+
+
+def test_default_repair_sends_only_what_actually_drifted(monkeypatch):
+    """기본 Repair 는 drift-only — 달라지지 않은 속성은 보내지 않는다."""
+    bodies = _install(monkeypatch, [_account(enabled=True, role_id="Administrator")])
+    _provision("lenovo")
+    assert list(bodies[0]) == ["Password"]
+
+    bodies2 = _install(monkeypatch, [_account(enabled=False, role_id="ReadOnly")])
+    _provision("lenovo")
+    assert set(bodies2[0]) == {"Password", "Enabled", "RoleId"}
+
+
+def test_full_body_family_still_refuses_non_writable_properties(monkeypatch):
+    """`full_body_patch=True` 는 "전부 보내라" 가 아니다.
+
+    read_only / verify_only / unsupported / unverified 로 선언된 Property 는
+    full_body Family 에서도 실리지 않는다. XCC 는 Locked 가 read_only 이므로
+    **잠긴 계정에도** Locked 를 보내지 않는다 (03 §14).
+    """
+    bodies = _install(monkeypatch,
+                      [_account(locked=True, password_change_required=True)])
+    out = _provision("lenovo", adapter_id="redfish_lenovo_xcc3")
+    assert out["family"] == "lenovo_xcc_accounttypes"
+    assert "Locked" not in bodies[0], "full_body 예외가 read_only 속성까지 실었다"
+    # PasswordChangeRequired 는 XCC2/3 에서 writable 이라 실제 drift 가 있으면 실린다.
+    assert bodies[0].get("PasswordChangeRequired") is False
 
 
 # ── 실제 iLO 의미를 재현한 수렴 테스트 ───────────────────────────────────────

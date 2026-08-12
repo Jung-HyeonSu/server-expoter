@@ -5213,11 +5213,19 @@ _ACCOUNT_FAMILY_DEFAULTS = {
     'evidence':                 'unverified',
     # 비밀번호를 다른 속성과 같은 PATCH 에 담으면 조용히 버리는 Family (HPE iLO).
     'isolated_write_patch':     False,
-    # Repair PATCH 에 drift 없는 writable 속성까지 실을 것인가.
-    # **기본 True(full body)** — 이 저장소의 유일한 실측 근거가 full body 편이다.
-    #   Lenovo XCC 사이트 실측: 비밀번호 단독 PATCH 시 권한 cache 손상.
-    # drift-only 가 안전하다는 실측이 나온 Family 만 False 로 연다.
-    'full_body_patch':          True,
+    # Repair PATCH 에서 **drift 가 없는 writable 속성까지** Password 와 함께 보낼 것인가.
+    #
+    # 기본은 False = drift-only 다. 실제로 달라진 것만 쓴다.
+    #
+    # True 는 "공통 Property 를 전부 보내라" 는 뜻이 **아니다.** 그 Family 에서
+    # **writable 로 확인된 상태 Property 를 Password 와 함께 보내야만 하는 예외**를 뜻한다.
+    # Property Contract 가 read_only / verify_only / unsupported / unverified 라고 말한
+    # Property 는 full_body_patch=True Family 에서도 **절대 실리지 않는다**.
+    #
+    # True 는 LIVE 또는 공식 근거가 있는 Family 에만 명시한다. 한 Family 의 실측을
+    # 다른 Vendor/Family 의 기본 동작으로 일반화하지 않는다(rule 25 R7-A-1 의 반대 방향
+    # 오용 금지). 특히 UNVERIFIED Family 는 이 값을 상속하지 않는다.
+    'full_body_patch':          False,
     # Family 별 Property 쓰기 계약. 미선언 Property 는 _ACCOUNT_PROP_DEFAULTS 를 따른다.
     'props':                    {},
 }
@@ -5298,10 +5306,20 @@ _ACCOUNT_FAMILIES = {                                                          #
     #   목록에는 없다. PasswordChangeRequired 는 XCC2 만 지원한다(XCC3 분리는 P4).
     # source: pubs.lenovo.com/xcc2-restapi/update_userid_password_role_properties_patch,
     #         pubs.lenovo.com/xcc3-restapi/resource_account_service_accounts (03 §10/§11/§15/§16)
+    #
+    # full_body_patch: **이 Family 한정 예외다.** 사이트 실측(10.50.11.232 Lenovo XCC)에서
+    #   Password 를 단독으로 PATCH 하자 권한 cache 가 손상됐다 — RoleId 는 Administrator 로
+    #   보이는데 /Managers 는 AccessDenied 였고, Password 를 Enabled/RoleId 와 함께 보내면
+    #   권한이 유지됐다. 그래서 이 Family 는 drift 가 없어도 그 둘을 함께 싣는다.
+    #   이 실측을 다른 Vendor/Family 의 기본 동작으로 일반화하지 않는다.
+    #   read_only/verify_only/unsupported/unverified Property 는 여기서도 실리지 않는다.
+    # source: 사이트 실측 10.50.11.232 (cycle 2026-05-06 F50 phase 4,
+    #         tests/evidence/2026-08-12-git-location-live-verification.md §3.2)
     'lenovo_xcc_accounttypes':  {'password_change_required': False,            # nosec rule12-r1
                                  'account_types': ('Redfish',),
                                  'account_types_required': ('Redfish',),
                                  'reserved_slot_ids': ('HostBootStrap',),
+                                 'full_body_patch': True,
                                  'evidence': 'documented',
                                  'props': {
                                      'Locked': {'create': 'unsupported', 'repair': 'read_only'},
@@ -6257,14 +6275,13 @@ def account_service_provision(
         #   말할 때만** 실린다. read_only / unsupported / unverified 속성은 애초에 보내지
         #   않는다 — 보내고 거부되면 빼는 방식은 추측성 재시도라 금지한다.
         #
-        #   drift 여부까지 볼 것인가는 `full_body_patch` 가 정한다. **기본은 full body 다.**
-        #   9 Vendor 문서는 "drift 없는 속성까지 매번 보낼 이유는 없다" 고 권고하지만,
-        #   이 저장소가 가진 **유일한 실측 근거는 그 반대**다 — Lenovo XCC 에서 비밀번호를
-        #   단독으로 PATCH 하자 권한 cache 가 손상됐다(RoleId 는 Administrator 로 보이는데
-        #   /Managers 는 AccessDenied). 권고와 실측이 충돌하면 실측을 따른다(rule 25 R7-A-1).
-        #   실제 위험이었던 "쓸 수 없는 속성 전송" 은 위 Property Contract 가 이미 막는다.
-        #   drift-only 가 안전하다는 실측이 나온 Family 만 full_body_patch=False 로 연다.
-        full_body = family.get('full_body_patch') is not False
+        #   기본은 **drift-only** 다 — 실제로 달라진 것만 쓴다(9 Vendor 문서 공통 권고).
+        #   `full_body_patch=True` 는 그 Family 에서 writable 로 확인된 상태 Property 를
+        #   Password 와 **함께** 보내야만 하는 예외이고, LIVE/공식 근거가 있는 Family 에만
+        #   명시한다. 한 Family 의 실측을 다른 Vendor 의 기본 동작으로 일반화하지 않는다.
+        #   True 여도 read_only / verify_only / unsupported / unverified 는 실리지 않는다
+        #   (아래 account_prop_writable 가 먼저 걸러낸다).
+        full_body = bool(family.get('full_body_patch'))
         body_full = {}
         if account_prop_writable(family, 'Password', 'repair'):
             body_full['Password'] = target_password
