@@ -1,638 +1,146 @@
-# Server Exporter - 엔터프라이즈 서버 정보 수집 시스템
-
-## 개요
-
-엔터프라이즈급 서버 정보 수집 파이프라인이다. Jenkins-Ansible 기반의 **3-채널 통합 수집 시스템**으로 멀티벤더(Dell, HPE, Lenovo, Supermicro, Cisco) 하드웨어 및 OS 정보를 수집하고 표준화한다.
-
-**특징:**
-- **3중 채널**: OS-gather (Linux/Windows) + ESXi-gather + Redfish-gather (BMC/IPMI)
-- **Fragment 모듈화**: 각 gather가 자신의 역할만 하고, 공통 정규화 파이프라인이 병합
-- **Adapter 시스템**: 벤더/세대별 수집 방식을 YAML로 추상화 (코드 수정 불필요)
-- **Vault 자동 로딩**: 호출자는 IP만 전달, 인증정보는 ansible vault에서 자동 로드
-- **표준 JSON Output**: 3채널 공통 스키마 (status, sections, data, errors, meta, diagnosis)
-
-**상태**: 프로덕션 준비 완료 (실장비 검증: Dell/HPE/Lenovo, Round 7-10 완료)
-
----
-
-## 아키텍처
-
-### 전체 흐름 (호출자 → Jenkins → Ansible → JSON 결과)
-
-```
-호출자 (HTTP POST)
-  ├─ loc: "ich|chj|yi"
-  ├─ target_type: "os|esxi|redfish"
-  └─ inventory_json: [{"service_ip":"10.x.x.1"}]  (os/esxi)
-                      [{"bmc_ip":"10.x.x.1"}]     (redfish)
-                      [{"ip":"10.x.x.1"}]          (fallback)
-         ↓
-    Jenkins Job (Jenkinsfile v3, 4-Stage)
-    ├─ [1 Validate] 입력값 검증
-    ├─ [2 Gather] ansible-playbook 실행
-    │   ├─→ os-gather/site.yml (Play1:포트감지 → Play1.5:감지실패 OUTPUT → Play2:Linux → Play3:Windows)
-    │   ├─→ esxi-gather/site.yml (1-Play)
-    │   └─→ redfish-gather/site.yml (1-Play)
-    ├─ [3 Validate Schema] field_dictionary.yml 정합성 (FAIL 게이트)
-    ├─ [4 E2E Regression] pytest baseline/fixture 회귀 검증 (FAIL 게이트)
-    └─ [Post] json_only callback → JSON 출력
-         ↓
-    호출자 (console log 파싱 또는 artifact)
-```
-
-### Fragment 정규화
-
-각 gather는 자신의 fragment만 생성하고, merge_fragment.yml이 누적 병합한다.
-공통 builder(build_sections/status/errors/meta/correlation/output)가 최종 JSON을 조립한다.
-각 gather는 자신의 역할만 담당하며, 새 섹션 추가 시 build_output.yml 전체 수정은 필요하지 않다. 필요한 경우 site.yml에는 include_tasks 한 줄만 추가하면 된다.
-
-Fragment 변수 규칙, 네이밍 컨벤션, 실패 처리 패턴은 GUIDE_FOR_AI.md 참조.
-
-### Adapter 시스템 (벤더 자동 감지)
-
-```
-adapter_loader (lookup plugin)
-  ├─ adapters/<channel>/*.yml 스캔
-  ├─ 각 adapter의 match 조건 평가
-  │   (vendor AND model_patterns AND firmware_patterns AND ...)
-  ├─ 점수 계산
-  │   score = priority × 1000 + specificity × 10 + match_score
-  ├─ 점수순 정렬
-  └─ 최고 점수 adapter 반환 (또는 generic fallback)
-
-예: Redfish Dell iDRAC 선택 과정
-  ├─ dell_idrac9.yml (priority=100) vs
-  ├─ dell_idrac8.yml (priority=50) vs
-  ├─ dell_idrac.yml (priority=10) vs
-  ├─ redfish_generic.yml (priority=0)
-  └─ → 펌웨어 매칭 + 우선순위 기반 최종 선택
-```
-
-**새 벤더 추가 (3단계):**
-1. `common/vars/vendor_aliases.yml`에 벤더 이름 매핑 추가
-2. `adapters/redfish/{벤더}_*.yml` adapter YAML 생성 (match, capabilities, collect, normalize 경로)
-3. (선택) `redfish-gather/tasks/vendors/{벤더}/` OEM 태스크 추가
-
-**site.yml 수정 불필요** — adapter_loader가 동적으로 감지한다.
-
----
-
-## 기술 스택
-
-> 아래는 검증 기준 Agent (10.100.64.154) 에서 2026-03-27 확인한 값이다.
-> 최소 요구사항은 [REQUIREMENTS.md](REQUIREMENTS.md) 4절 참조.
-
-| 카테고리 | 기술 | 검증 기준 버전 | 용도 |
-|---------|------|--------------|------|
-| **Orchestration** | ansible-core | 2.20.3 | 플레이북 실행 |
-| | ansible (package) | 13.4.0 | core + bundled collections |
-| **Language** | Python | 3.12.3 | 커스텀 모듈, 필터, 플러그인 (venv: `/opt/ansible-env/`) |
-| **Runtime** | Java (OpenJDK) | 21.0.10 | Jenkins Agent 실행 |
-| **Template** | Jinja2 | 3.1.6 | Ansible 템플릿 엔진 |
-| **Protocol** | SSH, WinRM, Redfish API | — | 정보 수집 |
-| **CI/CD** | Jenkins | — | 파이프라인 실행 (Java 21 필수) |
-| **Secrets** | Ansible Vault | — | 인증 정보 관리 |
-| **Utils** | Python stdlib | — | Redfish HTTP, XML, JSON (외부 라이브러리 없음) |
-
-**Collections (프로젝트 사용 분):**
-- `ansible.windows` 3.3.0 — Windows gather
-- `community.vmware` 6.2.0 — ESXi gather
-- `community.windows` 3.1.0 — Windows 보조 모듈
-- `ansible.posix` 2.1.0, `community.general` 12.4.0, `ansible.utils` 6.0.1
-
-**pip 패키지:**
-- `pywinrm` 0.5.0 — Windows WinRM
-- `pyvmomi` 9.0.0 — ESXi vSphere API
-- `redis` 7.3.0 — Ansible fact caching
-- `jmespath` 1.1.0 — json_query 필터
-- `netaddr` 1.3.0 — ipaddr 필터
-- `lxml` 6.0.2 — VMware XML 파싱
-- Redfish는 **stdlib만 사용** (urllib, ssl, json)
-
----
-
-## 파일 구조
-
-```
-server-exporter/ (프로젝트 루트)
-
-[1] 수집 채널 (3개)
-   ├── os-gather/
-   │   ├── site.yml (4-Play: 포트감지→감지실패 OUTPUT→Linux→Windows)
-   │   └── tasks/linux/ (6개) + windows/ (6개) → gather_*.yml
-   ├── esxi-gather/
-   │   ├── site.yml (1-Play)
-   │   └── tasks/ → collect_facts/config/datastores + normalize_*
-   └── redfish-gather/
-       ├── site.yml (1-Play: precheck→detect→adapter→collect→normalize)
-       ├── library/redfish_gather.py (5,082줄, Redfish API 엔진 — Storage+Volumes 수집, 2026-08-10 재실측)
-       └── tasks/ + vendors/{dell,hpe,lenovo,supermicro,cisco}/
-
-[2] 공통 로직 (Fragment 정규화)
-   ├── common/library/
-   │   └── precheck_bundle.py (4단계 진단: ping→port→protocol→auth)
-   └── common/tasks/normalize/
-       ├── init_fragments.yml (누적 변수 초기화)
-       ├── merge_fragment.yml (Fragment 재귀 병합 엔진)
-       ├── build_*.yml (10개: sections, status, errors, meta, correlation, output)
-       └── supported_sections.yml, status_rules.yml
-
-[3] Adapter 시스템 (42개 YAML + adapters/registry.yml — cycle 2026-05-11 실측)
-   ├── adapters/redfish/ (31개: generic + dell×4 + hpe×7 + lenovo×4 + supermicro×8 + cisco×3
-   │                       + huawei×1 + inspur×1 + fujitsu×1 + quanta×1)
-   │   ※ cisco 3 = bmc + cimc + ucs_xseries (cycle 2026-05-01 ucs_xseries 신설 — cisco 그룹 내)
-   │   - cycle 2026-05-01 신 generation 7개: dell_idrac10 (F41) + hpe_ilo7 (F47) + lenovo_xcc3 (F55)
-   │     + supermicro_x12/x13/x14 (F61) + cisco_ucs_xseries (F69)
-   │   - cycle 2026-05-06 M-E2: hpe_superdome_flex (priority=95, lab 부재 web sources 14건)
-   │   - cycle 2026-05-07 M-B1~B4: supermicro x9 + x10 + ars + bmc 보강 (4 adapter — 6 generation)
-   │   - cycle 2026-05-11 hpe-csus-add: hpe_csus_3200 (priority=96, Compute Scale-up Server 3200, lab 부재 web sources 7건)
-   │   - cycle 2026-05-12 csus-rmc-multi-node: CSUS/Superdome RMC 멀티노드 수집 구현 — **lab 부재 (mock/web sources, 실장비 미검증)**
-   │     (전 Partition/Manager/Chassis 수집, data.multi_node Additive 컨테이너, lab 도입 후 실 baseline 교체 의무, ADR-2026-05-12)
-   │   - cycle 2026-05-01 신규 vendor 4개 (vault SKIP, 사용자 명시 승인): F44 huawei_ibmc /
-   │     F45 inspur_isbmc / F46 fujitsu_irmc / F47 quanta_qct_bmc
-   ├── adapters/os/ (7개: linux_*/windows_*)
-   └── adapters/esxi/ (4개: generic + 6x/7x/8x)
-
-[4] Schema & 데이터
-   ├── schema/
-   │   ├── sections.yml (11개: system, hardware, bmc, cpu, memory, storage, network, firmware, users, power, thermal)
-   │   ├── field_dictionary.yml (47 Must + 115 Nice + 6 Skip = 168 entries — 2026-07-02 재실측, 18 section prefixes)
-   │   ├── baseline_v1/ (9 baseline JSON: redfish 5 [cisco/dell/hpe/lenovo 실측 4 + hpe_csus_3200 **MOCK**] + esxi/ubuntu/windows + rhel810_raw_fallback)
-   │   └── examples/ (success/partial/failed 예시)
-   └── vault/ (linux.yml, windows.yml, esxi.yml, redfish/{vendor}.yml)
-
-[5] Python 플러그인 (12개)
-   ├── callback_plugins/json_only.py (stdout callback, OUTPUT 태스크만 JSON)
-   ├── lookup_plugins/adapter_loader.py (adapter 동적 선택)
-   ├── filter_plugins/diagnosis_mapper.py, field_mapper.py
-   └── module_utils/adapter_common.py (점수 계산, 벤더 정규화)
-
-[6] 테스트 (tests/fixtures 398개 [실장비 380 + HPE 에뮬레이터 15 + DMTF 표준 목업 3] + 9 baseline + test_*.py 71파일/980 collected [e2e_browser 2 포함] — 2026-06-09 재실측. robustness 루프 14R 후 +18 robustness 테스트파일(mutation 하네스 + round1~14 회귀))
-   ├── tests/redfish-probe/ (probe_redfish.py, deep_probe_redfish.py)
-   ├── tests/integration/ (HPE iLO 에뮬레이터 + DMTF 표준 mockup record/replay 오프라인 회귀 하네스)
-   ├── tests/fixtures/ (실장비 JSON 응답 + hpe_emulator_* 에뮬레이터 캡처 + dmtf_* DMTF 표준 mockup)
-   ├── tests/evidence/ (Round 7-10 조건부 검토)
-   └── tests/scripts/ (conditional_review.py, os_esxi_verify.sh)
-
-[7] 문서 (27개: 루트 4 + docs/ 23)
-   ├── README.md, GUIDE_FOR_AI.md, REQUIREMENTS.md
-   └── docs/
-       ├── 01_jenkins-setup        — Jenkins 설치·플러그인·자격증명·RBAC
-       ├── 02_redis-install         — Redis 설치·설정
-       ├── 03_agent-setup           — Agent 노드 구성 (VM·방화벽·패키지·노드등록)
-       ├── 04_job-registration      — Jenkins Job 등록·네이밍
-       ├── 05_inventory-json-spec   — inventory_json 입력 스펙
-       ├── 06_gather-structure      — 3-채널 Gather 구조
-       ├── 07_normalize-flow        — Fragment 정규화 흐름
-       ├── 08_failure-handling      — block/rescue/always 실패 처리
-       ├── 09_output-examples       — 표준 JSON 출력 예시
-       ├── 10_adapter-system        — Adapter 시스템 (matrix 포함)
-       ├── 11_precheck-module       — Precheck 모듈 (4단계 진단)
-       ├── 12_diagnosis-output      — Diagnosis 출력 구조
-       ├── 13_redfish-live-validation — 3대 실장비 검증
-       ├── 14_add-new-gather        — 새 Gather 추가 가이드
-       ├── 16_os-esxi-mapping       — OS/ESXi 필드 매핑
-       ├── 17_jenkins-pipeline      — Jenkins 파이프라인 런타임
-       ├── 18_ansible-project-config — Ansible 프로젝트 설정
-       ├── 19_decision-log          — 의사결정 로그
-       ├── 20_json-schema-fields    — JSON envelope 13 필드 + 필드 사전
-       ├── 21_vault-operations      — Vault 운영 (회전·2단계 로딩)
-       ├── 22_compatibility-matrix  — vendor × generation × section 호환성
-       ├── 22_rmc-activation-guide  — CSUS/Superdome RMC 활성화
-       └── 23_debugging-entrypoints — 디버깅 진입점
-```
-
----
-
-## ECC 활용
-
-| 작업 | 명령어 | 비고 |
-|------|--------|------|
-| 새 기능 계획 | `/plan "기능명"` | 구현 전 아키텍처·단계 계획 |
-| TDD | `/tdd "기능명"` | Python 부분: 테스트 먼저 |
-| Python 리뷰 | `/python-review` | redfish_gather.py, precheck_bundle.py 등 |
-| 일반 리뷰 | `/code-review` | Ansible YAML 포함 |
-| 보안 검사 | `/security-review` | 커밋 전 점검 |
-
-새 벤더/gather 추가 상세 절차는 docs/14_add-new-gather.md 참조.
-
-### Fragment 추가 체크리스트
-
-- [ ] `gather_*.yml` 또는 `collect_*.yml` 작성 (raw 수집)
-- [ ] Fragment 변수 생성 (5 공통 변수: `_data_fragment`, `_sections_supported_fragment`, `_sections_collected_fragment`, `_sections_failed_fragment`, `_errors_fragment` — 변수 이름은 모든 gather가 동일, 값으로 자기 섹션을 채움)
-- [ ] `normalize_*.yml` 또는 `common/tasks/normalize/build_*.yml` 작성
-- [ ] `merge_fragment.yml` 호출 확인 (각 gather 후)
-- [ ] `common/vars/supported_sections.yml` 업데이트
-- [ ] `schema/sections.yml` + `schema/fields/*.yml` 추가
-- [ ] Baseline JSON 예시 추가 + 문서 업데이트
-
----
-
-## 주의사항 & Best Practices
-
-### Critical: Fragment 철학 지키기
-
-**WRONG** - 누적 변수를 직접 수정:
-```yaml
-- name: 누적 변수 직접 수정 (금지! merge_fragment.yml 영역)
-  set_fact:
-    _collected_data: "{{ _collected_data | combine(...) }}"
-```
-
-**WRONG** - 다른 gather의 섹션을 자기 fragment에 포함:
-```yaml
-- name: cpu gather에서 memory도 추가 (금지!)
-  set_fact:
-    _sections_collected_fragment: ['cpu', 'memory']  # memory는 다른 gather 영역
-```
-
-**CORRECT** - 자신의 fragment만 (5 공통 변수):
-```yaml
-- name: 자신의 fragment 생성
-  set_fact:
-    _data_fragment:
-      cpu: {...}
-    _sections_supported_fragment: ['cpu']
-    _sections_collected_fragment: ['cpu']
-    _sections_failed_fragment: []
-```
-
-### High: Adapter 점수 계산
-
-```
-score = priority × 1000 + specificity × 10 + match_score
-```
-
-**점수 최적화:**
-- 범용 (generic) → priority=0
-- 기본 벤더 → priority=10
-- 세대별 → priority=50-100
-- 구체적 모델 → match.model_patterns + 높은 specificity
-
-### Medium: Vault 2단계 로딩
-
-**Redfish 특화:**
-```yaml
-# 1단계: 무인증으로 벤더 감지
-- redfish_gather:
-    ip: "{{ target_ip }}"
-    # 계정 없음 (ServiceRoot 무인증)
-  register: _rf_probe
-
-# 2단계: 벤더에 맞는 vault 로딩
-- include_vars:
-    file: "vault/redfish/{{ _rf_detected_vendor }}.yml"
-    name: _rf_vault
-
-# 3단계: 인증으로 재수집
-- redfish_gather:
-    ip: "{{ target_ip }}"
-    username: "{{ _rf_vault.username }}"
-    password: "{{ _rf_vault.password }}"
-```
-
-### Medium: Linux 2-Tier Gather (Python 감지 + Raw Fallback)
-
-Linux OS gather는 `preflight.yml`에서 Python 버전을 감지하여 `_l_python_mode`를 설정한다.
-
-| 모드 | 조건 | 수집 방식 |
-|------|------|----------|
-| `python_ok` | Python 3.9+ | 기존 Python 경로 (setup/shell/command/getent) |
-| `python_missing` / `python_incompatible` | Python 미설치 또는 3.8 이하 | raw-only 경로 |
-| `raw_forced` | `SE_FORCE_LINUX_RAW_FALLBACK=true` | raw-only (개발/검증 전용) |
-
-**raw fallback 원칙:**
-- remote 실행은 `raw` 모듈만 사용, controller-side `set_fact`/Jinja2 파싱은 허용
-- 6개 섹션 모두 수집 가능, JSON 스키마 호환성 100% 유지
-- `diagnosis.details`에 `gather_mode`, `python_version` 추가
-- SELinux: `getenforce` 출력을 `enabled`/`disabled`로 정규화 (Round 2에서 수정)
-- Memory: raw 경로는 dmidecode 기반으로 `physical_installed`를 반환 (Python 경로의 `os_visible`보다 정밀)
-- 검증 완료: RHEL 8.10 (py3.6→auto raw), RHEL 9.2, 9.6, Rocky 9.6, Ubuntu 24.04, 5대 31필드 전수 검증
-- 복잡 토폴로지 실증 완료 (bridge+VLAN+container NIC+policy routing, Round 4)
-
-### Low: OEM 확장 (선택)
-
-OEM이 없으면:
-```yaml
-collect:
-  strategy: standard_only
-```
-
-OEM이 있으면:
-```yaml
-collect:
-  strategy: standard+oem
-  oem_tasks: redfish-gather/tasks/vendors/{vendor}/collect_oem.yml
-```
-
----
-
-## Git 워크플로우
-
-### Commit 메시지 포맷
-
-```
-<type>: <description>
-
-<optional body>
-
-Examples:
-  feat: Add thermal information collection
-  fix: Fragment merge null value handling
-  refactor: Simplify adapter scoring algorithm
-  docs: Update field dictionary
-  test: Add Dell R760 thermal fixture
-```
-
-### Branch 전략 (권장)
-
-```bash
-main
-├─ feature/new-vendor-huawei
-│   └─ adapters/redfish/huawei_*.yml
-│   └─ redfish-gather/tasks/vendors/huawei/
-├─ bugfix/fragment-merge
-│   └─ common/tasks/normalize/merge_fragment.yml
-└─ docs/add-thermal-section
-    └─ schema/sections.yml
-    └─ docs/thermal-section.md
-```
-
-### Branch 정책 (main / production)
-
-> 2026-06-11 사용자 확정.
-
-- **main** = 개발 브랜치. 하네스 + 순수 게더링 코드 전부.
-- **production** = 배포/포트폴리오 브랜치. **순수 게더링 코드만** (하네스 0개).
-
-**불변식**: 순수 프로젝트 코드/정보 → main + production 둘 다. 하네스 관련 → **main 전용**.
-
-**하네스로 분류(= production 에서 제외) 경로**:
-`.claude/`, `CLAUDE.md`, `GUIDE_FOR_AI.md`, `docs/ai/`, `docs/superpowers/`, `scripts/ai/`, `tests/reference/`, `tests/evidence/`
-
-**승격 방식 (확정 — 2026-06-30 자동화)**:
-- main 에서 **하네스 커밋과 순수 코드 커밋을 별도로 분리**해서 커밋한다.
-- production 반영은 **자동** — 작업 완료 시 `bash scripts/ai/promote_to_production.sh` 자율 실행
-  (순수 게더링 코드만 파일 sync + github/gitlab push). **사용자 per-instance 승인 불요** (사용자
-  명시 "production 에 넣는건 자동이여야 한다"). rule 93 R2 예외 2 / rule 24 R5.
-- `git merge main` → production 은 **금지**(하네스 누출). 승격은 파일 state sync 방식만.
-- 하네스 변경(하네스 경로)은 production 에 절대 올리지 않는다 (main 에만 commit/push). 스크립트가
-  하네스 경로를 자동 제외 + 누출 시 롤백.
-
-**remote / push**:
-- `origin` push URL 2개 = GitHub(`git@github.com:hshwang1994/server-exporter.git`) + 내부 GitLab(`https://10.100.64.156/root/server-expoter.git`).
-- 내부 GitLab 은 **lab 망 전용** — 외부 환경에선 연결 불가. 외부에서 `git push origin` 시 GitHub 만 반영되고 내부는 실패 → 내부 반영은 lab PC 에서 직접 push.
-
----
-
-## 3-채널 지원 현황
-
-| 기능 | OS (Linux/Windows) | ESXi | Redfish |
-|------|-------------------|------|---------|
-| 구현 완료 | O | O | O |
-| Adapter 수 | 7개 | 4개 | 31개 (2026-05-29 재실측) |
-| 지원 섹션 | 6개 | 6개 | 9개 |
-| Precheck | 포트 감지 | 4단계 | 4단계 |
-| Graceful Degradation | O | O | O |
-| 벤더 지원 | N/A | VMware | Dell, HPE, Lenovo, Supermicro, Cisco + (lab 부재) Huawei, Inspur, Fujitsu, Quanta |
-| 실장비 검증 | O | O (문서) | O (3대: Dell/HPE/Lenovo) |
-
----
-
-## 트러블슈팅
-
-### Q1: Fragment 병합이 제대로 되지 않음
-**원인:** merge_fragment.yml을 호출하지 않음
-**해결:**
-```yaml
-# gather_*.yml 후에 반드시 호출
-- include_tasks: "{{ playbook_dir }}/common/tasks/normalize/merge_fragment.yml"
-```
-
-### Q2: Adapter가 선택되지 않음
-**원인:** match 조건이 맞지 않음
-**해결:**
-```bash
-# -vvv로 adapter_loader lookup 디버그 출력 확인
-ansible-playbook redfish-gather/site.yml \
-  -i redfish-gather/inventory.sh \
-  -e "target_ip=10.x.x.1" -vvv 2>&1 | grep -i "adapter"
-```
-
-### Q3: Vault 로딩 실패
-**원인:** 벤더명이 정규화되지 않음
-**해결:**
-```yaml
-# vendor_aliases.yml 확인
-cat common/vars/vendor_aliases.yml | grep "{{ detected_vendor }}"
-```
-
----
-
-## 주요 문서
-
-| 문서 | 용도 |
-|------|------|
-| **README.md** | 프로젝트 정체성, 3-채널 개요 |
-| **GUIDE_FOR_AI.md** | Fragment 철학, 새 gather 템플릿 |
-| **REQUIREMENTS.md** | 벤더/버전별 최소 요구사항 |
-| **docs/06_gather-structure.md** | 전체 구조 |
-| **docs/07_normalize-flow.md** | Fragment 정규화 흐름 |
-| **docs/10_adapter-system.md** | Adapter 상세 설명 |
-| **docs/13_redfish-live-validation.md** | 3대 실장비 검증 결과 |
-| **docs/17_jenkins-pipeline.md** | Jenkins 파이프라인 런타임 |
-| **docs/18_ansible-project-config.md** | Ansible 프로젝트 설정 |
-| **docs/19_decision-log.md** | 설계 의사결정 기록 |
-
----
-
-## 알려진 제한사항
-
-- ESXi 수집은 community.vmware 컬렉션 의존 (프로덕션 Agent에 설치 필요, 03_agent-setup.md 3절 참조)
-- OEM vendor task는 placeholder 상태 (향후 운영 요구 시 확장)
-
-> 해결 완료된 항목(B1/B3/B5/B6/C1)은 docs/19_decision-log.md 참조.
-
----
-
-## AI 하네스 운영 (Tier 0)
-
-> 본 절은 2026-04-27 추가. clovirone 풀스펙 하네스를 server-exporter 도메인으로 1:1 포팅한 결과.
-
-### 세션 시작 프로세스
-
-**원칙**: 자동 추론 먼저, 질문은 최소한.
-
-#### Step 1: 자동 감지
-
-`git branch --show-current`로 브랜치명을 읽고:
-
-```
-server-exporter — 운영 기준선 (브랜치: main)
-```
-
-또는 작업 브랜치면:
-```
-server-exporter — 기능 작업 (huawei-vendor) (브랜치: feature/huawei-vendor)
-```
-
-#### Step 2: 작업 요청에서 역할 자동 추론
-
-| 키워드/패턴 | 추론 역할 |
-|---|---|
-| Ansible / playbook / gather / 채널 / Fragment | gather |
-| schema / sections / field_dictionary / baseline / callback / output | output-schema |
-| Jenkins / cron / agent / vault / Redis / 인프라 | infra |
-| pytest / probe / fixture / 회귀 / Round | qa |
-| 요구사항 / 기획 / 명세 | po |
-| 일정 / 릴리즈 / 진행률 | tpm |
-
-#### Step 3: 컨텍스트 로드
-
-- `.claude/role/{역할}/README.md`
-- 거기 명시된 ai-context 문서들
-- 정본: `GUIDE_FOR_AI.md` / `REQUIREMENTS.md` / `docs/01~23`
-
-#### Step 4: 코드 변경 요청 → task-impact-preview 먼저
-
-- 단순 오타 외의 코드 변경 시 **반드시** `task-impact-preview` 먼저 (rule 91 R1)
-- 사용자가 "그냥 진행해줘" / "프리뷰 skip" 명시하면 건너뜀
-- 5 섹션 출력 (영향 모듈 / 영향 vendor / 함께 바뀔 것 / 리스크 top 3 / 진행 확인)
-
-#### Step 5: AI 커뮤니케이션 원칙
-
-- 일상어 + WHY + WHAT + IMPACT + 결정 주체 명시 (rule 23)
-- 승인 요청 4요소 (무엇 / 왜 / 영향 / 결정 필요)
-- 완료 보고 6 체크리스트 (rule 24)
-
-#### Step 6: 자율 판단 원칙
-
-**R1. 자율 진행** (묻지 말고 바로):
-- 사용자가 "모두 진행", "계속" 명시
-- 이미 승인받은 범위 내 세부 선택
-- 검증 (ansible-playbook --syntax-check / pytest / verify_*)
-- 문서 갱신, commit, **push (main 포함 — 2026-05-01 사용자 명시, rule 93 R1+R4)**
-- **production 자동 승격** (순수 코드 변경 시 — `scripts/ai/promote_to_production.sh`, 2026-06-30 사용자 명시, rule 93 R2 예외 2)
-
-**R2. 명시 승인 필요**:
-1. 보호 경로 변경 (vault / Jenkinsfile / schema/baseline_v1)
-2. **force push** (`--force` / `-f` / `--force-with-lease`) — rule 93 R1
-3. 의존성 추가/삭제 (requirements 변경)
-4. schema 버전 결정 (rule 92 R5)
-5. cron 변경 (rule 80)
-6. 새 Vendor 추가 (rule 50)
-7. branch 간 merge / cherry-pick (rule 93 R2) — **단, main → production 순수코드 자동 승격은 예외(승인 불요, rule 93 R2 예외 2)**
-
-**R3. "완료" 직전 체크**: rule 24 6체크 모두 PASS여야 완료 선언.
-
-### 절대 금지사항
-
-1. **비밀값 하드코딩 금지** — vault/{linux,windows,esxi}.yml + vault/redfish/{vendor}.yml만 사용. 평문 commit 금지.
-2. **보호 경로 자율 수정 금지** — `.git/, vault/**, schema/baseline_v1/**, Jenkinsfile*`. 상세: `.claude/policy/protected-paths.yaml`
-3. **벤더 경계 위반 금지** — `common/`, `os-gather/`, `esxi-gather/`, `redfish-gather/` (단 `tasks/vendors/` 제외) 코드에 vendor 이름 (Dell/HPE/...) 하드코딩 금지. 분기는 adapter YAML 또는 OEM tasks 안에만 (rule 12).
-4. **Fragment 침범 금지** — 각 gather는 자기 fragment만 만든다. 다른 gather의 fragment 변수 / 누적 변수 직접 수정 금지 (rule 22).
-5. **외부 라이브러리 추가 금지 (redfish library)** — `redfish-gather/library/redfish_gather.py`는 stdlib만 (urllib / ssl / json) (rule 10).
-6. **문서 갱신 누락 금지** — 코드 변경 시 관련 증거 문서 갱신 필수 (rule 70).
-7. **bypassPermissions 금지** — settings.json `disableBypassPermissionsMode: "disable"`로 강제. CLI 플래그 우회 금지.
-8. **전역 설정 자율 수정 금지** — `~/.claude/settings.json` 수정 안 함. 팀 정책은 `.claude/settings.json` (이미 commit됨).
-
-### 하네스 자기개선 루프
-
-server-exporter는 두 개 루프 분리:
-
-| 루프 | Orchestrator | 대상 | 금지 |
-|---|---|---|---|
-| 제품 루프 | `wave-coordinator` | os-gather / esxi-gather / redfish-gather / common / adapters / schema / tests | 하네스 파일 수정 |
-| 하네스 루프 | `harness-evolution-coordinator` | .claude/, docs/ai/, scripts/ai/ | 제품 코드 수정 |
-
-#### 6단계 파이프라인
-
-```
-observer (관측+1차해석) → architect → reviewer → governor → updater → verifier
-```
-
-- 자유방임 자기수정 금지 — 교차검증 + 승인
-- control plane 완화 자동 금지 — 권한/보호/경계 변경은 사람만 승인
-
-#### 변경 등급 (Tier)
-
-| Tier | 예시 | 승인 |
-|---|---|---|
-| 1 (자동허용) | docs 초안, stale 정정, 보고서 | reviewer APPROVE 후 진행 |
-| 2 (승인필요) | rules / agents / skills 변경 | governor 심사 |
-| 3 (절대금지) | settings 권한 완화, 보호 경로 제거 | 사용자 에스컬레이션만 |
-
-### 컨텍스트 자동 로드 매핑
-
-작업 파일에 따라 아래 ai-context 자동 적용:
-
-```
-os-gather/, esxi-gather/, redfish-gather/, common/library/   → ai-context/gather/convention.md
-schema/, common/tasks/normalize/, callback_plugins/          → ai-context/output-schema/convention.md
-Jenkinsfile*, ansible.cfg, scripts/                          → ai-context/infra/convention.md
-tests/                                                       → role/qa/README.md
-adapters/{vendor}_*.yml, redfish-gather/tasks/vendors/{v}/   → ai-context/vendors/{vendor}.md
-외부 시스템 (Redfish/IPMI/SSH/WinRM/vSphere) 응답 처리        → ai-context/external/integration.md
-```
-
-### 하네스 구조
-
-```
-.claude/
-├── rules/        # 28 상시 규칙
-├── skills/       # 호출형 작업 플레이북 (Plan 2 예정)
-├── agents/       # 서브에이전트 정의 (Plan 2 예정)
-├── role/         # 6 역할 README (gather / output-schema / infra / qa / po / tpm)
-├── ai-context/   # 도메인별 컨벤션
-├── policy/       # 10 YAML
-├── templates/    # 8 문서 템플릿
-├── commands/     # 5 사용 가이드
-└── settings.json # 9 hooks 등록 (cycle-011 보호 경로 deny 제거)
-
-docs/ai/          # AI 협업 메타 (Plan 3 예정)
-scripts/ai/       # 자동화 스크립트 (Python 27, OS 중립)
-```
-
-### 핵심 컨벤션 요약
-
-- **Fragment 철학** (rule 22): 각 gather 자기 fragment만, merge_fragment.yml이 누적
-- **Adapter 점수**: `priority × 1000 + specificity × 10 + match_score`
-- **Vault 2단계 로딩** (Redfish): 무인증 detect → vendor vault 로드 → 인증 수집
-- **Linux 2-tier**: Python 3.9+ ok / raw fallback 자동 분기
-- **JSON envelope**: 13 필드 고정 (정본 = `common/tasks/normalize/build_output.yml` / rule 13 R5)
-  - 분석 6 카테고리: status / sections / data / errors / meta / diagnosis
-  - 라우팅·식별 5: target_type / collection_method / ip / hostname / vendor
-  - 추적 2: correlation / schema_version
-  - 실패 fallback (always block) 도 13 필드 모두 emit + diagnosis.details는 dict 형태 유지
-- **4단계 Precheck**: ping → port → protocol → auth
-- **Jenkins 4-Stage**: Validate → Gather → Validate Schema → **(pipeline별)** Stage 4 (`Jenkinsfile`=E2E Regression / `Jenkinsfile_portal`=Callback). cycle-015에서 `Jenkinsfile_grafana` 제거
-- **벤더 추가 3단계**: vendor_aliases.yml + adapter YAML + (선택) OEM tasks (site.yml 수정 불필요)
-
-### 갭 리포트 해석 주의
-
-- `session_start` hook이 origin/main 갭 출력
-- ahead = 내 브랜치 앞선 commit 수
-- behind = origin/main이 앞선 commit 수
-- behind > 0이면 `pull-and-analyze-main` skill 또는 `git diff HEAD..origin/main`으로 분석
-
----
-
-**프로젝트 상태: production-audit (2026-04-29) — 4 agent 전수조사 + HIGH 30+건 일괄 fix 완료**
-
-production-audit 결과 (2026-04-29):
-- **4 agent 병렬 전수조사** — Redfish (1504-line library + 16 adapter) / OS-ESXi-common / Schema-callback-cross-channel JSON / Tests-baselines-pipelines
-- **공통 정합 정합성 fix**: skeleton drift 동기화 (3 normalize 파일) / diagnosis.details shape 통일 (dict) / field_dictionary top-level 8 entries 추가
-- **Cross-channel JSON 일관성**: ESXi vendor `vendor_aliases.yml` 정규화 + `auth_success: true` set / cisco_baseline `users: []` / Windows storage `media_type` SSD/HDD enum 정규화
-- **Linux gather 보강**: LANG=C / VLAN underscore / FS allow-list / df '-' parse defense
-- **Windows gather 보강**: runtime swap namespace pattern / network InterfaceIndex grouping
-- **Redfish 보강**: account_service 복구 creds 버그 / cross-channel typing (int/bool cast) / vendor map merge / Power.PowerControl 비-dict 방어
-- **ESXi 보강**: DNS 추출 dict-level drill-in / netmask 비트 카운팅 (/22, /26, /28)
-- **Common 보강**: precheck IPv6 듀얼스택 / diagnosis_mapper None 가드
-- **Jenkins 보강**: per-stage timeout / E2E mandatory / archive / Jenkinsfile_portal Stage 3 hard gate / Callback unstable not error (rule 31 R2)
-- **Secrets 정리**: tests/scripts + scripts/ai 13곳 'Goodmit0802!' 환경변수화
-- 검증: **pytest 699/699 PASS** + harness consistency + vendor boundary + field_dictionary (83 entries) + PROJECT_MAP fingerprint 갱신
-
-이전 cycle-016 (2026-04-29):
-- 사용자 요구사항 11/11 검증 + 실 Jenkins 빌드 5회 (#39 ~ #45) + summary grouping 완성
-- 9 파일 namespace pattern (Jinja2 loop scoping fix)
-- 9 inline `{# ... #}` Jinja2 코멘트 제거
+# Server Exporter - Claude Code Project Guide
+## 1. Project
+Server Exporter는 Jenkins + Ansible 기반 서버 정보 Gathering 프로젝트다. 지원 채널은 OS(Linux/Windows), ESXi, Redfish(BMC) 3개다.
+호출자는 IPv4와 `target_type`을 전달하고 Jenkins가 Site/Agent를 선택한 뒤 Ansible이 수집한다. 결과는 Fragment로 생성되고 Common Normalize를 거쳐 Standard JSON Envelope로 반환된다.
+핵심 목표: 반복 실행 안전성, 실패 추적성, Target별 Result 보존, Vendor/Generation 확장성, Credential/Account Write 통제, Portal Consumer 일관성.
+
+## 2. Source of Truth
+충돌 시 우선순위:
+1. 현재 실제 코드
+2. 현재 Contract와 Regression Test
+3. Schema, Common Normalize, Callback 구현
+4. 이 `CLAUDE.md`
+5. README, docs, 과거 Evidence
+과거 Cycle/Round, Test/Adapter/Fixture 개수, 파일 Line 수, Commit SHA, Audit 결과는 현재 사실로 고정하지 않는다.
+필요 시 `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`, 관련 `docs/`, `.claude/rules/`, `.claude/skills/`만 읽는다.
+
+## 3. Architecture
+`Portal -> Jenkins Controller -> Site/Agent Routing -> Jenkins Agent -> Ansible -> OS|ESXi|Redfish -> Fragment -> Normalize/Merge -> JSON -> Callback/Result -> Portal`
+입력 개념: `loc`=Site/Agent Routing, `target_type`=`os|esxi|redfish`, OS/ESXi=`service_ip`, Redfish=`bmc_ip`, 호환 입력=`ip`, Portal 대상 입력은 IPv4 기준.
+`loc` 값으로 Credential/Vendor를 임의 분기하지 않는다. Jenkins Stage, Job 이름, Checkout SHA는 현재 Jenkinsfile과 실제 Build Log를 확인한다.
+주요 위치: `os-gather/site.yml`, `esxi-gather/site.yml`, `redfish-gather/site.yml`, `common/library/precheck_bundle.py`, `common/tasks/normalize/`, `callback_plugins/json_only.py`, `lookup_plugins/adapter_loader.py`, `schema/`, `vault/`.
+
+## 4. Fragment / Normalize
+각 Gather는 자기 담당 정보만 Fragment로 만들고 누적 Result를 직접 수정하지 않는다.
+공통 Fragment: `_data_fragment`, `_sections_supported_fragment`, `_sections_collected_fragment`, `_sections_failed_fragment`, `_errors_fragment`.
+`merge_fragment.yml`과 Common Builder가 최종 Result를 조립한다.
+금지: 다른 Gather Section 침범, 누적 변수 직접 수정, Vendor Task에서 Common Normalize 규칙 임의 변경, 새 Section 하나 때문에 전체 Output Builder 재작성.
+Overall `status`는 Error 문자열 개수가 아니라 실제 Section 결과로 `success`, `partial`, `failed`를 판단한다. Partial을 임의로 Failed로 바꾸거나 대표 Failure Stage를 억지로 부여하지 않는다.
+
+## 5. Adapter / Vendor Boundary
+Vendor/Generation 차이는 Adapter를 우선 사용한다. 공통 코드에 Vendor 이름 기반 분기를 추가하지 않는다.
+Vendor 차이는 Adapter YAML 또는 Vendor 전용 Task에 두고 Generic fallback을 유지한다. Evidence 없는 Vendor Exception을 추가하지 않는다.
+신규 Redfish Vendor/Generation 기본 확장 지점: `common/vars/vendor_aliases.yml` -> `adapters/redfish/*.yml` -> 필요 시 `redfish-gather/tasks/vendors/<vendor>/`.
+Adapter 선택 점수는 현재 구현 Contract인 `score = priority × 1000 + specificity × 10 + match_score`를 따른다.
+Adapter 선택 로직 변경 시 기존 선택 결과 전체를 Regression으로 확인한다.
+Mock/Emulator/Web Evidence와 실제 Lab 검증을 구분한다. Redfish 핵심 Library에 Third-party Python Dependency를 임의 추가하지 않는다.
+
+## 6. Channel Flow
+OS: `TCP 5986 -> TCP 5985 -> TCP 22 -> Protocol Detection -> Credential -> Gathering -> Normalize`
+- Windows: WinRM WS-Man Identify
+- Linux: SSH Identification
+- Linux는 Remote Python 상태에 따라 Standard 또는 Raw fallback 사용
+- Raw fallback은 Python 부재/비호환 환경에서도 Standard Result Contract 유지
+ESXi: `TCP 443 -> vSphere RetrieveServiceContent -> Credential -> Gathering -> Normalize`
+Redfish: `TCP 443 -> ServiceRoot -> Vendor Detection -> Adapter Selection -> Vendor Credential Profile Load -> Standard Account Auth -> Reconciliation if needed -> Standard Account Gathering -> Normalize`
+Redfish는 Vendor 확인 후 해당 Vendor Credential Profile을 로드하는 2단계 구조를 유지한다.
+
+## 7. Precheck Contract
+ICMP Ping은 필수 Connectivity Gate가 아니다. ICMP가 차단되어 있어도 실제 관리 포트 통신이 가능하면 Gathering은 진행해야 한다.
+원칙: TCP 연결 성공과 Protocol 확인 성공은 별개, Timeout만 보고 IP 미사용 단정 금지, Connection Refused만 보고 최종 장비 직접 응답 단정 금지.
+Hostname, IPv6, IPAM, ARP, ICMP 기반 별도 Discovery를 요구 없이 추가하지 않는다.
+Precheck 목적은 단순 Alive 판정이 아니라 TCP, Protocol, Authentication, Gathering 실패를 구분하는 것이다.
+오래된 `ping -> port -> protocol -> auth` 설명을 보고 ICMP Gate를 다시 구현하지 않는다.
+
+## 8. Redfish Standard Account / Recovery
+표준 Gathering Account를 특정 Username 문자열로 하드코딩하지 않는다.
+Standard Account는 선택된 Vendor Credential Profile의 `role: primary`, Recovery Account는 같은 Profile의 `role: recovery`다.
+현재 Primary Username이 `infraops`여도 `infraops` Literal 자체는 Contract가 아니다. 핵심 Contract는 최종 Gathering이 Standard Account로 수행되는 것이다.
+정상: `Primary 인증 성공 -> Account Write 0 -> Primary Gathering`
+Recovery 목적: `Standard Account 생성 또는 복구 -> Primary 재인증 -> Primary Gathering`
+Password 불일치: `Primary 인증 -> 구조화된 401 -> Recovery 성공 -> Standard Account 조회 -> Profile 값으로 Password 동기화 -> Primary 재인증 -> Primary Gathering`
+Standard Account 부재: `Primary 실패 -> Recovery 성공 -> 부재 확인 -> 기존 Vendor별 생성 방식으로 Standard Account 생성 -> Primary 인증 검증 -> Primary Gathering`
+생성 Username/Password/Role은 Standard Account Profile을 기준으로 한다.
+Reconciliation Write Gate: `Primary 실제 인증 시도 AND 구조화된 401 AND Recovery 인증 성공`
+Timeout, TLS 오류, Transport 오류, HTTP 5xx, HTTP 403은 Password 불일치로 해석하지 않으며 Account Write는 0이어야 한다.
+문자열 Error Parsing으로 인증 실패 추측 금지, 동일 Standard Username 여러 Slot이면 임의 수정 금지, Credential 후보/Retry 임의 증가 금지, Account Lockout 고려.
+Delete/Recreate 보호 정책 임의 완화 금지. Dry-run은 예정 Action 확인일 뿐 실제 생성/변경/재인증 완료 증거가 아니다. OS/ESXi에 Redfish Reconciliation을 확장하지 않는다.
+
+## 9. Diagnosis Contract
+유효한 `failure_stage`: `reachable`, `port`, `protocol`, `auth`, `gather`, `fallback`.
+Stable `failure_code`: `DNS_RESOLUTION_FAILED`, `TCP_CONNECT_FAILED`, `TCP_CONNECTION_REFUSED`, `PROTOCOL_CHECK_FAILED`, `AUTH_PROBE_FAILED`, `GATHER_FAILED`, `OUTPUT_BUILD_FAILED`.
+Success: `failure_stage=null`, `failure_code=null`, `failure_reason=null`.
+Failed: `failure_stage`, `failure_code`, `failure_reason`이 모두 존재해야 하며 실패인데 `failure_reason=null`인 Result를 만들지 않는다.
+`failure_stage`는 Root Cause가 아니라 Workflow가 멈춘 위치다.
+`auth_success=true`는 실제 인증 성공, `false`는 구조화된 명시적 인증 거부, `null`은 미시도 또는 확정 불가다.
+HTTP 403, Timeout, TLS, Transport 오류를 자동으로 `auth_success=false`로 만들지 않는다.
+
+## 10. Portal Failure Message
+Portal Failure Grid는 `errors[].message`를 사용한다. 최종 Failed Result의 사용자 Message는 `diagnosis.failure_reason`과 동일한 중앙 정의를 사용한다.
+기술 Evidence는 `errors[].detail`에 둔다. 사용자 Message에는 Port, Timeout, HTTP Status, Raw Exception, SOAP/XML 내부정보, Task/변수명을 넣지 않는다.
+대표 메시지:
+1. `대상 IP에서 응답을 확인할 수 없습니다. IP 사용 여부와 네트워크 상태를 확인하세요.`
+2. `대상 IP의 관리 포트에 연결할 수 없습니다. 방화벽과 관리 서비스 상태를 확인하세요.`
+3. `관리 포트에는 연결됐지만 서버 정보 수집에 필요한 응답을 확인할 수 없습니다. 관리 서비스 설정과 상태를 확인하세요.`
+4. `대상에 접속할 수 없습니다. 자격증명과 계정 권한을 확인하세요.`
+5. `대상 접속은 확인됐지만 정보 수집에 실패했습니다. 대상 상태와 수집 로그를 확인하세요.`
+IPv4-only이므로 사용자 Message에서 DNS/Hostname 확인을 안내하지 않는다. `DNS_RESOLUTION_FAILED` enum이 남아 있어도 사용자 안내를 DNS 문제로 단정하지 않는다.
+
+## 11. Result Envelope / Cardinality
+요청 Target 1개는 최종 Result Envelope 정확히 1개를 가져야 한다: `requested target count == result envelope count`.
+금지: Host 누락, Host 중복, 요청하지 않은 Host 추가.
+Gathering 중 unreachable이 되어 일반 OUTPUT Task까지 도달하지 못해도 Envelope가 사라지면 안 된다.
+Callback/Result Builder는 Host Lifecycle Evidence로 누락 Result를 보완한다. 모든 unreachable을 `fallback`으로 처리하지 않는다.
+현재 Standard Envelope Top-level Contract: `status`, `sections`, `data`, `errors`, `meta`, `diagnosis`, `target_type`, `collection_method`, `ip`, `hostname`, `vendor`, `correlation`, `schema_version`.
+새 Top-level Field, `failure_stage`, `failure_code`, Schema Version 변경은 Consumer와 Schema 영향을 확인한 뒤 진행한다. `diagnosis.details`는 기술 Evidence와 확장 Metadata 영역이다.
+
+## 12. Credential / Security / Failure Handling
+Credential은 기존 Vault와 Credential Profile 구조를 사용한다.
+금지: 새 Password 하드코딩, Debug/Callback/Result Credential 출력, Credential 후보/Retry 이유 없이 증가, 이유 없는 `ignore_errors: true`, 실패 후 정상처럼 계속 진행, Failed Host Result 누락, Timeout/403/5xx를 인증 실패로 단정, Raw stdout 하나에 상태/원인 혼합.
+`no_log`가 필요한 기존 Credential Task를 유지한다.
+사용자 요청 없이 Secret Rotation, Vault Rekey, Git History Cleanup으로 범위를 확대하지 않는다.
+
+## 13. AI Harness / Session Workflow
+세션 시작 시: 현재 Branch/Git 상태 확인 -> 요청/변경 경로 기준 역할 추론 -> 필요한 `.claude/role/`, `.claude/ai-context/`, `.claude/rules/`만 로드.
+단순 오타가 아닌 코드 변경은 현재 Impact Preview 정책을 따르고, 사용자가 Preview 생략/바로 진행을 명시하면 현재 정책 범위에서 진행한다.
+제품 코드 작업과 Harness 자기개선 작업을 섞지 않는다. 제품 코드 변경 중 `.claude/`, `docs/ai/`, `scripts/ai/`를 이유 없이 수정하지 않는다. Harness 개선 작업에서도 제품 코드를 요청 없이 수정하지 않는다.
+`bypassPermissions`를 사용하지 않고 `~/.claude/settings.json`을 자율 수정하지 않는다.
+세부 승인/Role/Hook/Orchestrator 규칙은 현재 `.claude/rules/`, `.claude/policy/`, `.claude/skills/`를 따른다. 오래된 Rule 번호/날짜를 이 파일에 복제하지 않는다.
+
+## 14. Git / Production
+`main`: 개발 기준 Branch, 순수 Project Code와 Harness 포함.
+`production`: 순수 Gathering 배포 Branch, Harness 제외.
+대표 production 제외 경로: `.claude/`, `CLAUDE.md`, `GUIDE_FOR_AI.md`, `docs/ai/`, `docs/superpowers/`, `scripts/ai/`, `tests/reference/`, `tests/evidence/`.
+원칙: 순수 코드/Harness 변경 가능하면 별도 Commit, `git merge main`으로 production 전체 병합 금지, 순수 Project Code는 현재 Promotion Script/정책으로 승격.
+유효한 자동 승격 범위에서는 매번 별도 승인 재요구 금지. force push와 History Rewrite 금지.
+Remote URL은 `git remote -v`로 확인하고 Push 성공만으로 Jenkins 반영 완료 판단 금지. 실제 Job의 Repository, Branch, Checkout SHA를 확인한다.
+
+## 15. Protected Changes
+수정 전 영향 확인 대상: `vault/**`, `schema/baseline_v1/**`, `Jenkinsfile*`, `common/tasks/normalize/**`, `callback_plugins/**`, `redfish-gather/library/redfish_gather.py`.
+Dependency 추가/삭제, Schema Version, Cron, 새 Vendor, 보호 경로 변경은 현재 Approval Policy를 확인한다.
+기존 코드 일부 수정 요청이면 전체 구조를 불필요하게 재작성하지 않는다.
+
+## 16. Verification / Completion
+코드 변경 후 변경 범위에 맞게 검증한다.
+기본: Python compile, YAML parse, Jinja2 compile, `ansible-playbook --syntax-check`, unit, e2e, integration, regression.
+Contract: field dictionary, schema drift, envelope, cross-channel, vendor boundary, secret leakage, Harness consistency.
+고정 Test Count를 신뢰하지 않고 현재 실행 결과를 기준으로 판단한다.
+실장비가 필요한 Protocol/Vendor/Account Write는 Unit Test만으로 실장비 검증 완료라고 하지 않는다. Dry-run과 실제 Write 검증을 구분한다.
+완료 보고에는 실제 변경, 검증 결과, Blocked, 실장비 여부, 운영 영향, 남은 작업을 구분한다. 실행하지 않은 코드를 `검증 완료`라고 표현하지 않는다.
+
+## 17. Documentation Guard
+문서와 실제 코드가 다르면 실제 코드와 현재 Contract를 우선하고 관련 문서를 갱신한다.
+stale 정보를 구현 근거로 사용하지 않는다: `ping -> port -> protocol -> auth`, 과거 Adapter/Fixture/Test 수, 파일 Line 수, Commit SHA, Audit 상태, 실장비 대수, 오래된 Jenkins Stage 설명.
+이 파일에는 모든 세션에서 항상 필요한 Project Contract와 Guardrail만 유지한다.
+Cycle/Round History, 긴 Troubleshooting, Vendor별 전체 구현, AI Harness History, 고정 수치/날짜, 일회성 작업 결과는 추가하지 않는다.
+세부 절차는 `.claude/skills/`, 경로별 규칙은 `.claude/rules/`, 상세 설계와 Evidence는 `docs/`에 둔다.
+
+## 18. Key Documentation
+`README.md`, `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`,
+`docs/05_inventory-json-spec.md`, `docs/06_gather-structure.md`,
+`docs/07_normalize-flow.md`, `docs/08_failure-handling.md`,
+`docs/10_adapter-system.md`, `docs/11_precheck-module.md`,
+`docs/12_diagnosis-output.md`, `docs/17_jenkins-pipeline.md`,
+`docs/19_decision-log.md`, `docs/20_json-schema-fields.md`,
+`docs/21_vault-operations.md`, `docs/22_compatibility-matrix.md`,
+`docs/23_debugging-entrypoints.md`.
