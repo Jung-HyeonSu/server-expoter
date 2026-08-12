@@ -7,6 +7,16 @@
 
 ---
 
+## 실환경 검증 잔여 (2026-08-12) — 이 세션에서 확인 불가
+
+> 정본: `tests/evidence/2026-08-12-runtime-verification-and-bugfix.md` §9.
+
+| # | 항목 | 차단 사유 | 확인 방법 |
+|---|---|---|---|
+| 1 | Jenkins 실제 checkout SHA | `10.100.64.153:8080` API 가 HTTP 403 — 세션에 Jenkins 자격증명 없음 | 해당 Job 의 SCM 설정(Repository/Branch)과 최근 빌드의 `GIT_COMMIT` 을 Jenkins UI 에서 확인. push 성공만으로 반영 단정 금지 (CLAUDE.md §14) |
+| 2 | Redfish Account Reconciliation **실제 Write** | dry-run 만 수행. 승인/검증 정책을 세션에서 확인 불가 | 승인된 lab 대상에서 `-e _rf_account_service_dryrun=false` 로 1대 검증 후 `account_service.verification` 이 `skipped` 아닌 값인지 확인 |
+| 3 | BUG-2 수정의 벤더별 실장비 확인 | cisco 외 fujitsu/hpe/huawei/inspur/quanta 는 lab 부재 | 각 벤더 장비 확보 시 OEM 섹션이 실제로 채워지는지 확인 (수정 전에는 병합 자체가 안 됐음) |
+
 ## Dell 대표 시리얼 교정 후속 (2026-08-11) — lab 부재로 미검증
 
 > 본 작업 정본: `docs/ai/SERIAL-NUMBER-TRACE-2026-08-11.md` Part III / 커밋 `0fb63799`.

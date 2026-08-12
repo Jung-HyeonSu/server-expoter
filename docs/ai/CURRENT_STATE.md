@@ -1,5 +1,33 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-12 (o) — 실환경 검증 + Fragment/include 버그 2건 수정
+
+> 정본 기록: `tests/evidence/2026-08-12-runtime-verification-and-bugfix.md`.
+> 실행 환경: WSL Ubuntu / ansible-core **2.20.7** / Python 3.12.3.
+
+- **BUG-1 ESXi `listening_ports` 항상 `[]`** — `collect_runtime.yml` 이 `system.runtime` dict 를
+  통째로 다시 만들면서 `listening_ports: []` 하드코딩 → `normalize_system.yml` 이 넣은 실제
+  수집값을 덮어썼다. `merge_fragment` 는 깊이 2 에서 dict 를 통째로 교체한다.
+  실측 `STEP1 ['22','443','902'] → STEP2 []`. 키 제거는 불가(`STEP3 MISSING`).
+  → 같은 원본(`_e_raw_listening_ports`)을 이어받도록 수정. **실장비 검증: esxi02 13개 포트 관측.**
+- **BUG-2 Redfish vendor OEM include 경로** — `{{ playbook_dir }}` 는 `<repo>/redfish-gather`
+  이고 그 아래 `common/` 이 없다. 실측 `exit=2 Could not find or access …`.
+  cisco/fujitsu/hpe/huawei/inspur/quanta 6건의 OEM fragment 가 **한 번도 병합되지 않았다.**
+  → 저장소 정식 방식(`REPO_ROOT` 기준)으로 통일.
+- **회귀 신설** — `test_fragment_overwrite_and_include_paths.py`(84) /
+  `test_auth_evidence_contract.py`(4). 두 버그 주입 실험에서 `exit=1` 검출 확인.
+- **3채널 syntax-check** os/esxi/redfish 모두 exit=0 (ansible-core 2.20.7).
+- **실장비 스모크 6대상** — esxi02 / Cisco CIMC / Dell iDRAC / Redfish 503 / RHEL 8.10 /
+  Windows 2022. 전부 요청 1 → envelope 1, 13필드 정합.
+  503 대상이 `failed + stage=protocol + code=PROTOCOL_CHECK_FAILED + 정본 3번 문장`,
+  HTTP 503 은 `detail` 에만 → P0-2/P0-3/§10 실증.
+  Dell 은 recovery fallback 성공 + `account_service.dryrun=true`(쓰기 0) 인데
+  `status=success, errors=[]` → **P0-7 실증**.
+- **§4 인증 근거 검증** — `_all_sec_collected > 0` 을 인증 근거로 쓰는 것이 타당함을 전수 확인
+  (controller-side / precheck / 빈 fragment 경로 모두 0건). 3경로를 테스트로 고정.
+- **BLOCKED** — Jenkins 실제 checkout SHA(§8): `10.100.64.153:8080` 은 응답하나 API 가 403
+  (자격증명 없음). GitLab internal(`10.100.64.156`)은 이 세션 네트워크에서 timeout.
+
 ## 일자: 2026-08-12 — errors[].message 계약 개선 (조사 → 실제 수정)
 
 > 입력: `docs/ai/ERRORS-MESSAGE-INVENTORY-2026-08-11.md` (조사 전용, 코드 변경 0).
