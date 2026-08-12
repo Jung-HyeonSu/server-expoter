@@ -93,8 +93,13 @@ def _meta(**kw):
 @pytest.mark.parametrize("meta,expected,why", [
     (_meta(recovered=True, verification="verified", action="password_sync"), False,
      "복구 성공 + 재인증 확인"),
-    (_meta(recovered=True, verification="none", action="create"), False,
-     "복구 성공 (verify 대상 아님)"),
+    # 2026-08-12 (audit H-1 / D-3): `verification='none'` 은 더 이상 성공이 아니다.
+    #   종전에는 8/9 vendor 의 POST 생성이 검증 없이 recovered=true 를 돌려주고 이 판정이
+    #   그것을 성공으로 확정했다 — 실제로 쓸 수 없는 계정이 "복구됨" 으로 나갔다.
+    #   이제 모듈의 모든 쓰기 경로가 재조회 + 재인증까지 하므로, 쓰기가 있었는데 'none' 인
+    #   결과 자체가 나오지 않는다. 혹시 나온다면 그것은 검증이 빠진 것이므로 실패다.
+    (_meta(recovered=True, verification="none", action="create"), True,
+     "검증 없이 만들어진 계정을 성공으로 인정하지 않는다"),
     (_meta(dryrun=True, verification="skipped"), False,
      "dryrun 은 의도적으로 아무것도 고치지 않는다 — 실패가 아니다"),
     (_meta(dryrun=True, recovered=True, verification="skipped"), False, "dryrun"),

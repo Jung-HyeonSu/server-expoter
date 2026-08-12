@@ -69,6 +69,29 @@ sys.modules.setdefault("ansible.module_utils.basic", _stub_basic)
 
 import redfish_gather as rg  # noqa: E402
 
+# 2026-08-12: provision 이 account_service_get → account_service_discover 로 옮겨졌다.
+# 기존 3-tuple fake 를 discovery dict 로 감싸는 공용 seam (tests/unit/account_seam.py).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from account_seam import as_discovery as _as_discovery_raw  # noqa: E402
+
+
+def _as_discovery(fn, **overrides):
+    return _as_discovery_raw(fn, rg, **overrides)
+
+
+@pytest.fixture(autouse=True)
+def _default_write_verify_seam(monkeypatch):
+    """2026-08-12 (audit H-1): 이제 **모든** 계정 쓰기 경로가 재조회 + 표준 자격 재인증을
+    수행한다. 종전 POST 경로는 2xx 만으로 성공을 보고했다.
+
+    그래서 쓰기 seam 만 stub 하던 테스트가 실제 네트워크로 나가게 된다. 여기서 기본
+    검증 seam 을 성공으로 깔아 둔다. 개별 테스트가 다시 setattr 하면 그쪽이 이긴다.
+    """
+    monkeypatch.setattr(rg, "_get", lambda *a, **k: (200, {}, None))
+    monkeypatch.setattr(rg, "_get_response_etag", lambda *a, **k: None)
+    monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
+
+
 # 테스트에서 쓰는 자리표시 자격 — 실제 값이 아니다.
 _RECOVERY_USER = "recovery-user"
 _RECOVERY_PASS = "<recovery-pass>"
@@ -276,15 +299,19 @@ def test_account_service_yml_no_longer_defaults_dryrun_to_false():
 def _patch_transport(monkeypatch, accounts, *, patch=(200, {}, None),
                      get=(200, {}, None), post=(201, {}, None), delete=(204, {}, None)):
     calls = {"patch": [], "post": [], "delete": [], "get": []}
-    monkeypatch.setattr(rg, "account_service_get", lambda *a, **k: ({}, accounts, []))
+    monkeypatch.setattr(rg, "account_service_discover", _as_discovery(lambda *a, **k: ({}, accounts, [])))
     monkeypatch.setattr(rg, "_patch",
                         lambda b, p_, body, *a, **k: (calls["patch"].append(p_), patch)[1])
     monkeypatch.setattr(rg, "_post",
                         lambda b, p_, body, *a, **k: (calls["post"].append(dict(body)), post)[1])
     monkeypatch.setattr(rg, "_delete",
                         lambda b, p_, *a, **k: (calls["delete"].append(p_), delete)[1])
-    monkeypatch.setattr(rg, "_get",
-                        lambda b, p_, *a, **k: (calls["get"].append(p_), get)[1])
+    def _fake_get(b, p_, *a, **k):
+        calls["get"].append(p_)
+        # get 이 callable 이면 호출 시점의 calls 를 보고 응답을 정한다 (예: 재생성 후 성공).
+        return get(p_, calls) if callable(get) else get
+
+    monkeypatch.setattr(rg, "_get", _fake_get)
     return calls
 
 
@@ -456,8 +483,11 @@ def test_delete_recreate_is_opt_in(monkeypatch):
         {"slot_uri": "/redfish/v1/AccountService/Accounts/2", "id": "2",
          "username": _TARGET_USER, "role_id": "Administrator", "enabled": True, "locked": False},
     ]
+    # 재생성 전에는 표준 자격 인증이 401, DELETE+POST 로 다시 만든 뒤에는 200.
+    # 2026-08-12 (audit H-1): 재생성 경로도 재조회 + 재인증까지 확인해야 성공이다.
     calls = _patch_transport(
-        monkeypatch, accounts=accounts, get=(401, {}, "HTTP 401"),
+        monkeypatch, accounts=accounts,
+        get=lambda p_, c: (200, {}, None) if c["post"] else (401, {}, "HTTP 401"),
         post=(201, {"@odata.id": "/redfish/v1/AccountService/Accounts/2"}, None))
 
     out = rg.account_service_provision(
@@ -470,6 +500,7 @@ def test_delete_recreate_is_opt_in(monkeypatch):
     assert len(calls["delete"]) == 1
     assert out["method"] == "delete_repost"
     assert out["recovered"] is True
+    assert out["verification"] == "verified", "재생성 뒤 확인 없이 성공으로 보고하면 안 된다"
 
 
 def test_ansible_layer_never_enables_delete_recreate():

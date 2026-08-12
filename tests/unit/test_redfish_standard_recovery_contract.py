@@ -44,6 +44,29 @@ sys.modules.setdefault("ansible.module_utils", _stub_mu)
 sys.modules.setdefault("ansible.module_utils.basic", _stub_basic)
 import redfish_gather as rg  # noqa: E402
 
+# 2026-08-12: provision 이 account_service_get → account_service_discover 로 옮겨졌다.
+# 기존 3-tuple fake 를 discovery dict 로 감싸는 공용 seam (tests/unit/account_seam.py).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from account_seam import as_discovery as _as_discovery_raw  # noqa: E402
+
+
+def _as_discovery(fn, **overrides):
+    return _as_discovery_raw(fn, rg, **overrides)
+
+
+@pytest.fixture(autouse=True)
+def _default_write_verify_seam(monkeypatch):
+    """2026-08-12 (audit H-1): 이제 **모든** 계정 쓰기 경로가 재조회 + 표준 자격 재인증을
+    수행한다. 종전 POST 경로는 2xx 만으로 성공을 보고했다.
+
+    그래서 쓰기 seam 만 stub 하던 테스트가 실제 네트워크로 나가게 된다. 여기서 기본
+    검증 seam 을 성공으로 깔아 둔다. 개별 테스트가 다시 setattr 하면 그쪽이 이긴다.
+    """
+    monkeypatch.setattr(rg, "_get", lambda *a, **k: (200, {}, None))
+    monkeypatch.setattr(rg, "_get_response_etag", lambda *a, **k: None)
+    monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
+
+
 _spec = importlib.util.spec_from_file_location(
     "_frc_harness", REPO / "tests" / "e2e" / "test_failure_reason_contract.py"
 )
@@ -277,7 +300,7 @@ def _dell_accounts(existing_username=""):
 
 def _provision(monkeypatch, accounts, patch_code=200, verify_codes=(200,),
                acct_service=None, dryrun=False, patch_body=None):
-    calls = {"patch": [], "verify": 0}
+    calls = {"patch": [], "verify": 0, "reread": 0}
 
     def fake_acct_get(bmc_ip, u, p, t, v):
         return acct_service, accounts, []
@@ -287,12 +310,18 @@ def _provision(monkeypatch, accounts, patch_code=200, verify_codes=(200,),
         return patch_code, (patch_body or {}), None
 
     def fake_get(bmc_ip, path, u, p, t, v):
+        # 2026-08-12: 쓰기 뒤에는 (a) 계정 리소스 재조회 (복구 자격, slot URI) 와
+        #   (b) 표준 자격 재인증 (/Systems) 이 **둘 다** 일어난다. "재인증 횟수" 는
+        #   (b) 만 센다 — 그래야 lockout 예산과 같은 것을 세게 된다.
+        if not str(path).endswith("Systems"):
+            calls["reread"] += 1
+            return 200, {"UserName": "infraops", "Enabled": True}, None
         calls["verify"] += 1
         idx = min(calls["verify"] - 1, len(verify_codes) - 1)
         code = verify_codes[idx]
         return (code, {}, None) if code == 200 else (code, {}, f"HTTP {code}")
 
-    monkeypatch.setattr(rg, "account_service_get", fake_acct_get)
+    monkeypatch.setattr(rg, "account_service_discover", _as_discovery(fake_acct_get))
     monkeypatch.setattr(rg, "_patch", fake_patch)
     monkeypatch.setattr(rg, "_get", fake_get)
     monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
@@ -529,8 +558,7 @@ def test_dell_200_with_locked_rejection_triggers_retry_without_locked(monkeypatc
         resp, code = responses[min(len(sent) - 1, len(responses) - 1)]
         return code, resp, None
 
-    monkeypatch.setattr(rg, "account_service_get",
-                        lambda *a, **k: ({}, _dell_accounts("infraops"), []))
+    monkeypatch.setattr(rg, "account_service_discover", _as_discovery(lambda *a, **k: ({}, _dell_accounts("infraops"), [])))
     monkeypatch.setattr(rg, "_patch", fake_patch)
     monkeypatch.setattr(rg, "_get", lambda *a, **k: (200, {}, None))
     monkeypatch.setattr(rg.time, "sleep", lambda *_: None)
@@ -558,8 +586,7 @@ def test_persistent_200_rejection_is_a_write_failure_not_a_verify_failure(monkey
         verify_calls["n"] += 1
         return 401, {}, "HTTP 401"
 
-    monkeypatch.setattr(rg, "account_service_get",
-                        lambda *a, **k: ({}, _dell_accounts("infraops"), []))
+    monkeypatch.setattr(rg, "account_service_discover", _as_discovery(lambda *a, **k: ({}, _dell_accounts("infraops"), [])))
     monkeypatch.setattr(rg, "_patch",
                         lambda *a, **k: (200, _IDRAC_LOCKED_REJECT, None))
     monkeypatch.setattr(rg, "_get", fake_get)

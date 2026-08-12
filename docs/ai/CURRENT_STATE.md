@@ -1,5 +1,49 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-12 (p) — Redfish 계정 Reconcile: Capability Discovery + Family Strategy
+
+> 정본 기록: `tests/evidence/2026-08-12-redfish-standard-account-final-compatibility.md`
+> 매트릭스: `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`
+> 결정: `docs/ai/decisions/ADR-2026-08-12-account-family-strategy.md`
+
+9 Vendor 공식조사 9건 + AS-IS 감사를 현재 HEAD 와 대조해 남아 있던 결함을 처리했다.
+
+- **C-1 (CRITICAL) 해소** — 계정 열거를 `complete/incomplete/failed` 3-상태로, 존재 판정을
+  `present/absent/unknown/ambiguous` 4-상태로 만들었다. Accounts 컬렉션 403/5xx/timeout /
+  링크 부재 / member 일부 실패 / `Members@odata.count` 불일치는 전부 `unknown` 이고
+  **`unknown` 에서는 Account Write 0건**이다. 종전에는 이 상태가 "계정 없음" 이 되어 실제
+  생성 POST 가 나갔다(감사가 production 함수를 실행해 증명).
+- **C-2 해소** — `site.yml` 의 `_rf_auth_rejected` 분모를 `_rf_accounts`(표준+복구 병합) →
+  `_rf_standard_accounts` 로 교정. 복구 후보가 있으면 `auth_success` 가 영영 false 로
+  확정되지 못하던, **정확히 reconcile 이 가능한 상황에서만 진단이 비는** 구조였다.
+- **H-1 해소** — 모든 쓰기 경로에 재조회(`_confirm_account_state`) + 표준 자격 재인증을
+  의무화. Ansible 게이트를 `verification == 'verified'` 로 좁혔다(종전은 `'none'` 도 성공).
+- **H-2 해소** — `module.check_mode` 를 dryrun 에 OR. `--check` 가 실제 PATCH/POST 를
+  내보내던 결함이 닫혔다.
+- **H-3 해소** — `account_service_discover()` 신설. ServiceRoot 링크 추종(AccountService URI
+  하드코딩 제거), Accounts/Roles URI, Password·Lockout 정책, AccountTypes, Manager Firmware
+  까지 **읽기 전용**으로 확보한다. 생성 POST URI 하드코딩 5곳도 discovery 결과로 교체.
+- **Family Strategy 도입** — vendor 이름 분기 + 실패 시 payload 사다리(무작위 Write fallback)
+  제거. 읽기로 Family 를 확정하고 검증된 방식 하나만 실행한다. 판정 근거 우선순위는
+  실제 Resource Capability -> Vendor -> BMC Family -> Firmware -> Generation -> Adapter hint.
+  주요 교정: Lenovo Purley = 빈 slot PATCH(POST 아님), Cisco RoleId 는 Roles 어휘에서 선택
+  (전 Cisco `admin` 고정 remap 제거), HPE iLO4 `Oem/Hp`, HPE CSUS/Superdome 을 iLO 로
+  처리하지 않음, Supermicro 계정분리 세대는 AccountTypes/Firmware 로 판정,
+  Inspur `Oem.Public.Status` + Family gated If-Match, Dell iDRAC10 reserved slot 2.
+- **Lockout** — Dell 생성 슬롯 순회 3->1, 표준계정 실패 인증 최대 9회->3회, 후보 간 backoff 는
+  **401 일 때만** 65초(설정 가능)로 확대하고 transport 오류는 종전 5초 유지.
+- **UNVERIFIED Family 는 현행 유지** (사용자 결정) — Fujitsu / Quanta / X-Series / IMM2 /
+  Supermicro X9 / Inspur M5·M7 / HPE RMC 는 generic POST 경로와 400/405 retry 를 그대로 둔다.
+- **실장비 미러 재생 신설** — `tests/reference/redfish/**` 를 읽는 테스트가 0건이던 것을
+  (감사 D-8) `tests/integration/test_account_reconcile_replay.py` 로 연결. Dell 5 / HPE 1 /
+  Lenovo 1 / Cisco 1 호스트 실응답으로 읽기 단계를 검증한다 (43 tests).
+- **테스트 2694 -> 2794 passed** (실패 0). unit+regression 실행 66.6s -> 18.1s (M-9 부수 효과).
+- **envelope 13 필드 / sections / field_dictionary 의미 변경 0.** 추가는 전부
+  `diagnosis.details.account_service` 하위 (Additive only).
+- **미해결로 남긴 것**: 실장비 Write E2E 0건(어떤 Family 도 `PROVEN` 아님), Dell `HOLD`(E-6
+  비밀번호 정책), 운영 Job 은 게이트가 열리면 여전히 실쓰기(사용자 결정), audit H-5 는
+  Portal 문장 변경을 수반해 미처리.
+
 ## 일자: 2026-08-12 (o) — 실환경 검증 + Fragment/include 버그 2건 수정
 
 > 정본 기록: `tests/evidence/2026-08-12-runtime-verification-and-bugfix.md`.

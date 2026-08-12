@@ -400,9 +400,18 @@
         #   "등록된 자격증명 거부" 가 아니다.
         - name: "redfish | rescue | 인증 거부 실증 판정"
           ansible.builtin.set_fact:
+            #
+            # 2026-08-12 (audit C-2): `attempted` 를 `_rf_accounts`(표준+복구 **병합**)
+            #   길이로 세던 것을 `_rf_standard_accounts` 로 바로잡는다.
+            #   `_rf_auth_statuses` 는 표준 후보에서만 쌓이는데(try_one_account.yml 의
+            #   loop 대상이 `_rf_standard_accounts`) 분모만 복구 후보까지 세고 있었다.
+            #   결과: **복구 후보가 하나라도 있으면** 두 수가 영영 같아지지 않아
+            #   auth_success 가 false 로 확정되지 못했다. 계정 쓰기를 정당화한 바로 그
+            #   401 이 envelope 에 남지 않는, 정확히 reconcile 이 가능한 상황에서만
+            #   진단이 비는 구조였다.
             _rf_auth_rejected: >-
               {%- set statuses = _rf_auth_statuses | default([]) -%}
-              {%- set attempted = (_rf_accounts | default([])) | length -%}
+              {%- set attempted = (_rf_standard_accounts | default([])) | length -%}
               {{ attempted > 0
                  and (statuses | length) == attempted
                  and (statuses | select('equalto', 401) | list | length) == attempted }}

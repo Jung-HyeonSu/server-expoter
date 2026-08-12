@@ -333,8 +333,16 @@ reason:           "resolved"
 ```
 os      → vault/<location>/os/<os_type>.yml
 esxi    → vault/<location>/esxi.yml
-redfish → vault/<location>/redfish/<vendor>.yml
+redfish → vault/<location>/redfish/<vendor>.yml        (복구 계정 전용)
+        + vault/common/redfish/standard.yml            (표준 수집 계정 — 전역 상수)
 ```
+
+> 2026-08-12 정정 (audit H-6): 본 설계 문서는 Redfish scope 를 1개(`location + vendor`)로
+> 적었으나 **구현된 계약은 2개**다. 표준 수집 계정은 `module_utils/credential_common.py:54`
+> 의 **모듈 상수**(`REDFISH_STANDARD_SCOPE`)이며 location/vendor 를 인자로 받지 않는다.
+> `location + vendor` 축은 **복구 계정에만** 적용된다.
+> 이 문서를 따라 새 Location 을 구성하면서 `vault/<loc>/redfish/<vendor>.yml` 에
+> `role: primary` 를 넣으면 `recovery_accounts_of()` 가 그것을 버려 복구 후보가 0개가 된다.
 
 `location` / `os_type` / `vendor` 는 **전부 등록된 집합에서만** 온다
 (`known_locations` / 리터럴 2종 / `known_vendors`). 임의 문자열이 경로에 들어가지 않는다 —
@@ -412,7 +420,8 @@ vault/
 |---|---|---|
 | ESXi | location 1개 | `vault/<loc>/esxi.yml` — 2번째 축이 없으므로 디렉터리도 없다 |
 | OS | location + os_type | `vault/<loc>/os/<os_type>.yml` |
-| Redfish | location + vendor | `vault/<loc>/redfish/<vendor>.yml` |
+| Redfish (표준 수집) | **없음 — 전역 1벌** | `vault/common/redfish/standard.yml` (2026-08-12 정정) |
+| Redfish (복구) | location + vendor | `vault/<loc>/redfish/<vendor>.yml` |
 
 균일성을 위해 `vault/<loc>/esxi/default.yml` 로 맞추는 안은 기각한다 — 의미 없는 경로 조각이
 하나 늘고, "이 채널은 축이 하나" 라는 사실이 오히려 흐려진다.

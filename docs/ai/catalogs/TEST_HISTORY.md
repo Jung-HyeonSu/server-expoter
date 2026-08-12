@@ -2,6 +2,34 @@
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
+## 2026-08-12 (p) — Redfish 계정 Reconcile Family Strategy 회귀
+
+- **기준선(변경 전 직접 측정)**: unit+regression 1907 passed / 7 xfailed (66.55s),
+  e2e 587 passed / 6 skipped (13.07s), integration(not live) 200 passed / 3 skipped (1.71s)
+  = **2694 passed**.
+- **변경 후**: unit+regression **1961** (18.05s), e2e **590** (12.46s),
+  integration **243** (2.75s) = **2794 passed**, 실패 0.
+- **신규 파일**
+  - `tests/unit/test_account_capability_and_presence.py` (20) — 3-상태 열거 / 4-상태 존재 판정 /
+    ServiceRoot 링크 추종 / 정책 파싱 / **부분 조회 실패 시 Write 0건** 회귀(C-1).
+  - `tests/unit/test_account_family_and_write_contract.py` (33) — Family 결정성, Dell iDRAC10
+    reserved slot 2, Cisco Roles 어휘 기반 판정, Lenovo Purley slot PATCH, Supermicro
+    Firmware 경계, Inspur OEM Status/ETag, 검증 의무화, check_mode, lockout 예산,
+    상태 수렴(Disabled/Locked/Role/PasswordChangeRequired/AccountTypes).
+  - `tests/integration/account_replay.py` + `tests/integration/test_account_reconcile_replay.py` (43)
+    — **실장비 미러 재생** (Dell 5호스트 / HPE 1 / Lenovo 1 / Cisco 1). 감사 D-8 해소.
+  - `tests/unit/account_seam.py` — 기존 3-tuple fake 를 discovery dict 로 감싸는 공용 seam.
+- **갱신 파일**: 계정 관련 unit 5종 + e2e 2종. seam 이동(`account_service_get` ->
+  `account_service_discover`)과 의도된 동작 변경(POST 사다리 제거 / 검증 의무화 /
+  `verification='none'` 불인정 / backoff 조건화)을 반영.
+- **부수 효과**: 계정 테스트에 `time.sleep` monkeypatch autouse fixture 를 넣어 audit M-9
+  (8개 테스트가 각 6초 블로킹) 해소. unit+regression 수트가 **66.55s -> 18.05s**.
+- **Ansible syntax-check** (WSL Ubuntu, ansible-core 2.20.7): os/esxi/redfish 전부 exit=0.
+- **게이트**: verify_vendor_boundary exit=0 (신규 Family 표 13라인 `# nosec rule12-r1` 표기 후),
+  verify_harness_consistency exit=0, output_schema_drift_check exit=0,
+  validate_field_dictionary PASS, vault_decrypt_check --layout-only exit=0.
+- **실장비 0건.** `ansible-playbook` 실행 0건, Account Write 0건.
+
 ## 2026-08-11 (o) — Dell 대표 시리얼 교정 회귀 (ServiceRoot Service Tag)
 
 - **신규**: `tests/unit/test_dell_service_tag_serial.py` **41건** —

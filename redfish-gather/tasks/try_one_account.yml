@@ -128,8 +128,17 @@
     # 60min timeout 대비 영향 미미.
     # site.yml strategy: free 와 호환되도록 pause 대신 controller-side sleep 사용
     # (pause 모듈은 free strategy 에서 host loop bypass 미지원 → 즉시 ERROR).
+    #
+    # 2026-08-12: 인증이 **거부**된 경우(401)에만 간격을 늘린다.
+    #   Dell iDRAC10 IP Blocking 기본값 FailCount=3 / FailWindow=60s 를 5초 간격으로는
+    #   피할 수 없다. 반대로 timeout / TLS / transport 오류는 실패 카운터를 올리지 않으므로
+    #   종전 5초를 유지한다 — 도달 불가 장비에서 수집 시간만 늘리지 않기 위해서다.
+    #   source: dell.com/.../idrac10_1.xx_scg/network-security-configuration
     - name: "redfish | try_account | backoff on failure"
       when: not (_rf_attempt_ok | bool)
-      ansible.builtin.command: sleep 5
+      ansible.builtin.command: >-
+        sleep {{ _rf_auth_backoff_seconds | default(65)
+                 if ((_rf_attempt.auth_evidence | default({})).first_auth_status | default(0)) == 401
+                 else (_rf_transport_backoff_seconds | default(5)) }}
       delegate_to: localhost
       changed_when: false

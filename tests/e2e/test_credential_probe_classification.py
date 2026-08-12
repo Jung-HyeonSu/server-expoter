@@ -81,8 +81,15 @@ def test_credential_attempt_count_unchanged():
     rf_text = _text("redfish-gather/tasks/try_one_account.yml")
     assert rf_text.count("redfish_gather:") == 1
     assert "retries:" not in rf_text and "until:" not in rf_text
-    # 계정 잠금 회피 backoff 는 그대로 유지한다
-    assert "sleep 5" in rf_text, "lockout backoff 를 제거하면 안 된다"
+    # 계정 잠금 회피 backoff 는 그대로 유지한다.
+    # 2026-08-12: 값을 고정 5초에서 "인증 거부(401) 면 길게 / transport 오류면 종전 5초" 로
+    #   나눴다. Dell iDRAC10 IP Blocking 기본값(FailCount=3 / FailWindow=60s)은 5초 간격으로
+    #   피할 수 없고, 반대로 timeout·TLS 실패는 실패 카운터를 올리지 않으므로 늘릴 이유가 없다.
+    #   source: dell.com/.../idrac10_1.xx_scg/network-security-configuration
+    assert "sleep " in rf_text, "lockout backoff 를 제거하면 안 된다"
+    assert "_rf_auth_backoff_seconds" in rf_text
+    assert "_rf_transport_backoff_seconds | default(5)" in rf_text, (
+        "transport 오류의 종전 5초 간격이 사라졌다")
 
 
 def test_no_extra_diagnostic_login_added():

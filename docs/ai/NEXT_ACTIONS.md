@@ -7,6 +7,48 @@
 
 ---
 
+## Redfish 계정 Reconcile 후속 (2026-08-12) — Family Strategy 도입 이후
+
+> 정본: `tests/evidence/2026-08-12-redfish-standard-account-final-compatibility.md`
+> 매트릭스: `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`
+> **현재 어떤 BMC Family 도 `PROVEN` 이 아니다** — 실장비 Write E2E 가 0건이다.
+
+### 운영 결정 필요 (사람 몫 — 코드로 풀 수 없다)
+
+| # | 항목 | 상태 | 왜 지금 |
+|---|---|---|---|
+| ACC-D1 | **Dell 표준 비밀번호 vs iDRAC Security Strengthen Policy** (기존 E-6) | [HOLD] | 해소 전까지 Dell 은 표준 계정으로 수집할 수 없다. 비밀번호 값을 올릴지 장비 정책을 조정할지의 운영 결정. 코드는 원인을 정확히 진단한다 |
+| ACC-D2 | **Global Standard Password 정책 교집합** | [HOLD] | Cisco Strong(max 14) 과 Inspur MinPasswordLength(최대 16) 를 동시에 만족하는 비밀번호가 **존재하지 않을 수 있다**. 매트릭스 4절 A/B/C/D 중 선택 필요 |
+| ACC-D3 | `_rf_account_service_dryrun` 항구 정책 | [PENDING] | `Jenkinsfile_portal:219` 에 override 가 없고 `d3e79167` 은 어느 브랜치에도 없다(dangling). **게이트가 열리면 운영에서 실제 계정 Write 가 나간다.** 2026-08-12 사용자 결정으로 현행 유지 중 |
+| ACC-D4 | audit H-5 (`empty_accounts` -> `GATHER_FAILED`) 수정 여부 | [PENDING] | 고치면 Portal 사용자 문장이 5번 -> 4번으로 바뀐다. Consumer 영향 결정 필요라 이번에 손대지 않았다 |
+
+### 실장비 검증 (lab / 사이트 필요)
+
+| # | 항목 | 우선순위 | 절차 |
+|---|---|---|---|
+| ACC-L1 | 통제된 1대 read-only Capability Probe -> dry-run -> Write -> 2차 실행 Write 0 | [HIGH] | evidence 문서 5절에 명령과 확인 필드까지 정리했다 |
+| ACC-L2 | Dell iDRAC7/8 read-only 미러 캡처 | [HIGH] | Manager-scoped AccountService 실증 (현재 미러는 iDRAC9/10 만) |
+| ACC-L3 | Lenovo Purley 미러 캡처 | [HIGH] | pre-populated 빈 slot 판정 실증. 현재 XCC 미러는 1호스트뿐 |
+| ACC-L4 | Cisco 최신 BMC 미러 캡처 | [HIGH] | RoleId `Administrator` + Id semantics 실증 (현재 미러는 CIMC 만) |
+| ACC-L5 | Supermicro X13/X14 미러 (계정 분리 전/후 Firmware 각 1) | [MED] | 분리 경계 실증 + 최신 `/AccountService` POST 도입 판단 |
+| ACC-L6 | Inspur M6 미러 + ETag/If-Match 실동작 + `Oem.Public.Status` error code 목록 | [MED] | 현재 fixture 는 mock |
+| ACC-L7 | Huawei 미러 + **Redfish Login Interface 활성화 방법** | [MED] | 계정이 있고 권한도 맞는데 인증이 안 되는 원인. OEM field/action 미확보로 이번에 미구현 |
+| ACC-L8 | Fujitsu iRMC RESTful API Specification pack 원문 + S4/S5/S6 미러 | [LOW] | Create 계약 자체가 미확보. 현재 generic 유지 |
+| ACC-L9 | Quanta 3 Family(Legacy v1.1 / Modern v1.11 / Inhouse OpenBMC) 미러 | [LOW] | upstream OpenBMC 를 QCT 계약으로 간주하면 안 된다 |
+| ACC-L10 | 후보 backoff 65초가 Jenkins Gather stage 시간에 주는 영향 실측 | [LOW] | Dell 복구 후보 4개 전부 실패 시 약 3분 추가. `-e _rf_auth_backoff_seconds=<n>` 로 조절 가능 |
+
+### 코드 후속 (근거 확보 후)
+
+| # | 항목 | 선행 조건 |
+|---|---|---|
+| ACC-C1 | Cisco IMC 3.x instance POST(`POST /Accounts/<ID>`) Family 추가 | ACC-L4 또는 IMC 3.x 미러 |
+| ACC-C2 | Supermicro 최신 `/AccountService` POST Family 추가 | ACC-L5 (어느 Firmware 부터인지 확정) |
+| ACC-C3 | Fujitsu `RedfishAdmin` Role Family 추가 | ACC-L8 |
+| ACC-C4 | Huawei Redfish Login Interface 자동 복구 | ACC-L7 |
+| ACC-C5 | `account_service_provision` 분할 (`redfish_gather.py` 5,800줄 초과 — rule 10 R3) | 기존 NEXT_ACTIONS 항목과 동일. `module_utils` import 경로가 Jenkins agent 에서 동작하는지 확인이 선행 |
+
+---
+
 ## 실환경 검증 잔여 (2026-08-12) — 이 세션에서 확인 불가
 
 > 정본: `tests/evidence/2026-08-12-runtime-verification-and-bugfix.md` §9.

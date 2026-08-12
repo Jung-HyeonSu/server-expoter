@@ -2,6 +2,45 @@
 
 > 외부 시스템 (Redfish / IPMI / SSH / WinRM / vSphere) 계약 카탈로그. rule 28 #11 측정 대상 (TTL 90일). rule 96 origin 주석 정본.
 
+## 일자: 2026-08-12 — 9 Vendor 계정 Write 계약 origin (공식 조사 반영)
+
+> 정본 매트릭스: `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`
+> 아래는 `redfish_gather._ACCOUNT_FAMILIES` 각 항목의 근거 출처다 (rule 96 R1).
+
+| Family | 계약 | origin |
+|---|---|---|
+| `dell_slot_patch` | 빈 slot PATCH, slot 1 = IPMI anonymous 예약 | dell.com/.../idrac8_2.70.70.70_ug/configuring-local-users |
+| `dell_idrac10_slot_patch` | slot 1 + slot 2(default root) 예약, Local User 32 | dell.com/.../idrac10_1.20.xx_ug/configuring-local-users |
+| (Dell 공통) | iDRAC10 IP Blocking FailCount 3 / FailWindow 60s / Penalty 60s | dell.com/.../idrac10_1.xx_scg/network-security-configuration |
+| (Dell 공통) | iDRAC9 Password Strength Policy (4.40.00.00+) | dell.com/.../idrac9_7.xx_ug/password-strength-policy |
+| `hpe_ilo4` | OEM namespace `Oem/Hp`, Password/UserName max 39 | hewlettpackard.github.io/ilo-rest-api-docs/ilo4/ |
+| `hpe_ilo5plus` | RoleId(Administrator/Operator/ReadOnly) + Oem/Hpe/Privileges | servermanagementportal.ext.hpe.com/docs/redfishservices/ilos/supplementdocuments/managingusers |
+| (generic) | CSUS 3200 RMC — Account 는 username path, POST create 는 목차만 확인 | support.hpe.com/.../sd00002765en_us (Configuring RMC user accounts / PATCH update) |
+| (generic) | Superdome Flex 280 RMC — 30 users, password 6~40 class 기반 min | support.hpe.com/.../a00108548en_us (Setting up users from CLI) |
+| `lenovo_purley_slot_patch` | Intel Purley = pre-populated slot, 빈 UserName 이 빈 slot, PATCH create | pubs.lenovo.com/xcc-restapi/create_an_account_intel_p_based_patch |
+| `lenovo_collection_post` | Whitley/AMD = Collection POST; TSM 은 PasswordChangeRequired 미지정 시 default **true** | pubs.lenovo.com/xcc-restapi/create_an_account_post, pubs.lenovo.com/tsm/post_create_new_account |
+| `lenovo_xcc_accounttypes` | XCC2/XCC3 AccountTypes(Redfish/SNMP/ManagerConsole/IPMI/WebUI), XCC3 은 `HostBootStrap` 제외 | pubs.lenovo.com/xcc2-restapi/create_an_account_post, pubs.lenovo.com/xcc3-restapi/resource_account_service_accounts |
+| `cisco_cimc_collection_post_id` | IMC 4.1~6.0 = Collection POST + body `Id` + RoleId `admin` | cisco.com/.../b_Cisco_IMC_REST_API_guide_4_1 + 사이트 실측 10.100.15.2 (201) |
+| `cisco_bmc_dynamic` | 최신 Cisco BMC = Collection POST, RoleId **`Administrator`**, Id 는 BMC 할당 | cisco.com/.../b_cisco-bmc-rest-api-guide (1.0/2.0/4.0) |
+| (미채택) | Cisco IMC 3.x = `POST /Accounts/<ID>` (instance) — 근거 부족으로 generic 유지 | cisco.com/.../b_Cisco_IMC_REST_API_guide_301 |
+| `supermicro_legacy` | X10+/H11+ Redfish, `POST /AccountService/Accounts`, Role Administrator/Operator/ReadOnly | supermicro.com/manuals/other/redfish-ref-guide-html/.../account-service.htm |
+| `supermicro_split_account` | Gen13 01.05.xx+ / Gen14 01.02.xx.xx+ / NVIDIA Superchip 01.04.xx+ 부터 IPMI·Redfish 계정 분리, AccountTypes 기본 Redfish | supermicro.com/en/support/manuals/product/software/redfish-user-guide/Content/general-content/accounts.htm |
+| `inspur_m6` | Collection POST(`Id` optional), **HTTP 200 + `Oem.Public.Status == 0`**, PATCH 는 `If-Match` 요구, MinPasswordLength 8~16 설정 가능 | 浪潮英信服务器 Redfish用户手册 V1.2 §4.1~4.7 |
+| `huawei_ibmc` | Collection POST + Instance PATCH (2019 MM920 / 2025 Kunpeng 양쪽 공식), Roles + PrivilegeMap 제공 | Huawei EDOC1100372764, EDOC1100105860 |
+| (Huawei 미해결) | Local User 별 **Redfish Login Interface** 가 꺼져 있을 수 있음 — 자동 활성화 방법 미확보 | Huawei iBMC User Guide — Setting the User Interfaces for Logging to iBMC |
+| (Huawei 공통) | lockout: 5회 연속 실패 -> 5분 자동 잠금 | Huawei iBMC User Guide — Accessing the iBMC CLI |
+| `generic_collection_post` | Fujitsu S4/S5/S6, Quanta 전 세대, X-Series, IMM2, X9, Inspur M5/M7, HPE RMC — **공식 Write 계약 미확보** | 근거 없음이 곧 기록이다 (매트릭스 2.6 / 2.9 절) |
+
+### Password Policy 교집합 위험 (신규 기록)
+
+```text
+Cisco IMC Strong Password 활성  ->  max 14
+Inspur MinPasswordLength        ->  고객이 최대 16 까지 설정 가능
+```
+
+두 정책을 동시에 만족하는 단일 비밀번호가 **존재하지 않을 수 있다.** 코드 버그가 아니라
+제품 Contract 결정 사항이다 (매트릭스 4절).
+
 ## 일자: 2026-08-03 (감사) — **조립 경로 17곳 전수 목록 + 세대 이동 위험도**
 
 > 배경: iDRAC8 사고의 본질은 "리소스 위치가 세대별로 다를 수 있는데 우리는 경로를 **문자열로 조립**한다"
