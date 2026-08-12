@@ -132,8 +132,48 @@ accounts:
     info = _mod.inspect_accounts(bad, vendor="dell")
     joined = " ".join(info["problems"])
     assert "role=" in joined
-    assert "허용 label 밖" in joined
     assert "role=primary 후보가 없다" in joined
+
+
+def test_recovery_label_outside_allowed_set_is_a_problem():
+    """허용 label 검사는 **recovery 후보에만** 적용된다."""
+    bad = """
+accounts:
+  - username: "u1"
+    password: "p1"
+    label: "common_infraops"
+    role: "primary"
+  - username: "u2"
+    password: "p2"
+    label: "not_a_known_label"
+    role: "recovery"
+"""
+    joined = " ".join(_mod.inspect_accounts(bad, vendor="dell")["problems"])
+    assert "recovery label 이 허용 set 밖" in joined
+    assert "not_a_known_label" in joined
+
+
+def test_primary_label_outside_recovery_set_is_not_a_problem():
+    """primary label 을 recovery 허용 set 으로 재던 오탐의 회귀 방어 (2026-08-12).
+
+    허용 set 의 정본은 adapter `credentials.recovery_accounts[].vault_label` —
+    즉 **recovery 후보의 label 집합**이다. 표준 수집 계정(primary)의 label 은
+    그 목록에 없는 것이 정상이며, 실제 9 vendor vault 가 모두 그 형태다.
+    종전 구현은 primary 까지 검사해 9 vendor 전부를 오탐으로 실패시켰다.
+    """
+    ok = """
+accounts:
+  - username: "u1"
+    password: "p1"
+    label: "common_infraops"
+    role: "primary"
+  - username: "u2"
+    password: "p2"
+    label: "dell_fallback_1"
+    role: "recovery"
+"""
+    info = _mod.inspect_accounts(ok, vendor="dell")
+    assert not info["problems"], f"오탐: {info['problems']}"
 
 
 def test_recovery_first_is_warning_not_failure():
