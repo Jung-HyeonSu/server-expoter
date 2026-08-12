@@ -337,6 +337,10 @@
                 channel:           "os"
                 adapter_candidate: "{{ (_selected_adapter | default({})).adapter_id | default(none) }}"
                 detected_os:       "linux"
+                # 2026-08-12: 어떤 자격증명 세트로 수집했는지 (Secret 아님 — location/channel 조합).
+                #   성공 경로에도 남긴다 — 성공한 대상과 실패한 대상이 같은 세트를 썼는지
+                #   비교할 수 있어야 원인 범위를 좁힐 수 있다. Redfish / ESXi 와 동일 배치.
+                credential_scope:  "{{ (_cred_scope | default('')) or none }}"
                 selected_port:     22
                 # 2026-08-10 (Phase 3-A): PLAY 1 의 공통 precheck 가 **실제 probe 한 포트**를
                 # 그대로 쓴다. linux 로 분류되려면 5986 실패 → 5985 실패 → 22 성공 순으로
@@ -619,6 +623,10 @@
                 channel:           "os"
                 adapter_candidate: "{{ (_selected_adapter | default({})).adapter_id | default(none) }}"
                 detected_os:       "windows"
+                # 2026-08-12: 어떤 자격증명 세트로 수집했는지 (Secret 아님 — location/channel 조합).
+                #   성공 경로에도 남긴다 — 성공한 대상과 실패한 대상이 같은 세트를 썼는지
+                #   비교할 수 있어야 원인 범위를 좁힐 수 있다. Redfish / ESXi 와 동일 배치.
+                credential_scope:  "{{ (_cred_scope | default('')) or none }}"
                 # selected_port 는 정수 — checked_ports([5985,5986]) / Linux SSH 경로(22) /
                 # precheck 모듈(int) 과 타입 일관. 구: 문자열 "5986" (2026-06-30 실측 불일치).
                 selected_port:     "{{ ansible_port | default(5986) | int }}"
