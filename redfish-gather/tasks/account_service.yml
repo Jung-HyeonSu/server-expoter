@@ -91,6 +91,14 @@
       create_uri: null
       create_uri_kind: null
       create_uri_basis: null
+      # policy_conflict: 전역 표준 비밀번호와 장비 정책이 구조적으로 충돌하는가.
+      #   자동 완화도 자동 회전도 하지 않는다 — 운영자가 알아볼 수 있게 상태만 남긴다.
+      policy_conflict: null
+      auth_budget_limit: null
+      auth_budget_exhausted: null
+      role_id_unsupported: null
+      # login_interfaces: 계정별 Redfish 접근 스위치 (Huawei 고유 축, 읽기 전용).
+      login_interfaces: null
       # isolation_basis: Password 단독 PATCH 를 고른 근거 수준.
       #   live_proven(실장비 재현) / advisory_derived(벤더 Advisory) / safety_strategy(저장소 선택)
       isolation_basis: null
@@ -210,6 +218,15 @@
           create_uri_kind: "{{ (_rf_acct_result.account_service | default({})).create_uri_kind | default(none) }}"
           # create_uri_basis: 최신 Create 계약을 쓸 근거가 장비값에서 나왔는가.
           create_uri_basis: "{{ (_rf_acct_result.account_service | default({})).create_uri_basis | default(none) }}"
+          # policy_conflict: 장비 정책과 전역 표준 비밀번호가 구조적으로 맞지 않는 상태.
+          policy_conflict: "{{ (_rf_acct_result.account_service | default({})).policy_conflict | default(none) }}"
+          # auth_budget_*: 계정 잠금 전에 멈췄는가 (재시도를 늘리는 값이 아니다).
+          auth_budget_limit: "{{ (_rf_acct_result.account_service | default({})).auth_budget_limit | default(none) }}"
+          auth_budget_exhausted: "{{ (_rf_acct_result.account_service | default({})).auth_budget_exhausted | default(none) }}"
+          # role_id_unsupported: 장비가 알려 준 Roles 목록에 없는 권한 이름을 썼는가.
+          role_id_unsupported: "{{ (_rf_acct_result.account_service | default({})).role_id_unsupported | default(none) }}"
+          # login_interfaces: 계정에 Redfish 접근이 켜져 있는가 (Huawei). 읽기 전용.
+          login_interfaces: "{{ (_rf_acct_result.account_service | default({})).login_interfaces | default(none) }}"
           # isolation_basis: 이 Family 의 쓰기 방식을 무슨 근거로 골랐는가.
           #   실장비 실측(live_proven)과 벤더 Advisory 추론(advisory_derived)을 합치지 않는다.
           isolation_basis: "{{ (_rf_acct_result.account_service | default({})).isolation_basis | default(none) }}"

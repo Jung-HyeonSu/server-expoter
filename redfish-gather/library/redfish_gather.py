@@ -456,6 +456,27 @@ def _err(section, message, detail=None, code=None):
 MAX_EXTENDED_INFO_ITEMS = 3
 MAX_EXTENDED_INFO_LEN = 300
 
+# 이번 run 에서 표준 계정에 허용할 **최대 실패 인증 횟수**.
+# Dell IP Blocking 기본값(60초 창에서 3회)을 기준으로 잡는다 — 장비가 정책을 알려주지
+# 않아도 무제한으로 두지 않는다.
+ACCOUNT_DEFAULT_AUTH_BUDGET = 3
+
+
+def account_auth_budget(policy):
+    """장비가 선언한 lockout 임계에서 실패 인증 예산을 끌어온다.
+
+    **재시도를 늘리는 장치가 아니다.** 상한을 두어 검증 루프가 계정을 잠그기 전에
+    멈추게 한다. `AccountLockoutThreshold == 0` 을 "제한 없음" 으로 읽지 않는다 —
+    Dell 은 그 값이 0 이어도 IP Blocking(FailCount 3 / FailWindow 60s)이 따로 동작한다.
+    source: 02 §22/§23, 03 §22, 04 §22, 06 §21, 07 §25
+    """
+    threshold = (policy or {}).get('lockout_threshold')
+    if isinstance(threshold, int) and not isinstance(threshold, bool) and threshold > 0:
+        # 임계에 도달하기 전에 멈춘다.
+        return max(1, min(threshold - 1, ACCOUNT_DEFAULT_AUTH_BUDGET + 2))
+    return ACCOUNT_DEFAULT_AUTH_BUDGET
+
+
 # 계정 쓰기 후 재인증 확인 간격(초). 첫 시도는 지연 없이, 이후 1초 / 5초.
 # BMC 가 계정 변경을 비동기 반영하거나 직전 연결이 옛 자격으로 남아 있는 경우를 흡수한다.
 # 합계 6초 — 무한 대기가 되지 않도록 값 자체로 상한을 고정한다.
@@ -4926,6 +4947,22 @@ def _account_policy_of(service):
                     return v
         return None
     supported = _safe(service, 'SupportedAccountTypes', default=None)
+
+    def _auth_methods():
+        """Oem 하위에서 인증 방식 스위치를 **이름으로 분기하지 않고** 찾는다.
+
+        upstream OpenBMC 는 `Oem.OpenBMC.AuthMethods` 에 BasicAuth/SessionToken/…
+        를 노출한다. namespace 를 하드코딩하면 rule 12 R1 위반이므로 키 이름만 본다.
+        """
+        oem = service.get('Oem')
+        if not isinstance(oem, dict):
+            return None
+        for section in oem.values():
+            if isinstance(section, dict) and isinstance(section.get('AuthMethods'), dict):
+                return {k: v for k, v in section['AuthMethods'].items()
+                        if isinstance(v, bool)}
+        return None
+
     return {
         'service_enabled':        _safe(service, 'ServiceEnabled', default=None),
         'min_password_length':    _num('MinPasswordLength'),
@@ -4937,7 +4974,45 @@ def _account_policy_of(service):
         'auth_failure_delay_seconds': _oem_num('AuthFailureDelayTimeSeconds'),
         'auth_failures_before_delay': _oem_num('AuthFailuresBeforeDelay'),
         'supported_account_types': [s for s in _as_list(supported) if isinstance(s, str)] or None,
+        # 2026-08-12 (rev.2): 인증 방식 자체가 꺼져 있을 수 있다.
+        #   Dell iDRAC9 7.30.10.50+ / iDRAC10 1.30.10.50+ 는 기본이 `Unadvertised` 이고,
+        #   Lenovo XCC3 도 `Unadvertised` 다. **Unadvertised != Disabled** 이며,
+        #   이 client 는 처음부터 Authorization 헤더를 보내므로 Unadvertised 와 호환된다.
+        #   `Disabled` 를 '비밀번호가 틀렸다' 로 오진하지 않기 위해 상태를 남긴다.
+        #   **정책을 바꾸지 않는다 — 읽기만 한다.**
+        # source: Dell KB 000437501, pubs.lenovo.com/xcc3-restapi (02 §24, 03 §23, 09 §23)
+        'http_basic_auth': _str(_safe(service, 'HTTPBasicAuth', default='')) or None,
+        'auth_methods':    _auth_methods(),
     }
+
+
+def _account_login_interfaces(acc_data):
+    """계정 Resource 에서 **Login Interface 목록**을 관측한다 (Huawei 고유 축).
+
+    Huawei iBMC 는 Local User 마다 Web / SNMP / IPMI / SSH / SFTP / Local / **Redfish**
+    인터페이스를 개별로 켜고 끈다. 즉 계정이 있고 권한도 맞고 비밀번호도 맞는데
+    `Redfish` 가 꺼져 있으면 Redfish 인증이 실패한다. 이것을 모르면 그 실패를
+    "비밀번호 불일치" 로 오진하고 쓸데없는 Account Write 를 유발한다.
+
+    **읽기 전용이다.** 이 값을 켜는 정확한 OEM payload 는 공식 자료에서 확인되지 않았고,
+    추측해서 쓰지 않는다 (07 §12/§37). 관측해서 진단에만 쓴다.
+
+    OEM namespace 이름으로 분기하지 않고 키 이름만 본다 (rule 12 R1).
+    source: Huawei "Setting the User Interfaces for Logging to iBMC" (07 §10)
+    """
+    oem = _safe(acc_data, 'Oem', default=None)
+    if not isinstance(oem, dict):
+        return None
+    for section in oem.values():
+        if not isinstance(section, dict):
+            continue
+        for key, value in section.items():
+            if 'logininterface' not in key.replace('_', '').lower():
+                continue
+            items = [s for s in _as_list(value) if isinstance(s, str)]
+            if items:
+                return items
+    return None
 
 
 def _role_ids_from_collection(coll):
@@ -5077,6 +5152,8 @@ def account_service_discover(bmc_ip, username, password, timeout, verify_ssl,
             #   tests/reference/redfish/lenovo/10_50_11_232 의 계정 3개에 실제로 존재한다.
             #   즉 **XCC3 전용 개념이 아니다.** slot id 문자열로 맞히지 않고 이 값을 본다.
             'host_bootstrap': _safe(acc_data, 'HostBootstrapAccount', default=None),
+            # Huawei 고유 축 — 계정별 Redfish 접근 스위치 (읽기 전용, 07 §10).
+            'login_interfaces': _account_login_interfaces(acc_data),
         })
     out['member_read'] = len(out['accounts'])
 
@@ -6190,6 +6267,13 @@ def account_service_provision(
         'create_uri':        None,
         'create_uri_kind':   None,
         'create_uri_basis':  None,
+        # 정책 충돌 / 인증 예산 / 미지원 RoleId / 계정별 Redfish 접근 스위치.
+        'policy_conflict':      None,
+        'auth_budget_limit':    None,
+        'auth_budget_exhausted': False,
+        'role_id_unsupported':  False,
+        'login_interfaces':     None,
+        'write_rejections':     None,
         'errors':          [],
     }
 
@@ -6203,6 +6287,7 @@ def account_service_provision(
     # Capability Discovery 로 장비가 선언한 인증 실패 패널티를 읽은 뒤 확정된다(아래 1) 단계).
     # 그 전에 호출될 일은 없지만, 미할당 상태가 남지 않게 기본값으로 먼저 묶어 둔다.
     verify_schedule = ACCOUNT_VERIFY_DELAYS
+    auth_budget_limit = ACCOUNT_DEFAULT_AUTH_BUDGET
 
     def _verify_standard_credential():
         """쓴 뒤 표준 자격으로 실제 인증되는지 확인. (ok, code, err, attempts)
@@ -6213,6 +6298,17 @@ def account_service_provision(
         out['verify_resource'] = 'Systems'
         code_v, err_v = None, None
         for attempt, delay in enumerate(verify_schedule):
+            # 예산을 넘기면서까지 확인하지 않는다. 여기서 더 시도하면 표준 계정을 잠근다.
+            if out['auth_budget'].get(target_username, 0) >= auth_budget_limit:
+                out['auth_budget_exhausted'] = True
+                out['errors'].append(_err(
+                    'account_service',
+                    '재인증 확인을 계정 잠금 한도 전에 중단했습니다. '
+                    '장비의 계정 잠금 정책과 표준 계정 상태를 확인하세요.',
+                    detail=(f'auth budget {auth_budget_limit} reached for standard account; '
+                            f'verified attempts={attempt}'),
+                ))
+                return False, code_v, err_v, attempt
             if delay:
                 time.sleep(delay)
             code_v, _, err_v = _get(bmc_ip, 'Systems', target_username, target_password,
@@ -6294,14 +6390,41 @@ def account_service_provision(
         'lockout_duration':    policy.get('lockout_duration'),
         'auth_failure_delay_seconds': policy.get('auth_failure_delay_seconds'),
         'supported_account_types': policy.get('supported_account_types'),
+        # 인증 방식 자체가 꺼져 있으면 비밀번호 문제로 오진하기 쉽다 — 상태만 남긴다.
+        'http_basic_auth': policy.get('http_basic_auth'),
+        'auth_methods':    policy.get('auth_methods'),
         # 비밀번호 길이 자체는 남기지 않는다 (탐색 공간을 줄여 주는 약한 누출).
         'within_declared_bounds': within,
     }
     # 재인증 확인 간격을 장비가 선언한 패널티에 맞춰 넓힌다 (정책은 읽기만 한다).
     verify_schedule = account_verify_delays(policy)
     out['verify_schedule_seconds'] = list(verify_schedule)
-    if within is False:
-        # 사용자 결정 2026-08-12: 여기서 **차단하지 않는다.** 시도하고 응답으로 확정한다.
+    # 실패 인증 예산도 장비가 선언한 값에서 끌어온다 (재시도를 늘리지 않는다).
+    auth_budget_limit = account_auth_budget(policy)
+    out['auth_budget_limit'] = auth_budget_limit
+    # 2026-08-12 (rev.2): 정책 충돌을 **기계가 읽을 수 있는 상태**로 남긴다.
+    #   전역 표준 비밀번호는 하나인데 Vendor 정책은 서로 다르다. 예를 들어 Cisco IMC 의
+    #   Strong Password(max 14)와 Inspur 의 설정 가능 MinPasswordLength(최대 16)가 같은
+    #   사이트에 있으면 두 정책을 동시에 만족하는 비밀번호가 **수학적으로 존재하지 않는다.**
+    #   그것은 코드 버그가 아니라 제품 Contract 문제이므로, 무리하게 반복 Write 하지 않고
+    #   운영자가 알아볼 수 있는 상태로 노출한다.
+    #
+    #   **차단하지 않는다**(사용자 결정 2026-08-12). 정책을 완화하지도, 비밀번호를 바꾸거나
+    #   회전시키지도 않는다. 계약상 허용된 결정적 Write 를 1회 하고 실제 응답과
+    #   Fresh Auth 로 최종 판정한다.
+    if isinstance(min_len, int) and isinstance(max_len, int) and min_len > max_len:
+        out['policy_conflict'] = {'kind': 'declared_range_impossible',
+                                  'min_password_length': min_len,
+                                  'max_password_length': max_len}
+        out['errors'].append(_err(
+            'account_service',
+            '장비가 선언한 비밀번호 길이 정책이 서로 모순됩니다. 장비 정책을 확인하세요.',
+            detail=f'declared MinPasswordLength={min_len} > MaxPasswordLength={max_len}',
+        ))
+    elif within is False:
+        out['policy_conflict'] = {'kind': 'password_outside_declared_range',
+                                  'min_password_length': min_len,
+                                  'max_password_length': max_len}
         out['errors'].append(_err(
             'account_service',
             '표준 계정 비밀번호가 장비가 선언한 길이 정책 범위를 벗어납니다. '
@@ -6319,6 +6442,19 @@ def account_service_provision(
     out['isolation_basis']   = family.get('isolation_basis')
     out['firmware_advisory'] = family.get('firmware_advisory')
     role_id = choose_role_id(family, target_role, discovery)
+    # 2026-08-12 (rev.2): 고른 RoleId 가 장비가 선언한 목록에 없으면 그 사실을 남긴다.
+    #   Fujitsu 는 RedfishAdmin / RedfishOperator / RedfishReadOnly 라는 자체 Role 체계를
+    #   갖는데, 그것이 곧 `ManagerAccount.RoleId` literal 이라는 근거는 없다(08 §9/§29).
+    #   추측해서 바꾸지 않는다 — 보내되, 근거가 없다는 사실을 진단에 남긴다.
+    supported_roles = [r for r in (discovery.get('role_ids') or []) if isinstance(r, str)]
+    if supported_roles and role_id not in supported_roles:
+        out['role_id_unsupported'] = True
+        out['errors'].append(_err(
+            'account_service',
+            '장비가 알려 준 권한 목록에 없는 권한 이름을 사용합니다. '
+            '표준 계정의 권한 설정을 확인하세요.',
+            detail=f'RoleId={role_id!r} not in device Roles {sorted(supported_roles)}',
+        ))
 
     # 2) 기존 사용자 검색
     #
@@ -6397,6 +6533,20 @@ def account_service_provision(
                 'account_service',
                 '대상 계정이 잠금 상태입니다. 비밀번호 불일치가 아니라 계정 잠금이 원인일 수 있습니다.',
                 detail=f'slot={existing.get("id")} Locked=true',
+            ))
+        # 2026-08-12 (rev.2): 계정별 Redfish 접근 스위치 (Huawei 고유 축).
+        #   계정이 있고 권한도 맞는데 Redfish 가 꺼져 있으면 인증이 실패한다. 그 실패를
+        #   비밀번호 문제로 오진하면 필요 없는 Account Write 가 반복된다.
+        #   **켜는 payload 는 공식 근거가 없어 구현하지 않는다** — 관측해서 알려만 준다.
+        out['login_interfaces'] = existing.get('login_interfaces')
+        if existing.get('login_interfaces') is not None \
+                and not any(s.lower() == 'redfish' for s in existing['login_interfaces']):
+            out['errors'].append(_err(
+                'account_service',
+                '대상 계정에 Redfish 접근이 허용되어 있지 않습니다. '
+                '비밀번호 문제가 아니라 계정의 접근 인터페이스 설정 문제일 수 있습니다.',
+                detail=('login interfaces='
+                        + ','.join(existing['login_interfaces'])),
             ))
         if dryrun:
             out['verification'] = 'skipped'
@@ -6662,6 +6812,12 @@ def account_service_provision(
         out['write_accepted'] = accepted_r
         out['vendor_status'] = reason_r
         if accepted_r:
+            # 삭제하고 새로 만든 계정은 **다시 확인해야 한다.** 여기서 예산이 없다는 이유로
+            # 확인을 건너뛰면, 계정을 지워 놓고 그 결과를 보지 않은 채 실패로 보고하게 된다.
+            # 예산의 목적은 헛도는 재시도로 계정을 잠그는 것을 막는 것이지, 방금 만든 계정의
+            # 검증을 막는 것이 아니다. 그래서 이 한 번의 확인 몫만 상한을 올린다.
+            auth_budget_limit += len(verify_schedule)
+            out['auth_budget_limit'] = auth_budget_limit
             out['method']   = 'delete_repost'
             out['slot_uri'] = _str(_safe(post_data, '@odata.id')) or existing.get('slot_uri')  # Round 8 #4: 비-str @odata.id
             # 2026-08-12: 재생성 뒤에도 반드시 재조회 + 재인증까지 한다. 종전에는

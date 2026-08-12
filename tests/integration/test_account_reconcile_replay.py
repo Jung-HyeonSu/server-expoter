@@ -182,6 +182,10 @@ def test_policy_fields_parse_from_vendor_fixture(path):
         #   여기서 끌어온다 (HPE iLO 는 AuthFailureDelayTimeSeconds=10 을 선언한다).
         "auth_failure_delay_seconds", "auth_failures_before_delay",
         "supported_account_types",
+        # 2026-08-12 (rev.2): 인증 방식 자체가 꺼져 있을 수 있다. Unadvertised(광고만 안 함)와
+        #   Disabled(사용 불가)는 다르고, Disabled 를 '비밀번호 오류' 로 오진하면 안 된다.
+        #   읽기만 한다 — 자동으로 켜지 않는다 (02 §24, 03 §23, 09 §23/§24).
+        "http_basic_auth", "auth_methods",
     }
     for key in ("min_password_length", "max_password_length",
                 "lockout_threshold", "lockout_duration",

@@ -597,7 +597,8 @@ def test_policy_never_records_password_length(monkeypatch):
     assert set(out["policy"]) == {
         "min_password_length", "max_password_length", "lockout_threshold",
         "lockout_duration", "auth_failure_delay_seconds",
-        "supported_account_types", "within_declared_bounds"}
+        "supported_account_types", "within_declared_bounds",
+        "http_basic_auth", "auth_methods"}
     assert "password_length" not in str(out["policy"]).replace("min_password_length", "") \
         .replace("max_password_length", "")
 
