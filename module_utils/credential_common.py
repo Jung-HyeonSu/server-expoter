@@ -35,6 +35,28 @@ OS_TYPES = ("linux", "windows")
 #: vault 디렉터리 루트 (저장소 상대)
 VAULT_ROOT = "vault"
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Redfish 표준 수집 계정(Standard Gathering Account) — **전역 1개**
+# ──────────────────────────────────────────────────────────────────────────────
+# 2026-08-12 Contract 확정:
+#   표준 수집 계정은 Location 과도 Vendor 와도 무관하게 **하나**다.
+#   ich+Dell / ich+HPE / chj+Dell / yi+Lenovo / git+Cisco … 전부 같은 계정이다.
+#   따라서 경로에 location 도 vendor 도 들어가지 않는다 — 상수다.
+#
+# 왜 상수로 두는가:
+#   함수 인자로 location/vendor 를 받아 조합하면 "언젠가 Location 별로 갈릴 수 있다" 는
+#   여지가 코드에 남는다. 그 여지가 곧 9 vendor × 4 Location = 36벌 중복의 원인이었다
+#   (2026-08-12 실측: 9개 vendor vault 의 primary 가 전부 동일 — distinct digest 1개).
+#   상수로 두면 중복이 구조적으로 불가능하다.
+#
+# Recovery 계정만 (location + vendor) 축을 갖는다. 목적이 다르기 때문이다 —
+# Recovery 는 수집용이 아니라 **표준 계정을 만들거나 되살리기 위한** 계정이다.
+REDFISH_STANDARD_SCOPE = "common/redfish/standard"
+REDFISH_STANDARD_RELPATH = "{0}/{1}.yml".format(VAULT_ROOT, REDFISH_STANDARD_SCOPE)
+
+#: 표준 계정으로 인정하는 role. 이 role 이 아닌 항목은 표준 후보가 될 수 없다.
+ROLE_PRIMARY = "primary"
+
 #: 경로 조각으로 허용하는 문자. registry / vendor_aliases 가 오염돼도
 #: `../` 같은 조각이 경로에 들어가지 못하게 하는 최종 방어선이다.
 _PATH_SAFE = re.compile(r"\A[a-z0-9_-]+\Z")
@@ -148,6 +170,89 @@ def resolve_credential_scope(
         "selection_basis": basis,
         "reason": REASON_RESOLVED,
     }
+
+
+def resolve_redfish_credentials(
+    location,
+    known_locations,
+    known_vendors=(),
+    vendor=None,
+):
+    """Redfish 전용 — 축이 **둘**이라 결과도 둘이다.
+
+    Args:
+        location:        `se_location` extra-var 값
+        known_locations: locations.yml 의 키 집합
+        known_vendors:   vendor_aliases.yml 의 canonical 키 집합
+        vendor:          canonical vendor
+
+    Returns:
+        dict — Secret 없음:
+            standard_credential_scope / standard_vault_relpath
+                항상 같은 값(전역 상수). location / vendor 를 보지 않는다.
+            recovery_credential_scope / recovery_vault_relpath
+                (location, vendor) 로 결정. 못 정하면 둘 다 None.
+            reason
+                **recovery 쪽 판정 결과**다. 표준 계정은 상수라 판정할 것이 없다.
+                'vendor_unresolved' 여도 표준 계정은 여전히 사용 가능하다 —
+                호출자는 표준으로 인증을 시도할 수 있고, 다만 복구는 할 수 없다.
+
+    fallback 이 없다는 것은 여기서도 동일하다: 표준 vault 가 없다고 vendor vault 의
+    primary 를 쓰지 않고, Dell recovery 가 없다고 HPE recovery 를 쓰지 않는다.
+    각 scope 는 자기 파일 하나만 본다.
+    """
+    recovery = resolve_credential_scope(
+        location=location,
+        target_type="redfish",
+        known_locations=known_locations,
+        known_vendors=known_vendors,
+        vendor=vendor,
+    )
+    return {
+        "standard_credential_scope": REDFISH_STANDARD_SCOPE,
+        "standard_vault_relpath": REDFISH_STANDARD_RELPATH,
+        "recovery_credential_scope": recovery["credential_scope"],
+        "recovery_vault_relpath": recovery["vault_relpath"],
+        "selection_basis": recovery["selection_basis"],
+        "reason": recovery["reason"],
+    }
+
+
+def standard_accounts_of(vault_data):
+    """표준 vault 내용 → 표준 수집 후보. `role: primary` 만, **순서 보존**.
+
+    role 이 primary 가 아닌 항목은 버린다. 표준 vault 에 recovery 가 섞여 들어와도
+    그것으로 수집하지 않기 위해서다 (§14 — scope 를 넘나드는 대체 금지).
+    """
+    return [
+        a for a in normalize_accounts(vault_data)
+        if (a.get("role") or ROLE_PRIMARY) == ROLE_PRIMARY
+    ]
+
+
+def recovery_accounts_of(vault_data):
+    """Recovery vault 내용 → 복구 후보. **순서 보존**.
+
+    `role: primary` 는 제외한다. 이유는 하나다: Location/Vendor vault 에 남아 있는
+    primary 를 표준 계정 대용으로 쓰는 경로를 **구조적으로** 없애기 위해서다.
+    (이관 후에는 애초에 존재하지 않지만, 남아 있어도 쓰이지 않는다.)
+
+    `normalize_accounts` 의 legacy 호환(ansible_user)은 role=primary 를 만들므로
+    여기서 자동으로 제외된다 — recovery vault 의 legacy 키는 표준 계정 복제본이었다.
+    """
+    return [
+        a for a in normalize_accounts(vault_data)
+        if (a.get("role") or ROLE_PRIMARY) != ROLE_PRIMARY
+    ]
+
+
+def redfish_candidates(standard_accounts, recovery_accounts):
+    """Redfish 인증 후보 배열 — 표준이 먼저, 그 다음 recovery.
+
+    두 배열 **내부** 순서는 각각 그대로 둔다. vault 배열 순서 = 시도 순서라는
+    기존 Contract 를 recovery 안에서도 유지한다 (role 기반 재정렬 없음).
+    """
+    return list(standard_accounts or []) + list(recovery_accounts or [])
 
 
 def _as_set(values):

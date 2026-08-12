@@ -342,6 +342,19 @@ for e in response["errors"]:
 > 멈춘 곳은 두 경우 모두 자격증명 단계다.
 > 어떤 세트를 열었는지는 `diagnosis.details.credential_scope` 로 확인한다.
 
+> **Credential scope 두 개 — Redfish 만** (2026-08-12)
+>
+> Redfish 는 계정 축이 둘이라 `details` 에 scope 가 둘 나온다.
+>
+> | 필드 | 값 | 무엇인가 | 채널 |
+> |---|---|---|---|
+> | `credential_scope` | `common/redfish/standard` | **실제 인증·수집에 쓴** 표준 수집 계정. Location / Vendor 와 무관한 전역 1개 | 3채널 (OS/ESXi 는 `<loc>/os/<type>`, `<loc>/esxi`) |
+> | `recovery_credential_scope` | `<loc>/redfish/<vendor>` | 표준 계정을 **만들거나 되살리기 위한** 복구 계정 범위. 수집에는 쓰지 않는다 | Redfish 전용 |
+>
+> 최종 수집은 **반드시** 표준 계정으로 수행된다. 복구 계정으로 수집한 결과가
+> 정상 결과로 나가는 경로는 없다 — 복구가 확인되면 표준 계정으로 **재수집**한다.
+> `diagnosis.details.auth.used_role` 이 `recovery` 인 성공 결과는 존재할 수 없다.
+
 > **매핑 예외 1건**: OS 채널의 관리 포트 전체 실패는 `stage=port` + `code=TCP_CONNECT_FAILED` 다.
 > OS 는 `wait_for` 로만 포트를 확인해 RST 를 관측할 수 없으므로 `TCP_CONNECTION_REFUSED` 로
 > 확정할 수 없다. 멈춘 단계는 포트 감지 단계이므로 `stage` 는 `port` 를 유지한다.

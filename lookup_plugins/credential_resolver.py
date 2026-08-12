@@ -85,13 +85,23 @@ def _import_credential_common(repo_root):
     if module_utils_path not in sys.path:
         sys.path.insert(0, module_utils_path)
     try:
-        from credential_common import resolve_credential_scope  # noqa: WPS433
+        from credential_common import (  # noqa: WPS433
+            resolve_credential_scope,
+            resolve_redfish_credentials,
+        )
     except ImportError:
         raise AnsibleError(
             "credential_resolver: module_utils/credential_common.py를 "
             "import할 수 없습니다. REPO_ROOT={0}".format(repo_root)
         )
-    return resolve_credential_scope
+    return resolve_credential_scope, resolve_redfish_credentials
+
+
+def _clean_str(value):
+    """target_type 분기용 최소 정규화 — 판정 로직은 순수 함수 쪽에 있다."""
+    if value is None:
+        return ""
+    return str(value).strip().lower()
 
 
 def _read_yaml_mapping(path, top_key, what):
@@ -127,7 +137,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
         repo_root = _resolve_repo_root(kwargs, variables)
-        resolve_credential_scope = _import_credential_common(repo_root)
+        resolve_scope, resolve_redfish = _import_credential_common(repo_root)
 
         locations = _read_yaml_mapping(
             os.path.join(repo_root, *LOCATIONS_RELPATH), "locations", "locations.yml"
@@ -138,14 +148,24 @@ class LookupModule(LookupBase):
             "vendor_aliases.yml",
         )
 
-        result = resolve_credential_scope(
-            location=kwargs.get("location"),
-            target_type=kwargs.get("target_type"),
-            known_locations=locations.keys(),
-            known_vendors=vendor_aliases.keys(),
-            os_type=kwargs.get("os_type"),
-            vendor=kwargs.get("vendor"),
-        )
+        # Redfish 는 표준(전역) / 복구(location+vendor) 두 scope 를 함께 돌려준다.
+        # 두 축의 의미가 달라 한 필드에 담으면 반드시 섞인다 — 필드부터 나눈다.
+        if _clean_str(kwargs.get("target_type")) == "redfish":
+            result = resolve_redfish(
+                location=kwargs.get("location"),
+                known_locations=locations.keys(),
+                known_vendors=vendor_aliases.keys(),
+                vendor=kwargs.get("vendor"),
+            )
+        else:
+            result = resolve_scope(
+                location=kwargs.get("location"),
+                target_type=kwargs.get("target_type"),
+                known_locations=locations.keys(),
+                known_vendors=vendor_aliases.keys(),
+                os_type=kwargs.get("os_type"),
+                vendor=kwargs.get("vendor"),
+            )
         # 미등록 Location 진단에 쓰라고 허용 목록을 함께 준다. Secret 이 아니다.
         result["known_locations"] = sorted(locations.keys())
         return [result]

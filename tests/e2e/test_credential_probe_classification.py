@@ -101,7 +101,11 @@ def test_redfish_auth_evidence_is_structured_not_parsed():
     # 후보별 관측은 try_one_account 가 누적하고, 판정은 site.yml 한 곳에서 한다
     probe = _text("redfish-gather/tasks/try_one_account.yml")
     assert "first_auth_status" in probe and "_rf_auth_statuses" in probe
-    assert "_rf_auth_statuses: []" in _text("redfish-gather/tasks/collect_standard.yml")
+    # 2026-08-12: `[]` 리터럴 → `| default([])`. Phase 1(표준) / Phase 3(복구 후 재수집)
+    #   두 번 도는데 매번 비우면 Phase 1 의 401 관측이 사라진다.
+    assert "_rf_auth_statuses: \"{{ _rf_auth_statuses | default([]) }}\"" in _text(
+        "redfish-gather/tasks/collect_standard.yml"
+    )
     # site.yml 은 정수 비교만 한다 (문자열 검색 금지)
     site = _text("redfish-gather/site.yml")
     assert "_rf_auth_statuses" in site

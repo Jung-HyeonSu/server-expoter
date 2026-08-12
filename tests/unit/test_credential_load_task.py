@@ -24,8 +24,17 @@ import pytest
 import yaml
 
 REPO = Path(__file__).resolve().parents[2]
-TASK_REL = "common/tasks/credential/resolve_and_load.yml"
-TASK_PATH = REPO / TASK_REL
+# 2026-08-12: 파일 열기 절차가 load_one.yml 로 빠지고, Redfish 는 2-scope 로딩을
+#   별도 파일에서 한다. 계약은 "credential 로딩 서브시스템 전체" 에 걸리므로
+#   세 파일을 함께 본다 (한 파일만 보면 cacheable / no_log 누락이 다른 파일에 숨는다).
+TASK_REL = "common/tasks/credential/"
+CRED_DIR = REPO / "common" / "tasks" / "credential"
+TASK_RELS = [
+    "common/tasks/credential/resolve_and_load.yml",
+    "common/tasks/credential/load_one.yml",
+    "common/tasks/credential/resolve_and_load_redfish.yml",
+]
+TASK_PATH = CRED_DIR / "resolve_and_load.yml"
 
 _spec = importlib.util.spec_from_file_location(
     "_failure_reason_contract_harness",
@@ -42,12 +51,15 @@ from credential_common import normalize_accounts  # noqa: E402
 
 def _tasks() -> list[dict[str, Any]]:
     """block / rescue / always 안까지 평탄화한 태스크 목록 (generator 를 list 로 고정)."""
-    doc = list(yaml.safe_load_all(TASK_PATH.read_text(encoding="utf-8")))[0]
-    return list(_iter_tasks(doc))
+    out: list[dict[str, Any]] = []
+    for rel in TASK_RELS:
+        doc = list(yaml.safe_load_all((REPO / rel).read_text(encoding="utf-8")))[0]
+        out.extend(_iter_tasks(doc))
+    return out
 
 
 TASKS = _tasks()
-RAW = TASK_PATH.read_text(encoding="utf-8")
+RAW = "\n".join((REPO / rel).read_text(encoding="utf-8") for rel in TASK_RELS)
 
 
 def _code_only(text: str) -> str:
@@ -94,14 +106,22 @@ def _render(template: str, ctx: dict[str, Any]) -> Any:
     return _ansible_env().from_string(template).render(**ctx)
 
 
+# outcome 은 두 단계로 만들어진다:
+#   load_one.yml    — 파일 부재 / 복호화 실패 / loaded
+#   호출자          — loaded 인데 후보가 0개면 empty_accounts
+# 두 템플릿을 실제 순서대로 이어 붙여 렌더한다 (한쪽만 검사하면 조합 결과를 못 잠근다).
+_TPL_LOAD_ONE = _set_fact_template("load_one | classify", "_cl_outcome")
 _TPL_OUTCOME = _set_fact_template("classify load outcome", "_cred_load_outcome")
 
 
 def _outcome(exists: bool, load_failed: bool, accounts: list) -> str:
     """production 템플릿으로 outcome 을 계산한다."""
+    cl = str(_render(_TPL_LOAD_ONE, {
+        "_cl_stat": {"stat": {"exists": exists}},
+        "_cl_load": {"failed": load_failed},
+    })).strip()
     result = _render(_TPL_OUTCOME, {
-        "_cred_vault_stat": {"stat": {"exists": exists}},
-        "_cred_vault_load": {"failed": load_failed},
+        "_cl_outcome": cl,
         "_cred_accounts": accounts,
     })
     return str(result).strip()
@@ -154,14 +174,31 @@ def test_uses_include_vars_not_vars_files():
 
 def test_include_vars_uses_name_scope():
     """`name:` 없이 로드하면 vault 의 top-level 키가 host var 로 흘러든다."""
-    inc = _task_named("include vault")["ansible.builtin.include_vars"]
-    assert inc.get("name") == "_cred_vault_data"
+    inc = _task_named("load_one | include vars")["ansible.builtin.include_vars"]
+    assert inc.get("name") == "_cl_vault_data"
+
+
+def test_only_one_include_vars_implementation():
+    """vault 를 여는 태스크는 **한 곳**이어야 한다.
+
+    Redfish 는 표준/복구 두 파일을 연다. 절차를 복제하면 한쪽에만 no_log 가 빠지는
+    식의 비대칭이 생긴다. 실제로 그런 사고를 막으려고 load_one.yml 로 뽑아냈다.
+    """
+    incs = [t for t in TASKS if "ansible.builtin.include_vars" in t]
+    assert len(incs) == 1, f"include_vars 태스크가 {len(incs)}개 — load_one.yml 하나여야 한다"
 
 
 # ── T19: Secret 비노출 ───────────────────────────────────────────────────────
 def test_secret_touching_tasks_have_no_log():
     """vault 내용을 만지는 태스크는 전부 no_log 여야 한다."""
-    must_no_log = ("include vault", "normalize accounts")
+    must_no_log = (
+        "load_one | include vars",
+        "load_one | reset",
+        "normalize accounts",
+        "redfish | adopt standard",
+        "redfish | adopt recovery",
+        "redfish | merge candidates",
+    )
     for part in must_no_log:
         task = _task_named(part)
         assert task.get("no_log") is True, f"{part!r} 태스크에 no_log 누락"
@@ -169,10 +206,11 @@ def test_secret_touching_tasks_have_no_log():
 
 def test_summary_debug_prints_no_secret():
     """요약 debug 는 개수와 label 만 출력한다 — username / password 를 찍지 않는다."""
-    msg = _task_named("summary")["ansible.builtin.debug"]["msg"]
-    assert "password" not in msg
-    assert "username" not in msg
-    assert "attribute='label'" in msg or 'attribute="label"' in msg
+    for part in ("credential | summary", "redfish | summary"):
+        msg = _task_named(part)["ansible.builtin.debug"]["msg"]
+        assert "password" not in msg, part
+        assert "username" not in msg, part
+        assert "attribute='label'" in msg or 'attribute="label"' in msg, part
     assert "| length" in msg
 
 
@@ -258,12 +296,12 @@ def test_task_never_hard_fails():
         assert "ansible.builtin.fail" not in task, (
             f"{task.get('name')!r} 가 fail 을 쓴다 — envelope 소실 위험 (rule 11)"
         )
-    inc = _task_named("include vault")
+    inc = _task_named("load_one | include vars")
     assert inc.get("failed_when") is False
 
 
 def test_stat_runs_on_controller():
     """vault 는 controller 파일이다. 대상 host 로 stat 하면 인증 전이라 실패한다."""
-    stat_task = _task_named("stat vault file")
+    stat_task = _task_named("load_one | stat")
     assert stat_task.get("delegate_to") == "localhost"
     assert stat_task.get("become") is False

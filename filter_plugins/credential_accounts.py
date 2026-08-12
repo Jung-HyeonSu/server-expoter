@@ -49,9 +49,9 @@ def _import_credential_common():
         if path and os.path.isdir(path) and path not in sys.path:
             sys.path.insert(0, path)
 
-    from credential_common import normalize_accounts  # noqa: WPS433
+    import credential_common  # noqa: WPS433
 
-    return normalize_accounts
+    return credential_common
 
 
 def credential_accounts(vault_data):
@@ -64,8 +64,24 @@ def credential_accounts(vault_data):
     Returns:
         list[dict] — username / password / label / role. **입력 순서 그대로.**
     """
-    normalize_accounts = _import_credential_common()
-    return normalize_accounts(vault_data)
+    return _import_credential_common().normalize_accounts(vault_data)
+
+
+def credential_standard_accounts(vault_data):
+    """표준 vault dict → 표준 수집 후보 (role=primary 만, 순서 보존)."""
+    return _import_credential_common().standard_accounts_of(vault_data)
+
+
+def credential_recovery_accounts(vault_data):
+    """Recovery vault dict → 복구 후보 (role=primary 제외, 순서 보존)."""
+    return _import_credential_common().recovery_accounts_of(vault_data)
+
+
+def credential_redfish_candidates(standard_accounts, recovery_accounts):
+    """Redfish 인증 후보 = 표준 먼저 + recovery (각 배열 내부 순서 보존)."""
+    return _import_credential_common().redfish_candidates(
+        standard_accounts, recovery_accounts
+    )
 
 
 class FilterModule(object):
@@ -74,4 +90,7 @@ class FilterModule(object):
     def filters(self):
         return {
             "credential_accounts": credential_accounts,
+            "credential_standard_accounts": credential_standard_accounts,
+            "credential_recovery_accounts": credential_recovery_accounts,
+            "credential_redfish_candidates": credential_redfish_candidates,
         }

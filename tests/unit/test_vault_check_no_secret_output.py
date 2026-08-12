@@ -199,6 +199,62 @@ def test_empty_vault_is_a_problem():
     assert info["problems"], "인증 후보가 0개가 되는 상태는 잡아야 한다"
 
 
+def test_kind_of_path():
+    """표준 / 복구 / 단일 vault 를 경로로 구분한다 (2026-08-12 분리)."""
+    assert _mod.kind_of("vault/common/redfish/standard.yml") == "standard"
+    assert _mod.kind_of("vault/ich/redfish/dell.yml") == "recovery"
+    assert _mod.kind_of("vault/ich/os/linux.yml") == "single"
+    assert _mod.kind_of("vault/ich/esxi.yml") == "single"
+    assert _mod.kind_of("vault/redfish/dell.yml") == "single"
+
+
+def test_recovery_vault_without_primary_is_fine():
+    """복구 vault 에 primary 가 없는 것은 정상이다 — 표준은 전역 파일에 있다."""
+    rec = """
+accounts:
+  - username: "u"
+    password: "p"
+    label: "dell_fallback_1"
+    role: "recovery"
+"""
+    info = _mod.inspect_accounts(rec, vendor="dell", kind="recovery")
+    assert not info["problems"], info["problems"]
+    assert not info["warnings"], "복구 vault 의 recovery-first 는 경고 대상이 아니다"
+
+
+def test_recovery_vault_with_primary_is_a_problem():
+    """복구 vault 에 primary 가 남아 있으면 표준 계정 중복이다."""
+    polluted = """
+accounts:
+  - username: "u"
+    password: "p"
+    label: "common_infraops"
+    role: "primary"
+  - username: "u2"
+    password: "p2"
+    label: "dell_fallback_1"
+    role: "recovery"
+"""
+    joined = " ".join(_mod.inspect_accounts(polluted, vendor="dell", kind="recovery")["problems"])
+    assert "recovery 아닌 role" in joined
+
+
+def test_standard_vault_with_recovery_is_a_problem():
+    mixed = """
+accounts:
+  - username: "u"
+    password: "p"
+    label: "common_infraops"
+    role: "primary"
+  - username: "u2"
+    password: "p2"
+    label: "dell_fallback_1"
+    role: "recovery"
+"""
+    joined = " ".join(_mod.inspect_accounts(mixed, kind="standard")["problems"])
+    assert "primary 아닌 role" in joined
+
+
 def test_vendor_of_path():
     assert _mod.vendor_of("vault/ich/redfish/dell.yml") == "dell"
     assert _mod.vendor_of("vault/redfish/hpe.yml") == "hpe"

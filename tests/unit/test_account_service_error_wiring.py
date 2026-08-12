@@ -78,9 +78,11 @@ def _detail(errors) -> Any:
 
 
 def _meta(**kw):
+    # 2026-08-12: auth_ok 기본값 True — "복구 자격으로 접속은 됐다" 가 기존 케이스들의
+    #   전제였다. 접속 자체가 안 된 경우는 별도 분기가 생겼고 아래에서 따로 검증한다.
     base = {"attempted": True, "recovered": False, "method": "noop", "action": "none",
             "account_existed": False, "verification": "none", "dryrun": False,
-            "slot_uri": None, "vendor": "dell"}
+            "slot_uri": None, "vendor": "dell", "auth_ok": True}
     base.update(kw)
     return base
 
@@ -128,13 +130,25 @@ def test_message_is_grid_ready(meta, label):
 
 
 def test_message_branches_are_distinct():
-    """원인별로 실제로 다른 문장이 나온다 (3분기가 무의미해지지 않게)."""
+    """원인별로 실제로 다른 문장이 나온다 (분기가 무의미해지지 않게)."""
     seen = {
+        _message(_meta(auth_ok=False)),
         _message(_meta(action="ambiguous", method="ambiguous")),
         _message(_meta(method="not_supported")),
         _message(_meta(verification="failed")),
     }
-    assert len(seen) == 3
+    assert len(seen) == 4
+
+
+def test_recovery_auth_failure_has_its_own_message():
+    """복구 계정으로 **접속조차 못 한** 경우는 다른 안내가 필요하다 (2026-08-12).
+
+    이때 운영자가 해야 할 일은 "표준 계정 정리" 가 아니라 "복구 자격 확인" 이다.
+    다른 분기와 같은 문장을 쓰면 그 차이가 결과에서 사라진다.
+    """
+    msg = _message(_meta(auth_ok=False, verification="failed"))
+    assert "복구" in msg
+    _assert_grid_ready(msg, "account_service/recovery-auth-failed")
 
 
 # ═══════════════════════════════════════════════════════════════════════════

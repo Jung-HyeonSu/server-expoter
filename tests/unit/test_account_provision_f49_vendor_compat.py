@@ -341,9 +341,15 @@ def test_provision_dell_silent_fail_verify_detects(monkeypatch):
     # 1차 verify (slot 3) = 401 silent fail, 2차 verify (slot 4) = 200 ok
     verify_calls = {"n": 0}
 
+    # 2026-08-12: 쓰기 후 재인증은 짧은 지연을 두고 유한 재시도한다
+    #   (ACCOUNT_VERIFY_DELAYS). 따라서 "이 슬롯은 silent fail" 을 만들려면
+    #   그 슬롯의 재시도 횟수만큼 401 이어야 한다. 1회만 401 로 두면 재시도에서
+    #   200 이 나와 같은 슬롯이 성공해 버린다 (테스트 의도가 뒤집힌다).
+    _fails = len(rg.ACCOUNT_VERIFY_DELAYS)
+
     def fake_get(bmc_ip, path, u, p, t, v):
         verify_calls["n"] += 1
-        if verify_calls["n"] == 1:
+        if verify_calls["n"] <= _fails:
             return 401, {}, "HTTP 401: Unauthorized"
         return 200, {}, None
 

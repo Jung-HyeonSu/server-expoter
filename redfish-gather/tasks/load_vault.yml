@@ -2,70 +2,82 @@
 # redfish-gather/tasks/load_vault.yml
 #
 # 공통 Credential Resolver 결과를 Redfish 변수 이름으로 옮기는 **얇은 어댑터**다.
-# 실제 선택과 로딩은 common/tasks/credential/resolve_and_load.yml 가 이미 끝냈다.
+# 실제 선택과 로딩은 common/tasks/credential/resolve_and_load_redfish.yml 가 끝냈다.
 #
-# 2026-08-12 변경 — Adapter ↔ Credential 결합 분리:
+# 2026-08-12 (2차) — 표준 계정 전역화:
+#   표준 수집 계정은 Location / Vendor 와 무관한 **전역 1개**다.
+#     vault/common/redfish/standard.yml   → role=primary 만
+#   복구 계정만 (Location + Vendor) 축을 갖는다.
+#     vault/<loc>/redfish/<vendor>.yml    → role=recovery 만
+#
+#   근거 (2026-08-12 실측): 이관 전 9개 vendor vault 의 primary 가 **전부 동일**했다
+#   (distinct digest 1개). Location 4벌까지 더하면 같은 계정이 36벌 중복돼 있었고,
+#   비밀번호를 바꾸려면 36곳을 고쳐야 했다. 축이 하나뿐인 값에 축을 두 개 준 것이 원인이다.
+#
+# 2026-08-12 (1차) — Adapter ↔ Credential 결합 분리:
 #   종전: `_selected_adapter.credentials.profile` → vault/redfish/<profile>.yml
 #         (Adapter 가 "누구로 인증할지" 까지 정했다)
-#   현재: (se_location, canonical vendor) → vault/<loc>/redfish/<vendor>.yml
+#   `credentials.fallback_profiles` 루프는 삭제했다 (42/42 adapter 가 `[]` 인 dead code
+#   였고, 의미가 "다른 Vendor 자격을 시도하지 않는다" 정책과 정면 충돌).
 #
-#   무해성 근거 (2026-08-12 실측): non-empty `credentials.profile` 을 가진 Redfish
-#   adapter 의 profile 값 집합이 vendor_aliases.yml canonical 키 집합과 양방향
-#   차집합 0 이고, 비-generic adapter 는 vendor 매치 실패 시 실격되므로
-#   (module_utils/adapter_common.py 의 -9999) **선택된 adapter 의 profile 은 감지된
-#   vendor 와 문자 그대로 같은 값**이었다. 즉 이 교체로 vault 선택 결과가 바뀌지 않는다.
+# 순서 계약 (불변):
+#   후보 배열 = [표준 primary] + [recovery vault 배열 순서 그대로].
+#   role 기반 재정렬은 하지 않는다.
 #
-#   의도된 유일한 변화: vendor 를 알면서 generic adapter 가 선택된 경우.
-#   종전에는 profile 이 빈 문자열이라 **빈 자격 1회 시도**로 갔다. 이제는 그 vendor 의
-#   credential set 을 쓴다. 빈 자격 시도는 **vendor 자체를 식별하지 못했을 때만** 남는다
-#   (collect_standard.yml). Dell 인 줄 알면서 빈 자격으로 찔러 볼 이유가 없다.
-#
-#   `credentials.fallback_profiles` 루프는 삭제했다. 42/42 adapter 가 `[]` 인 dead code
-#   였고, 의미(다른 vendor 의 vault 로 폴백)가 "다른 Location/Vendor 자격을 시도하지
-#   않는다" 정책과 정면으로 충돌한다.
-#
-# 순서 계약 (불변): vault `accounts` 배열 순서 = multi-account fallback 시도 순서.
-#   관례상 list[0] = role=primary (공통계정), list[1...] = role=recovery.
-#   role 기반 재정렬은 하지 않는다 — 순서를 바꾸면 인증 순서가 바뀌고 Redfish
-#   reconcile 진입 조건까지 흔들린다.
-#   legacy 단일 자격(ansible_user / ansible_password) 호환도 그대로 유지된다
-#   (module_utils/credential_common.normalize_accounts).
-#
-# 입력 (resolve_and_load.yml 산출):
-#   _cred_accounts, _cred_scope, _cred_reason, _cred_load_outcome
+# 입력 (resolve_and_load_redfish.yml 산출):
+#   _cred_standard_accounts, _cred_recovery_accounts, _cred_accounts,
+#   _cred_scope, _cred_recovery_scope, _cred_reason,
+#   _cred_standard_outcome, _cred_recovery_outcome
 # 출력:
-#   _rf_accounts     : list of {username, password, label, role}
-#   _rf_vault_loaded : bool
-#   _rf_vault_scope  : str — 진단/메시지용 범위 식별자 (Secret 아님)
+#   _rf_standard_accounts : 표준 후보 (role=primary)
+#   _rf_recovery_accounts : 복구 후보 (role=recovery)
+#   _rf_accounts          : 전체 후보 (진단/집계용)
+#   _rf_vault_scope       : 표준 scope — diagnosis.details.credential_scope 정본
+#   _rf_recovery_scope    : 복구 scope — diagnosis.details.recovery_credential_scope
+#   _rf_vault_loaded      : 표준 vault 로딩 성공 여부
 
-- name: "redfish | load_vault | adopt resolved credential set"
+- name: "redfish | load_vault | adopt resolved credential sets"
   ansible.builtin.set_fact:
+    _rf_standard_accounts: "{{ _cred_standard_accounts | default([]) }}"
+    _rf_recovery_accounts: "{{ _cred_recovery_accounts | default([]) }}"
     _rf_accounts: "{{ _cred_accounts | default([]) }}"
     _rf_vault_scope: "{{ _cred_scope | default('') }}"
-    _rf_vault_loaded: "{{ (_cred_load_outcome | default('not_resolved')) == 'loaded' }}"
+    _rf_recovery_scope: "{{ _cred_recovery_scope | default('') }}"
+    _rf_vault_loaded: "{{ (_cred_standard_outcome | default('not_resolved')) == 'loaded' }}"
   no_log: true
 
 - name: "redfish | load_vault | warn vendor unresolved"
   ansible.builtin.debug:
     msg: >-
-      vendor 를 식별하지 못해 credential set 을 고르지 못했습니다
+      vendor 를 식별하지 못해 복구 계정 범위를 정하지 못했습니다
       (reason={{ _cred_reason | default('vendor_unresolved') }}).
-      정체 미상 장비에 대한 best-effort 로 빈 자격 1회 수집을 시도합니다.
+      표준 계정은 vendor 와 무관하므로 그대로 시도합니다. 표준 계정 인증이 실패해도
+      복구는 수행할 수 없습니다.
   when: (_cred_reason | default('')) == 'vendor_unresolved'
 
-- name: "redfish | load_vault | warn credential set unavailable"
+- name: "redfish | load_vault | warn standard credential set unavailable"
   ansible.builtin.debug:
     msg: >-
-      credential set 을 열지 못했습니다 (scope={{ _cred_scope | default('?') }},
-      outcome={{ _cred_load_outcome | default('not_resolved') }}) —
+      표준 수집 계정을 열지 못했습니다 (scope={{ _rf_vault_scope | default('?') }},
+      outcome={{ _cred_standard_outcome | default('not_resolved') }}) —
       파일 존재 여부와 ansible-vault 복호화 키를 확인하세요.
+  when: (_cred_standard_outcome | default('not_resolved')) != 'loaded'
+
+- name: "redfish | load_vault | warn recovery credential set unavailable"
+  ansible.builtin.debug:
+    msg: >-
+      복구 계정 세트를 열지 못했습니다 (scope={{ _rf_recovery_scope | default('?') }},
+      outcome={{ _cred_recovery_outcome | default('not_resolved') }}).
+      표준 계정 인증이 성공하면 영향이 없지만, 실패하면 복구를 진행할 수 없습니다.
   when:
     - (_cred_reason | default('')) == 'resolved'
-    - (_cred_load_outcome | default('not_resolved')) != 'loaded'
+    - (_cred_recovery_outcome | default('not_resolved')) != 'loaded'
 
 - name: "redfish | load_vault | summary"
   ansible.builtin.debug:
     msg: >-
-      credential_scope={{ _rf_vault_scope | default('(unresolved)') }},
-      accounts={{ _rf_accounts | length }},
+      standard_scope={{ _rf_vault_scope | default('(none)') }}
+      (accounts={{ _rf_standard_accounts | length }}),
+      recovery_scope={{ _rf_recovery_scope | default('') | ternary(_rf_recovery_scope, '(none)') }}
+      (accounts={{ _rf_recovery_accounts | length }}),
       labels={{ _rf_accounts | map(attribute='label') | list }}

@@ -18,7 +18,7 @@ primary(공통계정) 자격이 왜 실패했는지 모르는 상태이기 때�
   F primary 가 5xx                    -> 아무것도 쓰지 않는다
   G primary 가 403                    -> 아무것도 쓰지 않는다
   H primary 401 + recovery 성공       -> 여기서만 쓰기를 허용한다
-  I recovery 까지 전멸                -> 아무것도 쓰지 않는다
+  I 복구 후보 0개                     -> 아무것도 쓰지 않는다
   J 같은 username 이 여러 슬롯        -> 아무것도 쓰지 않는다
 
 검증 방식
@@ -117,13 +117,19 @@ _TPL_DRYRUN_EFFECTIVE = _set_fact_template(
 
 
 def _decide(observations: list[dict[str, Any]], used_role: str, collect_ok: bool,
-            dryrun_override: Any = None) -> dict[str, Any]:
-    """관측 -> (primary 거부 판정, 진입 허용, 실제 쓰기 여부) 를 production 템플릿으로 계산."""
+            dryrun_override: Any = None, recovery_count: int = 1) -> dict[str, Any]:
+    """관측 -> (primary 거부 판정, 진입 허용, 실제 쓰기 여부) 를 production 템플릿으로 계산.
+
+    2026-08-12 Contract 변경: 진입 조건에서 "recovery 로 수집이 됐다" 가 빠졌다.
+    복구 계정으로는 수집하지 않으므로 그런 사실이 존재할 수 없다. 대신
+    "표준 수집이 실패했고 / 표준 자격이 401 로 거부됐고 / 복구 후보가 있다" 를 본다.
+    """
     rejected = _render(_TPL_PRIMARY_REJECTED, {"_rf_auth_observations": observations})
     allowed = _render(_TPL_RECONCILE_ALLOWED, {
         "_rf_used_account": {"role": used_role} if used_role else {},
         "_rf_collect_ok": collect_ok,
         "_rf_primary_auth_rejected": rejected,
+        "_rf_recovery_accounts": [{"label": f"r{i}"} for i in range(recovery_count)],
     })
     ctx: dict[str, Any] = {"_rf_account_reconcile_allowed": allowed}
     if dryrun_override is not None:
@@ -165,11 +171,14 @@ def test_case_c_second_run_after_sync_no_write():
     (403, "forbidden"),     # G: 인증은 통과했을 수 있고 권한만 부족
 ])
 def test_case_d_e_f_g_non_401_primary_failure_no_write(status, label):
-    """D/E/F/G: primary 실패가 401 이 아니면 원인 미확정이므로 쓰기 0."""
+    """D/E/F/G: primary 실패가 401 이 아니면 원인 미확정이므로 쓰기 0.
+
+    2026-08-12: 표준 수집이 실패한 상태(collect_ok=False)로 모델을 맞춘다 —
+    복구 계정으로 수집하는 경로가 없어졌으므로 "recovery 로 수집 성공" 상태는 없다.
+    """
     r = _decide(
-        [{"role": "primary", "label": "infraops", "status": status},
-         {"role": "recovery", "label": label, "status": 200}],
-        used_role="recovery", collect_ok=True)
+        [{"role": "primary", "label": "infraops", "status": status}],
+        used_role="", collect_ok=False)
     assert r["rejected"] is False, f"{label}: 401 이 아닌데 거부로 판정됨"
     assert r["allowed"] is False, f"{label}: 진입하면 안 된다"
     assert r["dryrun"] is True
@@ -177,25 +186,30 @@ def test_case_d_e_f_g_non_401_primary_failure_no_write(status, label):
 
 
 def test_case_h_primary_401_and_recovery_ok_allows_write():
-    """H: primary 가 401 로 명시 거부 + recovery 로 수집 성공 -> 이 경우에만 허용."""
+    """H: 표준 자격이 401 로 명시 거부 + 복구 후보 존재 -> 이 경우에만 허용."""
     r = _decide(
-        [{"role": "primary", "label": "infraops", "status": 401},
-         {"role": "recovery", "label": "vendor-default", "status": 200}],
-        used_role="recovery", collect_ok=True)
+        [{"role": "primary", "label": "infraops", "status": 401}],
+        used_role="", collect_ok=False, recovery_count=2)
     assert r["rejected"] is True
     assert r["allowed"] is True
     assert r["dryrun"] is False, "조건이 성립했을 때는 쓰기 모드를 명시 전달해야 한다"
     assert r["writes"] is True
 
 
-def test_case_i_all_candidates_rejected_no_write():
-    """I: recovery 까지 전부 실패하면 수집 자체가 실패라 진입하지 않는다."""
+def test_case_i_no_recovery_candidate_no_write():
+    """I: 복구 후보가 0개면 복구할 방법이 없으므로 진입하지 않는다.
+
+    2026-08-12: 종전 I 는 "recovery 도 401" 이었다. 새 흐름에서는 그 판정이
+    Ansible 레이어가 아니라 **모듈** 에서 난다 (auth_ok=false → 쓰기 없음).
+    Ansible 레이어에서 막을 수 있는 것은 "후보 자체가 없다" 뿐이므로 그것을 잠근다.
+    복구 자격이 인증되지 않았을 때 쓰기가 없다는 사실은
+    test_provision_refuses_to_write_without_recovery_auth 가 모듈 수준에서 잠근다.
+    """
     r = _decide(
-        [{"role": "primary", "label": "infraops", "status": 401},
-         {"role": "recovery", "label": "vendor-default", "status": 401}],
-        used_role="", collect_ok=False)
+        [{"role": "primary", "label": "infraops", "status": 401}],
+        used_role="", collect_ok=False, recovery_count=0)
     assert r["rejected"] is True, "primary 401 관측 자체는 사실대로 남는다"
-    assert r["allowed"] is False, "수집이 실패했으면 계정을 손대지 않는다"
+    assert r["allowed"] is False, "복구 후보가 없으면 진입하지 않는다"
     assert r["writes"] is False
 
 
@@ -521,10 +535,10 @@ def test_provision_result_never_contains_credentials(monkeypatch):
     ("redfish-gather/tasks/try_one_account.yml", "try_account | attempt"),
     ("redfish-gather/tasks/try_one_account.yml", "try_account | promote on success"),
     ("redfish-gather/tasks/account_service.yml", "resolve target primary account"),
-    ("redfish-gather/tasks/account_service.yml", "resolve recovery creds"),
-    ("redfish-gather/tasks/account_service.yml", "account_service | invoke"),
+    ("redfish-gather/tasks/account_service_try_one.yml", "account_service | invoke"),
+    ("redfish-gather/tasks/account_service_try_one.yml", "evaluate recovery auth"),
+    ("redfish-gather/tasks/account_service_try_one.yml", "adopt authenticated recovery result"),
     ("redfish-gather/tasks/account_service.yml", "record meta"),
-    ("redfish-gather/tasks/account_service.yml", "rotate to primary creds"),
 ])
 def test_credential_tasks_have_no_log(relpath, task_part):
     found = False
@@ -574,6 +588,22 @@ def test_site_yml_gates_include_on_reconcile_fact():
 
 
 def test_collect_standard_initialises_observation_facts():
-    text = (REPO / "redfish-gather/tasks/collect_standard.yml").read_text(encoding="utf-8")
-    assert "_rf_auth_observations: []" in text
-    assert "_rf_primary_auth_rejected: false" in text
+    """관측 fact 가 **정의**되는지 본다.
+
+    2026-08-12: 값이 `[]` 리터럴에서 `| default([])` 로 바뀌었다. collect_standard 가
+    Phase 1 / Phase 3 두 번 돌기 때문이다 — Phase 3 에서 초기화하면 Phase 1 의 401
+    관측이 사라져 "표준이 거부됐다" 는 사실 자체가 결과에서 증발한다.
+    """
+    facts = {}
+    for task in _tasks_of("redfish-gather/tasks/collect_standard.yml"):
+        if "init attempt state" in (task.get("name") or ""):
+            facts = task.get("ansible.builtin.set_fact") or {}
+            break
+    assert facts, "init attempt state 태스크를 찾지 못함"
+    for key in ("_rf_auth_statuses", "_rf_auth_observations",
+                "_rf_primary_auth_rejected", "_rf_failed_attempt_notes"):
+        assert key in facts, f"{key} 초기화 누락"
+        assert "default(" in str(facts[key]), (
+            f"{key} 가 리터럴로 초기화된다 — Phase 3 재수집에서 Phase 1 관측이 지워진다"
+        )
+    assert facts["_rf_collect_ok"] is False

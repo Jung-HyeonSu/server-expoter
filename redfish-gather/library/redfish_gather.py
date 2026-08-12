@@ -44,7 +44,7 @@ options:
   verify_ssl: optional, bool, default false
 '''
 
-import json, socket, sys, traceback
+import json, socket, sys, time, traceback
 
 # ── 단위 변환 상수 (cycle 2026-06-04 R-4 — 매직넘버 명명) ──────────────────────
 # 주의: decimal(10^n) 과 binary(2^n) 는 의미가 다르므로 절대 통합 금지.
@@ -447,6 +447,11 @@ def _err(section, message, detail=None, code=None):
 # BMC 가 수십 개 항목을 반환해도 errors[].detail 이 비대해지지 않게 절단한다.
 MAX_EXTENDED_INFO_ITEMS = 3
 MAX_EXTENDED_INFO_LEN = 300
+
+# 계정 쓰기 후 재인증 확인 간격(초). 첫 시도는 지연 없이, 이후 1초 / 5초.
+# BMC 가 계정 변경을 비동기 반영하거나 직전 연결이 옛 자격으로 남아 있는 경우를 흡수한다.
+# 합계 6초 — 무한 대기가 되지 않도록 값 자체로 상한을 고정한다.
+ACCOUNT_VERIFY_DELAYS = (0, 1, 5)
 
 
 def _extended_info(body, limit=MAX_EXTENDED_INFO_LEN):
@@ -4794,6 +4799,9 @@ def account_service_provision(
           'account_existed': bool,          # 대상 username 이 이미 있었는가
           'action':          'create' | 'password_sync' | 'none' | 'ambiguous',
           'verification':    'verified' | 'failed' | 'skipped' | 'none',
+          'auth_ok':         bool,          # 복구 자격이 AccountService 인증에 성공했는가
+          'write_response_info': str|None,  # 쓰기 응답의 @Message.ExtendedInfo 축약
+          'verify_attempts': int,           # 재인증 확인 시도 횟수 (해당 경로에서만)
           'errors':          [_err(...), ...],
         }
 
@@ -4815,11 +4823,18 @@ def account_service_provision(
         'account_existed': False,
         'action':          'none',
         'verification':    'none',
+        # 2026-08-12: 복구 자격이 **실제로 인증됐는가**. 이 값이 False 면 아래 어떤
+        # 쓰기 경로에도 들어가지 않는다 (§14 — 인증도 안 된 자격으로 BMC 계정을 건드리지 않는다).
+        'auth_ok':         False,
+        # PATCH/POST 응답 body 의 @Message.ExtendedInfo 축약. 2xx 에도 벤더가 여기에
+        # "적용하지 않았다 / 정책 미충족" 을 담는다. 종전에는 body 를 통째로 버려서
+        # 쓰기가 왜 무효였는지 알 근거가 남지 않았다 (2026-08-12 Dell 사례).
+        'write_response_info': None,
         'errors':          [],
     }
 
-    # 1) AccountService GET
-    _, accounts, errs = account_service_get(
+    # 1) AccountService GET — 이 호출이 곧 복구 자격의 인증 시험이다.
+    acct_service, accounts, errs = account_service_get(
         bmc_ip, current_username, current_password, timeout, verify_ssl
     )
 
@@ -4842,6 +4857,24 @@ def account_service_provision(
         out['errors'].append(_err(
             'account_service',
             f'AccountService 미지원 (vendor={vendor}, HTTP 404)',
+        ))
+        return out
+
+    # 2026-08-12: AccountService GET 자체가 실패하면 (401 / TLS / timeout / 5xx)
+    # **여기서 끝낸다.** 종전에는 그대로 진행해서 accounts=[] 로 "대상 계정 없음" 이 되고,
+    # 신규 생성 경로로 들어가 인증도 안 된 자격으로 POST/PATCH 를 시도할 수 있었다.
+    # 복구 자격이 인증되지 않았다는 것은 복구를 할 수 없다는 뜻이지, 계정을 만들
+    # 자격이 생겼다는 뜻이 아니다.
+    #   acct_service is None ⟺ AccountService GET 실패 (account_service_get 계약).
+    out['auth_ok'] = acct_service is not None
+    if not out['auth_ok']:
+        out['method'] = 'noop'
+        out['action'] = 'none'
+        out['errors'].extend(errs)
+        out['errors'].append(_err(
+            'account_service',
+            '복구 계정으로 계정 관리 서비스에 접근하지 못해 표준 계정 정리를 시작하지 못했습니다.',
+            detail='AccountService GET failed with recovery credential; no write attempted',
         ))
         return out
 
@@ -4912,14 +4945,14 @@ def account_service_provision(
             cisco_role_map = {'Administrator': 'admin', 'Operator': 'user',
                               'ReadOnly': 'readonly'}
             body_full['RoleId'] = cisco_role_map.get(target_role, 'admin')
-        code, _, err = _patch(
+        code, patch_resp, err = _patch(
             bmc_ip, _p(existing['slot_uri']), body_full,
             current_username, current_password, timeout, verify_ssl,
         )
         # 일부 펌웨어가 Locked 필드 PATCH 거부 (read-only) — Locked 빼고 1회 retry
         if code not in (200, 204) and code in (400, 405):
             body_no_locked = {k: v for k, v in body_full.items() if k != 'Locked'}
-            code, _, err = _patch(
+            code, patch_resp, err = _patch(
                 bmc_ip, _p(existing['slot_uri']), body_no_locked,
                 current_username, current_password, timeout, verify_ssl,
             )
@@ -4928,25 +4961,44 @@ def account_service_provision(
                     'account_service',
                     'Locked 필드 PATCH 거부 — Locked 빼고 retry 성공 (BMC 펌웨어가 Locked read-only)',
                 ))
+        # 2026-08-12: 2xx 든 4xx 든 응답 body 의 확장 오류 정보를 **먼저 건진다.**
+        #   Dell 은 PATCH 200 과 함께 @Message.ExtendedInfo 로 "무엇을 적용했는지 /
+        #   무엇을 거부했는지" 를 돌려준다. 종전에는 body 를 `_` 로 버려서, 쓰기가
+        #   수락됐는데 인증이 안 되는 상태의 원인을 알 방법이 아예 없었다.
+        out['write_response_info'] = _extended_info(patch_resp)
         if code not in (200, 204) or err:
             out['errors'].append(_err(
                 'account_service',
                 f'PATCH 기존 사용자 실패 (slot={existing.get("id")})',
-                detail=err or f'HTTP {code}',
+                detail=' | '.join(
+                    x for x in (err or f'HTTP {code}', out['write_response_info']) if x
+                ),
             ))
             return out
         # F50 phase 4: PATCH 후 실 인증 verify — silent fail / 권한 cache 손상 감지.
         # 1차 verify: 새 자격으로 /Systems GET. 401 이면 권한 손상.
         # fallback: DELETE + POST 재생성 (Lenovo XCC 권한 cache 클린 상태 보장).
-        verify_code, _, verify_err = _get(
-            bmc_ip, 'Systems', target_username, target_password,
-            timeout, verify_ssl,
-        )
-        if verify_code == 200 and not verify_err:
-            out['recovered']    = True
-            out['verification'] = 'verified'
-            return out
+        #
+        # 2026-08-12: **즉시 1회** 만 확인하던 것을 짧은 지연 + 유한 재시도로 바꾼다.
+        #   BMC 는 계정 변경을 비동기로 반영하는 경우가 있고, 직전 요청의 연결/세션이
+        #   아직 옛 자격으로 살아 있을 수도 있다. 그 상태의 401 을 "적용 실패" 로 확정하면
+        #   멀쩡한 쓰기를 실패로 보고하고, 그 다음 단계(계정 삭제 후 재생성)로 사람을 몰아간다.
+        #   총 대기 상한은 ACCOUNT_VERIFY_DELAYS 합(=6초)으로 고정한다 — 무한 대기 금지.
+        verify_code, verify_err = None, None
+        for attempt, delay in enumerate(ACCOUNT_VERIFY_DELAYS):
+            if delay:
+                time.sleep(delay)
+            verify_code, _, verify_err = _get(
+                bmc_ip, 'Systems', target_username, target_password,
+                timeout, verify_ssl,
+            )
+            if verify_code == 200 and not verify_err:
+                out['recovered']    = True
+                out['verification'] = 'verified'
+                out['verify_attempts'] = attempt + 1
+                return out
         out['verification'] = 'failed'
+        out['verify_attempts'] = len(ACCOUNT_VERIFY_DELAYS)
         # 2026-08-11 (Phase 6-B §11): **기존 계정을 지우는 fallback 은 기본적으로 하지 않는다.**
         #
         # 기존 승인 근거 (그대로 유효한 부분):
@@ -4972,8 +5024,28 @@ def account_service_provision(
                 'account_service',
                 '기존 계정의 비밀번호를 맞춘 뒤 인증 확인에 실패했습니다. '
                 '계정을 지우고 다시 만드는 자동 복구는 하지 않았습니다. 계정 상태를 확인하세요.',
-                detail=(verify_err or f'verify HTTP {verify_code}')
-                       + f'; slot={existing.get("id")}; delete_recreate=disabled',
+                detail='; '.join(x for x in (
+                    (verify_err or f'verify HTTP {verify_code}'),
+                    f'slot={existing.get("id")}',
+                    f'verify_attempts={out.get("verify_attempts")}',
+                    (f'write_response={out["write_response_info"]}'
+                     if out.get('write_response_info') else None),
+                    'delete_recreate=disabled',
+                ) if x),
+            ))
+            # 2026-08-12: 빈 슬롯 경로(patch_empty_slot)에만 있던 password 정책 힌트를
+            #   기존 계정 경로에도 둔다. 두 경로의 실패 모양(PATCH 2xx + 인증 401)이
+            #   같은데 한쪽에만 단서가 있어, 같은 사고를 두 번째 경로에서 만나면
+            #   원인 후보조차 보이지 않았다. 단정하지 않고 확인할 지점만 제시한다.
+            out['errors'].append(_err(
+                'account_service',
+                '비밀번호가 대상 장비의 암호 정책을 충족하지 못해 적용되지 않았을 수 있습니다. '
+                '장비의 암호 정책과 등록된 비밀번호를 확인하세요.',
+                detail=(
+                    'write accepted but authentication with the new credential failed; '
+                    'check BMC password strength policy (length / character classes / '
+                    'password history) against the configured value'
+                ),
             ))
             return out
         # 권한 손상 감지 — 운영 안전 위해 best-effort fallback.
@@ -5071,10 +5143,11 @@ def account_service_provision(
         last_err = None
         last_code = 0
         for slot in empty_slots[:3]:
-            code, _, err = _patch(
+            code, patch_resp, err = _patch(
                 bmc_ip, _p(slot['slot_uri']), body,
                 current_username, current_password, timeout, verify_ssl,
             )
+            out['write_response_info'] = _extended_info(patch_resp) or out['write_response_info']
             if code not in (200, 204) or err:
                 last_err = err
                 last_code = code
@@ -5082,14 +5155,22 @@ def account_service_provision(
                     'account_service',
                     f'Dell PATCH 빈 슬롯 실패 (slot={slot.get("id")}) — '            # nosec rule12-r1
                     f'다음 빈 슬롯으로 retry',
-                    detail=err or f'HTTP {code}',
+                    detail=' | '.join(x for x in (
+                        err or f'HTTP {code}', out['write_response_info']) if x),
                 ))
                 continue
-            # PATCH 200 OK — 실 인증 검증 (Dell silent-fail 감지)
-            verify_code, _, verify_err = _get(
-                bmc_ip, 'Systems', target_username, target_password,
-                timeout, verify_ssl,
-            )
+            # PATCH 200 OK — 실 인증 검증 (Dell silent-fail 감지).
+            # 2026-08-12: 기존 계정 경로와 동일하게 짧은 지연 + 유한 재시도 (비동기 반영 흡수).
+            verify_code, verify_err = None, None
+            for delay in ACCOUNT_VERIFY_DELAYS:
+                if delay:
+                    time.sleep(delay)
+                verify_code, _, verify_err = _get(
+                    bmc_ip, 'Systems', target_username, target_password,
+                    timeout, verify_ssl,
+                )
+                if verify_code == 200 and not verify_err:
+                    break
             if verify_code == 200 and not verify_err:
                 out['recovered']    = True
                 out['verification'] = 'verified'

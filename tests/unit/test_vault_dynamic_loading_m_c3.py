@@ -28,7 +28,8 @@ SITE_YML = REPO / "redfish-gather" / "site.yml"
 #   load_vault.yml 은 그 결과를 Redfish 변수 이름으로 옮기는 얇은 어댑터가 됐다.
 #   따라서 "자동 반영" 계약을 검증할 대상은 아래 공통 task 다.
 #   이 파일의 목적(vault 변경이 다음 run 에 자동 반영되는가)은 그대로다.
-RESOLVE_AND_LOAD = REPO / "common" / "tasks" / "credential" / "resolve_and_load.yml"
+CRED_DIR = REPO / "common" / "tasks" / "credential"
+RESOLVE_AND_LOAD = CRED_DIR / "resolve_and_load.yml"
 
 
 # ── (1) include_vars 가 cacheable 미사용 ─────────────────────────────────────
@@ -51,8 +52,14 @@ def test_m_c3_load_vault_no_cacheable() -> None:
 
 
 def test_m_c3_load_vault_uses_include_vars() -> None:
-    """공통 credential task 가 include_vars 사용 (매 task disk read — 캐시 없음)."""
-    content = RESOLVE_AND_LOAD.read_text(encoding="utf-8")
+    """공통 credential task 가 include_vars 사용 (매 task disk read — 캐시 없음).
+
+    2026-08-12: 실제 파일 열기는 load_one.yml 로 빠졌다 (Redfish 2-scope 로딩과 공유).
+    계약은 "credential 로딩 경로 전체" 에 걸리므로 디렉터리를 통째로 본다.
+    """
+    content = "\n".join(
+        f.read_text(encoding="utf-8") for f in sorted(CRED_DIR.glob("*.yml"))
+    )
     assert "include_vars" in content, (
         "resolve_and_load.yml: include_vars 미사용 — vault 동적 로딩 path 부재"
     )
@@ -146,9 +153,11 @@ def test_m_c3_scenario_5_single_run_no_midway_invalidation() -> None:
     검증: include_vars 가 name= 으로 변수 저장
     (host_vars 가 아닌 task 변수 — single-run 중간 invalidation 없음 — 의도된 동작).
     """
-    content = RESOLVE_AND_LOAD.read_text(encoding="utf-8")
-    assert "name: _cred_vault_data" in content, (
-        "resolve_and_load.yml: include_vars 가 name=_cred_vault_data 로 저장 안 함 "
+    content = "\n".join(
+        f.read_text(encoding="utf-8") for f in sorted(CRED_DIR.glob("*.yml"))
+    )
+    assert "name: _cl_vault_data" in content, (
+        "load_one.yml: include_vars 가 name=_cl_vault_data 로 저장 안 함 "
         "— task scope 분리 깨짐 (vault top-level 키가 host var 로 샌다)"
     )
 

@@ -76,7 +76,7 @@
         # Adapter(어떻게 수집하는가) 와 Credential(누구로 인증하는가) 이 결합돼 있었다.
         - name: "redfish | resolve credentials"
           ansible.builtin.include_tasks:
-            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/credential/resolve_and_load.yml"
+            file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/credential/resolve_and_load_redfish.yml"
           vars:
             _cred_target_type: "redfish"
             _cred_vendor: "{{ _rf_detected_vendor | default('') }}"
@@ -84,18 +84,21 @@
         - name: "redfish | load vault"
           ansible.builtin.include_tasks: tasks/load_vault.yml
 
-        # vendor 를 식별하지 못한 경우(`vendor_unresolved`)는 여기서 멈추지 않는다 —
-        # 정체 미상 장비에 대한 빈 자격 1회 best-effort 를 유지한다 (collect_standard.yml).
-        # 반대로 vendor 를 아는데 credential set 을 못 연 것은 명시적 실패다.
+        # 표준 수집 계정을 못 열면 Redfish 수집은 성립하지 않는다 — 여기서 명시적으로 끝낸다.
+        #   `vendor_unresolved`(vendor 미식별)는 **표준 계정과 무관**하다. 표준 계정은 전역
+        #   이라 vendor 를 몰라도 열 수 있으므로 여기서 멈추지 않는다. 그 경우 복구만
+        #   불가능하고, 정체 미상 장비에 대한 빈 자격 best-effort 도 그대로 유지된다.
+        #   복구 세트 부재는 여기서 실패로 만들지 않는다 — 표준 인증이 성공하면 아무 영향이 없다.
         - name: "redfish | abort if credential set unavailable"
           ansible.builtin.fail:
             msg: >-
-              Credential set 을 열 수 없습니다 (scope={{ _cred_scope | default('') | ternary(_cred_scope, _cred_reason) }},
-              outcome={{ _cred_load_outcome | default('not_resolved') }}).
-              se_location 값과 해당 Location 의 vault 파일, ansible-vault 복호화 키를 확인하세요.
+              Credential set 을 열 수 없습니다
+              (standard scope={{ _cred_scope | default('') | ternary(_cred_scope, _cred_reason) }},
+              outcome={{ _cred_standard_outcome | default('not_resolved') }}).
+              se_location 값과 vault/common/redfish/standard.yml, ansible-vault 복호화 키를 확인하세요.
           when: >-
             (_cred_reason | default('unknown_location')) not in ['resolved', 'vendor_unresolved']
-            or (_cred_load_outcome | default('not_resolved'))
+            or (_cred_standard_outcome | default('not_resolved'))
                in ['credential_set_missing', 'credential_set_undecryptable']
 
         # ── select adapter (Phase 2) ─────────────────────────────────────
@@ -122,9 +125,77 @@
             _rf_adapter_manager_layout: >-
               {{ ((_selected_adapter | default({})).vendor_notes | default({})).manager_layout | default('') }}
 
-        # ── collect standard ─────────────────────────────────────────────
+        # ── Phase 1: 표준 수집 계정으로 수집 ─────────────────────────────
+        # 표준 계정은 전역 1개다 (vault/common/redfish/standard.yml).
+        # 복구 계정은 여기 들어오지 않는다 — 복구 계정으로 수집하는 경로는 없다.
         - name: "redfish | collect standard"
           ansible.builtin.include_tasks: tasks/collect_standard.yml
+          vars:
+            _rf_try_accounts: "{{ _rf_standard_accounts | default([]) }}"
+
+        # ── 표준 계정 복구 (recovery → standard) ─────────────────────────
+        # 2026-08-12 (Contract 재확정): 진입 조건에서 "recovery 로 수집이 됐다" 를 뺀다.
+        #   복구 계정으로는 애초에 수집하지 않으므로 그 사실이 존재할 수 없다.
+        #   대신 "표준 수집이 실패했고, 표준 자격이 401 로 명시 거부됐고, 복구 후보가 있다" 로 본다.
+        #
+        # 2026-08-11 (Phase 6-B §6 §7): 401 한정은 그대로 유지한다. primary 실패 원인은
+        #   자격증명 불일치만이 아니다 — timeout / TLS / 5xx / 일시 단절도 같은 모양이다.
+        #   403(권한 부족)도 제외한다: 인증 자체는 통과했을 수 있어, 여기서 계정을 손대면
+        #   멀쩡한 표준 계정 비밀번호를 덮어쓴다.
+        #
+        # 이 값 하나를 account_service.yml 의 쓰기 모드도 함께 본다
+        # (§16 — "기본값이라서" 쓰기가 켜지는 경로를 없앤다).
+        - name: "redfish | account_service | 진입 조건 판정"
+          ansible.builtin.set_fact:
+            _rf_account_reconcile_allowed: >-
+              {{ (not (_rf_collect_ok | default(false) | bool))
+                 and (_rf_primary_auth_rejected | default(false) | bool)
+                 and ((_rf_recovery_accounts | default([])) | length > 0) }}
+
+        - name: "redfish | account_service (recovery → standard)"
+          when: _rf_account_reconcile_allowed | bool
+          ansible.builtin.include_tasks: tasks/account_service.yml
+
+        # 표준 자격이 거부됐는데 복구 세트가 없으면 **복구할 방법이 없다**는 사실을 남긴다.
+        # 이 상태는 결과만 보면 "그냥 인증 실패" 와 구분되지 않는다. 운영자가 해야 할 일이
+        # 다르다 — 전자는 해당 Location/Vendor 복구 자격을 배치해야 하고, 후자는 표준
+        # 계정 비밀번호를 맞춰야 한다. failure_code 를 새로 만들지 않고 근거만 분리한다.
+        - name: "redfish | recovery set unavailable 사실 기록"
+          when:
+            - not (_rf_collect_ok | default(false) | bool)
+            - _rf_primary_auth_rejected | default(false) | bool
+            - (_rf_recovery_accounts | default([])) | length == 0
+          block:
+            - name: "redfish | recovery set unavailable fragment"
+              ansible.builtin.set_fact:
+                _data_fragment: {}
+                _sections_supported_fragment: []
+                _sections_collected_fragment: []
+                _sections_failed_fragment: []
+                _sections_unsupported_fragment: []
+                _errors_fragment:
+                  - section: "account_service"
+                    message: "{{ _fr_credential_failed }}"
+                    detail: >-
+                      standard credential rejected and no recovery credential set available
+                      (recovery scope={{ _rf_recovery_scope | default('') | ternary(_rf_recovery_scope, _cred_reason | default('unresolved')) }},
+                      outcome={{ _cred_recovery_outcome | default('not_resolved') }})
+
+            - name: "redfish | recovery set unavailable 누적 (merge_fragment)"
+              ansible.builtin.include_tasks:
+                file: "{{ lookup('env','REPO_ROOT') }}/common/tasks/normalize/merge_fragment.yml"
+
+        # ── Phase 3: 표준 계정으로 재인증 + 재수집 ───────────────────────
+        # 복구가 **실제로 확인**됐을 때만 (§9 — write 2xx 는 성공이 아니다).
+        # 여기서 성공해야 비로소 "표준 계정으로 수집했다" 가 된다.
+        - name: "redfish | re-collect with standard account (after recovery)"
+          when:
+            - _rf_account_reconcile_allowed | bool
+            - (_rf_account_service_meta | default({})).recovered | default(false) | bool
+            - not ((_rf_account_service_meta | default({})).dryrun | default(true) | bool)
+          ansible.builtin.include_tasks: tasks/collect_standard.yml
+          vars:
+            _rf_try_accounts: "{{ _rf_standard_accounts | default([]) }}"
 
         # 2026-04-30: precheck/diagnosis가 이미 식별한 실패 단계에 따라 specific 메시지.
         # ServiceRoot(/redfish/v1/)는 Redfish 표준상 무인증 → protocol_supported=true이면
@@ -162,30 +233,20 @@
               {%- endif -%}
           when: not (_rf_collect_ok | bool)
 
-        # ── P2 (cycle 2026-04-28): recovery 자격 사용 시 공통계정 자동 복구 ──
-        # 사용자 결정 #4: dryrun ON default, lab 검증 후 OFF 전환
-        #
-        # 2026-08-11 (Phase 6-B §6 §7): 진입 조건을 좁힌다. 기능은 그대로 두고 조건만 좁힌다.
-        #   종전: "primary 로 수집이 안 됐고 recovery 로 됐다" 면 무조건 BMC 계정을 고쳤다.
-        #   문제: primary 실패의 원인은 자격증명 불일치만이 아니다. timeout / TLS / 5xx /
-        #        일시적 네트워크 단절도 같은 모양으로 보인다. 그런 상황에서 계정을 고치면
-        #        멀쩡한 공통계정의 비밀번호를 덮어쓰게 된다.
-        #   신: primary 후보가 **401 로 명시적으로 거부**됐을 때만 진입한다
-        #      (_rf_primary_auth_rejected — collect_standard.yml 이 역할 기준으로 판정).
-        #      403(권한 부족)은 제외한다 — 인증 자체는 통과했을 수 있다.
-        #
-        # 이 사실을 한 곳에서만 판정해 두고, 아래 include 의 when 과 account_service.yml 의
-        # 쓰기 모드가 같은 값을 본다 (§16 — "기본값이라서" 쓰기가 켜지는 경로를 없앤다).
-        - name: "redfish | account_service | 진입 조건 판정"
-          ansible.builtin.set_fact:
-            _rf_account_reconcile_allowed: >-
-              {{ (((_rf_used_account | default({})).role | default('primary')) == 'recovery')
-                 and (_rf_collect_ok | default(false) | bool)
-                 and (_rf_primary_auth_rejected | default(false) | bool) }}
-
-        - name: "redfish | account_service (recovery → primary)"
-          when: _rf_account_reconcile_allowed | bool
-          ansible.builtin.include_tasks: tasks/account_service.yml
+        # ── 최종 수집 주체 검증 (2026-08-12 Contract) ────────────────────
+        # "표준 계정으로 수집했다" 가 성립하지 않으면 성공이 아니다.
+        # 복구 계정으로 수집하는 경로는 위에서 구조적으로 제거했지만, 향후 누군가
+        # collect_standard 에 복구 후보를 넘기는 순간 조용히 되살아난다. 여기서 못 박는다.
+        #   허용: primary(표준 계정) / anonymous(정체 미상 장비 무인증 best-effort)
+        #   금지: recovery
+        - name: "redfish | abort if final gathering not by standard account"
+          ansible.builtin.fail:
+            msg: >-
+              Redfish 정보 수집에 실패했습니다 ({{ _rf_ip }}).
+              표준 수집 계정으로 수집을 완료하지 못했습니다
+              (사용된 계정 역할={{ (_rf_used_account | default({})).role | default('unknown') }}).
+              표준 계정 상태와 자격증명을 확인하세요.
+          when: ((_rf_used_account | default({})).role | default('primary')) == 'recovery'
 
         # ── normalize standard ───────────────────────────────────────────
         - name: "redfish | normalize standard"
@@ -274,6 +335,7 @@
                                     is mapping) else {}) | combine({
                      'adapter_candidate': _selected_adapter.adapter_id | default(none),
                      'credential_scope': (_cred_scope | default('')) or none,
+                     'recovery_credential_scope': (_cred_recovery_scope | default('')) or none,
                      'auth': _rf_attempts_meta | default({}),
                      'account_service': _rf_account_service_meta | default({}),
                      'multi_node_layout': (_rf_adapter_manager_layout | default('')) or none,
@@ -443,6 +505,8 @@
                                             is mapping)
                                         else {})
                                        | combine({'credential_scope': (_cred_scope | default('')) or none,
+                                                  'recovery_credential_scope':
+                                                    (_cred_recovery_scope | default('')) or none,
                                                   'notices':
                                            ((_rf_raw_collect | default({})).notices | default([]))})}) }}
           when: ((_diagnosis | default({}, true)).failure_reason | default(none)) is none

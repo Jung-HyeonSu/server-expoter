@@ -2185,6 +2185,29 @@ fields:
       only the selection axes. Use it to tell credential-placement problems apart
       from target-account problems.
 
+  "diagnosis.details.recovery_credential_scope":
+    type: "string|null"
+    priority: nice
+    channel: [redfish]
+    # 2026-08-12 신설 (Redfish 전용). 표준 수집 계정과 복구 계정은 **선택축이 다르다**:
+    #   표준  = 전역 1개          → credential_scope        = common/redfish/standard
+    #   복구  = location + vendor → recovery_credential_scope = <loc>/redfish/<vendor>
+    #   한 필드에 담으면 "무엇으로 수집했는지" 와 "무엇으로 복구를 시도했는지" 가 섞인다.
+    #   실제로 그 혼동 때문에 복구 계정으로 수집한 결과가 정상 결과로 나가고 있었다.
+    #   OS / ESXi 에는 복구 개념 자체가 없어 이 필드가 나타나지 않는다.
+    #   **Secret 이 아니다**: location / vendor 조합 문자열뿐이다.
+    help_ko: >-
+      표준 수집 계정 복구에 사용할 자격증명 세트의 범위 식별자 (Redfish 전용).
+      형식은 `<location>/redfish/<vendor>` (예: ich/redfish/dell). vendor 를 식별하지
+      못했거나 복구 세트를 정하지 못하면 null. 수집 자체는 `credential_scope`(표준 계정)
+      로 수행되며, 이 값은 복구 경로에만 쓰인다. 계정 정보는 포함하지 않는다.
+    help_en: >-
+      Scope identifier of the recovery credential set (Redfish only), formatted as
+      `<location>/redfish/<vendor>` (e.g. ich/redfish/dell); null when the vendor is
+      unidentified or no recovery scope could be determined. Gathering itself always
+      uses the standard account in `credential_scope`; this scope is used only to
+      create or repair that standard account. Contains no account material.
+
   "diagnosis.details.hostname_source":
     type: "string"
     priority: nice
