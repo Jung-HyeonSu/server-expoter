@@ -1577,3 +1577,27 @@ DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` �
 - 환경 제약: 검증 기준 Agent (10.100.64.154) 외 WSL에서 직접 수집
 - Evidence: tests/evidence/2026-04-28-reference-collection.md
 - decision-log: docs/19_decision-log.md §13 Round 11
+
+---
+
+## 2026-08-12 — errors[].message 계약 개선 회귀
+
+- 범위: 공통 정규화 / precheck / callback / 3채널 gather 문구 · schema · 신규 계약 테스트
+- 명령: `python -m pytest tests/ -q -p no:cacheprovider`
+- 결과: **2094 passed / 10 skipped / 7 xfailed** (착수 전 baseline **1974 passed**)
+- 보조 검증:
+  - `python tests/validate_field_dictionary.py` → `RESULT: PASS` (8/10 checks, 0 failed, 79 warnings)
+  - `python scripts/ai/hooks/output_schema_drift_check.py` → exit 0 (sections=11 / fd_paths=173 / prefixes=18)
+  - `python scripts/ai/verify_vendor_boundary.py` → 통과
+  - `python scripts/ai/verify_harness_consistency.py` → 통과
+  - 저장소 전체 `ast.parse` 0 오류 / `yaml.safe_load_all` 1 오류(`scripts/ai/bug_tracker/inventory_lab_linux.yml` — 이번 변경 대상 아님, Jinja 포함 inventory)
+- 신설 테스트: `tests/e2e/test_section_message_contract.py`(40) · `tests/unit/test_esxi_section_errors.py`(43) ·
+  `tests/unit/test_errors_normalize.py` 재작성(17) · `test_errors_message_contract.py` +14
+- Baseline 갱신: `tests/fixtures/redfish/dmtf_rackmount1/expected_output.json`
+  (status partial→success / failed_sections ['storage']→[] / collected +storage / error_count 2→1).
+  근거: 성공한 SimpleStorage fallback 이 더 이상 errors 로 잡히지 않는다 (H11).
+  **오프라인 mockup 재생 산출물**이며 실장비 baseline 이 아니다.
+- 환경 제약: `ansible-playbook` 미설치 → 3채널 syntax-check **미실행**. Ansible 검증은 production YAML
+  템플릿 추출 + Jinja 렌더로 대체했다 (실제 플레이북 실행 아님).
+- Evidence: `tests/evidence/2026-08-12-errors-message-contract.md`
+

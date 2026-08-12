@@ -5,6 +5,21 @@
 - 성격: **조사 전용**. 코드 / 문구 / Schema / failure_code / failure_stage / Portal / 테스트 기대값 **변경 0건**
 - 판단 기준: `CLAUDE.md` §2 Source of Truth — **현재 실제 코드**가 정본. 문서 서술이 코드와 다르면 코드를 사실로 기록하고 문서 쪽을 문제로 표시했다
 
+
+> **후속 반영 (2026-08-12)** — 본 조사 결과를 현재 코드로 재검증한 뒤 실제로 수정했다.
+> 따라서 아래 §4 문제 목록 / §5 소실 경로 / §6 inventory 의 상당수는 **이미 해소된 상태**이며,
+> 인용된 file:line 도 이동했다. 이 문서는 **2026-08-11 시점의 조사 스냅샷**으로 보존한다.
+>
+> 현재 계약과 변경 내역은 다음을 정본으로 본다:
+> - `tests/evidence/2026-08-12-errors-message-contract.md` (변경·검증 기록)
+> - `docs/19_decision-log.md` 2026-08-12 항목 (왜 그렇게 결정했나)
+> - `docs/20_json-schema-fields.md` §4-1 (`errors[]` 원소 계약 — 호출자용)
+> - `common/vars/failure_reasons.yml` / `common/vars/section_messages.yml` (문장 정본)
+> - `filter_plugins/errors_normalizer.py` (정규화 정본)
+>
+> 남은 항목(Result Delivery / status 판정 변경 / 실장비 검증)은
+> `docs/ai/NEXT_ACTIONS.md` 의 "errors[].message 계약 개선 후속" 절에 있다.
+
 ---
 
 ## 0. 조사 개요

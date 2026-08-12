@@ -680,3 +680,88 @@
   controllers/adapters 실값. test_adapter_id os_linux_generic→os_linux_ubuntu. **(구)보류 메모:** 166(원 host) 이 RHEL 9.6 로 OS 변경 + 119 는 os_linux_rhel 로 잡혀
   os_linux_generic Ubuntu 캡처 불가. 위 Ubuntu 어댑터 버그 해결 후 재캡처 가능. (현 ubuntu_baseline vendor=None 은
   canonical 유효라 회귀는 통과 — 우선순위 낮음.)
+
+## errors[].message 계약 개선 후속 (2026-08-12)
+
+정본 기록: `tests/evidence/2026-08-12-errors-message-contract.md`.
+아래는 이번 범위에서 **의도적으로 제외**한 것들이다. 사유를 함께 남긴다.
+
+### A. Result Delivery — 이번 범위 밖 (errors.message 품질 문제가 아니라 결과 전달 문제)
+
+envelope 과 `errors[].message` 는 정상 생성됐는데 **Portal 이 아예 받지 못하는** 경로다.
+사용자 지시(§11)에 따라 별도 Backlog 로 분리한다.
+
+- [ ] **[Jenkins] Validate stage 실패 → Callback 미실행** — `Jenkinsfile_portal:65~108` 의 `error` step 10곳.
+  Declarative stage 는 순차 실행이고 Validate 에 `catchError` 가 없어 즉시 FAILURE 로 끝난다 →
+  Stage 4 'Callback' 이 실행되지 않아 Portal 수신 0건. 호출자는 Jenkins build 실패만 관측한다.
+- [ ] **[Jenkins] `gather_output.json` 0바이트 → abort** — `Jenkinsfile_portal:183`.
+  이 `error` 는 `catchError`(:152-177) **바깥**이라 UNSTABLE 로 흡수되지 않는다.
+- [ ] **[Jenkins] Validate Schema 실패 → Callback 통째 취소** — `Jenkinsfile_portal:201-223`.
+  gather 는 성공했고 message 도 이미 만들어졌는데 field_dictionary 정합 실패(help_ko 누락 등
+  **errors 와 무관한 이유** 포함)로 전달이 취소된다.
+- [ ] **[Jenkins] httpRequest 3회 실패 → UNSTABLE + 재전송 큐 없음** — `Jenkinsfile_portal:281,324,330`.
+  `post { always { deleteDir() } }` 로 워크스페이스까지 지워져 수동 재전송도 불가.
+- [ ] **[Jenkins] stage timeout ABORTED → 대체 envelope 없음** — `Jenkinsfile_portal:43,58,126,209,231`.
+- [ ] **[inventory] `inventory.sh` 가 IP 검증 실패 시 `sys.exit(1)`** — play 자체가 시작되지 않아
+  envelope 이 0개다 (os-gather/inventory.sh:31-33, redfish-gather/inventory.sh:32-34).
+
+### B. status 판정이 바뀌는 변경 — 사용자 승인 필요
+
+- [ ] **Windows partial 구조 도입** — 현재 Windows 는 `status=partial` 이 **구조적으로 발생하지 않는다**.
+  8개 gather 중 6개가 `_sections_failed_fragment: []` 를 무조건 set 하고, 유일한 실패 표기였던
+  `system_runtime` 은 build_sections 의 11섹션 루프에 없어 no-op 이었다(이번에 `[]` 로 정리 — 동작 불변).
+  각 gather 가 원천 rc/결과로 실측 판정하게 바꾸면 지금까지 success 로 보고되던 호스트가 partial 이 된다
+  → Portal 지표가 즉시 변한다. baseline 회귀 + 승인 필요.
+- [ ] **OS users 섹션 unsupported 강등(N14)** — 수집 실패가 `not_supported` 로 조용히 강등된다.
+  F23 결정(노이즈 차단)과 충돌해 판단 보류.
+- [ ] **ESXi 확장 수집 실패 임계(NEW-1) / firewall_state null 판정(NEW-2)** — 실장비 없이 오탐 위험.
+  `collect_network_extended` 4개 모듈 전부 실패, `collect_runtime` 의 firewall_state null 을
+  실패로 볼지 정상 미설정으로 볼지 실 vCenter 확인 필요.
+
+### C. 기능 버그 (message 품질과 무관 — 이번 작업에서 고치지 않음)
+
+- [ ] **[ESXi 데이터 유실] `collect_runtime.yml:161` 의 하드코딩 `listening_ports: []`** 가
+  `esxi_disks` 수집분을 덮어쓴다. `normalize_system.yml:33` 이 실값을 넣은 **뒤**
+  `collect_runtime` 이 같은 `system.runtime` fragment 를 다시 만들면서 빈 list 를 싣고,
+  `merge_fragment.yml` 의 dict 병합은 `[]` 도 not-none 이라 나중 값이 이긴다.
+  → `data.system.runtime.listening_ports` 가 **항상 `[]`** 로 나간다.
+  같은 파일이 `default_gateways` 에는 이미 "빈 list 면 키 제외" 회피를 넣어 뒀다.
+
+### D. 실장비 검증 (AI 환경에서 불가)
+
+- [ ] `ansible-playbook --syntax-check` 3채널 (이 환경에 ansible 미설치)
+- [ ] Redfish 표준 계정 복구(P0-6) 실장비 dry-run → 실제 write 검증
+- [ ] Portal 화면에서 실제 문장 확인 (partial 케이스 포함)
+- [ ] `TCP_CONNECTION_REFUSED` 실환경 재현 → 2번 문장 노출 확인
+
+### C-2. Redfish vendor OEM merge_fragment 경로 (적대적 검수 2026-08-12 발견, HIGH)
+
+- [ ] **[기능 버그 / pre-existing] vendor OEM 6곳이 존재하지 않는 경로로 merge_fragment 를 include 한다.**
+  - 위치: `redfish-gather/tasks/vendors/cisco/collect_oem.yml`, `huawei/collect_oem.yml`,
+    `inspur/collect_oem.yml`, `fujitsu/normalize_oem.yml`, `hpe/normalize_oem.yml`,
+    `quanta/normalize_oem.yml` — 전부 `{{ playbook_dir }}/common/tasks/normalize/merge_fragment.yml`.
+  - redfish 채널의 `playbook_dir` 는 `${WORKSPACE}/redfish-gather` 이고 **`redfish-gather/common/`
+    디렉터리는 존재하지 않는다** (`ls redfish-gather/` → inventory.sh / library / site.yml / tasks 뿐).
+    저장소의 다른 모든 호출부는 `{{ lookup('env','REPO_ROOT') }}/common/...` 을 쓴다.
+    Jenkinsfile 3종 어디에도 `ANSIBLE_PLAYBOOK_DIR` 설정이 없고 `REPO_ROOT=${WORKSPACE}` 만 있다.
+  - 예상 결과: 해당 vendor 의 OEM fragment 가 **한 번도 병합되지 않고**, include 실패가 site.yml 의
+    OEM rescue 로 떨어져 "일부 제조사 확장 정보를 수집하지 못했습니다" 경고만 남는다.
+    (반증 근거: `os-gather/tasks/linux/gather_system.yml` 의 `{{ playbook_dir }}/tasks/linux/...` 는
+     실제로 존재하는 경로라 정상 동작한다 — playbook_dir 해석 자체는 맞다.)
+  - **이번 작업에서 고치지 않은 이유**: errors.message 품질이 아니라 수집 기능/데이터 변경이다.
+    고치면 Cisco / Huawei / Inspur / Fujitsu / HPE / Quanta 의 `data.bmc.oem` 이 새로 채워지기
+    시작하므로 baseline 회귀 + 실장비(또는 에뮬레이터) 확인이 선행돼야 한다.
+  - 선행 확인: 실장비 1대에서 "지금 OEM 이 실제로 누락되고 있는지" 를 envelope 으로 확인.
+
+### C-3. Jinja 컴파일 게이트 (2026-08-12 부분 해소)
+
+- [x] **[DONE] pytest 로 inline Jinja 전수 컴파일** — `tests/e2e/test_section_message_contract.py::
+      test_every_inline_jinja_template_compiles` 신설. 실제로 이번 작업 중 발생한 파손
+      (`>-` 스칼라 안 `#` 주석 → 템플릿 전체 컴파일 불가)을 잡았다.
+- [x] **[DONE] 실제 Ansible 템플릿 엔진 렌더** — `tests/e2e/test_diagnosis_template_ansible_render.py`
+      신설. 순수 jinja2 로는 재현되지 않는 ansible-core 2.19+ Marker 동작을 검증한다.
+      이 테스트가 `_diagnosis` 미정의 / `{}` / details 부재에서 **3채널 rescue 가 전부 죽는**
+      pre-existing 버그를 찾아냈고 같은 커밋에서 고쳤다.
+- [ ] **[검토] `pre_commit_jinja_compile_check.py` 를 advisory → blocking 승격** (`JINJA_COMPILE_BLOCKING=1`).
+      pytest 게이트가 생겼으므로 우선순위는 낮아졌다.
+

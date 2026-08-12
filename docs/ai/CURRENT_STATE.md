@@ -1,5 +1,34 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-12 — errors[].message 계약 개선 (조사 → 실제 수정)
+
+> 입력: `docs/ai/ERRORS-MESSAGE-INVENTORY-2026-08-11.md` (조사 전용, 코드 변경 0).
+> 그 주장을 **현재 코드로 재검증**한 뒤 수정. 정본 기록: `tests/evidence/2026-08-12-errors-message-contract.md`.
+
+- **Message 4계층 확정** — 전체 실패(6문장, `failure_reasons.yml`) / 섹션 부분 실패(섹션 의미 유지,
+  `section_messages.yml`) / 기술 Evidence(`errors[].detail`, string|null) /
+  성공 fallback·정보성(`diagnosis.details.notices` — errors 아님).
+- **문장은 `failure_code` 에서만 파생** — `precheck_bundle.REASON_BY_FAILURE_CODE` 단일 매핑.
+  종전에는 문장과 stage/code 가 서로 다른 조건으로 갈려 같은 결과를 Portal 과 대시보드가 다르게 해석했다.
+  `TCP_CONNECTION_REFUSED` → 2번 문장("대상 IP의 관리 포트에 연결할 수 없습니다…").
+  존재하지 않던 presence 판정(`ip_in_use`) 제거 — **ICMP/IPAM/ARP 기능은 만들지 않았다.**
+- **Redfish rescue 4필드를 `_rf_auth_outcome` 하나에서 파생** (passed/rejected/unknown).
+  인증 통과가 관측된 뒤의 수집 실패에 자격증명 문장을 쓰지 않는다.
+- **성공한 fallback 이 status 를 partial 로 강등하던 경로 제거** —
+  `redfish_gather.notices()` 신설. DMTF rackmount1 오프라인 재생이 `partial → success` (golden 재생성).
+- **소실 경로 배선** — account_service errors 25지점(종전 전량 폐기) / 실패 후보·무인증 probe 근거 /
+  rescue 진입 시 누적 섹션 errors / ESXi `_e_disks_ok`·`_e_dns_ok`·`_e_config_ok`(소비처 0건이었음).
+- **정규화 단일화** — `filter_plugins/errors_normalizer.py` 신설(멱등).
+  `message` 는 항상 비지 않은 문자열(파이썬 dict repr 노출 경로 제거), `detail` 은 string|null 통일.
+- **게이트 신설** — `schema/field_dictionary.yml` 에 `errors[]` 4항목(종전 정의 **0건**),
+  `tests/e2e/test_section_message_contract.py`(partial/success 문구 게이트 종전 0건),
+  `tests/unit/test_esxi_section_errors.py`.
+- **회귀**: `pytest tests/` **2094 passed / 10 skipped / 7 xfailed** (착수 전 1974 passed) ·
+  field_dictionary PASS · schema-drift exit 0 · vendor-boundary / harness-consistency 통과.
+- **미검증**: 실장비 / 실 Jenkins / `ansible-playbook --syntax-check` (이 환경에 ansible 미설치).
+  Ansible 검증은 production YAML 템플릿을 추출해 Jinja 로 렌더하는 방식이며 실제 플레이북 실행이 아니다.
+
+
 ## 일자: 2026-08-11 (o) — Phase 6-C: 실제 Jenkins Agent / lab BMC 검증
 
 > **코드 변경 0건.** Phase 6-B 결과를 실환경에서 검증만 했다.
