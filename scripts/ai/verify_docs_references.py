@@ -80,7 +80,9 @@ SKIP_DIRS = {".git", "__pycache__", "node_modules", ".pytest_cache"}
 # 역사를 기록하는 문서. 지금 없는 경로를 적는 게 이 문서들의 일이라 위반이 아니다.
 HISTORY_DOC_RE = re.compile(
     r"(^docs/ai/decisions/|^docs/ai/archive/|^tests/evidence/"
-    r"|CONVENTION_DRIFT\.md$|FAILURE_PATTERNS\.md$|TEST_HISTORY\.md$|CURRENT_STATE\.md$)"
+    r"|CONVENTION_DRIFT\.md$|FAILURE_PATTERNS\.md$|TEST_HISTORY\.md$|CURRENT_STATE\.md$"
+    # 아래 셋도 성격이 같다 — 그때 무엇이 있었는지를 적는 게 이 문서들의 일이다.
+    r"|^docs/reference/decision-log\.md$|EXTERNAL_CONTRACTS\.md$|^docs/ai/NEXT_ACTIONS\.md$)"
 )
 
 # 그 줄이 "만들 예정"이거나 "예시"라고 말하면 실존 주장이 아니다.

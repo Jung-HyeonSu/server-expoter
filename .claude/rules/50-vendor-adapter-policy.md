@@ -7,7 +7,7 @@
 ## 적용 대상
 
 - 저장소 전체 (`**`) — 벤더 추가/변경 시
-- `adapters/`, `redfish-gather/tasks/vendors/`, `vault/<loc>/redfish/`
+- `adapters/`, `vault/<loc>/redfish/`
 - `common/vars/vendor_aliases.yml`
 
 ## 현재 관찰된 현실
@@ -15,7 +15,7 @@
 - 9 vendor (Dell / HPE / Lenovo / Supermicro / Cisco + Huawei / Inspur / Fujitsu / Quanta) + generic fallback — 후 4종은 cycle-019 신규 (lab 부재, web sources)
 - 단일 main 브랜치 운영. branch는 `main` + `feature/*` + `fix/*` + `vendor/*` (벤더 추가 시) + `docs/*` + `harness/*`
 - vendor별 plugin 모듈 없음 — adapter YAML + OEM tasks + vault만
-- 42 adapter (Redfish 31 + OS 7 + ESXi 4 — cycle 2026-05-11 실측 hpe-csus-add)
+- adapter 개수는 적지 않는다 (rule 00). `ls adapters/{redfish,os,esxi}/*.yml | wc -l` 로 센다
 
 ## 목표 규칙
 
@@ -40,7 +40,7 @@
 - **Default**: 새 vendor 추가는 정확히 9단계
   1. `common/vars/vendor_aliases.yml` 매핑 추가
   2. `adapters/{redfish,os,esxi}/{vendor}_*.yml` adapter 생성 (priority/specificity/match/capabilities/collect/normalize)
-  3. (선택) `redfish-gather/tasks/vendors/{vendor}/` OEM tasks
+  3. (선택) OEM 확장이 필요하면 라이브러리 `_extract_oem_*` 에 vendor 분기 추가
   4. `vault/<loc>/redfish/<vendor>.yml` 생성 (ansible-vault encrypt)
   5. `schema/baseline_v1/{vendor}_baseline.json` 추가 (실장비 검증 후)
   6. `.claude/ai-context/vendors/{vendor}.md` 추가

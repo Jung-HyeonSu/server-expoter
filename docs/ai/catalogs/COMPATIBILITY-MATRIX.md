@@ -8,12 +8,27 @@
 
 ## 사이트 검증 4 vendor × 1 generation (Round PASS — cycle 2026-05-06 commit `0a485823`)
 
-| vendor | generation | 사이트 BMC | adapter file | vault | OEM tasks | baseline |
-|---|---|---|---|---|---|---|
-| Dell | iDRAC10 | 5대 | `adapters/redfish/dell_idrac10.yml` (priority=120) | `vault/<loc>/redfish/dell.yml` (encrypted) | `redfish-gather/tasks/vendors/dell/` | `schema/baseline_v1/dell_baseline.json` |
-| HPE | iLO7 | 1대 | `adapters/redfish/hpe_ilo7.yml` (priority=120) | `vault/<loc>/redfish/hpe.yml` (encrypted) | `redfish-gather/tasks/vendors/hpe/` | `schema/baseline_v1/hpe_baseline.json` |
-| Lenovo | XCC3 | 1대 | `adapters/redfish/lenovo_xcc3.yml` (priority=120) | `vault/<loc>/redfish/lenovo.yml` (encrypted) | `redfish-gather/tasks/vendors/lenovo/` | `schema/baseline_v1/lenovo_baseline.json` |
-| Cisco | UCS X-series | 1대 | `adapters/redfish/cisco_ucs_xseries.yml` (priority=110) | `vault/<loc>/redfish/cisco.yml` (encrypted) | **`redfish-gather/tasks/vendors/cisco/` (cycle 2026-05-07 M-J1 신설)** | `schema/baseline_v1/cisco_baseline.json` |
+> **2026-08-13 정정.** 이 표의 generation 열은 **adapter 오선택 결과를 장비 사실로
+> 적어 둔 것**이었다. adapter 선택이 무인증 probe 직후라 model/firmware 가 비었고,
+> 빈 fact 는 실격이 아니라 중립이라 priority 최상위가 뽑혔다. 인증 후 재선택을
+> 넣고 실측하니 세대가 전부 달랐다.
+> 근거: `tests/evidence/2026-08-13-adapter-oem-esxi9-live.md`
+
+| vendor | generation (실측) | 사이트 BMC | adapter file | vault | baseline |
+|---|---|---|---|---|---|
+| Dell | **iDRAC9** (FW 7.10.70.00) | 5대 | `adapters/redfish/dell_idrac9.yml` (priority=100) | `vault/<loc>/redfish/dell.yml` (encrypted) | `schema/baseline_v1/dell_baseline.json` |
+| HPE | **iLO6** (v1.73, DL380 Gen11) | 1대 | `adapters/redfish/hpe_ilo6.yml` (priority=100) | `vault/<loc>/redfish/hpe.yml` (encrypted) | `schema/baseline_v1/hpe_baseline.json` |
+| Lenovo | **XCC** (AFBT58B 5.70, SR650 V2) | 1대 | `adapters/redfish/lenovo_xcc.yml` (priority=100) | `vault/<loc>/redfish/lenovo.yml` (encrypted) | `schema/baseline_v1/lenovo_baseline.json` |
+| Cisco | **CIMC** (4.1, TA-UNODE-G1) | 1대 | `adapters/redfish/cisco_cimc.yml` (priority=100) | `vault/<loc>/redfish/cisco.yml` (encrypted) | `schema/baseline_v1/cisco_baseline.json` |
+
+OEM tasks 열은 지웠다. vendor OEM task 층은 2026-08-13 에 제거됐다 — 9 vendor 18개
+파일이 전부 모듈 출력에 없는 경로를 읽어 기여가 0이었다
+(`docs/ai/decisions/ADR-2026-08-13-vendor-oem-task-removal.md`). 지금 OEM 은 라이브러리
+`_extract_oem_*` 가 `data.system.oem` / `data.bmc.oem` 으로 내보낸다.
+
+주목할 점 — **baseline 은 처음부터 맞는 값을 갖고 있었다.** `dell_baseline.json` 은
+`redfish_dell_idrac9`, `cisco_baseline.json` 은 `redfish_cisco_cimc` 다. 어긋난 것은
+라이브 캡처(`schema/output_examples/`)와 이 표였다.
 
 → **Out of scope (rule 92 R2)**: 위 4 vendor × 1 generation 코드 path **변경 금지** (envelope shape 영향 0).
 
@@ -166,7 +181,7 @@ cycle 2026-05-07 Phase 2 신설 helper 7종 (`redfish_gather.py` +338 lines, std
 - 측정 명령:
   ```bash
   ls adapters/redfish/*.yml | wc -l
-  ls redfish-gather/tasks/vendors/ | wc -l
+  ls adapters/esxi/*.yml | wc -l
   python adapter origin 검사(제거됨) --all --redfish-only
   ```
 

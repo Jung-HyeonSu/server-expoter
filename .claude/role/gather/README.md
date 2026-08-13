@@ -56,7 +56,7 @@ Ansible 기반 3-channel 서버 정보 수집 개발. 각 채널이 자기 fragm
 
 ## 주의사항 (Critical)
 - **Fragment 철학 (rule 22)**: 각 gather는 자기 fragment만 만든다. 5 공통 변수 (`_data_fragment` / `_sections_supported_fragment` / `_sections_collected_fragment` / `_sections_failed_fragment` / `_errors_fragment`) 사용 — 변수 이름은 모든 gather 동일, **값**으로 자기 섹션을 채움. 누적 변수 (`_collected_data` 등) 직접 수정 금지.
-- **벤더 경계 (rule 12)**: gather 코드에 벤더 이름 (Dell/HPE/Lenovo/...) 하드코딩 금지. 벤더 분기는 `adapters/` YAML 또는 `redfish-gather/tasks/vendors/{vendor}/` 안에만.
+- **벤더 경계 (rule 12)**: gather 코드에 벤더 이름 (Dell/HPE/Lenovo/...) 하드코딩 금지. 벤더 분기는 `adapters/` YAML 또는 Redfish 라이브러리의 `_extract_oem_*` 안에만.
 - **Vault 2단계 로딩 (Redfish)**: 1단계 무인증으로 ServiceRoot detect → vendor 결정 → 2단계 vendor vault 로드 후 인증 수집.
 - **Linux 2-tier (preflight.yml)**: `_l_python_mode`로 Python 3.9+ vs raw fallback 자동 분기. raw 경로는 `raw` 모듈만 remote 실행, controller-side `set_fact`/Jinja2 파싱 허용.
 - **merge_fragment.yml 호출**: 각 gather 후에 반드시 호출해야 누적 병합됨.

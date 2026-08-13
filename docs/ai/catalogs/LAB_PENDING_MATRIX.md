@@ -67,7 +67,7 @@
 | C4 | vault 분리 결정 (`vault/<loc>/redfish/hpe_csus.yml`) | 사용자 명시 승인 + 사이트 자격증명 정책 | rule 50 R2 단계 4 |
 | C5 | ServiceRoot.Product 실측 — 정확 model 문자열 | C1 | adapter `model_patterns` 정밀화 |
 | C6 | Managers / Systems / Chassis Member 개수 + ID 패턴 실측 | C1 | mock fixture RMC / PDHC0~N / Bay1.iLO5 / Partition0~N 검증 |
-| C7 | `Oem.Hpe.PartitionInfo` / `FlexNodeInfo` / `GlobalConfiguration` schema 실측 | C1 | `redfish-gather/tasks/vendors/hpe/normalize_oem.yml` `default({})` 정정 |
+| C7 | `Oem.Hpe.PartitionInfo` / `FlexNodeInfo` / `GlobalConfiguration` schema 실측 | C1 | 라이브러리 `_extract_oem_hpe` 확장 (vendor OEM task 층은 2026-08-13 제거) |
 | C8 | RMC 활성화 / Subscription License / 펌웨어 요구 실측 | C1 + C4 | `docs/operate/06-rmc-activation.md` 4 절 정정 |
 
 #### HPE 에뮬레이터 mock-tier 커버리지 (2026-06-08 — 실장비 PENDING 과 별개)

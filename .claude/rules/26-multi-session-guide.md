@@ -37,7 +37,7 @@
   ```markdown
   | 세션 | 담당 영역 | 오너십 파일 |
   |---|---|---|
-  | A | adapter Huawei 신규 | adapters/redfish/huawei_*.yml + redfish-gather/tasks/vendors/huawei/ |
+  | A | adapter Huawei 신규 | adapters/redfish/huawei_*.yml |
   | B | tests/fixtures Huawei | tests/fixtures/huawei_*.json |
   | C | docs 갱신 | .claude/ai-context/vendors/huawei.md + docs/reference/live-validation.md |
   ```

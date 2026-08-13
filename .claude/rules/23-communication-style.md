@@ -29,7 +29,7 @@
 
 > **무엇**: 새 벤더 Huawei를 server-exporter에 추가
 > **왜**: 신규 호출자가 Huawei iBMC 기반 서버 수집 요청
-> **영향**: `common/vars/vendor_aliases.yml` 1줄 추가 + `adapters/redfish/huawei_*.yml` 신규 1~3개 + `redfish-gather/tasks/vendors/huawei/` (선택). 기존 5개 vendor (Dell/HPE/Lenovo/Supermicro/Cisco) 영향 없음
+> **영향**: `common/vars/vendor_aliases.yml` 1줄 추가 + `adapters/redfish/huawei_*.yml` 신규 1~3개 (필요 시 라이브러리 OEM 분기). 기존 5개 vendor (Dell/HPE/Lenovo/Supermicro/Cisco) 영향 없음
 > **결정 필요**: 진행 / 펌웨어 검증 우선 / 보류 중 택일
 
 ##### 나쁜 예

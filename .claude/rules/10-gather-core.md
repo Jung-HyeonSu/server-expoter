@@ -53,7 +53,7 @@
 
 ### R6. Vendor 이름 하드코딩 금지 (rule 12 R1)
 
-본 rule은 rule 12 (adapter-vendor-boundary)로 자세히 분리됨. 핵심: gather 코드에 "Dell", "HPE" 등 vendor 이름 하드코딩 금지. 분기는 adapter YAML 또는 `redfish-gather/tasks/vendors/{vendor}/`에서만.
+본 rule은 rule 12 (adapter-vendor-boundary)로 자세히 분리됨. 핵심: gather 코드에 "Dell", "HPE" 등 vendor 이름 하드코딩 금지. 분기는 adapter YAML 또는 Redfish 라이브러리의 OEM 추출 분기에서만.
 
 ## 금지 패턴
 

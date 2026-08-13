@@ -8,7 +8,7 @@
 >
 > **라인 번호 기준**: HEAD `c7817510`.
 > 작성 중 워킹트리에 이 설계와 무관한 수정이 있었다:
-> `esxi-gather/tasks/collect_runtime.yml`, `redfish-gather/tasks/vendors/**` 7개,
+> `esxi-gather/tasks/collect_runtime.yml`, vendor OEM task 7개(2026-08-13 제거),
 > 신규 `tests/unit/test_auth_evidence_contract.py`, `tests/unit/test_fragment_overwrite_and_include_paths.py`.
 > **이 문서가 인용하는 파일은 그 목록에 없으며 인용 라인은 전부 앵커 문자열로 재확인했다.**
 > 그래도 읽는 시점에 밀릴 수 있으므로 재확인 시 **태스크명 / 함수명 / 문자열**로 찾을 것.
@@ -1141,7 +1141,7 @@ production 소비 코드가 0건이며 `tests/unit/test_adapter_vault_label_cons
 |---|---|---|
 | redfish 31개 `credentials:` | 제거 | `test_vault_dynamic_loading_m_c3.py:141`, `test_hpe_superdome_flex_m_e2.py:121` |
 | `recovery_accounts` | 제거 — vault 의 `role: recovery` 가 이미 production 정본이다. adapter 쪽 복제는 §5.3 조건 5(중복 금지) 위반 | `test_adapter_vault_label_consistency.py:137,140,158,170,185` (그리고 `:114` 의 adapter 개수 30 고정) |
-| os 7개 / esxi 4개 `credentials:` | 제거 — 완전 dead. profile 이름이 실제 vault 파일명과 일치하지도 않는다 | 없음 |
+| os / esxi adapter 의 `credentials:` | 제거 — 완전 dead. profile 이름이 실제 vault 파일명과 일치하지도 않는다 | 없음 |
 
 `test_adapter_vault_label_consistency.py` 가 검증하던 "adapter recovery label ⊆ vendor 허용 집합"
 의 가치는 **vault 검증 스크립트로 이관**한다 (§9.5, §16 2단계). 원래 label 의 정본은

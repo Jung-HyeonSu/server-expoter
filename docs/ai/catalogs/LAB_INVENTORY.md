@@ -93,15 +93,24 @@ Jenkins agent(10.100.64.0/24)에서 세 구간 모두 닿는다.
 
 ## 6. 알려진 공백
 
-**ESXi 9.0.0에 맞는 어댑터가 없다.** `adapters/esxi/*.yml`의 `version_patterns`는
-`^6\.` / `^7\.` / `^8\.` 셋뿐이라 9.0.0 다섯 대는 `esxi_generic`으로 떨어진다.
-다만 `esxi_7x` / `esxi_8x` / `esxi_generic`의 `sections_supported`가 완전히 같아서
-수집 항목이 줄지는 않는다. `meta.adapter_id`가 `esxi_generic`으로 찍히는 관측 정확도 문제다.
-`REQUIREMENTS.md` 지원 표에는 9.x가 아예 없다.
+**ESXi 9.0.0 어댑터 부재는 2026-08-13 에 해소됐다.** `adapters/esxi/esxi_9x.yml` 을
+추가했고 실장비 3대(`10.100.64.91~93`)에서 `esxi_generic` → `esxi_9x` 로 바뀌는 것을
+확인했다. 수집 섹션은 6개로 전후 동일하다 — 애초에 데이터 손실이 아니라 관측
+정확도 문제였다. 근거: `tests/evidence/2026-08-13-adapter-oem-esxi9-live.md`.
 
-**ESXi 9.0.0 5대의 접속 자격증명이 제공되지 않았다.** BMC 자격증명만 받았다.
-`vault/.lab-credentials.yml`에는 `credentials_provided: false`로 표시해 두었고,
-수집 실행은 `vault/<loc>/esxi.yml`을 쓰므로 그쪽에 값이 있으면 동작한다.
+**`vault/.lab-credentials.yml` 의 `credentials_provided: false` 는 그 파일 기준이다.**
+실제 수집은 `vault/<loc>/esxi.yml` 을 쓰고, 그쪽 자격증명으로 9.0.0 호스트 수집이
+된다는 것을 실측으로 확인했다.
+
+**아직 수집이 안 되는 것 5대** (2026-08-13 실측, 전·후 동일)
+
+| 대상 | 실패 | 관측 |
+|---|---|---|
+| 10.100.15.1 | protocol | 443 은 열려 있는데 ServiceRoot 를 제대로 주지 않는다 |
+| 10.100.15.3 | reachable | 전 포트 무응답. 방화벽 drop 인지 전원 off 인지 안 갈린다 |
+| 10.100.15.32 | auth | ServiceRoot 가 벤더를 식별시키지 못한다(`vendor_unresolved`). 표준 계정은 전역이라 시도됐고 거부됐다. 복구 세트는 vendor 축이라 못 열었다 — 설계대로다 |
+| 10.100.64.94 | reachable | 짝인 BMC 10.100.15.32 도 실패. 같은 기계가 양쪽 다 안 된다 |
+| 10.100.64.95 | protocol | 443 응답은 있으나 vSphere 응답이 아니다 |
 
 ## 7. 갱신 시점
 

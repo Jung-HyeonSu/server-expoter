@@ -81,7 +81,7 @@
 
 ### R4. Vendor-specific 로직은 adapter YAML
 
-- **Default**: vendor별 분기는 `adapters/{channel}/{vendor}_*.yml` 또는 `redfish-gather/tasks/vendors/{vendor}/`. gather 코드는 vendor-agnostic
+- **Default**: vendor별 분기는 `adapters/{channel}/{vendor}_*.yml` 또는 Redfish 라이브러리의 OEM 추출 분기. gather 코드는 vendor-agnostic
 - **Forbidden**: gather 코드에 `if vendor == "Dell"` 분기
 - **Why**: rule 12 R1과 동일. fragment 철학의 vendor 차원
 

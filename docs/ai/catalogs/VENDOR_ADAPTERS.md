@@ -26,7 +26,7 @@
 > **cycle 2026-05-07 변경**: 27 adapter → 30 adapter
 >   - Phase 1: supermicro_x10 신설 (M-B1) + supermicro_ars 신설 (M-B3) + 4 신규 vendor OEM tasks 신설 (M-J1 Cisco 추가 = 5 신설)
 >   - Phase 3 M-K1: 30 adapter origin 주석 일관성 검증 (verify_adapter_origin_check.py --all --redfish-only PASS 30/30)
->   - Phase 3 M-J1: Cisco vendor task (`redfish-gather/tasks/vendors/cisco/`) 신설 — 9 vendor OEM 모두 cover
+>   - Phase 3 M-J1: Cisco vendor task ((2026-08-13 제거 — 라이브러리 `_extract_oem_cisco`)) 신설 — 9 vendor OEM 모두 cover
 
 ## adapter 카운트 history
 
@@ -148,19 +148,17 @@
 
 ## OEM tasks 매트릭스 (M-J1 통합)
 
-| vendor | OEM tasks 디렉터리 | 상태 |
-|---|---|---|
-| Dell | `redfish-gather/tasks/vendors/dell/` | [DONE] (placeholder pattern — 이전 cycle) |
-| HPE | `redfish-gather/tasks/vendors/hpe/` | [DONE] (M-G1 Superdome 분기 보강) |
-| Lenovo | `redfish-gather/tasks/vendors/lenovo/` | [DONE] |
-| Supermicro | `redfish-gather/tasks/vendors/supermicro/` | [DONE] (M-B2 보강) |
-| **Cisco** | `redfish-gather/tasks/vendors/cisco/` | **[ORPHAN] 파일은 있으나 어느 adapter 도 참조 안 함** (2026-08-10 실측) |
-| Huawei | `redfish-gather/tasks/vendors/huawei/` | [DONE] (Phase 1 M-C2 신설) — **normalize 는 2026-08-10 까지 미실행이었음** |
-| Inspur | `redfish-gather/tasks/vendors/inspur/` | [DONE] (Phase 1 M-D1 신설) — **normalize 는 2026-08-10 까지 미실행이었음** |
-| Fujitsu | `redfish-gather/tasks/vendors/fujitsu/` | [DONE] (Phase 1 M-E2 신설) |
-| Quanta | `redfish-gather/tasks/vendors/quanta/` | [DONE] (Phase 1 M-F1 신설) |
+> **2026-08-13 제거.** 이 표에 있던 9 vendor OEM task 디렉터리는 전부 삭제됐다.
+> 18개 파일이 모듈 출력에 없는 경로(`systems[0].Oem.*`, `data.chassis.Oem.*`)를 읽어
+> 기여가 0이었다. 실장비 8대 envelope 에도 이들이 쓴다던 `data.bmc.oem_<vendor>` 키가
+> 한 건도 없었다.
+>
+> 지금 OEM 은 라이브러리 `_extract_oem_{hpe,dell,lenovo,supermicro,cisco}` 와 Manager OEM
+> 추출이 `data.system.oem` / `data.bmc.oem` 으로 내보낸다. 확장이 필요하면 그쪽을 넓힌다.
+>
+> 근거: `docs/ai/decisions/ADR-2026-08-13-vendor-oem-task-removal.md`
 
-→ 9 vendor 모두 OEM tasks 디렉터리 보유 (cycle 2026-05-07 M-J1 종료 시점).
+
 
 ### 2026-08-10 실측 정정 — "디렉터리 보유 ≠ 실행됨"
 
@@ -230,6 +228,7 @@ credentials:
 
 | Adapter | 대상 |
 |---|---|
+| `esxi_9x.yml` | ESXi 9.x (2026-08-13 신설, priority 100 — 8x 와 동률) |
 | `esxi_8x.yml` | ESXi 8.x |
 | `esxi_7x.yml` | ESXi 7.x |
 | `esxi_6x.yml` | ESXi 6.x |

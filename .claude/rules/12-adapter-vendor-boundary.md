@@ -2,7 +2,6 @@
 
 ## 적용 대상
 - `adapters/{redfish,os,esxi}/**`
-- `redfish-gather/tasks/vendors/**`
 - `common/`, `os-gather/`, `esxi-gather/`, `redfish-gather/` (vendor 하드코딩 금지 영역)
 - `common/vars/vendor_aliases.yml`
 
@@ -11,14 +10,18 @@
 - adapter YAML 은 `adapters/{redfish,os,esxi}/` 아래에 있다 (개수는 세지 않는다 — rule 00 의 세는 명령 참조)
 - 9 vendor (Dell / HPE / Lenovo / Supermicro / Cisco / Huawei / Inspur / Fujitsu / Quanta) + generic fallback
 - adapter_loader (lookup plugin)이 동적 점수 계산으로 선택
-- vendor-specific OEM tasks는 `redfish-gather/tasks/vendors/{vendor}/`
+- vendor-specific OEM 추출은 라이브러리 `_extract_oem_*` (task 디렉터리는 2026-08-13 제거)
 
 ## 목표 규칙
 
 ### R1. Vendor 이름 하드코딩 금지
 
-- **Default**: `common/`, `os-gather/`, `esxi-gather/`, `redfish-gather/` (단 `tasks/vendors/` 제외) 코드에 vendor 이름 하드코딩 금지
-- **Allowed**: `redfish-gather/tasks/vendors/{vendor}/` 안, `adapters/{channel}/{vendor}_*.yml` 안, `common/vars/vendor_aliases.yml`
+- **Default**: `common/`, `os-gather/`, `esxi-gather/`, `redfish-gather/` 코드에 vendor 이름 하드코딩 금지
+- **Allowed**: `adapters/{channel}/{vendor}_*.yml` 안, `common/vars/vendor_aliases.yml`
+- **2026-08-13 변경**: 종전에는 `redfish-gather/tasks/vendors/{vendor}/` 도 Allowed 였다.
+  그 디렉터리는 삭제됐다 — 9 vendor 18개 task 가 전부 모듈 출력에 없는 경로를 읽어
+  기여가 0이었다. vendor OEM 확장 지점은 이제 라이브러리 층이다
+  (근거: `docs/ai/decisions/ADR-2026-08-13-vendor-oem-task-removal.md`)
 - **Allowed (cycle-006 추가)**: `redfish-gather/library/redfish_gather.py` 의 다음 영역
   - `_FALLBACK_VENDOR_MAP` (vendor_aliases.yml load 실패 시 fallback)
   - OEM schema 추출 분기 (`if vendor == 'hpe': oem = _safe(data, 'Oem', 'Hpe')` 등) — Redfish API spec 자체가 vendor namespace를 정의 (`Oem.Hpe`, `Oem.Dell`, `Oem.Lenovo`, `Oem.Supermicro`). 외부 계약 (rule 96)에 직접 의존
@@ -45,7 +48,8 @@
 - **Default**: 새 vendor 추가는 정확히 3단계:
   1. `common/vars/vendor_aliases.yml`에 alias 매핑
   2. `adapters/{redfish,os,esxi}/{vendor}_*.yml` adapter 생성
-  3. (선택) `redfish-gather/tasks/vendors/{vendor}/` OEM tasks
+  3. (선택) OEM 확장이 필요하면 `redfish-gather/library/redfish_gather.py` 의
+     `_extract_oem_*` 에 vendor 분기 추가 (rule 12 R1 Allowed 영역)
 - **Forbidden**: site.yml 수정 (adapter_loader가 동적 감지)
 - **Why**: site.yml을 vendor마다 수정하면 vendor 수만큼 site.yml이 비대해짐
 

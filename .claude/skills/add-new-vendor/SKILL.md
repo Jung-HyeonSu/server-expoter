@@ -37,7 +37,6 @@ specificity: 20
 capabilities: [...]
 collect:
   strategy: standard+oem
-  oem_tasks: redfish-gather/tasks/vendors/huawei/collect_oem.yml
 normalize:
   ...
 metadata:
@@ -46,7 +45,7 @@ metadata:
   oem_path: /redfish/v1/...
   origin_check: 2026-04-27 (hshwang)
 
-### 3. OEM tasks (선택) — redfish-gather/tasks/vendors/huawei/collect_oem.yml
+### 3. OEM 확장 (선택) — 라이브러리 `_extract_oem_*` 에 vendor 분기
 
 ### 4. Vault — vault/<loc>/redfish/huawei.yml (encrypt)
 vault_redfish_username: ...

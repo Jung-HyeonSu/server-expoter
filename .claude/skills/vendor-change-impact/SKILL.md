@@ -41,7 +41,7 @@ common / 3-channel 코드 변경이 어느 vendor adapter / vendor baseline에 �
 ## 절차
 
 1. **변경 파일 분류**:
-   - vendor-specific (`adapters/{channel}/{vendor}_*.yml`, `redfish-gather/tasks/vendors/{vendor}/`) → 해당 vendor만
+   - vendor-specific (`adapters/{channel}/{vendor}_*.yml`, 라이브러리 `_extract_oem_*`) → 해당 vendor만
    - common (`common/library/`, `common/tasks/normalize/`) → 모든 vendor 간접
    - schema (`schema/sections.yml`, `schema/field_dictionary.yml`) → Must 필드면 모든 vendor, Nice면 일부
 2. **각 vendor 영향 평가**:

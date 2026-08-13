@@ -58,7 +58,7 @@ normalize:
 
 → **rule 96 R1-A 의무**: web sources 4종 중 1개 이상 origin 주석 (vendor docs / DMTF spec / GitHub issue / 사용자 사이트 실측). lab 부재 시 web sources 0건 금지.
 
-### 3. (선택) OEM tasks (`redfish-gather/tasks/vendors/{vendor}/`)
+### 3. (선택) OEM 확장 — 라이브러리 `_extract_oem_*`
 
 OEM 분기 필요한 경우만. 없으면 standard_only.
 
@@ -78,7 +78,7 @@ ansible-vault create vault/<loc>/redfish/huawei.yml
 
 ### 6. ai-context (`.claude/ai-context/vendors/{vendor}.md`)
 
-vendor 컨텍스트 자동 로드 (작업 파일이 `redfish-gather/tasks/vendors/{vendor}/` 안일 때):
+vendor 컨텍스트 자동 로드 (작업 파일이 `adapters/redfish/{vendor}_*.yml` 일 때):
 
 ```markdown
 # ai-context/vendors/huawei

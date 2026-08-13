@@ -39,7 +39,7 @@ axes:
     description: "벤더 경계 — common/ + 3-channel에 vendor 이름 하드코딩 금지"
     checks:
       - "common/, os-gather/, esxi-gather/, redfish-gather/ 코드에 Dell/HPE/Lenovo/Supermicro/Cisco 하드코딩 없음"
-      - "vendor 분기는 adapters/ YAML 또는 redfish-gather/tasks/vendors/ 안에만"
+      - "vendor 분기는 adapters/ YAML 또는 라이브러리 _extract_oem_* 안에만"
       - "vendor_aliases.yml만 정규화 메타로 참조"
       - "신규 vendor 추가 3단계 (vendor_aliases + adapter YAML + OEM tasks)"
 

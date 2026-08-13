@@ -59,7 +59,7 @@ adapter YAML 변경 전문 리뷰. server-exporter의 adapter는 vendor 분기 �
 
 ### collect / normalize: PASS
 - strategy: standard+oem
-- oem_tasks: redfish-gather/tasks/vendors/dell/collect_oem.yml ✓
+- oem_tasks 선언 없음 ✓ (2026-08-13 제거 — 되살아나면 include 가 실패한다)
 
 ### 권고
 - probe-redfish-vendor로 7.x 검증 + tested_against 갱신 (rule 96 R1)

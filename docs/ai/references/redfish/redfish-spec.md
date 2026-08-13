@@ -93,7 +93,7 @@ server-exporter는 **HTTP Basic** (vault에서 username/password 로드).
 }
 ```
 
-server-exporter는 OEM 처리를 `redfish-gather/tasks/vendors/{vendor}/`에서.
+server-exporter 는 OEM 처리를 라이브러리 `_extract_oem_*` 에서 한다.
 
 ## 펌웨어 inventory
 
@@ -123,7 +123,7 @@ server-exporter는 OEM 처리를 `redfish-gather/tasks/vendors/{vendor}/`에서.
 1. **무인증 detect 우선**: 인증 정보 vault 로드 전 ServiceRoot로 vendor 결정 (rule 27)
 2. **HTTPS verify**: 자체 서명 환경 → `verify=False` + 코드 의도 주석 (cycle-011: rule 60 해제)
 3. **Timeout**: `urllib.request.urlopen(req, timeout=30)` 명시 (rule 30 R3)
-4. **OEM은 adapter에**: standard endpoint 우선 + OEM은 `redfish-gather/tasks/vendors/{vendor}/`로 분리
+4. **OEM 분리**: standard endpoint 우선 + OEM 은 라이브러리 `_extract_oem_*` 로 분리
 5. **Adapter 점수**: 같은 vendor면 펌웨어 / 모델 매칭으로 specificity 차등 (rule 12 R2)
 
 ## 참고 클라이언트 라이브러리 (server-exporter 미사용)

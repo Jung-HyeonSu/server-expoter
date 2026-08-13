@@ -29,8 +29,9 @@ Overall `status`는 Error 문자열 개수가 아니라 실제 Section 결과로
 
 ## 5. Adapter / Vendor Boundary
 Vendor/Generation 차이는 Adapter를 우선 사용한다. 공통 코드에 Vendor 이름 기반 분기를 추가하지 않는다.
-Vendor 차이는 Adapter YAML 또는 Vendor 전용 Task에 두고 Generic fallback을 유지한다. Evidence 없는 Vendor Exception을 추가하지 않는다.
-신규 Redfish Vendor/Generation 기본 확장 지점: `common/vars/vendor_aliases.yml` -> `adapters/redfish/*.yml` -> 필요 시 `redfish-gather/tasks/vendors/<vendor>/`.
+Vendor 차이는 Adapter YAML 또는 Redfish 라이브러리의 OEM 추출 분기에 두고 Generic fallback을 유지한다. Evidence 없는 Vendor Exception을 추가하지 않는다.
+신규 Redfish Vendor/Generation 기본 확장 지점: `common/vars/vendor_aliases.yml` -> `adapters/redfish/*.yml` -> 필요 시 `redfish-gather/library/redfish_gather.py` 의 `_extract_oem_*`.
+Ansible Task 층의 vendor OEM 디렉터리는 2026-08-13 에 제거됐다 (기여 0).
 Adapter 선택 점수는 현재 구현 Contract인 `score = priority × 1000 + specificity × 10 + match_score`를 따른다.
 Adapter 선택 로직 변경 시 기존 선택 결과 전체를 Regression으로 확인한다.
 Mock/Emulator/Web Evidence와 실제 Lab 검증을 구분한다. Redfish 핵심 Library에 Third-party Python Dependency를 임의 추가하지 않는다.

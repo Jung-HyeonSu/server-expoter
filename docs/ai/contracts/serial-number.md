@@ -708,7 +708,7 @@ flowchart TD
 | `redfish-gather/tasks/normalize_standard.yml` | 483 | `data.hardware.serial` 배선 |
 | | 191-198 | `physical_disks[].serial` (+dedup 키) |
 | | 502 / 544 / 562 / 565-570 / 579 | bmc / memory.slots / adapters / power / multi_node passthrough |
-| `redfish-gather/tasks/vendors/huawei/collect_oem.yml` | 45 | Huawei `board_serial` |
+| 라이브러리 `_extract_oem_*` (Huawei 분기) | 45 | Huawei `board_serial` |
 | `common/tasks/normalize/build_correlation.yml` | 21-26 | `correlation.serial_number` |
 | `common/tasks/normalize/build_failed_output.yml` | 62-67 | 실패 시 `serial_number: none` |
 | `common/tasks/normalize/build_output.yml` | 45-63 | envelope 조립 |
@@ -1057,7 +1057,7 @@ Model  : TA-UNODE-G1 (UCS C220 M4)
 | `ESN` 키 | 저장소 fixture 전체 **0건** |
 | `SerialNumber` | 목업 3종: `21500810P5N0H4000123` / `21500920P6N0H6000456` / `ATLAS800-2024-00001` |
 | `Oem.Huawei.BoardInfo.BoardSerialNumber` | 목업에서 `SerialNumber` 와 **동일값** (`huawei_atlas` 만 `ATLAS800-MB-001` 로 다름) |
-| 수집 코드 | `redfish-gather/tasks/vendors/huawei/collect_oem.yml:45` 가 `BoardSerialNumber` 를 `data.bmc.oem_huawei.board_serial` 로 넣는다 |
+| 수집 코드 | 없다. Huawei OEM task 는 2026-08-13 에 제거됐고, 그 전에도 읽는 경로가 존재하지 않아 값이 나온 적이 없다 |
 | `hardware.serial` | 다른 벤더와 동일하게 `System.SerialNumber` 사용 (벤더 분기 없음) |
 | 판정 | 목업 값이 동일하게 만들어져 있을 뿐이므로 **실장비에서 ESN / SerialNumber / BoardSN 이 같은 값인지는 UNKNOWN**. lab 부재 (MOCK_ONLY) |
 

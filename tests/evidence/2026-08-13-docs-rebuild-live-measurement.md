@@ -62,7 +62,7 @@ firmware, power, thermal`. `system` 과 `users` 는 `not_supported` 로 나온�
 **수집 섹션은 6개로 동일**했다. 즉 데이터 손실은 없고 `meta.adapter_id` 만 사실과 다르다.
 
 **시리얼 일치가 두 번째 쌍에서도 확인된다.** ESXi `10.100.64.91` 이 `64CXJ54` 를 보고했고,
-같은 기계의 BMC `10.100.15.27` 에서 뜬 저장 예시(`schema/output_examples/redfish_dell_idrac10.jsonc`)도
+같은 기계의 BMC `10.100.15.27` 에서 뜬 저장 예시(`schema/output_examples/redfish_dell_idrac9.jsonc`)도
 `64CXJ54` 다.
 
 ## 발견 — adapter 오선택이 실장비에서 재현된다

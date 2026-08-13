@@ -147,7 +147,7 @@ schema/output_examples/
 ├── os_linux_baremetal_dell.jsonc
 ├── os_windows2022.jsonc
 ├── esxi_vmware.jsonc
-├── redfish_dell_idrac10.jsonc
+├── redfish_dell_idrac9.jsonc
 ├── redfish_hpe_ilo6.jsonc
 ├── redfish_lenovo_xcc.jsonc
 ├── redfish_cisco_cimc.jsonc

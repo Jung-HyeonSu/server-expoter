@@ -61,7 +61,7 @@
 - **Dual-manager**: RMC = primary AccountService host. per-node iLO 5 는 보조. adapter `vendor_notes.manager_layout` 으로 `bmc.name` 분기 — `rmc_primary` (CSUS 3200) / `rmc_primary_ilo_secondary` (Superdome Flex).
 - **Vendor 분류**: HPE sub-line — Manufacturer = "HPE". 별도 vendor 아님 (M-E1 결정 (a)).
 - **vault**: `vault/<loc>/redfish/hpe.yml` 재사용 (별도 vault 불필요).
-- **OEM tasks**: `redfish-gather/tasks/vendors/hpe/` 재사용 (Oem.Hpe 동일 namespace).
+- **OEM 추출**: 라이브러리 `_extract_oem_hpe` (`Oem.Hpe` → `Oem.Hp` fallback). Ansible task 층의 vendor OEM 디렉터리는 2026-08-13 에 제거됐다.
 - **lab**: 부재 — web sources 8건 (CSUS) + 14건 (Superdome Flex) (rule 96 R1-A). 사이트 실측 시 정정 가능.
 - **활성화 위험**: HPE community 7200359 — 사이트 RMC Redfish 비활성화 / 라이선스 부재 사례. `diagnosis.details.rmc_activation_check` 메타로 진단 hint. `docs/operate/06-rmc-activation.md` 참조.
 

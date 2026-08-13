@@ -24,7 +24,7 @@
 | 범주 | 파일 수 | 대표 위치 | 비고 |
 |---|---|---|---|
 | 운영 config | 1 | `jenkins/jobs/redfish-account-provision-verify/config.xml:22,100` | vault 마스터 암호 — **최우선** |
-| 활성 코드 (주석/예시) | 4 | `redfish-gather/tasks/try_one_account.yml:48` (주석), `schema/output_examples/redfish_dell_idrac10.jsonc:11`, `schema/output_examples/README.md:75` | site 실측 결과/예시에 평문 |
+| 활성 코드 (주석/예시) | 4 | `redfish-gather/tasks/try_one_account.yml:48` (주석), `schema/output_examples/redfish_dell_idrac9.jsonc:11`, `schema/output_examples/README.md:75` | site 실측 결과/예시에 평문 |
 | dead 일회용 스크립트 | 5 | `scripts/ai/bug_tracker/{inventory_lab_linux.ini,inventory_lab_linux.yml,capture_raw_linux.yml,agent_ops.py}`, `scripts/ai/add_lab_recovery_to_all_vaults.py` | 이미 실행됨 — 재실행 불필요. `echo PASS \| sudo -S` 형태는 런타임 `ps` 노출도 |
 | 테스트 | 3 | `tests/unit/test_account_provision_*.py`, `tests/e2e/test_envelope_failure_modes.py` | redaction 테스트가 실제 값을 regex 로 박아둠 |
 | 문서 (정본) | 2 | `docs/operate/05-vault.md`, `CLAUDE.md` (이력 주석) | vault 암호 문서화 |

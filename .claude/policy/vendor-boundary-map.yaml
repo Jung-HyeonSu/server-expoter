@@ -13,7 +13,6 @@ vendors:
       - "adapters/redfish/dell_idrac8.yml"    # iDRAC8 (priority=50)
       - "adapters/redfish/dell_idrac9.yml"    # iDRAC9 (priority=100)
       - "adapters/redfish/dell_idrac10.yml"   # iDRAC10 (priority=120, F41 cycle 2026-05-01)
-    oem_tasks: "redfish-gather/tasks/vendors/dell/"
     vault: "vault/<loc>/redfish/dell.yml"
     aliases: ["Dell", "Dell Inc.", "Dell EMC", "iDRAC"]
     firmware_examples: ["3.x", "4.x", "5.x", "6.x", "7.x", "1.x (iDRAC10)"]
@@ -28,7 +27,6 @@ vendors:
       - "adapters/redfish/hpe_csus_3200.yml"  # Compute Scale-up Server 3200 (priority=102, cycle 2026-06-04 96→102, lab 부재)
       - "adapters/redfish/hpe_ilo6.yml"  # iLO6 (priority=100)
       - "adapters/redfish/hpe_ilo7.yml"  # iLO7 Gen12 (priority=120, F47 cycle 2026-05-01)
-    oem_tasks: "redfish-gather/tasks/vendors/hpe/"  # Superdome Flex 도 동일 OEM 재사용 (Oem.Hpe namespace)
     vault: "vault/<loc>/redfish/hpe.yml"  # Superdome Flex 도 동일 vault 재사용 (M-E1 결정 (a))
     aliases: ["HPE", "Hewlett Packard Enterprise", "Hewlett-Packard", "HP", "iLO", "Superdome", "Superdome Flex"]
     firmware_examples: ["2.x", "3.x", "1.12.00 (iLO7)", "RMC 2.x/3.x (Superdome Flex, lab 부재)"]
@@ -69,7 +67,6 @@ vendors:
       - "adapters/redfish/lenovo_imm2.yml"   # IMM2 (priority=50)
       - "adapters/redfish/lenovo_xcc.yml"    # XCC1/XCC2 (priority=100, V2/V3)
       - "adapters/redfish/lenovo_xcc3.yml"   # XCC3 (priority=120, F55 cycle 2026-05-01, V4 OpenBMC)
-    oem_tasks: "redfish-gather/tasks/vendors/lenovo/"
     vault: "vault/<loc>/redfish/lenovo.yml"
     aliases: ["Lenovo", "XCC", "IBM", "ThinkSystem"]
     firmware_examples: ["1.x (IMM2)", "2.x", "AFBT.. (XCC2)", "3.x (XCC3 OpenBMC)"]
@@ -83,7 +80,6 @@ vendors:
       - "adapters/redfish/supermicro_x12.yml"  # X12/H12 AST2600 (priority=90, F61 cycle 2026-05-01)
       - "adapters/redfish/supermicro_x13.yml"  # X13/H13/B13 (priority=100, F61)
       - "adapters/redfish/supermicro_x14.yml"  # X14/H14 (priority=110, F61)
-    oem_tasks: "redfish-gather/tasks/vendors/supermicro/"
     vault: "vault/<loc>/redfish/supermicro.yml"
     aliases: ["Supermicro", "Super Micro Computer, Inc.", "Super Micro Computer", "SMCI"]
     firmware_examples: ["1.x", "2.x", "X12/X13/X14 (AST2600)"]
@@ -94,7 +90,6 @@ vendors:
       - "adapters/redfish/cisco_bmc.yml"          # generic Cisco fallback (priority=10)
       - "adapters/redfish/cisco_cimc.yml"         # M4~M8 (priority=100)
       - "adapters/redfish/cisco_ucs_xseries.yml"  # X210c/X410c standalone CIMC (priority=110, F69)
-    oem_tasks: null
     vault: "vault/<loc>/redfish/cisco.yml"
     aliases: ["Cisco", "Cisco Systems", "Cisco Systems Inc", "Cisco Systems Inc.", "CIMC", "UCS"]
     firmware_examples: ["4.x", "5.x", "6.x"]
@@ -104,7 +99,6 @@ vendors:
     description: "Huawei FusionServer Pro V5/V6 / iBMC (lab 부재 — web sources only)"
     adapters:
       - "adapters/redfish/huawei_ibmc.yml"  # priority=80
-    oem_tasks: null  # 향후 작성 (사이트 fixture 확보 후)
     vault: null  # 미생성 (사용자 명시 2026-05-01) — 향후 vault/<loc>/redfish/huawei.yml
     aliases: ["Huawei", "HUAWEI", "Huawei Technologies Co., Ltd.", "iBMC"]
     firmware_examples: []  # lab 부재
@@ -114,7 +108,6 @@ vendors:
     description: "Inspur NF/TS 시리즈 / ISBMC (lab 부재 — web sources only)"
     adapters:
       - "adapters/redfish/inspur_isbmc.yml"  # priority=80
-    oem_tasks: null
     vault: null
     aliases: ["Inspur", "INSPUR", "Inspur Information", "ISBMC"]
     firmware_examples: []
@@ -124,7 +117,6 @@ vendors:
     description: "Fujitsu PRIMERGY M5/M6/M7 / iRMC S4-S6 (lab 부재 — web sources only)"
     adapters:
       - "adapters/redfish/fujitsu_irmc.yml"  # priority=80
-    oem_tasks: null
     vault: null
     aliases: ["Fujitsu", "FUJITSU", "Fujitsu Limited", "Fujitsu Technology Solutions", "iRMC", "PRIMERGY"]
     firmware_examples: []
@@ -134,7 +126,6 @@ vendors:
     description: "Quanta (QCT) QuantaGrid / OpenBMC (lab 부재 — web sources only)"
     adapters:
       - "adapters/redfish/quanta_qct_bmc.yml"  # priority=80
-    oem_tasks: null
     vault: null
     aliases: ["Quanta", "QUANTA", "Quanta Computer", "Quanta Cloud Technology", "QCT", "QuantaGrid"]
     firmware_examples: []
@@ -144,7 +135,6 @@ vendors:
     description: "Vendor-agnostic Redfish (fallback, priority=0)"
     adapters:
       - "adapters/redfish/redfish_generic.yml"
-    oem_tasks: null
     vault: null
     aliases: []
     firmware_examples: []
@@ -164,11 +154,12 @@ esxi_adapters:
   - "adapters/esxi/esxi_6x.yml"
   - "adapters/esxi/esxi_7x.yml"
   - "adapters/esxi/esxi_8x.yml"
+  - "adapters/esxi/esxi_9x.yml"
 
 # 벤더 경계 원칙
 boundary_principles:
   - "common/ + os-gather/ + esxi-gather/ + redfish-gather/ 코드는 vendor 이름 하드코딩 금지 (rule 12 R1)"
-  - "vendor-specific 로직은 adapters/{channel}/{vendor}_*.yml 또는 redfish-gather/tasks/vendors/{vendor}/ 안에만"
+  - "vendor-specific 로직은 adapters/{channel}/{vendor}_*.yml 또는 라이브러리 _extract_oem_* 안에만"
   - "예외 (cycle-006 추가): redfish_gather.py의 OEM 추출 분기 / `_FALLBACK_VENDOR_MAP` / `_detect_from_product` / BMC names — Redfish API spec의 vendor namespace는 외부 계약"
   - "adapter 점수: priority * 1000 + specificity * 10 + match_score (높을수록 우선)"
   - "vendor_aliases.yml은 어떤 코드에서도 정규화 메타로 참조 가능"
@@ -177,7 +168,7 @@ boundary_principles:
 add_vendor_steps:
   1: "common/vars/vendor_aliases.yml에 벤더 이름 매핑 추가"
   2: "adapters/redfish/{vendor}_*.yml adapter YAML 생성 (match / capabilities / collect / normalize 4 키 + metadata origin 주석)"
-  3: "(선택) redfish-gather/tasks/vendors/{vendor}/ OEM 태스크 추가"
+  3: "(선택) 라이브러리 _extract_oem_* 에 vendor 분기 추가"
   4: "vault/<loc>/redfish/<vendor>.yml ansible-vault encrypt"
   5: "schema/baseline_v1/{vendor}_baseline.json (실장비 검증 후)"
   note: "site.yml 수정 불필요 — adapter_loader가 동적 감지"

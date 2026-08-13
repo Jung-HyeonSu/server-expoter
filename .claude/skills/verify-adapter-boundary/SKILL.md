@@ -12,7 +12,7 @@ description: common / 3-channel 코드에 vendor 이름 하드코딩 검출 (rul
 ## 입력
 
 - (선택) 변경 파일 list 또는 전체 스캔
-- 검사 디렉터리: common / os-gather / esxi-gather / redfish-gather (단 tasks/vendors/ 제외)
+- 검사 디렉터리: common / os-gather / esxi-gather / redfish-gather
 
 ## 출력
 
@@ -21,7 +21,7 @@ description: common / 3-channel 코드에 vendor 이름 하드코딩 검출 (rul
 
 ### 검사 대상 6 영역
 - common/library/, common/tasks/, common/vars/
-- os-gather/, esxi-gather/, redfish-gather/ (단 redfish-gather/tasks/vendors/ 제외)
+- os-gather/, esxi-gather/, redfish-gather/
 
 ### 결과: PASS (위반 0건)
 또는

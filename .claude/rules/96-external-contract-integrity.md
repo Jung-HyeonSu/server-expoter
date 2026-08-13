@@ -118,7 +118,7 @@ cycle 2026-05-01 학습 — 사용자 의도 두 번 강조 후에야 정확히 
 - vault path (`vault/<loc>/redfish/<vendor>.yml`)
 - 화면이 없으므로 i18n / message 영향 없음
 - baseline_v1/{vendor}_baseline.json
-- vendor 별 OEM tasks (`redfish-gather/tasks/vendors/{vendor}/`)
+- vendor 별 OEM 추출 분기 (`redfish-gather/library/redfish_gather.py` 의 `_extract_oem_*`)
 
 **Forbidden**: 외부 연동 enum 값 변경 시 위 탐색 skip.
 
