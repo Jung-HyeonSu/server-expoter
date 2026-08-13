@@ -107,7 +107,7 @@ def test_<vendor>_<fw>_envelope_emit():
 ### 6. 갱신
 
 - `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` — 펌웨어 / endpoint drift 추가
-- `tests/evidence/INDEX.md` — 본 evidence 등재 (있으면)
+- `tests/evidence/` 의 카탈로그가 있으면 본 evidence 를 등재한다
 - `.claude/ai-context/vendors/{vendor}.md` — 본 펌웨어 노트
 
 ### 7. cross-channel 회귀 테스트 자동 적용

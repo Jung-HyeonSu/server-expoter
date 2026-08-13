@@ -224,7 +224,7 @@
 - [x] `failure_stage` enum 에 `gather` 추가 (실행이 중단된 단계 의미 유지)
 - [x] `diagnosis.failure_code` 신설 (nullable 7종, 성공 시에도 키 존재)
 - [x] TCP 실패 분류를 문자열 파싱에서 `tcp_check_ex()` 구조화 kind 로 교체
-- [x] schema/baseline/examples/fixtures/hook/문서 정합화
+- [x] schema · baseline · examples · fixtures · hook · 문서 정합화
 - [x] schema_version `"1"` 유지 (근거: `docs/contract/03-fields.md`:589` 정책 + 전례 2건)
 - [ ] **[남음] Redfish HTTP 401 기반 인증 실패 세분화 (운영 경로)** — `redfish_gather.py` 의
       errors 엔트리는 `{section, message, detail}` 3키뿐이고 HTTP status 가 message 문자열
@@ -249,7 +249,7 @@
 
 ## adapter/OEM 배선 정합 후속 (2026-08-10) — 설명자료 조사에서 파생
 
-> 상세: `docs/ai/CURRENT_STATE.md` 2026-08-10 (b) + `docs/presentation/gathering-explainer-source.md` §15.
+> 상세: `docs/ai/CURRENT_STATE.md` 2026-08-10 (b). 당시 참고한 설명자료 원본은 삭제됐다.
 > 코드 fix 3종 적용 완료(pytest 1368 passed). 아래는 **승인 또는 실장비가 필요해 미착수**한 항목.
 
 - [ ] **[MED / 승인필요] cisco OEM tasks 배선**: `redfish-gather/tasks/vendors/cisco/{collect,normalize}_oem.yml`
@@ -341,7 +341,7 @@
 
 ## 미수집 필드 전수조사 후속 (2026-06-22)
 
-> 상세: `docs/ai/tickets/2026-06-22-os-disk-serial-wwn/AUDIT-defined-not-collected.md` (ESXi/OS 3 agent 실측 audit).
+> 상세: `2026-06-22 os-disk-serial-wwn 티켓의 AUDIT 문서 (삭제됨 — git log 참조)` (ESXi/OS 3 agent 실측 audit).
 
 - [x] **[DONE 2026-06-22] Tier1 무의존 구현** (commit `dcdf32e8`/`8aa06f18`):
   - ESXi `storage.controllers[]`(hostBusAdapter, 5개 esxi02 실측) / Linux `storage.controllers[]`(lspci, 96 PERC H965i 실측) /
@@ -529,7 +529,7 @@
 
 ## Round 15 (2026-06-09 멀티에이전트 버그헌트) 후속
 
-> 상세: `tests/evidence/2026-06-09-round15-multiagent-bughunt.md`. 본 cycle 33 fix 적용·검증 완료.
+> 상세: `round15 bughunt 기록 (삭제됨 — git log 참조)`. 본 cycle 33 fix 적용·검증 완료.
 > 아래는 **lab/실행 환경 필요로 보류**한 항목.
 
 | 우선 | 항목 | 분류 | 결정 주체 |
@@ -539,7 +539,7 @@
 
 ## Round 16 (2026-06-09 멀티에이전트 버그헌트 — 5 pass 수렴) 후속
 
-> 상세: `tests/evidence/2026-06-09-round16-multiagent-bughunt.md`. 15 fix 적용·검증 완료
+> 상세: `round16 bughunt 기록 (삭제됨 — git log 참조)`. 15 fix 적용·검증 완료
 > (confirmed 추이 10→1→2→2→0, pass5 CONVERGED). 아래는 lab/하네스 필요로 보류.
 
 | 우선 | 항목 | 분류 | 결정 주체 |
@@ -550,7 +550,7 @@
 
 ## Round 17 (2026-06-10 멀티에이전트 버그헌트) 후속
 
-> 상세: `tests/evidence/2026-06-10-round17-multiagent-bughunt.md`. 23 confirmed 중 18 적용·검증
+> 상세: `round17 bughunt 기록 (삭제됨 — git log 참조)`. 23 confirmed 중 18 적용·검증
 > 완료(batch1/2). 아래는 **lab/실행 환경 필요로 보류**(검증 불가 → 정직 보고).
 
 | 우선 | 항목 | 분류 | 결정 주체 |

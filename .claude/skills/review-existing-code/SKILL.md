@@ -60,7 +60,7 @@ server-exporter 코드를 4 축 매트릭스로 리뷰 (`.claude/policy/review-m
 
 ### 심각도별 list
 - [CRIT] Vendor Boundary: redfish-gather/library/redfish_gather.py:152 "Dell" 하드코딩
-- [WARN] Quality: redfish-gather/tasks/collect_storage.yml:88 int(capacity) 미방어
+- [WARN] Quality: redfish-gather/tasks/collect_<section>.yml:88 int(capacity) 미방어
 
 ### 권고
 1. CRIT 즉시 수정 PR

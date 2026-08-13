@@ -67,7 +67,7 @@ docs/ai/references/
 
 ### Jenkins
 
-- Declarative Pipeline (`jenkins/pipeline-syntax.md`)
+- Declarative Pipeline (`docs/ai/references/jenkins/pipeline-syntax.md`)
 - 4-Stage (Validate / Gather / Validate Schema / E2E Regression)
 - agent-master 망 분리
 - `Jenkinsfile`, `grafana 파이프라인(제거됨)`, `Jenkinsfile_portal` 3종

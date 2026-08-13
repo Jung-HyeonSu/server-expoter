@@ -105,7 +105,7 @@ OS baseline expansion cycle 진입 — rhel920 / rhel960 / rocky960 신규 basel
 |---|---|
 | 신규 baseline JSON | `schema/baseline_v1/{rhel920,rhel960,rocky960}_baseline.json` (3 파일) |
 | evidence | `tests/evidence/2026-MM-DD-{rhel920,rhel960,rocky960}.md` (3 파일) |
-| 회귀 추가 (선택) | `tests/regression/test_os_baseline_consistency.py` 에 3 baseline 추가 |
+| 회귀 추가 (선택) | `tests/regression/ 의 OS baseline 정합 테스트 (아직 없다 — 이 작업에서 만든다)` 에 3 baseline 추가 |
 | 문서 갱신 | CURRENT_STATE + TEST_HISTORY + decision-log + NEXT_ACTIONS |
 | commit | 1~3건 (baseline 별 분리 또는 통합 선택) |
 

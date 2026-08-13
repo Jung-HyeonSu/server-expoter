@@ -264,7 +264,7 @@ locations:
 ### 3.4 확장 절차 (새 Location `newdc`)
 
 1. `common/vars/locations.yml` 에 3줄 추가
-2. `vault/newdc/{os/linux.yml, os/windows.yml, esxi.yml, redfish/*.yml}` 생성 + 암호화
+2. `vault/<새 loc>/{os/linux.yml, os/windows.yml, esxi.yml, redfish/*.yml}` 을 만들고 암호화한다
 3. Jenkins 에 `newdc` label agent 등록
 
 **코드 수정 0줄.** Python / Playbook / Jenkinsfile 어느 것도 바뀌지 않는다.
@@ -440,7 +440,7 @@ vault/
 
 resolver 대상이 아니고(평문, gitignored, lab 전용), 다음 5개 파일이 경로를 하드코딩한다:
 `tests/e2e_browser/lab_loader.py:16`,
-`tests/evidence/cycle-015/{bmc-auth-probe,dell-round11-endpoint-coverage,linux-probe,winrm-probe}-*.py`.
+cycle-015 의 probe 스크립트 4종 (해당 evidence 디렉터리는 삭제됐다 — git log 참조).
 
 ### 5.5 파일 내부 Schema — **변경 없음**
 

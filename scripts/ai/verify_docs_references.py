@@ -83,6 +83,11 @@ HISTORY_DOC_RE = re.compile(
     r"|CONVENTION_DRIFT\.md$|FAILURE_PATTERNS\.md$|TEST_HISTORY\.md$|CURRENT_STATE\.md$)"
 )
 
+# 그 줄이 "만들 예정"이거나 "예시"라고 말하면 실존 주장이 아니다.
+#   `| 새 Linux 배포판 (예: Rocky) | adapters/os/linux_rocky.yml |` 처럼
+#   무엇을 만들지 보여주는 표가 실제로 그 파일을 주장하는 건 아니다.
+EXAMPLE_RE = re.compile(r"(예\s*:|예시|만들 |만든다|생성한다|작성한다|샘플|template|placeholder|권장|가정)")
+
 # 그 줄 자체가 "이건 없다"를 말하고 있으면 위반이 아니다.
 TOMBSTONE_RE = re.compile(
     r"(부재|없음|없다|가 아니라|이 아니라|삭제됨|삭제됐|제거됨|제거됐|해제됨|해제됐"
@@ -207,7 +212,7 @@ def main() -> int:
                 #   ADR·evidence·drift 카탈로그는 그 시점에 존재하던 경로를 적는 게 일이고,
                 #   "`tests/baseline_v1/` 가 아니라 …" 같은 문장은 부재가 곧 요지다.
                 #   이걸 구분하지 않으면 검증기가 정확할수록 위반 수가 늘어난다.
-                if hist_file or TOMBSTONE_RE.search(line):
+                if hist_file or TOMBSTONE_RE.search(line) or EXAMPLE_RE.search(line):
                     historical += 1
                     continue
                 violations.append((rel, lineno, tok))

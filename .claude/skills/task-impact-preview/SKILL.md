@@ -23,7 +23,7 @@ server-exporter는 3-channel + multi-vendor + adapter + schema + Jenkins 등 cro
 - 영향: Dell / HPE / ... (구체 list)
 
 ### 3. 함께 바뀔 것
-- 테스트: tests/redfish-probe/test_X.py / fixtures
+- 테스트: tests/redfish-probe/ 아래 해당 테스트 / fixtures
 - 문서: docs/X / .claude/ai-context/Y
 - adapter: adapters/{channel}/{vendor}_*.yml
 - schema: sections.yml + field_dictionary.yml + baseline_v1

@@ -64,8 +64,7 @@ internal remote는 별도 명시적 push용 (선택적).
   **순수 게더링 코드(하네스 제외)** 승격은 **사용자 per-instance 승인 불요 — 자동 진행** (R6 승인 포맷 면제).
   - 사용자 명시: "production 에 넣는건 자동이여야 한다" → 매번 묻지 말고 작업 완료 시 자동 승격.
   - 방식: `scripts/ai/promote_to_production.sh` (파일 state sync — `git merge` 아님). 하네스 경로
-    (`.claude/, CLAUDE.md, docs/ai/, docs/superpowers/, scripts/ai/,
-    tests/reference/, tests/evidence/`)는 절대 production 에 올리지 않는다.
+    (`.claude/, CLAUDE.md, docs/ai/, scripts/ai/, tests/reference/, tests/evidence/`)는 절대 production 에 올리지 않는다.
   - production 은 하네스-free 라 pre-commit 훅(`scripts/ai/hooks/*`)이 물리 부재 → 본 sync 커밋은
     `--no-verify` 정당 (rule 90 R5 "--no-verify 금지" 의 예외 — 하네스-free 브랜치 한정. 품질
     게이트는 이미 main 에서 통과). force push 는 여전히 금지 (R1).

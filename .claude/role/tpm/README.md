@@ -37,6 +37,6 @@ Round 검증 진행률 / 릴리즈 / 문서 갱신 / 다중 세션 인계 / 일�
 
 ## 주의사항
 - **두 루프 분리 (CLAUDE.md)**: 제품 루프 (wave-coordinator) ↔ 하네스 루프 (harness-evolution-coordinator). 서로 대상 파일 침범 금지.
-- **다중 세션**: 단일 main이라 worktree 또는 별도 세션 분리 시 docs/ai/handoff/<날짜>-<주제>.md로 인계 (rule 26).
+- **다중 세션**: 단일 main이라 worktree 또는 별도 세션 분리 시 docs/ai/tickets/<날짜>-<주제>.md로 인계 (rule 26).
 - **Round 검증**: 새 벤더/펌웨어 검증은 Round 단위로 progress 추적, evidence/에 기록.
 - **rule 70 문서 보존 판정**: 1회성 audit/review 보고서는 archive 또는 삭제. active에 두는 것은 향후 작업에서 AI가 참조할 가치 있는 것만.

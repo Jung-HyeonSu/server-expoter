@@ -110,7 +110,7 @@
 
 ### R6. Archive 진입 기준
 
-- **Default (archive)**: 다음 유형은 `docs/ai/archive/`로 이동
+- **Default (archive)**: 다음 유형은 `docs/ai/archive/` 로 옮긴다 (없으면 만든다)
   | 유형 | 예시 |
   |---|---|
   | 구조·정책 전환의 결정 이력 | `INITIAL_STATE_*.md` |

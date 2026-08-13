@@ -3,7 +3,7 @@
 > **이 문서는** Jenkins Job 을 외부에서 트리거하는 호출자 (포털 / 백엔드 서비스) 가 보내야 하는 `inventory_json` 파라미터의 형식을 정의합니다.
 >
 > **핵심 약속 (꼭 기억해 주세요)**: 호출자는 **IP 만** 전달합니다. 호스트명 / 자격증명 / 벤더는 보내지 않습니다.
-> 자격증명은 vault 에서 자동 로딩되고, OS 종류 / BMC 제조사 / 벤더는 server-exporter 가 자동으로 감지합니다.
+> 자격증명은 vault 에서 자동 로딩되고 OS 종류 / BMC 제조사 / 벤더는 server-exporter 가 스스로 감지합니다.
 
 ## 5초 요약
 
@@ -37,7 +37,7 @@ target_type 에 따라 IP 필드명이 다릅니다.
 | `os` / `esxi` | `service_ip` | OS / 하이퍼바이저가 직접 응답하는 서비스 IP |
 | `redfish` | `bmc_ip` | 서버 BMC 의 별도 관리 IP (서비스 IP 와 다른 경우가 많음) |
 
-호출자가 "어느 IP 를 사용해야 하는지" 헷갈리지 않도록 필드 이름으로 의도를 표현합니다.
+호출자가 "어느 IP 를 사용해야 하는지" 헷갈리지 않도록 필드 이름에 의도를 담았습니다.
 
 ## 3. 보내지 않는 것
 
@@ -91,8 +91,8 @@ parameters {
 따라서 파라미터명이 `inventory_json` 이면 쉘·Python 에서
 `$inventory_json` (소문자) 으로 바로 접근할 수 있다.
 
-추가로 `environment` 블록에서 대문자 변수를 명시적으로 매핑하면
-두 가지 이름 모두 사용 가능해진다:
+추가로 `environment` 블록에서 대문자 변수를 명시해서 매핑하면
+두 가지 이름을 모두 쓸 수 있다:
 
 ```groovy
 environment {
@@ -110,10 +110,10 @@ environment {
 | 2순위 | 환경변수 `inventory_json` (소문자) | Jenkins 파라미터 자동 전달 |
 | 3순위 | `.inventory_input.json` 파일 | Jenkinsfile `writeFile` fallback |
 
-세 가지 모두 비어 있거나 존재하지 않으면 에러로 종료한다.
+세 가지가 모두 비어 있거나 없으면 에러로 종료한다.
 
 > **참고** — 현재 Jenkinsfile v3 에서는 `environment` 블록에서 `INVENTORY_JSON` 을
-> 명시 설정하므로, 실제 동작 시 1순위(대문자 환경변수) 로 전달된다.
+> 명시 설정하므로 실제 동작 시 1순위(대문자 환경변수) 로 전달된다.
 > 2·3순위는 `environment` 블록 없이 파라미터만 정의하거나
 > 수동 실행(writeFile) 시 fallback 으로 동작한다.
 

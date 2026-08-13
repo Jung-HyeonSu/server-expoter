@@ -904,7 +904,7 @@ Gen12 OEM 정보 (Oem.Hpe.SystemInformation 등) 수집 실패.
 
 ### 후속 (NEXT_ACTIONS — lab 도입 후)
 
-- iLO 7 Gen12 사이트 fixture 캡처 (`tests/fixtures/redfish/hpe_ilo7/` — facts.firmware 실측 형식 확정)
+- iLO 7 Gen12 사이트 fixture 캡처 (`tests/fixtures/redfish/ 의 iLO7 디렉터리 (미생성)` — facts.firmware 실측 형식 확정)
 - 1.20+ 2-part 변형 발견 시 firmware_patterns 추가 정정
 - 사이트 사고 발생 시 reverse regression 검토 (rule 25 R7-A-1 — 사용자 실측 > spec)
 

@@ -32,7 +32,7 @@ server-exporter 회귀 테스트 대상을 자동 선정. 변경 경로 → 테�
 ### 대상 영역
 - redfish-gather/library/redfish_gather.py (수정)
 - adapters/redfish/dell_idrac9.yml (수정)
-- common/tasks/normalize/build_storage.yml (수정)
+- common/tasks/normalize/build_<section>.yml (수정)
 
 ### 회귀 명령
 1. `ansible-playbook --syntax-check redfish-gather/site.yml`

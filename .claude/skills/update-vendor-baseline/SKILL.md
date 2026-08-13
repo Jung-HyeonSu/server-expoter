@@ -33,9 +33,9 @@ description: 실장비 검증 결과로 schema/baseline_v1/{vendor}_baseline.jso
 | firmware | NIC.Slot.1 펌웨어 버전 갱신 | 펌웨어 업그레이드 |
 
 ### Evidence
-- tests/evidence/2026-04-27-dell-idrac9-7x/
+- tests/evidence/<날짜>-<vendor>-<펌웨어>/
 - probe dump: ServiceRoot.json, Storage.json, FirmwareInventory.json
-- diff: tests/evidence/2026-04-27-dell-idrac9-7x/diff-vs-baseline.md
+- diff: tests/evidence/<날짜>-<vendor>-<펌웨어>/diff-vs-baseline.md
 
 ### 회귀 검증 결과
 - pytest tests/regression/ -k dell PASS

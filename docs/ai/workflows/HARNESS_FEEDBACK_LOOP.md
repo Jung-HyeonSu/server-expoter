@@ -6,7 +6,7 @@
 
 | 출처 | 처리 |
 |---|---|
-| 사용자 chat 피드백 ("이렇게 해줘", "이건 그만") | docs/ai/handoff/<날짜>-<주제>.md 기록 → cycle 일환으로 정리 |
+| 사용자 chat 피드백 ("이렇게 해줘", "이건 그만") | docs/ai/tickets/<날짜>-<주제>.md 기록 → cycle 일환으로 정리 |
 | FAILURE_PATTERNS.md append (사고 후) | rule 95 R1 의심 패턴 추가 검토 |
 | CONVENTION_DRIFT.md (drift 발견) | 마이그레이션 계획 (rule 92 R2) |
 | Round 검증 결과 (tests/evidence/) | adapter origin 주석 / baseline 갱신 (rule 96 R1) |

@@ -174,7 +174,7 @@ pipeline {
         }
         stage('Stage 4 — E2E Regression') {
             agent { label 'master' }
-            steps { sh 'pytest tests/redfish-probe/test_baseline.py ...' }
+            steps { sh 'pytest tests/redfish-probe/ 의 baseline 테스트 ...' }
         }
     }
     post {
