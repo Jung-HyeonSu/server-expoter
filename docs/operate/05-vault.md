@@ -142,13 +142,13 @@ ansible-vault create vault/<loc>/redfish/dell.yml
 
 ```bash
 # 어떤 경로가 아직 비었는지 (복호화 없이)
-python scripts/ai/vault_decrypt_check.py --layout-only
+python 내부 검증 스크립트 --layout-only
 
 # 복호화 + accounts 스키마 + role + label 정합 (Secret 값은 출력하지 않는다)
-SE_VAULT_PASSWORD='<마스터 키>' python scripts/ai/vault_decrypt_check.py
+SE_VAULT_PASSWORD='<마스터 키>' python 내부 검증 스크립트
 ```
 
-> `scripts/ai/vault_decrypt_check.py` 는 `.gitignore` 대상 **로컬 도구**다 (cycle-018 결정 —
+> vault 복호화 점검 도구 는 `.gitignore` 대상 **로컬 도구**다 (cycle-018 결정 —
 > 당시 마스터 키가 코드에 하드코딩돼 있었다). 2026-08-12 에 하드코딩을 제거하고 키를
 > `SE_VAULT_PASSWORD` / `--password-file` 로만 받도록 바꿨다. gitignore 해제 여부는
 > 사용자 결정 사항으로 남겨 두었으므로, fresh clone 에는 이 파일이 없을 수 있다.
@@ -511,7 +511,7 @@ accounts:
 | `skill: debug-precheck-failure` | auth 실패 시 |
 | `redfish-gather/tasks/load_vault.yml` | vault 로딩 정본 코드 |
 | `docs/operate/02-agent-node.md` | Agent 보안 설정 |
-| `docs/ai/references/ansible/ansible-vault.md` | ansible-vault 명령 reference |
+| Ansible Vault 공식 문서 | ansible-vault 명령 reference |
 
 ---
 

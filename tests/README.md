@@ -56,4 +56,4 @@
 - `docs/reference/live-validation.md` — 실장비 검증 / Round
 - `docs/reference/compatibility-matrix.md` — 호환성 매트릭스
 - `docs/develop/06-debugging.md` — 디버깅 매트릭스
-- `.claude/skills/capture-site-fixture/SKILL.md` — 사이트 fixture 캡처 절차
+- 내부 작업 절차 — 사이트 fixture 캡처 절차

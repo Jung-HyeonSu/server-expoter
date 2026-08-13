@@ -231,4 +231,4 @@ server-exporter/
 | 결정 추적 (왜 지금 이 모습?) | [19](docs/reference/decision-log.md) |
 | 환경 사전 점검 | [REQUIREMENTS.md](REQUIREMENTS.md) |
 
-파일 단위 상세 구조와 AI 협업 정책은 [CLAUDE.md](CLAUDE.md) 의 "파일 구조" 와 "AI 하네스 운영" 절 참조.
+문서 전체 지도는 [docs/README.md](docs/README.md) 에 있다.

@@ -52,7 +52,7 @@ flowchart TD
 
 3 skeleton 파일 (init_fragments / build_empty_data / build_failed_output) 의 data skeleton 동기화 검증:
 ```bash
-python scripts/ai/hooks/pre_commit_fragment_skeleton_sync.py --all
+python 내부 검증 스크립트 --all
 ```
 
 ## Fragment 변수 정본 (rule 22 R7)
