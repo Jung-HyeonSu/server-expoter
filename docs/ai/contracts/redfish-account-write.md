@@ -411,7 +411,7 @@ Vendor × Family 매트릭스, `CURRENT_STATE.md`,
 `NEXT_ACTIONS.md`, `catalogs/EXTERNAL_CONTRACTS.md`, `catalogs/TEST_HISTORY.md`,
 `catalogs/LAB_PENDING_MATRIX.md`, `docs/reference/decision-log.md`, `docs/operate/05-vault.md`,
 `docs/ai/decisions/ADR-2026-08-12-account-write-contract.md`(신규, rule 70 R8 trigger 1),
-`tests/evidence/2026-08-12-account-write-contract-alignment.md`(신규)
+계정 쓰기 계약 정합 검증 기록 (`docs/ai/CURRENT_STATE.md` 2026-08-13 절)
 
 ---
 
@@ -763,7 +763,7 @@ Fujitsu 는 API Pack 원문 확보 전 Family 추가 없음.
   [ ] ADR 작성 (rule 70 R8)
   [ ] EXTERNAL_CONTRACTS / LAB_PENDING_MATRIX / CURRENT_STATE / NEXT_ACTIONS / TEST_HISTORY / `docs/operate/05-vault.md`
   [ ] git Location 4대 재실행 (Check Mode 먼저 → Case A + 2차 Write 0)
-  [ ] tests/evidence/2026-08-12-account-write-contract-alignment.md
+  [ ] 계약 정합 검증 기록 — CURRENT_STATE 2026-08-13 절
   [ ] commit + push (rule 93) + production 승격 판단
 ```
 

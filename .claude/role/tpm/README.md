@@ -7,8 +7,6 @@ Round 검증 진행률 / 릴리즈 / 문서 갱신 / 다중 세션 인계 / 일�
 - `docs/ai/CURRENT_STATE.md` — 현재 상태 스냅샷
 - `docs/ai/NEXT_ACTIONS.md` — 다음 작업
 - `docs/ai/catalogs/` — 8 카탈로그 (FAILURE_PATTERNS, PROJECT_MAP, TEST_HISTORY, CONVENTION_DRIFT, VENDOR_ADAPTERS, SCHEMA_FIELDS, EXTERNAL_CONTRACTS, JENKINS_PIPELINES)
-- `docs/ai/handoff/` — 세션 인계
-- `docs/ai/harness/` — 하네스 self-improvement 로그
 - `docs/reference/decision-log.md` — 운영 의사결정
 
 ## 로드할 ai-context 문서

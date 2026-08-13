@@ -11,8 +11,10 @@
 
 | Adapter | priority | 대상 |
 |---|---|---|
-| `adapters/redfish/lenovo_xcc.yml` | 100 | XCC (현행) |
-| `adapters/redfish/lenovo_xcc_legacy.yml` | 50 | 구 IMM2 / 초기 XCC |
+| `adapters/redfish/lenovo_xcc3.yml` | 120 | XCC3 (최신) |
+| `adapters/redfish/lenovo_xcc.yml` | 100 | XCC |
+| `adapters/redfish/lenovo_imm2.yml` | 50 | 구 IMM2 |
+| `adapters/redfish/lenovo_bmc.yml` | 10 | generic fallback |
 
 ## OEM 특이사항
 
@@ -29,7 +31,7 @@
 ## 검증 이력
 
 - Round 7-10: XCC 검증 완료
-- Baseline: `schema/baseline_v1/lenovo_xcc_baseline.json`
+- Baseline: `schema/baseline_v1/lenovo_baseline.json`
 
 ## Reference
 

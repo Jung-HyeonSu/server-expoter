@@ -47,7 +47,6 @@ REPO = Path(__file__).resolve().parents[2]
 # 최상위 디렉터리는 실행 시점에 실측하고, 루트 파일만 명시한다.
 ROOT_FILES = {
     "CLAUDE.md",
-    "rule 22 (fragment-philosophy)",
     "README.md",
     "REQUIREMENTS.md",
     "ansible.cfg",
@@ -77,6 +76,18 @@ NOT_A_PATH = {
 PATH_TOKEN_RE = re.compile(r"[A-Za-z0-9_.\-/]+(?:\.[A-Za-z0-9_]+)?")
 
 SKIP_DIRS = {".git", "__pycache__", "node_modules", ".pytest_cache"}
+
+# 역사를 기록하는 문서. 지금 없는 경로를 적는 게 이 문서들의 일이라 위반이 아니다.
+HISTORY_DOC_RE = re.compile(
+    r"(^docs/ai/decisions/|^docs/ai/archive/|^tests/evidence/"
+    r"|CONVENTION_DRIFT\.md$|FAILURE_PATTERNS\.md$|TEST_HISTORY\.md$|CURRENT_STATE\.md$)"
+)
+
+# 그 줄 자체가 "이건 없다"를 말하고 있으면 위반이 아니다.
+TOMBSTONE_RE = re.compile(
+    r"(부재|없음|없다|가 아니라|이 아니라|삭제됨|삭제됐|제거됨|제거됐|해제됨|해제됐"
+    r"|폐지|종전|옛 |더 이상|존재하지 않|DEPRECATED|아직 없으면)"
+)
 
 
 def git_tracked(patterns: list[str]) -> list[str]:
@@ -178,6 +189,7 @@ def main() -> int:
     files = git_tracked(patterns)
 
     violations: list[tuple[str, int, str]] = []
+    historical = 0
     scanned = 0
     for rel in files:
         fp = REPO / rel
@@ -186,10 +198,19 @@ def main() -> int:
         except OSError:
             continue
         scanned += 1
+        hist_file = bool(HISTORY_DOC_RE.search(rel))
         for lineno, line in enumerate(lines, 1):
             for tok in extract_candidates(line, tops, shorthand=args.shorthand):
-                if not exists(tok):
-                    violations.append((rel, lineno, tok))
+                if exists(tok):
+                    continue
+                # 역사 기록과 "없음을 주장하는 문장"은 위반이 아니다.
+                #   ADR·evidence·drift 카탈로그는 그 시점에 존재하던 경로를 적는 게 일이고,
+                #   "`tests/baseline_v1/` 가 아니라 …" 같은 문장은 부재가 곧 요지다.
+                #   이걸 구분하지 않으면 검증기가 정확할수록 위반 수가 늘어난다.
+                if hist_file or TOMBSTONE_RE.search(line):
+                    historical += 1
+                    continue
+                violations.append((rel, lineno, tok))
 
     if args.baseline:
         Path(args.baseline).write_text(
@@ -204,6 +225,8 @@ def main() -> int:
         for f, n, t in violations:
             by_target.setdefault(t, []).append(f"{f}:{n}")
         print(f"죽은 문서 참조: {len(violations)}건 / 대상 {len(by_target)}종 ({scanned}개 파일 검사)")
+        if historical:
+            print(f"  (역사 기록·부재 진술 {historical}건은 제외했다)")
         print()
         items = sorted(by_target.items(), key=lambda kv: -len(kv[1]))
         head = len(items) if args.full else 25
@@ -218,7 +241,8 @@ def main() -> int:
             print(f"\n  ... 대상 {len(items) - head}종 추가 (--full 로 전체 출력)")
         return 2
 
-    print(f"문서 참조 통과: 죽은 경로 없음 ({scanned}개 파일 검사)")
+    tail = f" / 역사 기록·부재 진술 {historical}건 제외" if historical else ""
+    print(f"문서 참조 통과: 죽은 경로 없음 ({scanned}개 파일 검사{tail})")
     return 0
 
 

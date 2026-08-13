@@ -33,7 +33,7 @@
 
 ### R2. 오너십 표 명시 의무
 
-- **Default**: 다중 세션 시작 전 `docs/ai/handoff/<날짜>-<주제>.md` 또는 `docs/tickets/<...>/CONTINUATION.md`에 오너십 표 작성:
+- **Default**: 다중 세션 시작 전 `docs/ai/tickets/<날짜>-<주제>/CONTINUATION.md` 에 오너십 표를 쓴다:
   ```markdown
   | 세션 | 담당 영역 | 오너십 파일 |
   |---|---|---|

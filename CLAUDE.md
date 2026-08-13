@@ -43,7 +43,7 @@ OS: `TCP 5986 -> TCP 5985 -> TCP 22 -> Protocol Detection -> Credential -> Gathe
 - Raw fallback은 Python 부재/비호환 환경에서도 Standard Result Contract 유지
 ESXi: `TCP 443 -> vSphere RetrieveServiceContent -> Credential -> Gathering -> Normalize`
 Redfish: `TCP 443 -> ServiceRoot -> Vendor Detection -> Adapter Selection -> Credential Load(Standard 전역 + Recovery Location×Vendor) -> Standard Account Auth -> Reconciliation if needed -> Standard Account Gathering -> Normalize`
-Redfish Credential은 축이 2개다. **Standard Gathering Account는 전역 1벌**(`vault/common/redfish/standard.yml`)이며 Location도 Vendor도 보지 않는다. **Recovery Account만 Location×Vendor**(`vault/<loc>/redfish/<vendor>.yml`)다. Vendor 확인이 필요한 것은 Recovery 쪽이며, Vendor 미식별이어도 Standard 인증은 시도한다.
+Redfish Credential은 축이 2개다. **Standard Gathering Account는 전역 1벌**(`vault/common/redfish/standard.yml`)이며 Location도 Vendor도 보지 않는다. **Recovery Account만 Location×Vendor**(`vault/<loc>/redfish/<vendor>.yml`)다. Vendor 확인이 필요한 것은 Recovery 쪽이다. Vendor 미식별이어도 Standard 인증은 시도한다.
 
 ## 7. Precheck Contract
 ICMP Ping은 필수 Connectivity Gate가 아니다. ICMP가 차단되어 있어도 실제 관리 포트 통신이 가능하면 Gathering은 진행해야 한다.
@@ -54,10 +54,10 @@ Precheck 목적은 단순 Alive 판정이 아니라 TCP, Protocol, Authenticatio
 
 ## 8. Redfish Standard Account / Recovery
 표준 Gathering Account를 특정 Username 문자열로 하드코딩하지 않는다.
-Standard Account는 **전역 Standard Vault**(`vault/common/redfish/standard.yml`)의 `role: primary`, Recovery Account는 **Location×Vendor Vault**(`vault/<loc>/redfish/<vendor>.yml`)의 `role: recovery`다. 두 파일은 서로 다른 축을 가진 별개 Set이며, Recovery Vault에 `role: primary`를 넣으면 그 항목은 버려진다.
+Standard Account는 **전역 Standard Vault**(`vault/common/redfish/standard.yml`)의 `role: primary`, Recovery Account는 **Location×Vendor Vault**(`vault/<loc>/redfish/<vendor>.yml`)의 `role: recovery`다. 두 파일은 축이 서로 다른 별개 Set이며 Recovery Vault에 `role: primary`를 넣으면 그 항목은 버려진다.
 Account Reconcile은 쓰기 전에 Read-only Capability Discovery로 BMC Family를 확정하고 검증된 Write 방식 하나만 실행한다. 쓰기 실패 후 다른 Payload/URI로 순차 재시도하지 않는다.
 Account 존재 판정은 `present`/`absent`/`unknown`/`ambiguous` 4-상태다. Account 목록을 완전히 열거하지 못한 `unknown` 상태에서는 Account Write 0건이어야 한다.
-Write 성공은 HTTP 2xx가 아니라 Vendor Contract로 판정하고(본문 거부/OEM Status 포함), 반드시 Account 재조회와 Standard Credential 재인증까지 통과해야 성공이다.
+Write 성공은 HTTP 2xx가 아니라 Vendor Contract로 판정한다(본문 거부/OEM Status 포함). 반드시 Account 재조회와 Standard Credential 재인증까지 통과해야 성공이다.
 현재 Primary Username이 `infraops`여도 `infraops` Literal 자체는 Contract가 아니다. 핵심 Contract는 최종 Gathering이 Standard Account로 수행되는 것이다.
 정상: `Primary 인증 성공 -> Account Write 0 -> Primary Gathering`
 Recovery 목적: `Standard Account 생성 또는 복구 -> Primary 재인증 -> Primary Gathering`
@@ -105,7 +105,7 @@ Credential은 기존 Vault와 Credential Profile 구조를 사용한다.
 
 ## 13. AI Harness / Session Workflow
 세션 시작 시: 현재 Branch/Git 상태 확인 -> 요청/변경 경로 기준 역할 추론 -> 필요한 `.claude/role/`, `.claude/ai-context/`, `.claude/rules/`만 로드.
-단순 오타가 아닌 코드 변경은 현재 Impact Preview 정책을 따르고, 사용자가 Preview 생략/바로 진행을 명시하면 현재 정책 범위에서 진행한다.
+단순 오타가 아닌 코드 변경은 현재 Impact Preview 정책을 따른다. 사용자가 Preview 생략/바로 진행을 명시하면 현재 정책 범위에서 진행한다.
 제품 코드 작업과 Harness 자기개선 작업을 섞지 않는다. 제품 코드 변경 중 `.claude/`, `docs/ai/`, `scripts/ai/`를 이유 없이 수정하지 않는다. Harness 개선 작업에서도 제품 코드를 요청 없이 수정하지 않는다.
 사용자 `~/.claude/settings.json`(전역 설정)은 자율 수정하지 않는다. 프로젝트
 `.claude/settings.json` 의 권한 모드는 2026-05-01 ADR(harness-full-permissions)로

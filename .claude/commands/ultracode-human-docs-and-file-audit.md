@@ -318,20 +318,20 @@ README는 입구다.
 
 상세 설명은 docs로 보낸다.
 
-권장 역할:
+현재 구조 (2026-08-13 재편):
 
 ```text
-docs/README.md
-docs/getting-started/
-docs/operations/
-docs/architecture/
-docs/gather/
-docs/schema/
-docs/adapters/
-docs/troubleshooting/
-docs/decisions/
-docs/archive/
+docs/README.md        읽는 순서 안내
+docs/overview/        무엇이고 왜 있는가, 아키텍처
+docs/contract/        입력 / envelope / 필드 / 실패 진단
+docs/operate/         Jenkins, agent, job 등록, vault, 현장 수집
+docs/develop/         gather 구조, normalize, adapter, vendor 추가, 디버깅
+docs/reference/       호환성 매트릭스, 실장비 검증, 의사결정 로그
+docs/ai/              AI 전용 — 카탈로그, ADR, 계약, 티켓
 ```
+
+감사 대상은 이 구조다. 새 구조를 제안하기 전에 현재 구조로 설명되지 않는
+문서가 실제로 있는지 먼저 확인한다.
 
 큰 이동이 위험하면 기존 구조를 유지하되 `docs/README.md`부터 만든다.
 

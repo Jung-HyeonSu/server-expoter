@@ -8,7 +8,6 @@
 - `docs/contract/01-input.md` — inventory_json 입력 스펙
 - `docs/reference/decision-log.md` — 의사결정 로그
 - `docs/ai/decisions/` — ADR (Architecture Decision Record)
-- `docs/ai/roadmap/` — 기술 범위 / 방향
 
 ## 로드할 ai-context 문서
 1. `.claude/ai-context/common/repo-facts.md` — 현재 검증 기준 (Agent 10.100.64.154)

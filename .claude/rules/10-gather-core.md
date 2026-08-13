@@ -39,7 +39,7 @@
 
 ### R4. Linux 2-tier (raw fallback)
 
-- **Default**: `os-gather/preflight.yml`이 Python 버전 감지 → `_l_python_mode` 설정 → 본 gather가 모드별 분기
+- **Default**: `os-gather/tasks/linux/preflight.yml`이 Python 버전 감지 → `_l_python_mode` 설정 → 본 gather가 모드별 분기
 - **Allowed**: 개발/검증 시 `SE_FORCE_LINUX_RAW_FALLBACK=true`로 raw 강제
 - **Forbidden**: Python 모드를 가정한 채 setup/shell만 사용 (raw 모드에서 실패)
 - **Why**: RHEL 8.10 (Python 3.6) 같은 환경에서 setup 모듈 미동작. raw fallback이 필수

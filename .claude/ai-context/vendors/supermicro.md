@@ -11,9 +11,17 @@
 
 | Adapter | priority | 대상 |
 |---|---|---|
-| `adapters/redfish/supermicro_x12.yml` | 100 | X12 generation |
-| `adapters/redfish/supermicro_x11.yml` | 80 | X11 generation |
-| `adapters/redfish/supermicro_legacy.yml` | 30 | X10 이전 |
+| `adapters/redfish/supermicro_x14.yml` | 110 | X14 |
+| `adapters/redfish/supermicro_x13.yml` | 100 | X13 |
+| `adapters/redfish/supermicro_x12.yml` | 100 | X12 |
+| `adapters/redfish/supermicro_x11.yml` | 100 | X11 |
+| `adapters/redfish/supermicro_ars.yml` | 80 | ARS 계열 |
+| `adapters/redfish/supermicro_x10.yml` | 75 | X10 |
+| `adapters/redfish/supermicro_x9.yml` | 50 | X9 |
+| `adapters/redfish/supermicro_bmc.yml` | 10 | generic fallback |
+
+X11~X13 은 priority 가 100 으로 같다. 동률이라 `specificity` 와 `match_score` 로
+갈린다 — 모델 문자열이 비어 있으면 어느 쪽이 이길지 확정되지 않는다.
 
 ## OEM 특이사항
 

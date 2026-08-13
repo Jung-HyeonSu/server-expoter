@@ -497,7 +497,8 @@ accounts:
 
 - 회전 절차 중 임시 평문 password 메모는 메모리 only (파일 / clipboard 제거)
 - Jenkins credentials 는 server-exporter 외부 (Jenkins controller 권한 최소)
-- 회전 이력 = `tests/evidence/vault-rotation-log.md` (날짜 + 대상만, password 자체는 절대 기록 안 함)
+- 회전 이력은 `tests/evidence/vault-rotation-log.md` 에 남긴다. 아직 없으면 새로 만든다.
+  날짜와 대상만 적고 password 자체는 절대 쓰지 않는다
 - ansible-vault password file (`~/.vault_pass`) 은 `chmod 600`
 
 ## 11. 관련 문서

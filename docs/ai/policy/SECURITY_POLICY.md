@@ -26,7 +26,8 @@
 
 ## 3. Log redaction
 
-`.claude/policy/security-redaction-policy.yaml` 패턴 적용:
+redaction 패턴 (종전 `.claude/policy/security-redaction-policy.yaml` — cycle-011 에서
+정책 강제와 함께 제거됐다. 아래는 참고용으로만 남긴다):
 - vault 변수 누설
 - BMC password / iDRAC user / iLO password / XCC password / CIMC password
 - Redfish basic auth header
@@ -74,6 +75,6 @@
 - rule 60 (정본)
 - rule 27 R3 (Vault 2단계)
 - rule 31 (callback URL 무결성)
-- policy: `.claude/policy/protected-paths.yaml`, `.claude/policy/security-redaction-policy.yaml`
+- policy: `.claude/policy/protected-paths.yaml` (DEPRECATED — 강제는 해제됐고 파일만 남아 있다)
 - skill: rotate-vault, debug-precheck-failure
 - agent: security-reviewer, vault-rotator

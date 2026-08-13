@@ -45,7 +45,7 @@
 | 공통 | `common/` | library/precheck_bundle.py (TCP 도달·프로토콜 진단, ICMP 미사용), tasks/normalize/init_fragments/merge_fragment/build_*.yml |
 | 어댑터 | `adapters/{redfish,os,esxi}/` | 채널별 YAML. `registry.yml` 은 **읽는 코드가 없다** (문서용 색인) |
 | Schema | `schema/` | sections.yml (11 섹션), field_dictionary.yml (런타임 미사용 — 테스트·CI·훅 전용), baseline_v1/ (vendor 별 회귀 기준선) |
-| Vault | `vault/` | `common/redfish/standard.yml`(전역 표준) + `<loc>/redfish/<vendor>.yml`(복구) + `<loc>/os/{linux,windows}.yml` + `<loc>/esxi.yml`. 평면 경로는 2026-08-12 삭제 |
+| Vault | `vault/` | `vault/common/redfish/standard.yml`(전역 표준) + `<loc>/redfish/<vendor>.yml`(복구) + `<loc>/os/{linux,windows}.yml` + `<loc>/esxi.yml`. 평면 경로는 2026-08-12 삭제 |
 
 ## 테스트
 
