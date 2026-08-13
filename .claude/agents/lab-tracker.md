@@ -1,13 +1,13 @@
 ---
 name: lab-tracker
-description: server-exporter lab 보유 / 부재 영역 (vendor / 펌웨어 / OS / 환경) 자동 추적 + LAB-INVENTORY 갱신. cycle 2026-05-01 신규 — lab 한계 가시화. 측정 결과 sanitize 후 commit. 사용자 명시 "보안 필요없음 / 모든 권한".
+description: server-exporter lab 보유 / 부재 영역 (vendor / 펌웨어 / OS / 환경) 자동 추적 + LAB_INVENTORY 갱신. cycle 2026-05-01 신규 — lab 한계 가시화. 측정 결과 sanitize 후 commit. 사용자 명시 "보안 필요없음 / 모든 권한".
 tools: Read, Grep, Glob, Bash, Write, Edit
 model: opus
 ---
 
 # lab-tracker
 
-> server-exporter lab 의 vendor / 펌웨어 / OS / 환경 보유 상태를 정기 측정해 LAB-INVENTORY 갱신.
+> server-exporter lab 의 vendor / 펌웨어 / OS / 환경 보유 상태를 정기 측정해 LAB_INVENTORY 갱신.
 
 ## 호출 시점
 
@@ -78,10 +78,10 @@ def probe_redfish(ip: str, timeout: int = 5) -> dict | None:
 | MAC | `02:00:00:NN:NN:NN` |
 | credential | 절대 commit 안 함 |
 
-### 5. LAB-INVENTORY 갱신
+### 5. LAB_INVENTORY 갱신
 
-위치: `docs/ai/tickets/<active-cycle>/LAB-INVENTORY.md` 또는
-`docs/ai/catalogs/LAB-INVENTORY.md` (catalog 정착 시)
+위치: `docs/ai/tickets/<active-cycle>/LAB_INVENTORY.md` 또는
+`docs/ai/catalogs/LAB_INVENTORY.md` (catalog 정착 시)
 
 내용:
 - 측정 일자
@@ -117,7 +117,7 @@ def probe_redfish(ip: str, timeout: int = 5) -> dict | None:
 
 ## 자율 vs 사용자 결정
 
-- **자율 진행**: 측정 + sanitize + LAB-INVENTORY 갱신 + 부재 영역 sources 수집 위임
+- **자율 진행**: 측정 + sanitize + LAB_INVENTORY 갱신 + 부재 영역 sources 수집 위임
 - **사용자 결정**:
   - 신 lab 환경 의뢰 (외부 의존)
   - 부재 vendor 의 lab 환경 추가 결정 (운영 비용)
@@ -125,7 +125,7 @@ def probe_redfish(ip: str, timeout: int = 5) -> dict | None:
 
 ## 학습 (cycle 2026-05-01)
 
-- LAB-INVENTORY.md 수동 관리 → cycle 마다 stale 위험
+- LAB_INVENTORY.md 수동 관리 → cycle 마다 stale 위험
 - sanitize 안 된 fixture 는 commit 안 함 (보안 + 사용자 동의)
 - 부재 영역이 명시되면 sources 의존 작업 우선순위 자동 결정 가능
 

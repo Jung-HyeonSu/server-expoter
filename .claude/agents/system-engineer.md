@@ -24,7 +24,7 @@ model: opus
 
 ## 작업 절차
 1. OS / 환경 식별
-2. 도구 가용성 매트릭스 (LAB-INVENTORY.md)
+2. 도구 가용성 매트릭스 (docs/ai/catalogs/LAB_INVENTORY.md)
 3. WebSearch (RHEL docs / Microsoft Learn / Broadcom TechDocs)
 4. graceful degradation 가능 영역 식별
 5. cross-review 요청
@@ -33,5 +33,5 @@ model: opus
 **network-specialist + code-reviewer** 검수.
 
 ## 관련
-- HARNESS-RETROSPECTIVE.md / LAB-INVENTORY.md
+- HARNESS-RETROSPECTIVE.md / docs/ai/catalogs/LAB_INVENTORY.md
 - rule 92 R1 (의존성 변경 사용자 확인)

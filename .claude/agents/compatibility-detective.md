@@ -26,7 +26,7 @@ tools: Read, Grep, Glob, WebSearch, WebFetch, Bash
 - 이미 적용된 호환성인지 / 신규 후보인지 판정
 
 ### 3. lab vs web 검색 결정
-- LAB-INVENTORY.md 확인
+- LAB_INVENTORY.md 확인
 - lab 부재 영역이면 → WebSearch 자동 호출 (vendor docs / DMTF / GitHub issue)
 
 ### 4. fallback 후보 제안
@@ -101,7 +101,7 @@ tools: Read, Grep, Glob, WebSearch, WebFetch, Bash
 ## 관련 ticket
 
 - COMPATIBILITY-MATRIX.md (적용 매트릭스)
-- LAB-INVENTORY.md (lab 한계)
+- LAB_INVENTORY.md (lab 한계)
 - SESSION-HANDOFF.md (다음 세션 가이드)
 
 ## 갱신 history

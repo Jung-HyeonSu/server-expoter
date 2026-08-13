@@ -1,13 +1,13 @@
 ---
 name: lab-inventory-update
-description: lab 보유 / 부재 영역 (vendor / 펌웨어 / OS / 환경) 을 자동 측정해서 LAB-INVENTORY 갱신. cycle 2026-05-01 학습 — lab 한계가 본질적 제약. 사용자가 "lab 인벤토리 갱신", "현재 lab 상태", "부재 영역 list" 요청 시.
+description: lab 보유 / 부재 영역 (vendor / 펌웨어 / OS / 환경) 을 자동 측정해서 LAB_INVENTORY 갱신. cycle 2026-05-01 학습 — lab 한계가 본질적 제약. 사용자가 "lab 인벤토리 갱신", "현재 lab 상태", "부재 영역 list" 요청 시.
 ---
 
 # lab-inventory-update
 
 ## 목적
 
-server-exporter lab 의 현재 보유 / 부재 영역을 측정해 `docs/ai/tickets/<active-cycle>/LAB-INVENTORY.md` 또는 `docs/ai/catalogs/LAB-INVENTORY.md` 갱신. 다음 cycle 의 호환성 작업이 어디까지 사이트 실측 가능 / 어디부터 web sources 의존 인지 명확히 한다.
+server-exporter lab 의 현재 보유 / 부재 영역을 측정해 `docs/ai/tickets/<active-cycle>/LAB_INVENTORY.md` 또는 `docs/ai/catalogs/LAB_INVENTORY.md` 갱신. 다음 cycle 의 호환성 작업이 어디까지 사이트 실측 가능 / 어디부터 web sources 의존 인지 명확히 한다.
 
 ## 호출 시점
 
@@ -74,10 +74,10 @@ def probe_host(ip: str) -> dict:
 - IP / hostname / serial / asset_tag → 가명
 - vendor / 펌웨어 / OS 만 보존
 
-### 5. LAB-INVENTORY.md 갱신
+### 5. LAB_INVENTORY.md 갱신
 
 ```markdown
-# LAB-INVENTORY — 측정 일자 YYYY-MM-DD
+# LAB_INVENTORY — 측정 일자 YYYY-MM-DD
 
 ## 보유 (sanitized)
 
@@ -128,7 +128,7 @@ def probe_host(ip: str) -> dict:
 
 ## 자율 vs 사용자 결정
 
-- **AI 자율**: 측정 + sanitize + LAB-INVENTORY.md 갱신
+- **AI 자율**: 측정 + sanitize + LAB_INVENTORY.md 갱신
 - **사용자 결정**: 신 lab 환경 추가 / 부재 vendor 의 lab 환경 의뢰 / EOL 영역 정리
 
 ## 관련
@@ -137,4 +137,4 @@ def probe_host(ip: str) -> dict:
 - rule 25 R7-A-1 (사용자 실측 > spec)
 - agent: lab-tracker (자동 측정 위임)
 - skill: capture-site-fixture (사이트 사고 fixture)
-- catalog: docs/ai/catalogs/LAB-INVENTORY.md (있을 시)
+- catalog: docs/ai/catalogs/LAB_INVENTORY.md (있을 시)

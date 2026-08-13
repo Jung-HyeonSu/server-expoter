@@ -14,7 +14,7 @@ server-exporter lab 은 일부 vendor / 펌웨어만 보유 (Dell / HPE / Lenovo
 ## 호출 시점
 
 - 사용자 요청: "Huawei vendor 추가", "Inspur 추가", "Superdome Flex 분류"
-- lab 부재 명시 (LAB-INVENTORY.md 의 부재 영역)
+- lab 부재 명시 (docs/ai/catalogs/LAB_INVENTORY.md 의 부재 영역)
 - 호출자 신규 운영 vendor
 
 ## 입력

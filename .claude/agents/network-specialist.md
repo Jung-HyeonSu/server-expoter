@@ -27,7 +27,7 @@ model: opus
 ## 작업 절차
 1. 통신 단계 식별 (precheck failure_stage)
 2. cipher / TLS / SSH legacy 분석
-3. RHEL/Ubuntu/Windows/ESXi 환경 매트릭스 (LAB-INVENTORY.md)
+3. RHEL/Ubuntu/Windows/ESXi 환경 매트릭스 (LAB_INVENTORY.md)
 4. WebSearch (vendor docs / RFC / 사고 사례)
 5. fallback 후보 제안 (Additive only)
 6. cross-review 요청 (code-reviewer / system-engineer)
