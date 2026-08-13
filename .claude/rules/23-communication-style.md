@@ -56,13 +56,13 @@
 | `Adapter` | "Adapter (벤더/세대별 YAML)" |
 | `Adapter 점수` | "Adapter 점수 (priority×1000 + specificity×10 + match)" |
 | `3-channel` | "3-채널 (os/esxi/redfish 통합 수집)" |
-| `4단계 Precheck` | "4단계 진단 (ping → port → protocol → auth)" |
+| `Precheck` | "사전 진단 (TCP 도달 → 프로토콜 → 인증. ICMP 미사용)" |
 | `Vault 2단계` | "Vault 2단계 로딩 (무인증 detect → vendor vault → 인증 수집)" |
 | `Linux 2-tier` | "Linux 2-tier (Python ok / raw fallback)" |
 | `Sections 11` | "11 섹션 (system/hardware/bmc/cpu/memory/storage/network/firmware/users/power/thermal)" |
 | `Field Dictionary 47 Must` | "Field Dictionary (47 Must + 115 Nice + 6 Skip = 168 entries)" |
 | `Baseline` | "Baseline (실장비 회귀 기준선 JSON)" |
-| `loc` | "loc (운영 사이트: ich/chj/yi)" |
+| `loc` | "loc (운영 사이트 — 정본은 common/vars/locations.yml)" |
 | `target_type` | "target_type (os/esxi/redfish)" |
 | `JSON envelope` | "JSON envelope (status/sections/data/errors/meta/diagnosis 6 필드)" |
 | `Round 검증` | "Round 검증 (실장비 검증 단위)" |

@@ -11,7 +11,7 @@ model: sonnet
 
 ## 역할
 
-1. Jenkinsfile / Jenkinsfile_grafana / Jenkinsfile_portal 변경 검증
+1. Jenkinsfile / Jenkinsfile_portal / Jenkinsfile_portal_test 변경 검증
 2. 4-Stage (Validate / Gather / Validate Schema / E2E Regression) 정합
 3. cron 변경 사용자 승인 절차 (rule 80 + 92 R5)
 4. agent-master 망 분리 준수

@@ -9,11 +9,11 @@
 
 | 시스템 | 채널 | 라이브러리 | 인증 |
 |---|---|---|---|
-| Redfish API | redfish-gather | stdlib (urllib/ssl/json) | Basic Auth (vault/redfish/{vendor}.yml) |
+| Redfish API | redfish-gather | stdlib (urllib/ssl/json) | Basic Auth (vault/<loc>/redfish/<vendor>.yml) |
 | IPMI | (현재 사용 안 함, 향후 fallback) | — | — |
-| SSH | os-gather Linux | paramiko (Ansible 내부) | key 또는 password (vault/linux.yml) |
-| WinRM | os-gather Windows | pywinrm 0.5.0 | NTLM/Basic (vault/windows.yml) |
-| vSphere | esxi-gather | pyvmomi 9.0.0, community.vmware 6.2.0 | password (vault/esxi.yml) |
+| SSH | os-gather Linux | paramiko (Ansible 내부) | key 또는 password (vault/<loc>/os/linux.yml) |
+| WinRM | os-gather Windows | pywinrm 0.5.0 | NTLM/Basic (vault/<loc>/os/windows.yml) |
+| vSphere | esxi-gather | pyvmomi 9.0.0, community.vmware 6.2.0 | password (vault/<loc>/esxi.yml) |
 
 ## 목표 규칙
 

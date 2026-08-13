@@ -1,6 +1,6 @@
 ---
 name: debug-precheck-failure
-description: 4단계 진단 (ping → port → protocol → auth) 어디서 막혔는지 분석. precheck_bundle.py 결과의 diagnosis.details를 해석하고 구체적 해결 방향 제시. 사용자가 "ping은 됐는데 protocol 실패", "auth 단계에서 막힘", "precheck 실패 원인" 등 요청 시. - precheck 실패 발생 / graceful degradation 했지만 일부 데이터 누락 / 새 BMC 응답 없음
+description: 진단 (TCP 도달 → 프로토콜 → 인증 (ICMP 미사용)) 어디서 막혔는지 분석. precheck_bundle.py 결과의 diagnosis.details를 해석하고 구체적 해결 방향 제시. 사용자가 "포트는 열렸는데 protocol 실패", "auth 단계에서 막힘", "precheck 실패 원인" 등 요청 시. - precheck 실패 발생 / graceful degradation 했지만 일부 데이터 누락 / 새 BMC 응답 없음
 ---
 
 # debug-precheck-failure

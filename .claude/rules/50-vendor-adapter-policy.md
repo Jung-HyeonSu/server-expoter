@@ -7,7 +7,7 @@
 ## 적용 대상
 
 - 저장소 전체 (`**`) — 벤더 추가/변경 시
-- `adapters/`, `redfish-gather/tasks/vendors/`, `vault/redfish/`
+- `adapters/`, `redfish-gather/tasks/vendors/`, `vault/<loc>/redfish/`
 - `common/vars/vendor_aliases.yml`
 
 ## 현재 관찰된 현실
@@ -41,17 +41,17 @@
   1. `common/vars/vendor_aliases.yml` 매핑 추가
   2. `adapters/{redfish,os,esxi}/{vendor}_*.yml` adapter 생성 (priority/specificity/match/capabilities/collect/normalize)
   3. (선택) `redfish-gather/tasks/vendors/{vendor}/` OEM tasks
-  4. `vault/redfish/{vendor}.yml` 생성 (ansible-vault encrypt)
-  5. `tests/baseline_v1/{vendor}_baseline.json` 추가 (실장비 검증 후)
+  4. `vault/<loc>/redfish/<vendor>.yml` 생성 (ansible-vault encrypt)
+  5. `schema/baseline_v1/{vendor}_baseline.json` 추가 (실장비 검증 후)
   6. `.claude/ai-context/vendors/{vendor}.md` 추가
   7. `.claude/policy/vendor-boundary-map.yaml` 갱신
   8. `docs/13_redfish-live-validation.md` Round 갱신
   9. `docs/19_decision-log.md` 추가
 - **단계 10 (lab 부재 vendor 시 의무 — cycle 2026-05-01 / 2026-05-06 학습 형식화)**:
   - lab 부재 시 (사용자 사이트 외 lab 환경에 vendor 장비 없음) 다음 trigger 발생 → NEXT_ACTIONS.md 자동 등록 의무 (rule 96 R1-C 와 연동)
-    - `tests/baseline_v1/{vendor}_baseline.json` SKIP (단계 5)
+    - `schema/baseline_v1/{vendor}_baseline.json` SKIP (단계 5)
     - `docs/13_redfish-live-validation.md` Round = "lab 부재 — web sources" (단계 8)
-    - `vault/redfish/{vendor}.yml` SKIP 사용자 명시 승인 (단계 4)
+    - `vault/<loc>/redfish/<vendor>.yml` SKIP 사용자 명시 승인 (단계 4)
   - NEXT_ACTIONS.md 등재 항목:
     1. 사이트 fixture 캡처 (capture-site-fixture skill)
     2. baseline JSON 추가 (실장비 검증 후 — rule 13 R4)

@@ -60,7 +60,7 @@
 - **Multi-partition (nPAR)**: cycle 2026-05-12 (ADR-2026-05-12) — **전 partition / 전 manager / 전 chassis 수집 정식 지원**. `data.multi_node` Additive 컨테이너로 노출 (기존 `data.system` 등 9 path 는 Partition0 representative 유지).
 - **Dual-manager**: RMC = primary AccountService host. per-node iLO 5 는 보조. adapter `vendor_notes.manager_layout` 으로 `bmc.name` 분기 — `rmc_primary` (CSUS 3200) / `rmc_primary_ilo_secondary` (Superdome Flex).
 - **Vendor 분류**: HPE sub-line — Manufacturer = "HPE". 별도 vendor 아님 (M-E1 결정 (a)).
-- **vault**: `vault/redfish/hpe.yml` 재사용 (별도 vault 불필요).
+- **vault**: `vault/<loc>/redfish/hpe.yml` 재사용 (별도 vault 불필요).
 - **OEM tasks**: `redfish-gather/tasks/vendors/hpe/` 재사용 (Oem.Hpe 동일 namespace).
 - **lab**: 부재 — web sources 8건 (CSUS) + 14건 (Superdome Flex) (rule 96 R1-A). 사이트 실측 시 정정 가능.
 - **활성화 위험**: HPE community 7200359 — 사이트 RMC Redfish 비활성화 / 라이선스 부재 사례. `diagnosis.details.rmc_activation_check` 메타로 진단 hint. `docs/22_rmc-activation-guide.md` 참조.
@@ -96,7 +96,7 @@ C1~C8: `docs/ai/NEXT_ACTIONS.md` 참조. 사이트 fixture 캡처 + baseline + l
 
 ## Vault
 
-- 위치: `vault/redfish/hpe.yml`
+- 위치: `vault/<loc>/redfish/hpe.yml`
 - 일반적 계정: `Administrator`
 - 회전: `rotate-vault` skill
 
@@ -106,7 +106,7 @@ C1~C8: `docs/ai/NEXT_ACTIONS.md` 참조. 사이트 fixture 캡처 + baseline + l
 - Round 11 (2026-04-28): iLO 6 v1.73 (10.50.11.231) Baseline 캡처
 - cycle 2026-05-06 (M-E2): Superdome Flex / Flex 280 adapter 추가 (lab 부재, web sources 14건)
 - cycle 2026-05-11 (hpe-csus-add): **HPE CSUS 3200 (Compute Scale-up Server 3200) adapter 추가 (lab 부재, web sources 7건)**
-- Baseline: `tests/baseline_v1/hpe_ilo5_baseline.json`, `tests/baseline_v1/hpe_baseline.json`
+- Baseline: `schema/baseline_v1/hpe_baseline.json`, `schema/baseline_v1/hpe_baseline.json`
 - CSUS 3200 baseline: lab 도입 후 추가 예정 (NEXT_ACTIONS 등재)
 
 ## Reference

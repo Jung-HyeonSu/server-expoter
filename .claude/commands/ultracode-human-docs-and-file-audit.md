@@ -321,7 +321,7 @@ README는 입구다.
 권장 역할:
 
 ```text
-docs/index.md
+docs/README.md
 docs/getting-started/
 docs/operations/
 docs/architecture/
@@ -333,7 +333,7 @@ docs/decisions/
 docs/archive/
 ```
 
-큰 이동이 위험하면 기존 구조를 유지하되 `docs/index.md`부터 만든다.
+큰 이동이 위험하면 기존 구조를 유지하되 `docs/README.md`부터 만든다.
 
 ### REQUIREMENTS.md 역할
 
@@ -858,7 +858,7 @@ ansible-playbook --syntax-check redfish-gather/site.yml
 문서 링크 검사 스크립트가 있으면 우선 사용한다.
 
 ```bash
-python scripts/check_docs_links.py
+python scripts/ai/verify_docs_references.py
 ```
 
 실행하지 않은 검증은 “미실행”이라고 적고 이유를 남긴다.

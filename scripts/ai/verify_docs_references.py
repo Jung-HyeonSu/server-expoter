@@ -58,7 +58,8 @@ ROOT_FILE_PREFIXES = ("Jenkinsfile",)
 # 자리표시자가 들어간 표기는 템플릿이라 실존 검사 대상이 아니다.
 PLACEHOLDER_TOKENS = ("{", "}", "<", ">", "*", "?", "…", "...", "$")
 PLACEHOLDER_RE = re.compile(
-    r"(?:^|/)(?:NNN|N|XXX|YYYY-MM-DD|YYYYMMDD|date|vendor|loc|channel|section|gather)(?:/|\.|$)",
+    # 경로 한가운데 끼어 있어도 자리표시자다: `cycle-NNN.md`, `full-sweep-YYYY-MM-DD.md`
+    r"(?:^|[/_-])(?:NNN|XXX|YYYY-MM-DD|YYYYMMDD|date|vendor|loc|channel|section)(?:[/._-]|$)",
     re.IGNORECASE,
 )
 

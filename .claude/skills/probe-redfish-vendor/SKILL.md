@@ -43,27 +43,27 @@ description: 새 벤더 / 새 펌웨어 / 의심 응답에 대해 deep_probe_red
 
 ### 다음 단계
 - adapter dell_idrac9.yml의 firmware_patterns에 "7.x" 추가 (priority 100 유지)
-- schema/baseline_v1/dell_idrac9_baseline.json 회귀 검토
+- schema/baseline_v1/dell_baseline.json 회귀 검토
 - rule 96 origin 주석 갱신 (마지막 동기화 = 오늘)
 ```
 
 ## 절차
 
-1. **자격증명 확보** — vault/redfish/<vendor>.yml 또는 인터랙티브 (probe 시점)
+1. **자격증명 확보** — vault/<loc>/redfish/<vendor>.yml 또는 인터랙티브 (probe 시점)
 2. **deep_probe 실행**:
    ```bash
    python tests/redfish-probe/deep_probe_redfish.py \
      --ip 10.x.x.1 \
      --user "$VAULT_USER" \
      --password "$VAULT_PASS" \
-     --output tests/evidence/2026-04-27-dell-idrac9-7x/
+     --output tests/evidence/<날짜>-<vendor>-<펌웨어>/
    ```
 3. **응답 dump 분석**:
    - ServiceRoot → vendor 식별
    - Chassis / Systems / Storage / Volumes / Drives / Managers / UpdateService / AccountService 모두 GET
    - OEM endpoint 재귀 탐색
 4. **기존 baseline / fixtures와 diff**:
-   - `tests/baseline_v1/<vendor>_baseline.json`
+   - `schema/baseline_v1/<vendor>_baseline.json`
    - `tests/fixtures/<vendor>_*.json`
 5. **변경 path / 필드 list 작성** — rule 96 origin 주석 갱신용
 6. **결과를 evidence/ 에 저장**:

@@ -62,10 +62,10 @@ normalize:
 
 OEM 분기 필요한 경우만. 없으면 standard_only.
 
-### 4. vault/redfish/{vendor}.yml 생성 (또는 SKIP — 사용자 명시 승인)
+### 4. vault/<loc>/redfish/<vendor>.yml 생성 (또는 SKIP — 사용자 명시 승인)
 
 ```bash
-ansible-vault create vault/redfish/huawei.yml
+ansible-vault create vault/<loc>/redfish/huawei.yml
 # accounts list 입력 (rotate-vault skill / docs/21 참조)
 ```
 

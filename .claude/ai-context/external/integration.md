@@ -33,7 +33,7 @@
 ## SSH (Linux gather)
 
 - **라이브러리**: paramiko (Ansible 내부)
-- **인증**: SSH key 또는 password (vault/linux.yml)
+- **인증**: SSH key 또는 password (vault/<loc>/os/linux.yml)
 - **Linux 2-tier**: Python 3.9+ 있으면 setup/shell/command, 없으면 raw 모듈만
 - **Privilege escalation**: become_method=sudo
 
@@ -41,12 +41,12 @@
 
 - **라이브러리**: pywinrm 0.5.0
 - **인증**: NTLM 또는 Basic
-- **Vault**: vault/windows.yml
+- **Vault**: vault/<loc>/os/windows.yml
 
 ## vSphere API (ESXi gather)
 
 - **라이브러리**: pyvmomi 9.0.0
-- **인증**: vault/esxi.yml (vSphere 사용자/비밀번호)
+- **인증**: vault/<loc>/esxi.yml (vSphere 사용자/비밀번호)
 - **Collection**: community.vmware 6.2.0
 - **버전 지원**: ESXi 6.x / 7.x / 8.x (adapters/esxi/*.yml로 분기)
 - **XML 파싱**: lxml 6.0.2 (vmware 응답 일부 XML)

@@ -18,7 +18,7 @@ server-exporter의 모호한 요구를 디스커버리 대화로 정제. PO / �
 5. **Vault / 인증 영향**: 새 자격증명? Vault 2단계 변경?
 6. **Jenkins 영향**: 4-Stage 변경? cron 변경?
 7. **회귀 부담**: baseline 전수 vs 일부?
-8. **운영 환경**: ich / chj / yi 모두? 일부 loc?
+8. **운영 환경**: 전 loc? 일부 loc? (등록된 loc 은 `common/vars/locations.yml`)
 
 ## 절차
 

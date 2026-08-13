@@ -8,7 +8,7 @@
 
 ## 현재 관찰된 현실
 
-- Jenkins multi-pipeline 2종 (`Jenkinsfile` / `Jenkinsfile_portal`) — cycle-015에서 `Jenkinsfile_grafana` 제거 (사용자 명시 결정 — Grafana 적재 미사용)
+- Jenkins pipeline: `Jenkinsfile`(비운영) / `Jenkinsfile_portal`(운영) / `Jenkinsfile_portal_test`
 - 외부 CI 시스템 미사용 (Jenkins 단독)
 - 4-Stage: Validate / Gather / Validate Schema / **(pipeline별 Stage 4)** — 아래 R1-A 참조
 - agent-master 망 분리: Ingest / Callback은 master, gather는 agent
@@ -34,7 +34,6 @@
 | `Jenkinsfile` | E2E Regression | pytest baseline 회귀 (영향 vendor) + 오프라인 회귀 하네스 (`tests/integration/ -m "not live"` — HPE iLO 에뮬레이터 + DMTF 표준 mockup, 2026-06-08 — 별도 invocation) |
 | `Jenkinsfile_portal` | Callback | 호출자 통보 (master 실행, rule 31 무결성) |
 
-> **cycle-015**: `Jenkinsfile_grafana` 제거됨 (사용자 명시 결정).
 
 상세: `docs/ai/catalogs/JENKINS_PIPELINES.md`.
 

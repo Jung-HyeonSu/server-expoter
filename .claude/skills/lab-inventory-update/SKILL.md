@@ -49,19 +49,19 @@ server-exporter lab 의 현재 보유 / 부재 영역을 측정해 `docs/ai/tick
 test -f .lab-credentials.yml && echo "credentials available"
 ```
 
-또는 `tests/scripts/lab_inventory.py` (있을 시) — sanitized 버전만 commit.
+또는 `(전용 스크립트 없음 — 수동 측정)` (있을 시) — sanitized 버전만 commit.
 
 ### 2. ICMP / TCP 도달성 + Redfish ServiceRoot
 
 ```python
-# tests/scripts/lab_inventory.py (예시)
+# (전용 스크립트 없음 — 수동 측정) (예시)
 import json
 from pathlib import Path
 
 REDFISH_HOSTS = ...  # .lab-credentials.yml 에서 로드 (gitignored)
 
 def probe_host(ip: str) -> dict:
-    # ping → port 443 → /redfish/v1/ → Manufacturer / FirmwareVersion 추출
+    # TCP 443 → /redfish/v1/ → Manufacturer / FirmwareVersion 추출
     ...
 ```
 

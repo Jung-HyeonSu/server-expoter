@@ -48,11 +48,11 @@ metadata:
 
 ### 3. OEM tasks (선택) — redfish-gather/tasks/vendors/huawei/collect_oem.yml
 
-### 4. Vault — vault/redfish/huawei.yml (encrypt)
+### 4. Vault — vault/<loc>/redfish/huawei.yml (encrypt)
 vault_redfish_username: ...
 vault_redfish_password: ...
 
-### 5. Baseline — schema/baseline_v1/huawei_ibmc_baseline.json
+### 5. Baseline — schema/baseline_v1/<vendor>_baseline.json
 실장비 검증 (probe-redfish-vendor skill) 후 갱신
 
 ### 6. ai-context — .claude/ai-context/vendors/huawei.md
@@ -96,7 +96,7 @@ Round X 추가 (Huawei iBMC 3.x 검증)
 
 - 영향 채널: 주로 redfish (os / esxi는 vendor-agnostic)
 - 영향 schema: baseline_v1에 vendor JSON 추가
-- 영향 vault: vault/redfish/{vendor}.yml 신규
+- 영향 vault: vault/<loc>/redfish/<vendor>.yml 신규
 - 영향 정본: REQUIREMENTS.md / docs/13_redfish-live-validation.md / docs/19_decision-log.md
 
 ## 실패 / 오탐 처리

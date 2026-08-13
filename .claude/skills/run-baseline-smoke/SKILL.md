@@ -7,19 +7,19 @@ description: vendor fixture 기반 빠른 baseline 회귀. 실장비 없이 mock
 
 ## 목적
 
-server-exporter baseline 회귀를 빠르게 (실장비 없이 fixture만) 실행. 5 vendor x 1 fixture 단위 smoke.
+server-exporter baseline 회귀를 빠르게 (실장비 없이 fixture만) 실행. vendor 별 fixture 단위 smoke.
 
 ## 절차
 
 ```bash
 # 영향 vendor만 (변경 영역 따라)
-pytest tests/redfish-probe/test_baseline.py --vendor dell -v
+pytest tests/regression/ -k dell -v
 
 # 전수
-pytest tests/redfish-probe/test_baseline.py -v
+pytest tests/regression/ -v
 
 # 빠른 mode (fixture만, 실장비 skip)
-pytest tests/redfish-probe/test_baseline.py -m "not live" -v
+pytest tests/regression/ tests/e2e/ -m "not live" -v
 
 # schema 검증 동반
 python scripts/ai/hooks/output_schema_drift_check.py

@@ -24,7 +24,7 @@ description: 실장비 검증 결과로 schema/baseline_v1/{vendor}_baseline.jso
 ## Baseline 갱신 — Dell iDRAC9 7.x
 
 ### 대상 파일
-- schema/baseline_v1/dell_idrac9_baseline.json
+- schema/baseline_v1/dell_baseline.json
 
 ### 변경 내역
 | 섹션 | 변경 | 근거 |
@@ -38,7 +38,7 @@ description: 실장비 검증 결과로 schema/baseline_v1/{vendor}_baseline.jso
 - diff: tests/evidence/2026-04-27-dell-idrac9-7x/diff-vs-baseline.md
 
 ### 회귀 검증 결과
-- pytest tests/redfish-probe/test_baseline.py::test_dell_idrac9 PASS
+- pytest tests/regression/ -k dell PASS
 
 ### 후속
 - docs/19_decision-log.md "Round X" 추가
@@ -62,7 +62,7 @@ description: 실장비 검증 결과로 schema/baseline_v1/{vendor}_baseline.jso
    - section list가 sections.yml과 일치
 6. **회귀 검증**:
    ```bash
-   pytest tests/redfish-probe/test_baseline.py --vendor dell -v
+   pytest tests/regression/ -k dell -v
    ```
 7. **adapter origin 주석 갱신** (rule 96 R1): metadata.tested_against / 마지막 동기화 일자
 8. **evidence 보존** (rule 21 R4): Round 검증 결과 tests/evidence/에
@@ -93,7 +93,7 @@ description: 실장비 검증 결과로 schema/baseline_v1/{vendor}_baseline.jso
 - skill: `probe-redfish-vendor`, `update-output-schema-evidence`, `prepare-regression-check`
 - agent: `qa-regression-worker`, `baseline-validation-worker`, `schema-mapping-reviewer`
 - 정본: `docs/13_redfish-live-validation.md`
-- 정본: `tests/baseline_v1/`, `tests/evidence/`
+- 정본: `schema/baseline_v1/`, `tests/evidence/`
 
 ## 보안
 

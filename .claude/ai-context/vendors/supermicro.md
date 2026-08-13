@@ -23,7 +23,7 @@
 
 ## Vault
 
-- 위치: `vault/redfish/supermicro.yml`
+- 위치: `vault/<loc>/redfish/supermicro.yml`
 - 일반적 계정: `ADMIN`
 - 회전: `rotate-vault` skill
 

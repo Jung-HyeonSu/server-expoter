@@ -22,14 +22,14 @@
 
 ## Vault
 
-- 위치: `vault/redfish/lenovo.yml`
+- 위치: `vault/<loc>/redfish/lenovo.yml`
 - 일반적 계정: `USERID`
 - 회전: `rotate-vault` skill
 
 ## 검증 이력
 
 - Round 7-10: XCC 검증 완료
-- Baseline: `tests/baseline_v1/lenovo_xcc_baseline.json`
+- Baseline: `schema/baseline_v1/lenovo_xcc_baseline.json`
 
 ## Reference
 

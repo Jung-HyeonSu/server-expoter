@@ -2,7 +2,7 @@
 
 ## 적용 대상
 - 호출자 통보용 callback URL 처리
-- `Jenkinsfile`, `Jenkinsfile_portal` 의 post 단계 (cycle-015에서 `Jenkinsfile_grafana` 제거)
+- `Jenkinsfile_portal` 의 Callback stage (운영 경로)
 
 ## 현재 관찰된 현실
 

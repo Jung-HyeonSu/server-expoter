@@ -8,7 +8,6 @@
 | Jenkinsfile | 용도 | 호출자 |
 |---|---|---|
 | `Jenkinsfile` | 메인 (3-channel 통합) | 일반 호출자 |
-| `Jenkinsfile_grafana` | Grafana 데이터 수집 (agent-master 망 분리: Ingest는 master) | Grafana |
 | `Jenkinsfile_portal` | Portal 호출 (agent-master 망 분리: Callback은 master) | Portal |
 
 각 파이프라인 4-Stage:
@@ -22,7 +21,7 @@
 
 운영 토폴로지:
 - master (10.100.64.154) — Jenkins controller, 검증 기준 Agent
-- agent (각 loc: ich, chj, yi) — gather 실행
+- agent (loc 별 label — 정본은 `common/vars/locations.yml`) — gather 실행
 - 망 분리: Ingest / Callback 단계는 master에서, gather는 agent에서
 
 Agent 요구사항:
@@ -77,7 +76,7 @@ url = url.strip().rstrip('/')
 
 ## 7. agent-master 망 분리
 
-- Ingest (Grafana 데이터 등) → master에서 실행 (`Jenkinsfile_grafana`)
+- `Jenkinsfile_portal` 의 `Resolve Location` 과 `Callback` → master(`built-in`) 에서 실행
 - Callback (Portal 호출 등) → master에서 실행 (`Jenkinsfile_portal`)
 - gather는 agent에서 실행
 

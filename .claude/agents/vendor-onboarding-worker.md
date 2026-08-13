@@ -16,8 +16,8 @@ model: opus
 1. `common/vars/vendor_aliases.yml` 매핑 추가
 2. `adapters/{channel}/{vendor}_*.yml` adapter (adapter-author agent 위임)
 3. `redfish-gather/tasks/vendors/{vendor}/` OEM tasks (선택)
-4. `vault/redfish/{vendor}.yml` ansible-vault encrypt
-5. `tests/baseline_v1/{vendor}_baseline.json` (probe-redfish-vendor 결과 후)
+4. `vault/<loc>/redfish/<vendor>.yml` ansible-vault encrypt
+5. `schema/baseline_v1/{vendor}_baseline.json` (probe-redfish-vendor 결과 후)
 6. `.claude/ai-context/vendors/{vendor}.md`
 7. `.claude/policy/vendor-boundary-map.yaml` 갱신
 8. `docs/13_redfish-live-validation.md` Round 추가

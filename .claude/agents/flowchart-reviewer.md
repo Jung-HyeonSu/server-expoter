@@ -1,6 +1,6 @@
 ---
 name: flowchart-reviewer
-description: Mermaid 다이어그램 rule 41 준수 검증. 색상 / 노드 ID / 30 노드 / AS-IS-TO-BE 쌍 / 성공-실패-재시도. **호출 시점**: docs/flows/* 변경 / write-feature-flowchart 결과.
+description: Mermaid 다이어그램 rule 41 준수 검증. 색상 / 노드 ID / 30 노드 / AS-IS-TO-BE 쌍 / 성공-실패-재시도. **호출 시점**: 해당 문서의 mermaid 블록 변경 / write-feature-flowchart 결과.
 tools: ["Read", "Grep", "Glob"]
 model: haiku
 ---

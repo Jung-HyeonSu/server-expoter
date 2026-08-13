@@ -10,7 +10,6 @@ server-exporter Jenkins cron / scheduler 변경 안전 절차 (rule 80 + 92 R5).
 ## 대상
 
 - `Jenkinsfile` — 메인 (3-channel 통합)
-- `Jenkinsfile_grafana` — Grafana 데이터 수집
 - `Jenkinsfile_portal` — Portal 호출
 
 ## 변경 절차

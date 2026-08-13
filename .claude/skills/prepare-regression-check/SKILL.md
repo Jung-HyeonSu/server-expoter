@@ -37,8 +37,8 @@ server-exporter 회귀 테스트 대상을 자동 선정. `.claude/policy/test-s
 ### 회귀 명령
 1. `ansible-playbook --syntax-check redfish-gather/site.yml`
 2. `pytest tests/redfish-probe/probe_redfish.py --vendor dell -v`
-3. `pytest tests/redfish-probe/test_baseline.py --vendor dell -v` (Stage 4 등가)
-4. `pytest tests/redfish-probe/test_baseline.py -v` (전 vendor — common 변경)
+3. `pytest tests/regression/ -k dell -v` (영향 vendor 회귀)
+4. `pytest tests/regression/ tests/e2e/ -v` (전 vendor — common 변경)
 5. `python scripts/ai/hooks/output_schema_drift_check.py`
 6. `python scripts/ai/verify_vendor_boundary.py`
 7. `python scripts/ai/verify_harness_consistency.py`

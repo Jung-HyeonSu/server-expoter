@@ -7,7 +7,7 @@ model: opus
 
 # redfish-specialist
 
-> Redfish API 호환성 전문 agent. DMTF 표준 + 5 vendor (Dell/HPE/Lenovo/Supermicro/Cisco) BMC 펌웨어 변종 깊이 이해.
+> Redfish API 호환성 전문 agent. DMTF 표준 + vendor (정본 `common/vars/vendor_aliases.yml`) BMC 펌웨어 변종 깊이 이해.
 
 ## 호출 시점
 - 사이트 envelope 의 `data.bmc.firmware_version` / `data.system.model` 호환성 의심

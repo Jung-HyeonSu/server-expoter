@@ -1,13 +1,13 @@
 ---
 name: write-feature-flowchart
-description: 신규 / 변경 기능의 Mermaid 플로우차트 작성. rule 41 + rule 23 ASCII 태그 준수. 사용자가 "기능 흐름도", "플로우차트 그려줘" 등 요청 시. 큰 단위 기능에 의무. - 큰 단위 기능 추가/변경 / docs/flows/ 갱신 필요
+description: 신규 / 변경 기능의 Mermaid 플로우차트 작성. rule 41 + rule 23 ASCII 태그 준수. 사용자가 "기능 흐름도", "플로우차트 그려줘" 등 요청 시. 큰 단위 기능에 의무. - 큰 단위 기능 추가/변경 시 관련 문서의 다이어그램 갱신 필요
 ---
 
 # write-feature-flowchart
 
 ## 출력
 
-`docs/flows/<feature-name>/{AS-IS.md, TO-BE.md}` Mermaid 다이어그램.
+관련 문서 안에 AS-IS / TO-BE 쌍으로 넣는 Mermaid 다이어그램.
 
 ### 필수 항목 (rule 41)
 
@@ -29,7 +29,7 @@ description: 신규 / 변경 기능의 Mermaid 플로우차트 작성. rule 41 +
 ### server-exporter 도메인 예시
 
 - 호출자 → Jenkins 4-Stage → 3-channel ansible-playbook → adapter 자동 감지 → callback 출력
-- 4단계 Precheck (ping → port → protocol → auth) → graceful degradation
+- Precheck (TCP 도달 → 프로토콜 → 인증 (ICMP 미사용)) → graceful degradation
 - Vault 2단계 로딩 (Redfish)
 - vendor 분기는 subgraph (profile-dell / profile-hpe / ...)
 

@@ -7,7 +7,7 @@ description: Jenkins 빌드 / 테스트 실패 로그 분석. 4-Stage 어디서 
 
 ## 목적
 
-server-exporter Jenkins 4-Stage 실패 분석. Jenkins multi-pipeline 3종 (Jenkinsfile / Jenkinsfile_grafana / Jenkinsfile_portal) 단독 사용.
+server-exporter Jenkins 실패 분석. 파이프라인은 `Jenkinsfile`(4 stage, 비운영) / `Jenkinsfile_portal`(5 stage, 운영) / `Jenkinsfile_portal_test`.
 
 ## 4-Stage 실패 패턴
 
@@ -44,7 +44,7 @@ server-exporter Jenkins 4-Stage 실패 분석. Jenkins multi-pipeline 3종 (Jenk
 - baseline_v1/hpe_ilo5_baseline.json과 diff 발생
 
 ### 증거
-- Jenkins log: `tests/redfish-probe/test_baseline.py::test_hpe_ilo5 FAILED`
+- Jenkins log: `tests/regression/test_cross_channel_consistency.py::test_envelope_fields[hpe] FAILED`
 - diff: storage.controllers[0].vendor 필드 누락
 
 ### 수정 방향

@@ -21,7 +21,7 @@
 
 ## Vault
 
-- 위치: `vault/redfish/cisco.yml`
+- 위치: `vault/<loc>/redfish/cisco.yml`
 - 일반적 계정: `admin`
 - 회전: `rotate-vault` skill
 

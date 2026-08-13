@@ -59,7 +59,7 @@
 - **Default**: 다음 공용 파일은 한 세션이 먼저 편집 + 다른 세션은 pull 후 append
   - `schema/sections.yml`
   - `schema/field_dictionary.yml`
-  - `vault/redfish/{vendor}.yml`
+  - `vault/<loc>/redfish/<vendor>.yml`
   - `common/vars/vendor_aliases.yml`
   - `Jenkinsfile*`
 - **Allowed**: 다른 영역의 동시 편집은 OK

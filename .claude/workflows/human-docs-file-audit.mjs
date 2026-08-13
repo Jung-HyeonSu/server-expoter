@@ -12,9 +12,9 @@ ALREADY FIXED & COMMITTED (verify they are clean now; do NOT re-report unless a 
 - redfish-gather/library/README.md: line count now "약 4,500 줄 (2026-06 기준)" (no exact number — file is actively changing); dead test_runner + _detect_from_product refs removed; function-index line numbers removed.
 - schema/baseline_v1/README.md + docs/20: dead *_baseline_annotated.jsonc scheme repointed to real schema/output_examples/*.jsonc.
 - docs/08 + docs/19: tests/baseline_v1 → schema/baseline_v1. docs/08 §4 example: power section added (10 sections).
-- docs/10 + docs/14: vault profile redfish_dell → dell (vault/redfish/dell.yml), fallback []. docs/10 priority matrix: hpe_superdome_flex 101, supermicro_x12 in 100 row, hpe_ilo5 alone in 90. docs/22: priority=101.
+- docs/10 + docs/14: vault profile redfish_dell → dell (vault/<loc>/redfish/dell.yml), fallback []. docs/10 priority matrix: hpe_superdome_flex 101, supermicro_x12 in 100 row, hpe_ilo5 alone in 90. docs/22: priority=101.
 - docs/11 + docs/12: diagnosis examples now use nested "details" (channel/adapter_candidate/checked_ports/selected_port/redfish_version/product/systems_uri), no top-level probe_facts.
-- docs/18: forks=200; field_mapper → jedec_mapper. docs/17: Stage 3 = FAIL gate. docs/23: field_dictionary 83; §9 six keys are diagnosis top-level (siblings of details); priority quick-ref vendor 기본=10 (was 50). docs/05: vault/redfish/{vendor}.yml. common/README: normalize = 10 files.
+- docs/18: forks=200; field_mapper → jedec_mapper. docs/17: Stage 3 = FAIL gate. docs/23: field_dictionary 83; §9 six keys are diagnosis top-level (siblings of details); priority quick-ref vendor 기본=10 (was 50). docs/05: vault/<loc>/redfish/<vendor>.yml. common/README: normalize = 10 files.
 - ROUND C fixes: docs/12 failure example + FAQ — removed non-existent probe_facts key (merged INTO details by diagnosis_mapper.py). REQUIREMENTS.md §3-1: DL380 Gen11/iLO6 → redfish_hpe_ilo6 (P100); false "no dedicated iLO6 adapter" claim removed. docs/14 priority flowchart: lab 부재 보호 = 101.
 - ROUND D fixes: README envelope example matches real shape (diagnosis={reachable,...,details:dict} no precheck; meta no loc; correlation={serial_number,host_ip,bmc_ip,...} no request_id). docs/22 cell distribution OK=36/OK★=157/GAP=8. docs/21 §2 header restored. docs/23 generic example score=-20 (−40 penalty).
 - ROUND E fixes: failure_stage 4-value set {reachable, port, protocol, auth} now consistent across docs/11 (port-closed example uses "port"), docs/12 (added port row), docs/20 (added reachable row) — matches precheck_bundle.py (reachable=no response, port=host up+port closed). docs/20 cisco_baseline drift note corrected to hostname==ip (10.100.15.2), not null.
@@ -25,7 +25,7 @@ ALREADY FIXED & COMMITTED (verify they are clean now; do NOT re-report unless a 
 `
 
 const KNOWN_NONBUGS = `
-KNOWN-INTENTIONAL non-bugs (do NOT report): adapters/esxi/esxi_9x.yml + adapters/os/linux_rocky.yml ("(예:)" hypotheticals), vault/redfish/hpe_csus.yml (deferred), tests/evidence/vault-rotation-log.md + tests/fixtures/redfish/hpe_ilo7/ (prospective files), docs/19 refs to docs/ai/tickets/**/fixes/*.md (archived harness tickets), docs/13 line ~391 "field_dictionary 65" (dated historical cycle-log record — leave). Multiple-H1 lint + docs/superpowers archive = deferred owner decisions, NOT bugs.
+KNOWN-INTENTIONAL non-bugs (do NOT report): adapters/esxi/esxi_9x.yml + adapters/os/linux_rocky.yml ("(예:)" hypotheticals), vault/<loc>/redfish/hpe.yml (deferred), tests/evidence/vault-rotation-log.md + tests/fixtures/redfish/hpe_ilo7/ (prospective files), docs/19 refs to docs/ai/tickets/**/fixes/*.md (archived harness tickets), docs/13 line ~391 "field_dictionary 65" (dated historical cycle-log record — leave). Multiple-H1 lint + docs/superpowers archive = deferred owner decisions, NOT bugs.
 NOTE: a concurrent process is editing Python COMMENTS, so .py line counts drift — do NOT report exact Python line-count mismatches.
 `
 

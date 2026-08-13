@@ -1,6 +1,7 @@
 # Precheck Guard First
 
-> 본 수집 전에 4단계 진단 통과 보장. 각 단계 실패 시 graceful degradation.
+> 본 수집 전에 도달성·프로토콜을 확인하고, 실패 지점을 `diagnosis` 에 남긴다.
+> 목적은 단순 alive 판정이 아니라 TCP·프로토콜·인증·수집 실패를 **구분**하는 것이다.
 
 ## 적용 대상
 
@@ -10,46 +11,72 @@
 
 ## 현재 관찰된 현실
 
-- 4단계: ping → port → protocol → auth
-- 각 단계 실패 시 `diagnosis.details`에 어디서 막혔는지 기록
-- precheck 결과로 graceful degradation 또는 abort 결정
-- Vault 2단계 로딩 (Redfish): 1단계 무인증 detect → vendor 결정 → 2단계 vault 로드
+`common/library/precheck_bundle.py` 실측 (2026-08-13).
+
+- **ICMP 는 구현 자체가 없다.** 소켓도, `ping` 프로세스 호출도 없다. 코드가 두 곳에서
+  그 이유를 명시한다 — `:138`, `:181` "presence probe(ICMP / IPAM / ARP)는 만들지 않는다 — 사용자 지시".
+  그래서 `reachable` 은 **TCP 핸드셰이크가 됐거나 RST 를 받았다**는 뜻이지 ICMP 응답이 아니다.
+- `reachable` 과 `port_open` 은 **한 번의 TCP 연결 순회로 함께 판정**된다 (`_check_ports`).
+  단계가 둘로 나뉘어 순차 실행되는 게 아니다.
+- **인증 단계는 운영에서 실행되지 않는다.** `precheck_bundle.py:1399-1410` 이 측정 결과를
+  기록해 뒀다 — 어떤 채널도 precheck 에 자격증명을 넘기지 않는다. Redfish 는 이 시점에
+  제조사가 미확정이라 금고를 못 열고, 억지로 인증하면 본 수집 전에 실패 시도가 쌓여
+  **계정 잠금 위험**이 커진다.
+- 실패 지점은 `diagnosis` 의 `failure_stage` / `failure_code` 로 나온다.
 
 ## 목표 규칙
 
-### R1. 4단계 진단 순서 보장
+### R1. 판정 순서와 각 판정의 의미
 
-- **Default**: 본 수집 전 반드시 ping → port → protocol → auth 순서로 진단
-- **Forbidden**: 일부 단계 skip 후 본 수집 진입
-- **Why**: ping 실패 시 port 시도 의미 없음. protocol 실패 시 auth 시도 의미 없음. 무의미한 timeout 누적 → 빌드 시간 증가
+- **Default**: 아래 순서로 판정한다. 앞 단계가 실패하면 뒤는 시도하지 않는다.
 
-### R2. 단계별 책임 분리
+  | 판정 | 실제로 하는 일 | 실패 시 `failure_stage` |
+  |---|---|---|
+  | `reachable` + `port_open` | 채널 기본 포트를 TCP connect. 첫 성공에서 중단. RST 를 받으면 "살아 있고 포트가 닫힘" | `reachable` / `port` |
+  | `protocol_supported` | redfish=ServiceRoot GET 상태코드, os=SSH 배너 또는 무인증 WS-Man Identify, esxi=vSphere 응답 | `protocol` |
+  | `auth_success` | redfish 전용이며 자격증명이 넘어온 경우만. **운영 경로에서는 실행되지 않는다** | `auth` |
 
-| 단계 | 책임 |
-|---|---|
-| ping | ICMP 또는 TCP SYN으로 host 도달 가능성 |
-| port | target_type별 port 응답 (SSH=22, WinRM=5986, vSphere=443, Redfish=443) |
-| protocol | TCP 응답 + 첫 응답 형식 (HTTPS handshake / SSH banner / Redfish JSON) |
-| auth | 자격증명으로 인증 성공 |
+  기본 포트 — redfish `[443]`, esxi `[443]`, os `[5986, 5985, 22]`.
 
-각 단계가 어디서 실패했는지 `diagnosis.details`에 명시.
+- **Forbidden**: ICMP / IPAM / ARP 기반 presence probe 를 추가하는 것. 관리망에서 ICMP 가
+  막혀 있어도 BMC 는 443 으로 답한다. ICMP 로 판정하면 정상 장비를 죽은 것으로 오판한다.
+- **Forbidden**: timeout 만 보고 "IP 미사용" 으로 단정, Connection Refused 만 보고
+  "장비가 직접 응답했다" 고 단정.
+- **Why**: `CLAUDE.md` §7 이 요구하는 계약이다. 이 규칙 본문이 예전에 "ping → port →
+  protocol → auth" 라고 적어 두는 바람에, 정본이 "그 설명 보고 ICMP Gate 를 다시 구현하지
+  말라" 고 따로 경고해야 했다.
 
-### R3. Vault 2단계 로딩 (Redfish 특화)
+### R2. OS 채널은 후보 포트를 끝까지 훑는다
 
-- **Default**: Redfish는 단계별 처리:
-  1. ServiceRoot (`/redfish/v1/`) 무인증 GET → vendor manufacturer 추출
-  2. vendor 결정 후 `vault/redfish/{vendor}.yml` 동적 로드
-  3. 인증으로 본 수집 재개
-- **Forbidden**: 1단계 없이 vendor 가정으로 인증 vault 사용 (잘못된 vendor면 인증 실패)
-- **Why**: 새 vendor / 알려지지 않은 펌웨어에 대해 robustness 확보
+- **Default**: OS 는 `5986 → 5985 → 22` 순으로 각 포트마다 TCP 연결 후 **그 포트에 맞는
+  프로토콜까지 확인**한다. TCP 는 열렸는데 프로토콜이 안 맞으면 실격시키고 다음 후보로 넘어간다.
+- **Why**: 다른 서비스가 5985 를 쓰고 있는 환경에서 WinRM 으로 오판하지 않기 위해서다.
+- 확인된 포트로 OS 종류를 정한다 — 22=linux, 5985=windows(http), 5986=windows(https).
 
-### R4. Graceful degradation
+### R3. Redfish 자격증명은 축이 둘이다
 
-- **Default**: precheck 일부 단계 실패 시 가능한 데이터만 수집:
-  - ping ok / port ok / protocol fail → status: "failed", errors: ["protocol unsupported"]
-  - ping ok / port ok / protocol ok / auth fail → status: "failed", errors: ["auth failed"]
-  - 일부 endpoint만 실패 → status: "partial", data: { 가능한 섹션만 }
-- **Forbidden**: 일부 실패 시 전체 abort (호출자가 원하는 정보를 못 받음)
+- **Default**: precheck 뒤 순서는 `detect_vendor` → 자격증명 해석 → vault 적재 → adapter 선택.
+  자격증명 해석이 adapter 선택보다 **앞**이다 (`redfish-gather/site.yml:70-83`).
+  경로는 두 축으로 나뉜다.
+
+  | 구분 | 경로 | 축 |
+  |---|---|---|
+  | 표준 수집 계정 | `vault/common/redfish/standard.yml` | **전역 1벌.** location 도 vendor 도 보지 않는다 |
+  | 복구 계정 | `vault/<loc>/redfish/<vendor>.yml` | location × vendor |
+
+- **Allowed**: vendor 미식별(`vendor_unresolved`)이어도 **표준 vault 는 연다.** 복구 경로만
+  None 이 된다. site.yml 의 중단 게이트가 이 사유를 명시적으로 통과시킨다.
+- **Forbidden**: 평면 경로(`vault/<loc>/redfish/<vendor>.yml`, `vault/<loc>/os/linux.yml` 등) 사용.
+  2026-08-12 에 삭제됐다. 교차 location / 교차 vendor fallback 도 없다.
+
+### R4. 실패해도 봉투는 나온다
+
+- **Default**: 어디서 막히든 13필드 envelope 를 돌려준다. 막힌 지점은 `failure_stage` 로,
+  사용자 문장은 `failure_reason` 으로 구분된다.
+  - 프로토콜 실패 → `status: failed`, 전 섹션 `failed`
+  - 자격증명 실패 → `status: failed`, `failure_stage: auth`
+  - 일부 섹션만 실패 → `status: partial`, 성공 섹션 데이터는 유지
+- **Forbidden**: 일부 실패로 전체 abort. 호출자가 부분 결과도 못 받는다.
 
 ### R5. Validation Layer 분류 (classify-precheck-layer skill)
 
@@ -58,9 +85,9 @@
 | 검증 종류 | 위치 |
 |---|---|
 | 입력 형식 (JSON 파싱 / IP 형식) | Jenkins Stage 1 (Validate) |
-| 호스트 도달성 | precheck 1-2 (ping/port) |
-| 프로토콜 응답 | precheck 3 (protocol) |
-| 자격증명 | precheck 4 (auth) |
+| 호스트 도달성 | precheck TCP 판정 (reachable/port_open) |
+| 프로토콜 응답 | precheck protocol 판정 |
+| 자격증명 | 본 수집의 자격증명 시도 (precheck 인증 단계는 운영 미실행) |
 | 데이터 형식 (envelope schema) | Jenkins Stage 3 (Validate Schema) |
 | 비즈니스 규칙 (vendor-specific) | adapter YAML capabilities |
 
@@ -68,7 +95,7 @@
 
 ### R6. Vault 자동 반영 단서 3개 (cycle 2026-05-06-post M-C 학습 형식화)
 
-vault/redfish/{vendor}.yml 변경 시 다음 ansible 실행에서 자동 반영 보장. 의심 시 다음 3 단서 검증:
+vault 파일 변경 시 다음 ansible 실행에서 자동 반영 보장. 의심 시 다음 3 단서 검증:
 
 - **단서 1: include_vars cacheable 옵션 부재**
   - **Default**: `redfish-gather/tasks/load_vault.yml` 의 `include_vars` 호출에 `cacheable: yes` 옵션 **금지**
@@ -91,18 +118,18 @@ vault/redfish/{vendor}.yml 변경 시 다음 ansible 실행에서 자동 반영 
 
 ## 금지 패턴
 
-- 4단계 순서 일탈 — R1
-- 단계별 책임 혼재 (예: ping 단계에서 protocol 검사) — R2
-- Vault 1단계 skip — R3
+- ICMP / IPAM / ARP presence probe 추가 — R1
+- timeout 만 보고 IP 미사용 단정 / OS 후보 포트를 프로토콜 확인 없이 채택 — R1, R2
+- 삭제된 평면 vault 경로 사용 — R3
 - 일부 실패 시 전체 abort — R4
 - 검증을 잘못된 layer에 배치 — R5
 - vault include_vars cacheable / host facts 등록 / decrypt 캐시 도입 — R6
 
 ## 리뷰 포인트
 
-- [ ] precheck 4단계 호출 순서
+- [ ] precheck 판정 순서와 ICMP 미사용
 - [ ] 각 단계 실패 시 diagnosis.details 기록
-- [ ] Redfish는 Vault 2단계
+- [ ] Redfish 표준 vault 는 전역, 복구만 loc×vendor
 - [ ] graceful degradation 설계
 - [ ] 새 검증의 layer 분류 (R5)
 - [ ] vault 자동 반영 3 단서 (cacheable 0 / fact_caching 0 / decrypt 캐시 0) — R6

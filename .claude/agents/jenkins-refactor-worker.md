@@ -1,6 +1,6 @@
 ---
 name: jenkins-refactor-worker
-description: Jenkinsfile 3종 (main/grafana/portal) 리팩토링. 4-Stage 일관성 / cron 변경 / agent-master 망 분리. **호출 시점**: Jenkinsfile 구조 정리 / 새 Stage 추가 / 호출자 통합.
+description: Jenkinsfile (main / portal / portal_test) 리팩토링. 4-Stage 일관성 / cron 변경 / agent-master 망 분리. **호출 시점**: Jenkinsfile 구조 정리 / 새 Stage 추가 / 호출자 통합.
 tools: ["Read", "Write", "Edit", "Grep", "Glob"]
 model: sonnet
 ---

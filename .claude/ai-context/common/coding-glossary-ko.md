@@ -14,16 +14,16 @@
 | **adapter_loader** | lookup plugin (`lookup_plugins/adapter_loader.py`). adapters/ 스캔 → match 평가 → 점수 계산 → 정렬 → 최고 점수 반환 (또는 generic fallback). |
 | **Sections (11)** | system, hardware, bmc, cpu, memory, storage, network, firmware, users, power, thermal. `schema/sections.yml`에 정의. |
 | **Field Dictionary** | `schema/field_dictionary.yml`. 47 Must (모든 vendor 필수) + 115 Nice (vendor-specific 허용) + 6 Skip (의도적 미수집) = 168 entries (실측 2026-07-02). |
-| **Baseline** | `tests/baseline_v1/{vendor}_baseline.json`. 실장비 회귀 기준선. schema 변경 시 영향 vendor 전수 회귀. |
+| **Baseline** | `schema/baseline_v1/{vendor}_baseline.json`. 실장비 회귀 기준선. schema 변경 시 영향 vendor 전수 회귀. |
 | **target_type** | `os` / `esxi` / `redfish` 셋 중 하나. inventory_json + 입력으로 채널 결정. |
-| **loc** | 운영 사이트 (ich / chj / yi). Jenkins agent + inventory 분리 용도. 코드 분기 없음. |
+| **loc** | 운영 사이트. 정본은 `common/vars/locations.yml` (현재 ich / chj / yi / git). Jenkins agent 선택과 vault 경로에 쓰이고 코드 분기는 없다. |
 | **vendor_aliases** | `common/vars/vendor_aliases.yml`. 벤더 이름 정규화 메타 (예: "Dell EMC" → "dell"). |
 
 ## 진단 / 안전
 
 | 용어 | 풀이 |
 |---|---|
-| **4단계 Precheck** | `common/library/precheck_bundle.py`의 진단 절차: ping → port → protocol → auth. 각 단계 실패 시 graceful degradation. |
+| **Precheck** | `common/library/precheck_bundle.py` 의 진단 절차. TCP 도달·포트를 한 번에 판정하고 프로토콜을 확인한다. **ICMP 는 쓰지 않는다.** 인증 단계는 운영에서 실행되지 않는다. |
 | **Vault 2단계 로딩** | Redfish 특화. 1단계 무인증으로 ServiceRoot detect → vendor 결정 → 2단계 vendor vault 로드 후 인증으로 재수집. |
 | **Linux 2-tier gather** | preflight.yml에서 `_l_python_mode` 자동 감지. `python_ok` (Python 3.9+) / `python_missing` / `python_incompatible` / `raw_forced`. raw 경로는 dmidecode 기반. |
 | **Diagnosis** | 출력 envelope의 `diagnosis` 필드. 각 단계 결과 + gather_mode + python_version 등 메타. |

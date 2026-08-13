@@ -8,8 +8,10 @@
 ## 현재 관찰된 현실
 
 - 3-channel gather는 raw 수집 + fragment 생성으로 분리
-- precheck_bundle.py가 4단계 진단 (ping → port → protocol → auth) 후 본 수집
-- redfish_gather.py는 stdlib만 사용 (urllib / ssl / json), **5,082줄** (2026-08-10 재실측 — 종전 "3,867줄" 표기는 stale)
+- precheck_bundle.py 가 TCP 도달·포트를 한 번에 판정하고 프로토콜을 확인한 뒤 본 수집.
+  ICMP 는 구현되어 있지 않고, 인증 단계는 운영 경로에서 실행되지 않는다 (rule 27)
+- redfish_gather.py 는 stdlib 만 쓴다 (urllib / ssl / json). 줄 수는 적지 않는다 —
+  2026-08-10 에 "3,867 → 5,082 정정" 이라 적어 뒀는데 사흘 만에 또 틀렸다
 - Linux 2-tier (preflight.yml의 `_l_python_mode`로 Python ok / raw fallback 분기)
 
 ## 목표 규칙

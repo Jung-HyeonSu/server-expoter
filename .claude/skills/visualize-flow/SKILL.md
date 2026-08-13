@@ -29,7 +29,7 @@ sequenceDiagram
   A->>R: GET /redfish/v1/ (무인증)
   R-->>A: ServiceRoot (Manufacturer=Dell)
   Note over A: vendor 결정 → vault 로드
-  A->>A: include_vars vault/redfish/dell.yml
+  A->>A: include_vars vault/<loc>/redfish/dell.yml
   A->>R: GET /redfish/v1/Systems (Basic Auth)
   R-->>A: System info
   A->>A: build_*.yml → JSON envelope

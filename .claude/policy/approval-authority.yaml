@@ -31,13 +31,13 @@ schema_approver:
   related_rule: ".claude/rules/13-output-schema-fields.md"
 
 jenkinsfile_approver:
-  description: "Jenkinsfile / Jenkinsfile_grafana / Jenkinsfile_portal cron / 4-Stage 변경"
+  description: "Jenkinsfile / Jenkinsfile_portal / Jenkinsfile_portal_test stage 구조 변경"
   default: "hshwang"
   fallback: "Jenkins 운영자"
   related_rule: ".claude/rules/80-ci-jenkins-policy.md"
 
 vault_approver:
-  description: "vault/{linux,windows,esxi}.yml + vault/redfish/{vendor}.yml 회전 (cycle-012 vault encrypt 채택)"
+  description: "vault/<loc>/os/{linux,windows}.yml + vault/<loc>/esxi.yml + vault/<loc>/redfish/<vendor>.yml 회전 (cycle-012 vault encrypt 채택)"
   default: "hshwang"
   fallback: "운영 담당자"
   related_rule: "(cycle-011: rule 60 보안 정책 해제 — 운영 권장 수준)"

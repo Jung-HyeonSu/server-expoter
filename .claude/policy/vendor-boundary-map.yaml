@@ -14,7 +14,7 @@ vendors:
       - "adapters/redfish/dell_idrac9.yml"    # iDRAC9 (priority=100)
       - "adapters/redfish/dell_idrac10.yml"   # iDRAC10 (priority=120, F41 cycle 2026-05-01)
     oem_tasks: "redfish-gather/tasks/vendors/dell/"
-    vault: "vault/redfish/dell.yml"
+    vault: "vault/<loc>/redfish/dell.yml"
     aliases: ["Dell", "Dell Inc.", "Dell EMC", "iDRAC"]
     firmware_examples: ["3.x", "4.x", "5.x", "6.x", "7.x", "1.x (iDRAC10)"]
 
@@ -29,7 +29,7 @@ vendors:
       - "adapters/redfish/hpe_ilo6.yml"  # iLO6 (priority=100)
       - "adapters/redfish/hpe_ilo7.yml"  # iLO7 Gen12 (priority=120, F47 cycle 2026-05-01)
     oem_tasks: "redfish-gather/tasks/vendors/hpe/"  # Superdome Flex 도 동일 OEM 재사용 (Oem.Hpe namespace)
-    vault: "vault/redfish/hpe.yml"  # Superdome Flex 도 동일 vault 재사용 (M-E1 결정 (a))
+    vault: "vault/<loc>/redfish/hpe.yml"  # Superdome Flex 도 동일 vault 재사용 (M-E1 결정 (a))
     aliases: ["HPE", "Hewlett Packard Enterprise", "Hewlett-Packard", "HP", "iLO", "Superdome", "Superdome Flex"]
     firmware_examples: ["2.x", "3.x", "1.12.00 (iLO7)", "RMC 2.x/3.x (Superdome Flex, lab 부재)"]
     sub_lines:
@@ -70,7 +70,7 @@ vendors:
       - "adapters/redfish/lenovo_xcc.yml"    # XCC1/XCC2 (priority=100, V2/V3)
       - "adapters/redfish/lenovo_xcc3.yml"   # XCC3 (priority=120, F55 cycle 2026-05-01, V4 OpenBMC)
     oem_tasks: "redfish-gather/tasks/vendors/lenovo/"
-    vault: "vault/redfish/lenovo.yml"
+    vault: "vault/<loc>/redfish/lenovo.yml"
     aliases: ["Lenovo", "XCC", "IBM", "ThinkSystem"]
     firmware_examples: ["1.x (IMM2)", "2.x", "AFBT.. (XCC2)", "3.x (XCC3 OpenBMC)"]
 
@@ -84,7 +84,7 @@ vendors:
       - "adapters/redfish/supermicro_x13.yml"  # X13/H13/B13 (priority=100, F61)
       - "adapters/redfish/supermicro_x14.yml"  # X14/H14 (priority=110, F61)
     oem_tasks: "redfish-gather/tasks/vendors/supermicro/"
-    vault: "vault/redfish/supermicro.yml"
+    vault: "vault/<loc>/redfish/supermicro.yml"
     aliases: ["Supermicro", "Super Micro Computer, Inc.", "Super Micro Computer", "SMCI"]
     firmware_examples: ["1.x", "2.x", "X12/X13/X14 (AST2600)"]
 
@@ -95,7 +95,7 @@ vendors:
       - "adapters/redfish/cisco_cimc.yml"         # M4~M8 (priority=100)
       - "adapters/redfish/cisco_ucs_xseries.yml"  # X210c/X410c standalone CIMC (priority=110, F69)
     oem_tasks: null
-    vault: "vault/redfish/cisco.yml"
+    vault: "vault/<loc>/redfish/cisco.yml"
     aliases: ["Cisco", "Cisco Systems", "Cisco Systems Inc", "Cisco Systems Inc.", "CIMC", "UCS"]
     firmware_examples: ["4.x", "5.x", "6.x"]
 
@@ -105,7 +105,7 @@ vendors:
     adapters:
       - "adapters/redfish/huawei_ibmc.yml"  # priority=80
     oem_tasks: null  # 향후 작성 (사이트 fixture 확보 후)
-    vault: null  # 미생성 (사용자 명시 2026-05-01) — 향후 vault/redfish/huawei.yml
+    vault: null  # 미생성 (사용자 명시 2026-05-01) — 향후 vault/<loc>/redfish/huawei.yml
     aliases: ["Huawei", "HUAWEI", "Huawei Technologies Co., Ltd.", "iBMC"]
     firmware_examples: []  # lab 부재
     vault_status: "not_created (user explicit 2026-05-01)"
@@ -178,6 +178,6 @@ add_vendor_steps:
   1: "common/vars/vendor_aliases.yml에 벤더 이름 매핑 추가"
   2: "adapters/redfish/{vendor}_*.yml adapter YAML 생성 (match / capabilities / collect / normalize 4 키 + metadata origin 주석)"
   3: "(선택) redfish-gather/tasks/vendors/{vendor}/ OEM 태스크 추가"
-  4: "vault/redfish/{vendor}.yml ansible-vault encrypt"
+  4: "vault/<loc>/redfish/<vendor>.yml ansible-vault encrypt"
   5: "schema/baseline_v1/{vendor}_baseline.json (실장비 검증 후)"
   note: "site.yml 수정 불필요 — adapter_loader가 동적 감지"

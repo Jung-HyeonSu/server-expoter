@@ -68,7 +68,7 @@
 
 ## 4. Linux 2-tier (Python 감지 + Raw Fallback)
 
-`os-gather/preflight.yml`이 `_l_python_mode` 자동 설정:
+`os-gather/tasks/linux/preflight.yml`이 `_l_python_mode` 자동 설정:
 
 | 모드 | 조건 | 수집 방식 |
 |---|---|---|
@@ -92,16 +92,19 @@ raw 경로 원칙:
     # 계정 없음 (ServiceRoot 무인증)
   register: _rf_probe
 
-# 2단계: vendor에 맞는 vault 로드
-- include_vars:
-    file: "vault/redfish/{{ _rf_detected_vendor }}.yml"
-    name: _rf_vault
+# 2단계: 자격증명 해석 → vault 적재
+#   경로를 직접 조립하지 않는다. credential_resolver lookup 이 location/vendor 로
+#   표준(전역 1벌)과 복구(loc x vendor) 두 축을 각각 해석한다.
+- include_tasks: common/tasks/credential/resolve_and_load_redfish.yml
+  vars:
+    _cred_target_type: redfish
+    _cred_vendor: "{{ _rf_detected_vendor }}"
 
 # 3단계: 인증으로 재수집
 - redfish_gather:
     ip: "{{ target_ip }}"
-    username: "{{ _rf_vault.username }}"
-    password: "{{ _rf_vault.password }}"
+    username: "{{ (_rf_standard_accounts | first).username }}"
+    password: "{{ (_rf_standard_accounts | first).password }}"
 ```
 
 ## 6. Adapter 점수
@@ -119,7 +122,7 @@ priority:
 ## 7. 4단계 Precheck (precheck_bundle.py)
 
 ```
-ping → port → protocol → auth
+TCP 도달/포트 → 프로토콜 → 인증(운영 미실행). ICMP 미사용
 ```
 
 각 단계 실패 시 `diagnosis.details`에 어디서 막혔는지 기록 + graceful degradation.

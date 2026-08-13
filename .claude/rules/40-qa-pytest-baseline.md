@@ -1,7 +1,7 @@
 # QA — pytest + redfish-probe + Baseline 회귀
 
 ## 적용 대상
-- `tests/redfish-probe/**`, `tests/fixtures/**`, `tests/baseline_v1/**`, `tests/scripts/**`, `tests/evidence/**`
+- `tests/redfish-probe/**`, `tests/fixtures/**`, `schema/baseline_v1/**`, `tests/scripts/**`, `tests/evidence/**`
 - pytest 테스트
 
 ## 목표 규칙
@@ -13,14 +13,14 @@
 | Live probe | `tests/redfish-probe/probe_redfish.py` | 실장비 검증 (Round) |
 | Deep probe | `tests/redfish-probe/deep_probe_redfish.py` | 새 펌웨어 프로파일링 |
 | Mock fixtures | `tests/fixtures/**` | Mock 회귀 입력 |
-| Baseline | `tests/baseline_v1/**` | 회귀 기준선 |
+| Baseline | `schema/baseline_v1/**` | 회귀 기준선 |
 | Evidence | `tests/evidence/**` | Round 검증 결과 |
 | Scripts | `tests/scripts/conditional_review.py`, `os_esxi_verify.sh` | 보조 검증 |
 
 ### R2. 실장비 검증 절차 (Round)
 
 1. probe_redfish.py 또는 채널별 검증 스크립트 실행
-2. 결과를 `tests/baseline_v1/{vendor}_baseline.json`과 비교
+2. 결과를 `schema/baseline_v1/{vendor}_baseline.json`과 비교
 3. 차이가 있으면:
    - 외부 시스템 변경 → baseline 갱신 (rule 13 R4) + evidence 기록
    - 코드 회귀 → 코드 수정
@@ -31,8 +31,8 @@
 
 ```bash
 pytest tests/ -v
-pytest tests/redfish-probe/ --vendor dell
-pytest tests/redfish-probe/ -k "test_baseline"
+python tests/redfish-probe/probe_redfish.py --vendor dell
+pytest tests/regression/ -k dell
 ```
 
 ### R4. 새 펌웨어 추가 시 deep_probe

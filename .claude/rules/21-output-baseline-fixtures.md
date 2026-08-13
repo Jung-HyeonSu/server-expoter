@@ -7,8 +7,8 @@
 
 ## 현재 관찰된 현실
 
-- 145+ fixtures (실장비 JSON 응답, mock 회귀 입력)
-- 7+ baseline (vendor별 정규화된 회귀 기준선)
+- tests/fixtures — 실장비 JSON 응답과 mock 회귀 입력
+- schema/baseline_v1 — vendor 별 정규화된 회귀 기준선
 - evidence (Round 검증 결과)
 
 ## 목표 규칙

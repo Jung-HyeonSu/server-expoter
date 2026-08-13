@@ -41,17 +41,17 @@
 |---|---|---|
 | OS gather | `os-gather/` | site.yml (4-Play: 포트감지 → 감지실패 OUTPUT → Linux → Windows), tasks/{linux,windows}/gather_*.yml |
 | ESXi gather | `esxi-gather/` | site.yml (1-Play), tasks/collect_facts/config/datastores + normalize_*.yml |
-| Redfish gather | `redfish-gather/` | site.yml (1-Play: precheck → detect → adapter → collect → normalize), library/redfish_gather.py (약 3,830줄) |
-| 공통 | `common/` | library/precheck_bundle.py (4단계 진단), tasks/normalize/init_fragments/merge_fragment/build_*.yml |
-| 어댑터 | `adapters/{redfish,os,esxi}/` | 27 YAML + registry.yml — Redfish 16 + OS 7 + ESXi 4 |
-| Schema | `schema/` | sections.yml (11), field_dictionary.yml (47 Must / 115 Nice / 6 Skip = 168), baseline_v1/ (9 baseline: redfish 5 + esxi/ubuntu/windows + rhel810_raw_fallback) |
-| Vault | `vault/` | linux/windows/esxi.yml + redfish/{vendor}.yml |
+| Redfish gather | `redfish-gather/` | site.yml (1-Play: precheck → detect vendor → 자격증명 해석 → vault → adapter → collect → normalize), library/redfish_gather.py |
+| 공통 | `common/` | library/precheck_bundle.py (TCP 도달·프로토콜 진단, ICMP 미사용), tasks/normalize/init_fragments/merge_fragment/build_*.yml |
+| 어댑터 | `adapters/{redfish,os,esxi}/` | 채널별 YAML. `registry.yml` 은 **읽는 코드가 없다** (문서용 색인) |
+| Schema | `schema/` | sections.yml (11 섹션), field_dictionary.yml (런타임 미사용 — 테스트·CI·훅 전용), baseline_v1/ (vendor 별 회귀 기준선) |
+| Vault | `vault/` | `common/redfish/standard.yml`(전역 표준) + `<loc>/redfish/<vendor>.yml`(복구) + `<loc>/os/{linux,windows}.yml` + `<loc>/esxi.yml`. 평면 경로는 2026-08-12 삭제 |
 
 ## 테스트
 
 - `tests/redfish-probe/` — probe_redfish.py + deep_probe_redfish.py
-- `tests/fixtures/` — 145+ 실장비 JSON 응답
-- `tests/baseline_v1/` — 7+ 벤더 baseline JSON
+- `tests/fixtures/` — 실장비 JSON 응답 (개수는 세지 않는다)
+- `schema/baseline_v1/` — 벤더별 baseline JSON
 - `tests/evidence/` — Round 7-10 조건부 검토
 - `tests/scripts/` — conditional_review.py, os_esxi_verify.sh
 
@@ -61,4 +61,4 @@
 - `README.md` — 프로젝트 정체성, 3-channel 개요
 - `GUIDE_FOR_AI.md` — Fragment 철학, 새 gather 템플릿
 - `CLAUDE.md` — Tier 0 정본
-- `docs/01~19` — 운영 문서
+- `docs/` — 운영·계약·개발 문서

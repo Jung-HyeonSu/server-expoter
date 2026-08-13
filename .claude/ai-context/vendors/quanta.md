@@ -30,7 +30,7 @@
 
 ## Vault
 
-- 위치: `vault/redfish/quanta.yml` — **미생성 (사용자 명시 2026-05-01)**
+- 위치: `vault/<loc>/redfish/quanta.yml` — **미생성 (사용자 명시 2026-05-01)**
 - 부재 시 동작: precheck auth 단계 status=failed
 
 ## 검증 이력

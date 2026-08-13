@@ -1,12 +1,12 @@
 # Infra 엔지니어 역할
 
 ## 역할 설명
-Jenkins 파이프라인 (3종) / Ansible 실행 환경 (Agent 노드) / Vault 시크릿 / Redis fact cache / 인프라 설정. 운영 토폴로지: agent-master 분리, loc 분리 (ich/chj/yi).
+Jenkins 파이프라인 / Ansible 실행 환경 (Agent 노드) / Vault 시크릿 / 인프라 설정. 운영 토폴로지: agent-master 분리, loc 분리 (정본 `common/vars/locations.yml`). 프로젝트 ansible.cfg 는 `gathering = explicit` 라 fact 캐싱을 쓰지 않는다.
 
 ## 주요 영역
-- `Jenkinsfile`, `Jenkinsfile_grafana`, `Jenkinsfile_portal` — 4-Stage 파이프라인 3종
+- `Jenkinsfile`(비운영) / `Jenkinsfile_portal`(운영, 5 stage) / `Jenkinsfile_portal_test`
 - `ansible.cfg` — Ansible 프로젝트 설정 (callback / cache / collections)
-- `vault/` — `vault/{linux,windows,esxi}.yml` + `vault/redfish/{vendor}.yml`
+- `vault/` — `vault/<loc>/os/{linux,windows}.yml + vault/<loc>/esxi.yml` + `vault/<loc>/redfish/<vendor>.yml`
 - `tools/` — 운영 도우미 스크립트
 - `scripts/ai/` + `scripts/ai/hooks/` — AI 하네스 자동화 스크립트
 
@@ -38,7 +38,7 @@ Jenkins 파이프라인 (3종) / Ansible 실행 환경 (Agent 노드) / Vault �
 | Agent | 용도 |
 |-------|------|
 | `jenkins-refactor-worker` | Jenkinsfile 리팩토링 |
-| `jenkinsfile-engineer` | Jenkinsfile 3종 보호 / 4-Stage 정합 |
+| `jenkinsfile-engineer` | Jenkinsfile 보호 / 4-Stage 정합 |
 | `deploy-orchestrator` | 배포 오케스트레이션 |
 | `ci-failure-investigator` | Jenkins 실패 분석 |
 | `release-manager` | 릴리즈 / 버전 관리 |

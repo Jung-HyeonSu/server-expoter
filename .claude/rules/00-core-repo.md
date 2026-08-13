@@ -12,10 +12,21 @@
 - 3-channel 통합 수집 시스템 (os-gather + esxi-gather + redfish-gather)
 - Ansible 2.20.3 + Python 3.12.3 + Java 21 (Jenkins Agent)
 - 멀티벤더 9종 (Dell / HPE / Lenovo / Supermicro / Cisco + Huawei / Inspur / Fujitsu / Quanta — 후 4종 lab 부재)
-- Adapter 42개 (Redfish 31 + OS 7 + ESXi 4) + adapters/registry.yml — cycle 2026-05-11 실측 (hpe-csus-add)
-- Schema 11 sections + Field Dictionary 47 Must + 115 Nice + 6 Skip = 168 entries (2026-07-02 재실측, 18 section prefixes)
-- tests/fixtures 398개 (실장비 380 + HPE 에뮬레이터 15 + DMTF 표준 mockup 3) + 9 baseline JSON (redfish 5: cisco/dell/hpe/hpe_csus_3200/lenovo + esxi/ubuntu/windows + rhel810_raw_fallback) — 2026-06-08 재실측
-- Jenkins multi-pipeline 2종 (Jenkinsfile / _portal) — Bitbucket 미사용 (cycle-015에서 _grafana 제거)
+- Schema 11 sections (`system hardware bmc cpu memory storage network firmware users power thermal`)
+- Jenkins pipeline: `Jenkinsfile`(비운영, 자체 주석이 삭제 예정이라 명시) / `Jenkinsfile_portal`(운영) /
+  `Jenkinsfile_portal_test`. cron·trigger 는 셋 다 없다. grafana 파이프라인은 존재하지 않는다
+
+> **세어 놓은 수는 적지 않는다.** adapter·fixture·baseline·테스트 개수, 파일 줄 수는
+> 하나만 늘어도 그 수를 든 문서가 전부 동시에 틀린다. 실제로 `field_dictionary` 항목 수가
+> 저장소 안에서 다섯 가지 값(83 / 134 / 168 / 173 / 실제)으로 갈렸다. 필요하면 그때 센다.
+>
+> ```bash
+> ls adapters/redfish/*.yml adapters/os/*.yml adapters/esxi/*.yml | wc -l   # adapter
+> grep -c '^\s*priority:' schema/field_dictionary.yml                       # field dictionary
+> ls schema/baseline_v1/*.json | wc -l                                      # baseline
+> find tests/fixtures -type f | wc -l                                       # fixture
+> python -m pytest tests/ --collect-only -q | tail -1                       # 테스트
+> ```
 - 운영: 단일 main + feature/* 브랜치
 - 정본: REQUIREMENTS.md / GUIDE_FOR_AI.md / README.md / docs/01~23
 
@@ -31,7 +42,7 @@ ansible-playbook --syntax-check redfish-gather/site.yml
 
 # 테스트
 pytest tests/ -v
-pytest tests/redfish-probe/probe_redfish.py --vendor dell
+python tests/redfish-probe/probe_redfish.py --vendor dell   # 실장비 probe (pytest 아님)
 
 # Schema 검증 (Jenkins Stage 3와 동일)
 python tests/scripts/conditional_review.py
@@ -47,12 +58,12 @@ python scripts/ai/check_project_map_drift.py
 ```
 호출자 (Jenkins Job)
   ↓
-ansible.cfg + Jenkinsfile (3종)
+ansible.cfg + Jenkinsfile (운영 경로는 Jenkinsfile_portal)
   ↓
 3-channel:
   ├── os-gather/site.yml (4-Play: 포트감지 → 감지실패 OUTPUT → Linux → Windows)
   ├── esxi-gather/site.yml (1-Play, community.vmware)
-  └── redfish-gather/site.yml (precheck → detect → adapter → collect → normalize)
+  └── redfish-gather/site.yml (precheck → detect vendor → 자격증명 해석 → vault → adapter → collect → normalize)
   ↓
 Adapter (vendor 자동 감지)
   ↓ adapters/{redfish,os,esxi}/{vendor}_*.yml
@@ -91,7 +102,7 @@ callback_plugins/json_only.py → JSON envelope
 2. 같은 자리의 빈 번호 선택
 3. `.claude/rules/NN-<kebab-case-slug>.md` 생성
 4. `.claude/policy/surface-counts.yaml`의 `rules` 카운트 갱신
-5. `verify_harness_consistency.py`의 EXPECTED_REFERENCES에 skill/agent 연결 선언
+5. 본문에서 관련 skill / agent 를 `.claude/...` 경로로 참조 — `verify_harness_consistency.py` 가 그 경로의 실존을 검사한다
 
 **Forbidden**: 위 표에 없는 십의 자리 신설. 새 주제군은 먼저 표 갱신 + 사용자 승인 PR.
 
@@ -117,7 +128,7 @@ callback_plugins/json_only.py → JSON envelope
 - 변경된 채널/모듈의 계층 위치 확인
 - 보호 경로 변경 여부 + 사용자 승인 기록
 - 증거 문서 갱신 여부
-- clovirone 잔재 어휘 0건
+- 타 프로젝트 잔재 어휘 0건
 
 ## 테스트 포인트
 

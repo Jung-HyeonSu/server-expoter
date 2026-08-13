@@ -7,11 +7,11 @@
 ```
 server-exporter/
 ├── CLAUDE.md, GUIDE_FOR_AI.md, REQUIREMENTS.md, README.md  (정본)
-├── ansible.cfg, Jenkinsfile, Jenkinsfile_grafana, Jenkinsfile_portal  (운영)
-├── adapters/        # 벤더/세대별 YAML adapter (25개)
-│   ├── redfish/     # 14개 (generic + dell×3 + hpe×4 + lenovo×2 + supermicro×3 + cisco)
-│   ├── os/          # 7개 (linux_*/windows_*)
-│   └── esxi/        # 4개 (generic + 6x/7x/8x)
+├── ansible.cfg, Jenkinsfile, Jenkinsfile_portal, Jenkinsfile_portal_test  (운영 경로는 _portal)
+├── adapters/        # 벤더/세대별 YAML adapter
+│   ├── redfish/     # vendor × 세대
+│   ├── os/          # linux_* / windows_*
+│   └── esxi/        # generic + 6x/7x/8x (9.x 어댑터는 없다)
 ├── callback_plugins/    # json_only.py — stdout callback (OUTPUT 태스크만 JSON)
 ├── common/
 │   ├── library/         # precheck_bundle.py (4단계 진단)
@@ -26,8 +26,8 @@ server-exporter/
 ├── schema/              # sections.yml + field_dictionary.yml + baseline_v1/ + examples/
 ├── tests/               # redfish-probe/ + fixtures/ + evidence/ + scripts/
 ├── tools/               # 운영 도우미
-├── vault/               # linux/windows/esxi.yml + redfish/{vendor}.yml
-├── docs/                # 01~19 운영 문서 + ai/ + superpowers/
+├── vault/               # vault/common/redfish/standard.yml + <loc>/{esxi.yml,os/,redfish/}
+├── docs/                # 사람용 문서 + ai/ (하네스 전용)
 ├── scripts/             # ai/hooks/ + ai/*.py
 └── .claude/             # rules / skills / agents / role / ai-context / policy / templates / commands
 ```
@@ -36,7 +36,7 @@ server-exporter/
 
 ```
 호출자 (HTTP POST)
-  ├─ loc: ich|chj|yi
+  ├─ loc: locations.yml 의 키 (현재 ich|chj|yi|git)
   ├─ target_type: os|esxi|redfish
   └─ inventory_json: [{service_ip|bmc_ip|ip}]
          ↓

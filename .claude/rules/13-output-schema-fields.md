@@ -8,10 +8,11 @@
 ## 현재 관찰된 현실
 
 - 11 sections (system / hardware / bmc / cpu / memory / storage / network / firmware / users / power / thermal)
-- field_dictionary.yml: **47 Must + 115 Nice + 6 Skip = 168 entries** (실측 2026-07-02, 18 section prefixes)
+- field_dictionary.yml: 항목마다 `priority` 가 must / nice / skip 중 하나다 (개수는 세지 않는다 — rule 00 의 세는 명령 참조).
+  **런타임 코드는 이 파일을 읽지 않는다** — 테스트·CI·훅 전용이다
 - baseline_v1: vendor별 회귀 기준선
 - Jenkins Stage 3 (Validate Schema) + Stage 4가 FAIL 게이트
-  (Stage 4는 pipeline별 다름 — `Jenkinsfile`=E2E Regression / `Jenkinsfile_portal`=Callback, 정본은 rule 80 R1-A. cycle-015에서 `Jenkinsfile_grafana` 제거)
+  (마지막 stage 는 pipeline 별로 다르다 — `Jenkinsfile`=E2E Regression / `Jenkinsfile_portal`=Callback. 정본은 rule 80 R1-A)
 - DB schema 없음 — 본 출력 schema가 동등 역할
 
 ## 목표 규칙
@@ -21,7 +22,7 @@
 - **Default**: schema 변경은 다음 3종 동시 갱신:
   1. `schema/sections.yml` (섹션 list)
   2. `schema/field_dictionary.yml` (필드 정의)
-  3. `tests/baseline_v1/{vendor}_baseline.json` (영향 vendor 전수)
+  3. `schema/baseline_v1/{vendor}_baseline.json` (영향 vendor 전수)
 - **Allowed**: 1 vendor만 영향 받는 vendor-specific 필드는 그 vendor baseline만 갱신
 - **Forbidden**: sections.yml만 수정하고 field_dictionary 미갱신, 또는 그 반대
 - **Why**: 한쪽만 수정하면 Jenkins Stage 3 (정합 검증) FAIL

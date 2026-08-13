@@ -7,7 +7,7 @@ pytest 단위/통합 + redfish-probe (실장비 / mock fixture) + baseline 회�
 - `tests/redfish-probe/probe_redfish.py` — 실장비 / fixture probe
 - `tests/redfish-probe/deep_probe_redfish.py` — 펌웨어 프로파일링 (새 벤더 추가 시)
 - `tests/fixtures/` — 145+ 실장비 JSON 응답 (mock 회귀 입력)
-- `tests/baseline_v1/` — 7+ 벤더 baseline JSON (회귀 기준선)
+- `schema/baseline_v1/` — 7+ 벤더 baseline JSON (회귀 기준선)
 - `tests/evidence/` — Round 7-10 조건부 검토 결과
 - `tests/scripts/conditional_review.py` — 조건부 리뷰
 - `tests/scripts/os_esxi_verify.sh` — OS/ESXi 검증

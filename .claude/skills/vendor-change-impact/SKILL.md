@@ -1,6 +1,6 @@
 ---
 name: vendor-change-impact
-description: 코드 변경이 server-exporter의 5 vendor (Dell / HPE / Lenovo / Supermicro / Cisco)에 미치는 영향 분석. 사용자가 "Lenovo에 영향?", "이 변경 다른 vendor도 영향 있어?", "벤더별 영향" 등 요청 시. - common 또는 3-channel 코드 변경 / adapter 변경 / schema 변경 후 영향 vendor 식별 필요
+description: 코드 변경이 server-exporter 의 vendor (정본 `common/vars/vendor_aliases.yml`) 에 미치는 영향 분석. 사용자가 "Lenovo에 영향?", "이 변경 다른 vendor도 영향 있어?", "벤더별 영향" 등 요청 시. - common 또는 3-channel 코드 변경 / adapter 변경 / schema 변경 후 영향 vendor 식별 필요
 ---
 
 # vendor-change-impact
@@ -34,7 +34,7 @@ common / 3-channel 코드 변경이 어느 vendor adapter / vendor baseline에 �
 3. Cisco는 skip 가능
 
 ### 권고
-- pytest tests/redfish-probe/test_baseline.py --vendor dell 우선 실행
+- pytest tests/regression/ -k dell 우선 실행
 - 다른 vendor는 fixture 기반 회귀 (실장비 필요 없음)
 ```
 

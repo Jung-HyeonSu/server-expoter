@@ -1,6 +1,6 @@
 ---
 name: rotate-vault
-description: 벤더별 또는 채널별 vault 자격증명 회전 절차. vault/{linux,windows,esxi}.yml + vault/redfish/{vendor}.yml의 password / username 갱신 안내. ansible-vault rekey 또는 외부 BMC 사용자 자체 변경. 사용자가 "Dell vault 회전", "vault password 변경", "rotate" 등 요청 시. - 분기/반기 정기 회전 / BMC 사용자 변경 / 보안 사고 대응 / 자격증명 stale 발견
+description: 벤더별 또는 채널별 vault 자격증명 회전 절차. vault/<loc>/os/{linux,windows}.yml + vault/<loc>/esxi.yml + vault/<loc>/redfish/<vendor>.yml의 password / username 갱신 안내. ansible-vault rekey 또는 외부 BMC 사용자 자체 변경. 사용자가 "Dell vault 회전", "vault password 변경", "rotate" 등 요청 시. - 분기/반기 정기 회전 / BMC 사용자 변경 / 보안 사고 대응 / 자격증명 stale 발견
 ---
 
 # rotate-vault
@@ -13,7 +13,7 @@ server-exporter Vault 자격증명을 안전하게 회전. 두 가지 시나리�
 
 ## 입력
 
-- 영향 vault 파일 (예: vault/redfish/dell.yml)
+- 영향 vault 파일 (예: vault/<loc>/redfish/dell.yml)
 - 회전 종류 (vault password vs 자격증명)
 - 새 자격증명 (외부 시스템 변경 후 확보)
 
@@ -23,17 +23,17 @@ server-exporter Vault 자격증명을 안전하게 회전. 두 가지 시나리�
 
 ```bash
 # 1. 백업 (안전)
-cp vault/redfish/dell.yml /tmp/dell-vault.bak
+cp vault/<loc>/redfish/dell.yml /tmp/dell-vault.bak
 
 # 2. 새 password로 rekey
-ansible-vault rekey vault/redfish/dell.yml
+ansible-vault rekey vault/<loc>/redfish/dell.yml
 # (기존 password 입력 → 새 password 입력 2회)
 
 # 3. Jenkins credentials 갱신
 # (Jenkins UI → Credentials → ANSIBLE_VAULT_PASSWORD 갱신)
 
 # 4. 검증
-ansible-vault view vault/redfish/dell.yml
+ansible-vault view vault/<loc>/redfish/dell.yml
 # (새 password로 read 가능한지)
 ```
 
@@ -44,7 +44,7 @@ ansible-vault view vault/redfish/dell.yml
 # → BMC 운영자가 수행 (server-exporter는 read-only)
 
 # 2. 새 자격증명으로 vault 다시 encrypt
-ansible-vault edit vault/redfish/dell.yml
+ansible-vault edit vault/<loc>/redfish/dell.yml
 # 안에서 vault_redfish_password 갱신
 
 # 3. 검증
@@ -54,13 +54,13 @@ ansible-playbook redfish-gather/site.yml \
 
 # 4. evidence 기록
 echo "2026-04-27: Dell vault rotation (BMC user 변경)" \
-  >> tests/evidence/vault-rotation-log.md
+  >> tests/evidence/<날짜>-vault-rotation.md
 ```
 
 ### 시나리오 3: 벤더 추가 (새 vault 생성)
 
 ```bash
-ansible-vault create vault/redfish/huawei.yml
+ansible-vault create vault/<loc>/redfish/huawei.yml
 # 안에 입력:
 # vault_redfish_username: "service_account"
 # vault_redfish_password: "..."
@@ -76,7 +76,7 @@ ansible-vault create vault/redfish/huawei.yml
 
 ## 자동 반영 메커니즘 (M-C 학습 / rule 27 R6)
 
-vault/redfish/{vendor}.yml 변경 시 **다음 ansible 실행에서 자동 반영**. 회전 후 별도 캐시 무효화 작업 불필요.
+vault/<loc>/redfish/<vendor>.yml 변경 시 **다음 ansible 실행에서 자동 반영**. 회전 후 별도 캐시 무효화 작업 불필요.
 
 ### 자동 반영 보장 3 단서 (rule 27 R6 정본)
 
@@ -89,7 +89,7 @@ vault/redfish/{vendor}.yml 변경 시 **다음 ansible 실행에서 자동 반�
 ### 회전 후 다음 run 자동 반영 흐름
 
 ```
-1. vault edit / rekey 후 vault/redfish/dell.yml 변경
+1. vault edit / rekey 후 vault/<loc>/redfish/dell.yml 변경
 2. 다음 ansible-playbook 실행 시:
    - include_vars 가 vault file 디스크에서 새로 read (캐시 없음)
    - ansible-vault decrypt 매번 수행 (캐시 없음)
@@ -119,7 +119,7 @@ vault/redfish/{vendor}.yml 변경 시 **다음 ansible 실행에서 자동 반�
 
 - 회전 절차 중 임시로 평문 password 메모는 메모리 only (파일 / clipboard 제거)
 - Jenkins credentials는 server-exporter 외부 (Jenkins controller 권한 최소)
-- 회전 이력은 `tests/evidence/vault-rotation-log.md` (날짜 + 대상만, password 자체는 절대 기록 안 함)
+- 회전 이력은 `tests/evidence/<날짜>-vault-rotation.md` (날짜 + 대상만, password 자체는 절대 기록 안 함)
 - ansible-vault password 파일 (`~/.vault_pass`)은 `chmod 600`
 
 ## 실패 / 오탐 처리

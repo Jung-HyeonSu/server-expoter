@@ -23,14 +23,14 @@
 
 ## Vault
 
-- 위치: `vault/redfish/dell.yml`
+- 위치: `vault/<loc>/redfish/dell.yml`
 - 공통 사용자: 일반적으로 `root` 또는 `service_account`
 - 회전 절차: `rotate-vault` skill
 
 ## 검증 이력
 
 - Round 7-10: iDRAC9 펌웨어 5.x / 6.x 검증 완료
-- Baseline: `tests/baseline_v1/dell_idrac9_baseline.json`
+- Baseline: `schema/baseline_v1/dell_baseline.json`
 - Probe 스크립트: `tests/redfish-probe/probe_redfish.py --vendor dell`
 
 ## Reference

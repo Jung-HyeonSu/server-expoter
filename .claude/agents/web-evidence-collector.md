@@ -61,7 +61,7 @@ WebFetch(url="https://developer.dell.com/...", prompt="iDRAC9 6.10 PowerSubsyste
 # source: https://developer.dell.com/.../iDRAC9_6.10_Redfish.pdf (확인 2026-05-01)
 # source: https://redfish.dmtf.org/schemas/v1/Power.v1_8_0.json (PowerSubsystem 2020.4)
 # tested_against: ["6.10.x"]
-# evidence: tests/evidence/2026-05-01-dell-idrac9-6.10-power.md
+# evidence: tests/evidence/<날짜>-<vendor>-<주제>.md
 # lab: 보유 (Round XX)
 priority: 100
 match: ...

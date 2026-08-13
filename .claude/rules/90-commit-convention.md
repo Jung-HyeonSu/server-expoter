@@ -110,7 +110,7 @@ fix: probe_redfish.py 펌웨어 5.x 응답 형식 정정
 
 - 원인: iDRAC9 5.x 펌웨어부터 SystemId path 변경
 - adapter dell_idrac9.yml의 collect.systems_path 수정
-- baseline_v1/dell_idrac9_baseline.json 회귀 추가
+- schema/baseline_v1/dell_baseline.json 회귀 추가
 ```
 
 ```

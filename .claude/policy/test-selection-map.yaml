@@ -69,7 +69,6 @@ mappings:
     files:
       - "Jenkinsfile"
       - "Jenkinsfile_portal"
-    # cycle-015: Jenkinsfile_grafana 제거 (사용자 명시 결정)
     tests:
       - "Jenkins 4-Stage dry-run (Validate / Gather / Validate Schema / E2E Regression)"
       - "callback URL 무결성 (rule 31)"

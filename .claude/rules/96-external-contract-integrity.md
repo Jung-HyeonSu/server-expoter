@@ -115,7 +115,7 @@ cycle 2026-05-01 학습 — 사용자 의도 두 번 강조 후에야 정확히 
 
 - 해당 enum을 참조하는 모든 Python / Ansible YAML 파일
 - adapter 매칭 metadata (vendor / firmware / model_patterns)
-- vault path (`vault/redfish/{vendor}.yml`)
+- vault path (`vault/<loc>/redfish/<vendor>.yml`)
 - 화면이 없으므로 i18n / message 영향 없음
 - baseline_v1/{vendor}_baseline.json
 - vendor 별 OEM tasks (`redfish-gather/tasks/vendors/{vendor}/`)

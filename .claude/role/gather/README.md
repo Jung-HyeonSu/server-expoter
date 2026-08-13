@@ -8,7 +8,7 @@ Ansible 기반 3-channel 서버 정보 수집 개발. 각 채널이 자기 fragm
 - `esxi-gather/site.yml` — 1-Play, community.vmware 의존
 - `redfish-gather/site.yml` — 1-Play (precheck → detect → adapter → collect → normalize)
 - `redfish-gather/library/redfish_gather.py` — Python Redfish API 엔진 (약 3,830줄, stdlib only)
-- `common/library/precheck_bundle.py` — 4단계 진단 (ping → port → protocol → auth)
+- `common/library/precheck_bundle.py` — 진단 (TCP 도달 → 프로토콜 → 인증 (ICMP 미사용))
 - `filter_plugins/`, `lookup_plugins/`, `module_utils/` — Ansible custom plugin
 - `adapters/{redfish,os,esxi}/` — 벤더/세대별 YAML adapter
 
@@ -60,4 +60,4 @@ Ansible 기반 3-channel 서버 정보 수집 개발. 각 채널이 자기 fragm
 - **Vault 2단계 로딩 (Redfish)**: 1단계 무인증으로 ServiceRoot detect → vendor 결정 → 2단계 vendor vault 로드 후 인증 수집.
 - **Linux 2-tier (preflight.yml)**: `_l_python_mode`로 Python 3.9+ vs raw fallback 자동 분기. raw 경로는 `raw` 모듈만 remote 실행, controller-side `set_fact`/Jinja2 파싱 허용.
 - **merge_fragment.yml 호출**: 각 gather 후에 반드시 호출해야 누적 병합됨.
-- **새 섹션 추가**: `schema/sections.yml` + `schema/field_dictionary.yml` + `tests/baseline_v1/` 3종 동반 갱신.
+- **새 섹션 추가**: `schema/sections.yml` + `schema/field_dictionary.yml` + `schema/baseline_v1/` 3종 동반 갱신.

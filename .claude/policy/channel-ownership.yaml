@@ -66,7 +66,6 @@ modules:
     description: "Jenkins 파이프라인 3종 (main / grafana / portal)"
     paths:
       - "Jenkinsfile"
-      - "Jenkinsfile_grafana"
       - "Jenkinsfile_portal"
       - "ansible.cfg"
     role: "infra"

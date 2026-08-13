@@ -49,7 +49,7 @@ model: opus
 test -f .lab-credentials.yml && echo "credentials available"
 ```
 
-또는 `tests/scripts/lab_inventory.py` 같은 스크립트 (있을 시).
+또는 `(전용 스크립트 없음 — 수동 측정)` 같은 스크립트 (있을 시).
 
 ### 2. Redfish 도달성 + Manufacturer 확인
 

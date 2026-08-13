@@ -29,7 +29,7 @@
 
 ## Vault
 
-- 위치: `vault/redfish/huawei.yml` — **미생성 (사용자 명시 2026-05-01)**
+- 위치: `vault/<loc>/redfish/huawei.yml` — **미생성 (사용자 명시 2026-05-01)**
 - lab/사이트 도입 시: ansible-vault encrypt + username/password 등록
 - 부재 시 동작: precheck auth 단계 status=failed (graceful degradation, rule 27 R4)
 - 회전 절차: `rotate-vault` skill (vault 생성 후)
@@ -37,15 +37,15 @@
 ## 검증 이력
 
 - 실장비 검증: **부재** (lab 없음)
-- Baseline: 부재 (lab 도입 후 `schema/baseline_v1/huawei_baseline.json`)
+- Baseline: 부재 (lab 도입 후 `schema/baseline_v1/<vendor>_baseline.json (huawei 는 lab 부재로 미생성)`)
 - web sources 기반 회귀: redfish_generic vs huawei adapter 매칭 점수 차이만 검증
 
 ## 사이트 도입 시 절차 (rule 50 R2 잔여 단계)
 
-1. `vault/redfish/huawei.yml` 생성 (ansible-vault encrypt)
+1. `vault/<loc>/redfish/huawei.yml` 생성 (ansible-vault encrypt)
 2. ServiceRoot 무인증 detect → vendor=huawei 확인
 3. `tests/redfish-probe/probe_redfish.py --vendor huawei` 실행
-4. `schema/baseline_v1/huawei_baseline.json` 생성
+4. `schema/baseline_v1/<vendor>_baseline.json (huawei 는 lab 부재로 미생성)` 생성
 5. `tests/evidence/<날짜>-huawei.md` Round 검증 기록
 6. `docs/13_redfish-live-validation.md` Round 갱신
 7. `capture-site-fixture` skill 으로 사이트 fixture 캡처
