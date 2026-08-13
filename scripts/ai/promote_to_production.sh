@@ -45,13 +45,38 @@ echo "[promote] 순수 코드 ${#pure[@]} 파일 → production:"
 printf '  %s\n' "${pure[@]}"
 
 git checkout production --quiet
-# main 의 해당 파일 state 를 production 으로 가져온다 (삭제 파일 포함 처리)
-git checkout main -- "${pure[@]}" 2>/dev/null || true
+
+# 2026-08-13 수정: 종전에는 존재/삭제 파일을 한 번에 `git checkout main -- "${pure[@]}"`
+#   로 넘기고 실패를 `2>/dev/null || true` 로 삼켰다. `git checkout` 은 **경로 하나라도
+#   main 에 없으면 전체가 실패**하므로, 삭제 파일이 하나라도 섞이면 checkout 이 통째로
+#   무산됐다. 그런데 뒤이은 `git rm` 루프는 정상 동작해서 **삭제만 반영되고 수정은
+#   누락된 production** 이 만들어졌다 (실제 발생: 2026-08-13 승격에서 vault 12개 삭제만
+#   반영되고 redfish_gather.py 등 수정 파일이 빠졌다).
+#   → 존재 파일과 삭제 파일을 먼저 나누고, 실패를 삼키지 않는다.
+exists=(); gone=()
 for f in "${pure[@]}"; do
-  if ! git cat-file -e "main:$f" 2>/dev/null; then
-    git rm -q --ignore-unmatch -- "$f" || true   # main 에서 삭제된 파일은 production 에서도 삭제
-  fi
+  if git cat-file -e "main:$f" 2>/dev/null; then exists+=("$f"); else gone+=("$f"); fi
 done
+
+if [ "${#exists[@]}" -gt 0 ]; then
+  # 경로가 많으면 command line 길이 한계에 걸릴 수 있어 나눠서 적용한다.
+  printf '%s\0' "${exists[@]}" | xargs -0 -n 200 git checkout main --
+fi
+for f in "${gone[@]}"; do
+  git rm -q --ignore-unmatch -- "$f"   # main 에서 삭제된 파일은 production 에서도 삭제
+done
+
+# 적용 결과 검증 — 순수 코드가 실제로 main 과 같아졌는가.
+#   여기서 확인하지 않으면 "일부만 반영된 production" 을 성공으로 보고하게 된다.
+if [ "${#exists[@]}" -gt 0 ]; then
+  if ! git diff --quiet main -- "${exists[@]}"; then
+    echo "[promote] 순수 코드가 main 과 일치하지 않는다 — 롤백 후 중단."
+    git diff --name-only main -- "${exists[@]}" | head -20
+    git reset --hard --quiet
+    git checkout main --quiet
+    exit 1
+  fi
+fi
 
 # 하네스 누출 최종 방어 (어떤 이유로든 하네스가 staged 되면 롤백)
 if git diff --cached --name-only | grep -qE "$HARNESS_RE"; then
