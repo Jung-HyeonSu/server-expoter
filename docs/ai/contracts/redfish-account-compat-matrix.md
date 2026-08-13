@@ -11,7 +11,7 @@
 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
 계획: `docs/ai/contracts/redfish-account-write.md`
 
-9 Vendor Delta 조사 결과를 코드 계약으로 반영했다. **Evidence 등급 축을 상태와 분리**한다.
+9 Vendor Delta 조사 결과를 코드 계약으로 반영했다. Evidence 등급 축을 상태와 분리한다.
 
 | Evidence | 의미 |
 |---|---|
@@ -20,7 +20,7 @@
 | `DOCUMENTED` | 공식 문서로 계약 확인, Live Write 없음 |
 | `UNVERIFIED` | 공식 Write 계약 미확보 — 한 번의 결정적 쓰기만 하고 지원한다고 말하지 않는다 |
 
-**`LIVE-PROVEN` 과 `ADVISORY-DERIVED` 를 절대 합치지 않는다.**
+`LIVE-PROVEN` 과 `ADVISORY-DERIVED` 를 합치는 것은 절대 금지다.
 
 ### 새 판정 축 4종
 
@@ -33,8 +33,8 @@
 
 ### HPE — Family 는 하나, 근거는 Firmware 별
 
-쓰기 **동작**은 iLO5/6/7 전부 Password 단독 PATCH 로 같다(HPE 공식 지원 동작 + 저장소 안전 전략).
-갈리는 것은 그 선택의 **근거 수준**이다.
+쓰기 동작은 iLO5/6/7 전부 Password 단독 PATCH 로 같다(HPE 공식 지원 동작 + 저장소 안전 전략).
+갈리는 것은 그 선택의 근거 수준이다.
 
 | Firmware | Workaround Basis | Evidence | Firmware Risk |
 |---|---|---|---|
@@ -45,7 +45,7 @@
 | iLO5 전체 / Firmware 판독 불가 | `safety_strategy` | DOCUMENTED | 해당 없음 |
 | iLO4 | — (Oem/Hp) | DOCUMENTED | 해당 없음 |
 
-`safety_strategy` / `advisory_derived` 를 **Vendor mandatory 또는 LIVE-PROVEN 으로 표기하지 않는다.**
+`safety_strategy` / `advisory_derived` 를 Vendor mandatory 또는 LIVE-PROVEN 으로 표기하는 것은 금지다.
 
 ### Family 표 변화
 
@@ -58,18 +58,18 @@
 
 ### 제거한 재시도
 
-`PasswordChangeRequired` 추가 후 2차 POST, 거부 속성 drop 후 재PATCH — 둘 다 제거했다.
-허용되는 다중 쓰기는 **ETag 412 재시도(동일 URI·동일 payload)** 와
-**Family 가 쓰기 전에 확정한 sequence(HPE)** 뿐이다.
+`PasswordChangeRequired` 추가 후 2차 POST, 거부 속성 drop 후 재PATCH. 둘 다 제거했다.
+허용되는 다중 쓰기는 ETag 412 재시도(동일 URI·동일 payload)와
+Family 가 쓰기 전에 확정한 sequence(HPE) 뿐이다.
 
 ### 보호 계정
 
 `HostBootstrapAccount == true` (DMTF ManagerAccount 표준 Property, 실미러 10.50.11.232 에 존재)
-를 근거로 `protected` 분류한다. **XCC3 전용 개념이 아니다.** 열거·진단에는 남기고 Create/Repair
-후보에서만 제외하며, 표준 계정 이름이 겹치면 `protected_conflict` → **Write 0**.
+를 근거로 `protected` 분류한다. XCC3 전용 개념이 아니다. 열거·진단에는 남기고 Create/Repair
+후보에서만 제외한다. 표준 계정 이름이 겹치면 `protected_conflict` → **Write 0**.
 
-`reserved_slot_ids` 는 "여기에 만들지 마라" 이지 "여기 있는 계정은 못 고친다" 가 아니다 —
-두 축을 섞지 않는다.
+`reserved_slot_ids` 는 "여기에 만들지 마라" 이지 "여기 있는 계정은 못 고친다" 가 아니다.
+두 축을 섞으면 안 된다.
 
 ### 2026-08-13 실장비 재검증
 
@@ -81,8 +81,8 @@
 | Cisco CIMC 10.100.15.2 | success | success 9/11 | success 9/11 | **0 / 0 / 0** |
 
 4대 전부 `used_role=primary` / `credential_scope=common/redfish/standard`.
-**Create / Repair 는 이번에도 조건이 발생하지 않아 미증명이다** — 4대 모두 표준 계정이
-이미 정상이고, 조건을 만들려면 운영 계정을 지워야 하므로 하지 않았다.
+Create / Repair 는 이번에도 조건이 발생하지 않아 미증명이다. 4대 모두 표준 계정이
+이미 정상이다. 조건을 만들려면 운영 계정을 지워야 해서 하지 않았다.
 
 ---
 
@@ -103,9 +103,9 @@
 
 정본: `tests/evidence/2026-08-12-git-location-live-verification.md`
 
-lab 접근이 가능해져 **git Location 4대에서 실제 수집을 수행**했다. 그 결과 아래 3 Family 의
-**Case A(표준 인증 성공 → Account Write 0 → 표준 계정 수집)** 만 `PROVEN` 으로 올린다.
-검증된 것은 정확히 그 Model + Firmware 범위이며, **Create / Repair 는 여전히 미증명**이다.
+lab 접근이 가능해져 git Location 4대에서 실제 수집을 수행했다. 그 결과 아래 3 Family 의
+Case A(표준 인증 성공 → Account Write 0 → 표준 계정 수집)만 `PROVEN` 으로 올린다.
+검증된 것은 정확히 그 Model + Firmware 범위다. **Create / Repair 는 여전히 미증명**이다.
 
 | Family | 검증 대상 | Firmware | 증명된 것 |
 |---|---|---|---|
@@ -116,15 +116,16 @@ lab 접근이 가능해져 **git Location 4대에서 실제 수집을 수행**�
 Dell 은 유일하게 reconcile 조건이 발생했고(표준 401 + 계정 present) Repair 경로가 설계대로
 전부 동작했지만 **비밀번호가 iDRAC Security Strengthen Policy 에 거부**되어 `HOLD` 를 유지한다.
 
-**Create 경로는 어떤 Family 에서도 실행되지 않았다** — git 4대 모두 표준 계정이 이미 존재해
-`presence=absent` 조건이 발생하지 않았고, 조건을 만들려면 계정을 지워야 하므로 하지 않았다.
+Create 경로는 어떤 Family 에서도 실행되지 않았다. git 4대 모두 표준 계정이 이미 존재해
+`presence=absent` 조건이 아예 생기지 않았다. 조건을 만들려면 계정을 지워야 하므로
+거기까지는 하지 않았다.
 
 ### 2026-08-12 (2차) 갱신 — Global Standard Password 회전 + Repair 실증
 
 정본: `tests/evidence/2026-08-12-standard-password-convergence.md`
 
 전역 표준 계정 비밀번호를 교체하고 git Location 4대에 수렴시켰다. 그 과정에서
-**Repair 경로가 실장비에서 처음으로 완주**했고, HPE 에서 벤더 쓰기 계약 결함이 드러나
+Repair 경로가 실장비에서 처음으로 완주했다. HPE 에서는 벤더 쓰기 계약 결함이 드러나
 수정했다. Dell HOLD 는 **CLOSED** 다.
 
 | 대상 | 1차 | Repair 실행 | 2차 | 판정 |
@@ -147,26 +148,26 @@ Dell 은 유일하게 reconcile 조건이 발생했고(표준 401 + 계정 prese
 | `{Password, Enabled, Locked, RoleId}` | HTTP **400** `iLO.2.36.PropertyNotWritableOrUnknown ['Locked']` |
 | `{Password}` (정상 값) | HTTP **200** → 표준 자격 재인증 **성공** |
 
-→ iLO 는 `Password` 가 다른 속성과 함께 오면 **검사도 적용도 하지 않고 버린다.** 그런데
+→ iLO 는 `Password` 가 다른 속성과 함께 오면 검사도 적용도 하지 않고 버린다. 그런데
 응답은 성공과 동일하다 (아무것도 바뀌지 않는 본문도 `AccountModified` 를 준다). 응답만으로는
 절대 구분할 수 없으므로 **Family 가 쓰기 전에** 방식을 정해야 한다.
 반영: `_ACCOUNT_FAMILIES['hpe_ilo5plus'].isolated_write_patch = True`, `evidence: proven`.
 
 부수 결함 2건도 같은 실측에서 확정해 고쳤다.
-- `Locked: false` 를 **무조건** 실었다. 잠기지 않은 계정에는 no-op 인데 iLO 는 본문 전체를
-  400 으로 거부하고(속성 자체가 없음), Lenovo XCC 는 read-only 로 거부한다. 이제 **실제로
+- `Locked: false` 를 무조건 실었다. 잠기지 않은 계정에는 no-op 인데 iLO 는 본문 전체를
+  400 으로 거부한다(속성 자체가 없음). Lenovo XCC 는 read-only 로 거부한다. 이제 **실제로
   잠겨 있을 때만** 싣는다 → 실측 4대 모두 쓰기 1회 감소.
 - 재인증 확인 간격이 고정 `(0,1,5)`=6초였다. iLO 는 `AuthFailureDelayTimeSeconds=10` /
-  `AuthFailuresBeforeDelay=1` 을 **스스로 선언**한다. 즉 표준 인증이 한 번 실패한 뒤의
+  `AuthFailuresBeforeDelay=1` 을 스스로 선언한다. 즉 표준 인증이 한 번 실패한 뒤의
   재인증은 비밀번호를 옳게 써도 6초 안에는 전부 401 이다. 이제 장비가 선언한 값에서
   간격을 끌어온다(`account_verify_delays`, 상한 45초).
 
 #### Dell 세대 판정 — adapter hint 단독 결정 제거 (2026-08-12)
 
-`10.100.15.34` 는 실제로 **iDRAC9 / PowerEdge R760 / FW 7.10.70.00** 인데 Family 가
+`10.100.15.34` 는 실제로 iDRAC9 / PowerEdge R760 / FW 7.10.70.00 인데 Family 가
 `dell_idrac10_slot_patch` 로 잡혔다. 원인은 두 겹이다.
 
-1. Adapter 선택이 **무인증 probe** 단계라 `model` / `firmware` fact 가 비어 있고, 빈 fact 는
+1. Adapter 선택이 무인증 probe 단계라 `model` / `firmware` fact 가 비어 있다. 빈 fact 는
    실격이 아니라 skip 이라 priority 만으로 결정된다 (`dell_idrac10` 120 > `dell_idrac9` 100).
    실측 점수: 빈 fact 에서 idrac10 120520 > idrac9 100320. fact 가 차면 idrac10/idrac8 은
    `-9999` 로 실격되고 idrac9 가 100345 로 옳게 이긴다.
@@ -174,18 +175,18 @@ Dell 은 유일하게 reconcile 조건이 발생했고(표준 401 + 계정 prese
    `Manager.Model` 은 Dell 에서 `<NN>G Monolithic` 형태라 `idrac10` 이 들어갈 수 없는
    죽은 조건이었다 → **adapter hint 단독으로** Family 가 결정됐다.
 
-이름만의 문제가 아니다. 두 Family 는 `reserved_slot_ids` 가 `{1}` vs `{1,2}` 로 달라
+이 오판은 이름에서 끝나지 않는다. 두 Family 는 `reserved_slot_ids` 가 `{1}` vs `{1,2}` 로 달라
 **빈 슬롯이 2번일 때 PATCH 대상 URI 가 갈린다.** 이번 장비에서 차이가 보이지 않은 것은
-slot 2 를 `root` 가 쓰고 있었기 때문이지 동작이 같아서가 아니다.
+slot 2 를 `root` 가 쓰고 있었기 때문이다. 두 Family 의 동작이 같아서가 아니다.
 
-조치: 세대 근거를 **Firmware major**(iDRAC9 = 4~7.x, iDRAC10 = 1.x)로 바꾸고 Model 은 보조,
+조치: 세대 근거를 Firmware major(iDRAC9 = 4~7.x, iDRAC10 = 1.x)로 바꾸고 Model 은 보조,
 hint 는 근거가 없을 때만 쓰도록 되돌렸다. 회귀 테스트 4건 추가.
-**Adapter 오선택 자체(1번)는 남아 있다** — 인증 후 adapter 재선택이 필요한 별도 변경이라
+**Adapter 오선택 자체(1번)는 남아 있다.** 인증 후 adapter 재선택이 필요한 별도 변경이라
 이번 cycle 범위 밖이며 `docs/ai/NEXT_ACTIONS.md` 에 등재돼 있다.
 
 ### 이번 cycle 에서 실제로 낮아진 불확실성
 
-`tests/reference/redfish/**` 의 **실장비 미러**(Dell 5호스트 / HPE 1 / Lenovo 1 / Cisco 1)를
+`tests/reference/redfish/**` 의 실장비 미러(Dell 5호스트 / HPE 1 / Lenovo 1 / Cisco 1)를
 읽는 회귀 테스트가 종전 0건이었다(audit D-8). 이번에 `tests/integration/test_account_reconcile_replay.py`
 로 연결해 **읽기 단계**(Capability Discovery / 계정 존재 판정 / Family 선택)를 실제 응답으로
 검증한다. 미러에는 쓰기 응답이 없으므로 쓰기 동작은 여전히 미검증이다.
@@ -208,8 +209,7 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
   →  Global Standard Credential 재인증  →  표준 계정으로 실제 Gathering
 ```
 
-`HTTP 2xx` 하나로 성공이라 하지 않는다. `verification='none'` 상태의 쓰기를 성공으로
-인정하지 않는다.
+`HTTP 2xx` 하나로 성공이라 하지 않는다. `verification='none'` 상태의 쓰기는 성공이 아니다.
 
 ### 공통 Capability Discovery (읽기 전용, 쓰기 전 필수)
 
@@ -229,7 +229,7 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 
 열거 상태는 3-상태다: `complete` / `incomplete` / `failed`.
 계정 존재는 4-상태다: `present` / `absent` / `unknown` / `ambiguous`.
-**`unknown` 에서는 Account Write 0건이다.**
+`unknown` 에서는 Account Write 0건이다.
 
 ---
 
@@ -258,18 +258,18 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 | Remaining Gap | iDRAC7/8 실미러 부재 | Create 실장비 미검증 | 표준 비밀번호가 Security Strengthen Policy 미충족 — **운영 결정(E-6)** |
 
 **[정정 2026-08-13] 저장소에 iDRAC10 실미러는 없다.**
-종전 표는 `10_100_15_34` 를 iDRAC10 Fixture Evidence 로 적었으나, 그 미러는
-`FirmwareVersion=7.10.70.00` / `Model=16G Monolithic` 즉 **iDRAC9** 다
+종전 표는 `10_100_15_34` 를 iDRAC10 Fixture Evidence 로 적었으나 그 미러는
+`FirmwareVersion=7.10.70.00` / `Model=16G Monolithic` 즉 iDRAC9 다
 (`LAB_INVENTORY.md` 2026-08-12 정정과 실장비 재검증이 모두 같은 결론). iDRAC10 행의
 근거는 공식 문서뿐이며 Fixture / Live 모두 없다.
 
 **iDRAC10 HOLD 사유** (`tests/evidence/2026-08-12-redfish-standard-account-separation.md` §6.1):
 장비가 돌려준 문장 그대로 —
 `The property Locked is a read only property and cannot be assigned a value.` (1차, 코드로 해결됨)
-`Unable to set the password because the password entered does not comply to the Security Strengthen Policy standards.` (2차, **운영 결정 필요**)
+`Unable to set the password because the password entered does not comply to the Security Strengthen Policy standards.` (2차, 운영 결정 필요)
 
 코드는 두 층 모두 정확히 관측하고 진단한다. 남은 것은 비밀번호 값 또는 장비 정책 중
-어느 쪽을 맞출지의 결정이며, 그것은 이 작업의 범위가 아니다.
+어느 쪽을 맞출지의 결정이다. 그것은 이 작업의 범위가 아니다.
 
 ### 2.2 HPE
 
@@ -288,7 +288,7 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 | Status | `PARTIAL` | **`PROVEN` (Case A만)** / Create·Repair `UNVERIFIED` | `UNVERIFIED` | `UNVERIFIED` |
 | Remaining Gap | iLO4 실장비/미러 부재 | Create 실장비 미검증 | RMC ServiceRoot 실미러 + create payload | 동일 |
 
-이번 변경의 핵심: **CSUS / Superdome 을 iLO 로 처리하지 않는다.** adapter hint 가
+이번 변경의 핵심: CSUS / Superdome 은 iLO 로 처리하지 않는다. adapter hint 가
 `csus` / `superdome` 이면 iLO payload(`Oem.Hpe.Privileges`)를 쓰지 않고 generic 으로 남긴다.
 
 ### 2.3 Lenovo
@@ -309,8 +309,8 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 | Remaining Gap | Redfish AccountService 지원 근거 자체가 없음 | Purley 실미러 | Create 실장비 | XCC2 실미러 | XCC3 실미러 | TSM 실미러 + 특수 ID 보호 실측 |
 
 핵심 변경: **Purley 를 Collection POST 로 만들던 것을 빈 slot PATCH 로 바로잡았다.**
-판정은 이름이 아니라 **관측**(pre-populated 빈 slot 존재)으로 한다.
-그리고 Lenovo POST 는 처음부터 `PasswordChangeRequired:false` 를 실어 보낸다 — TSM 이
+판정은 이름이 아니라 관측(pre-populated 빈 slot 존재)으로 한다.
+그리고 Lenovo POST 는 처음부터 `PasswordChangeRequired:false` 를 실어 보낸다. TSM 이
 미지정 시 `true` 로 만들어 생성 직후 접근이 막히기 때문이다.
 
 ### 2.4 Cisco
@@ -333,7 +333,7 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 
 핵심 변경: **전 Cisco 에 `Administrator→admin` remap + Id 2..15 스캔을 적용하던 것을 끊었다.**
 `admin` 은 IMC 의 어휘이고 최신 Cisco BMC 는 `Administrator` 를 쓴다. 이제 RoleId 는
-**Roles Collection 이 실제로 노출한 값**에서 고르고, Id 는 Family 가 요구할 때만 보낸다.
+Roles Collection 이 실제로 노출한 값에서 고른다. Id 는 Family 가 요구할 때만 보낸다.
 
 ### 2.5 Supermicro
 
@@ -351,7 +351,7 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 | Remaining Gap | Redfish 지원 여부 자체 | 실미러 | 실미러 | Firmware 경계 실측 | `/AccountService` POST 가 어느 Firmware 부터인지 |
 
 **Create URI 는 아직 `/AccountService/Accounts` 를 쓴다.** 최신 매뉴얼의 `/AccountService` POST 는
-어느 Firmware 부터 실제 동작하는지 확인하지 못했고, 두 경로에 순차로 써 보는 것은 금지된
+어느 Firmware 부터 실제 동작하는지 확인하지 못했다. 두 경로에 순차로 써 보는 것은 금지된
 Write fallback 이다. 실미러 확보 후 Family 를 하나 더 나눈다.
 
 ### 2.6 Fujitsu iRMC
@@ -388,7 +388,7 @@ Roles Collection 에 `Administrator` 가 없고 `RedfishAdmin` 이 있으면 **�
 | Remaining Gap | **Redfish Login Interface 를 Redfish API 로 켜는 OEM field/action 미확보** + 실미러 |
 
 Login Interface 는 이번에 구현하지 않았다. 그것을 켜는 OEM 필드나 Action 이 공식 자료에서
-확인되지 않았고, 추측해서 쓰는 것은 금지 사항이다. 대신 계정이 있고 권한도 맞는데 인증이
+확인되지 않았다. 추측해서 쓰는 것은 금지 사항이다. 대신 계정이 있고 권한도 맞는데 인증이
 안 되는 상태가 `post_write_state` 와 `errors[].detail` 로 드러나므로 운영자가 이 원인을
 식별할 수 있다.
 
@@ -443,14 +443,14 @@ Login Interface 는 이번에 구현하지 않았다. 그것을 켜는 OEM 필�
   1건이 실장비에서 완주했다 (2026-08-12). Repair 가 실장비로 증명된 것은 이번이 처음이다.
 - **Dell HOLD 는 CLOSED.** 종전 HOLD 사유는 "표준 비밀번호가 iDRAC Security Strengthen
   Policy 에 거부됨" 이었다. 회전된 비밀번호로 1·2차 모두 표준 인증 성공 + Write 0 이므로
-  더는 막혀 있지 않다. 다만 **거부 사실 자체는 유효한 관측**이다 — 회전 전 값은 읽을 수
-  있는 규칙(길이/문자군/Regex)을 전부 만족하는데도 거부됐고, 활성 제약은
+  더는 막혀 있지 않다. 다만 거부 사실 자체는 유효한 관측이다. 회전 전 값은 읽을 수
+  있는 규칙(길이/문자군/Regex)을 전부 만족하는데도 거부됐다. 활성 제약은
   `Security.1.MinimumPasswordScore` 뿐이었다. 값에 따라 재발할 수 있으므로
   "Dell 은 선언된 규칙만으로 수용 여부를 판단할 수 없다" 는 계약으로 남긴다.
 
 **Account Create 경로는 여전히 어느 Family 에서도 실장비로 증명되지 않았다.**
-git 4대 모두 표준 계정이 이미 존재해 `presence=absent` 조건 자체가 발생하지 않았고,
-조건을 만들려면 운영 계정을 지워야 하므로 하지 않았다 (사용자 지시 §9).
+git 4대 모두 표준 계정이 이미 존재해 `presence=absent` 조건 자체가 성립하지 않았다.
+그 조건을 만들려면 운영 계정을 지워야 해서 손대지 않았다 (사용자 지시 §9).
 
 ---
 
@@ -469,19 +469,19 @@ git 4대 모두 표준 계정이 이미 존재해 `presence=absent` 조건 자�
 | **Inspur MinPasswordLength (고객 설정 가능)** | **최대 16 까지 상향 가능** |
 
 [WARN] **교집합이 빌 수 있다.** 어떤 사이트가 Cisco Strong Password(max 14)와 Inspur
-MinPasswordLength=16 을 동시에 운영하면, 두 정책을 모두 만족하는 **단일 비밀번호가
-수학적으로 존재하지 않는다.** 이것은 코드 버그가 아니라 제품 Contract 의 문제다.
+MinPasswordLength=16 을 동시에 운영하면, 두 정책을 모두 만족하는 단일 비밀번호가
+수학적으로 존재하지 않는다. 이것은 제품 Contract 의 문제다. 코드 버그가 아니다.
 
-현재 Dell HOLD 도 같은 종류다 — 코드가 아니라 값과 정책의 문제다.
+현재 Dell HOLD 도 같은 종류다. 코드가 아니라 값과 정책의 문제다.
 
 ### 이번 cycle 의 처리 (사용자 결정 2026-08-12)
 
 **차단하지 않는다.** 장비가 선언한 `MinPasswordLength` / `MaxPasswordLength` 를 읽어
-진단(`diagnosis.details.account_service.policy`)에 남기고, 범위를 벗어나면 경고를
-`errors[]` 에 남긴 뒤 **쓰기는 그대로 시도**한다. 거부되면 장비가 준 문장
+진단(`diagnosis.details.account_service.policy`)에 남긴다. 범위를 벗어나면 경고를
+`errors[]` 에 적은 뒤 쓰기는 그대로 시도한다. 거부되면 장비가 준 문장
 (`write_response_info`, `vendor_status`)으로 원인을 확정한다.
 
-비밀번호 길이 자체는 기록하지 않는다 — `within_declared_bounds` boolean 만 남긴다.
+비밀번호 길이 자체는 남기지 않는다. `within_declared_bounds` boolean 만 기록한다.
 
 ### 남은 아키텍처 결정 (운영/아키텍트 몫)
 
@@ -514,7 +514,7 @@ D. 상호 모순되는 Security Policy 조합을 지원 Matrix 에서 명시적�
 | POST 생성 요청 수 (UNVERIFIED Family) | 최대 3회 | **최대 2회** (현행 유지 결정 — HPE 전용 3차만 제거) |
 | username 별 실패 인증 카운터 | 없음 | `diagnosis.details.account_service.auth_budget` |
 
-BMC 의 Lockout 정책 자체는 **변경하지 않는다.** 읽기만 한다.
+BMC 의 Lockout 정책 자체는 변경하지 않는다. 읽기만 한다.
 
 ---
 
@@ -564,4 +564,4 @@ BMC 의 Lockout 정책 자체는 **변경하지 않는다.** 읽기만 한다.
 - Huawei Redfish Login Interface 자동 활성화 — OEM 계약 미확보로 미구현
 - Supermicro `/AccountService` POST — Firmware 경계 미확보로 미도입
 - `empty_accounts` → `CREDENTIAL_SET_UNAVAILABLE` (audit H-5) — Portal 사용자 문장이
-  5번→4번으로 바뀌므로 Consumer 결정 필요. **보고만 하고 변경하지 않았다.**
+  5번→4번으로 바뀌므로 Consumer 결정 필요. 보고만 하고 변경하지 않았다.
