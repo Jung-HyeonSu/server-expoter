@@ -7,10 +7,10 @@
 > 그 문서의 인용은 **전부 현재 코드로 재확인한 것만** 이 문서에 옮겼다.
 >
 > **라인 번호 기준**: HEAD `c7817510`.
-> 작성 중 워킹트리에 이 설계와 무관한 수정이 있었다 —
+> 작성 중 워킹트리에 이 설계와 무관한 수정이 있었다:
 > `esxi-gather/tasks/collect_runtime.yml`, `redfish-gather/tasks/vendors/**` 7개,
 > 신규 `tests/unit/test_auth_evidence_contract.py`, `tests/unit/test_fragment_overwrite_and_include_paths.py`.
-> **이 문서가 인용하는 파일은 그 목록에 없으며, 인용 라인은 전부 앵커 문자열로 재확인했다.**
+> **이 문서가 인용하는 파일은 그 목록에 없으며 인용 라인은 전부 앵커 문자열로 재확인했다.**
 > 그래도 읽는 시점에 밀릴 수 있으므로 재확인 시 **태스크명 / 함수명 / 문자열**로 찾을 것.
 
 ---
@@ -19,7 +19,7 @@
 
 ### 0.1 한 줄
 
-Credential 선택을 **`Location + Target Type + 최소 식별정보` 단일 Contract** 로 고정하고,
+Credential 선택을 **`Location + Target Type + 최소 식별정보` 단일 Contract** 로 고정하고
 Redfish 에서 Adapter(어떻게 수집하는가)와 Credential(누구로 인증하는가)의 유일한 결합점
 (`redfish-gather/tasks/load_vault.yml:17-18`, 2줄)을 끊는다.
 
@@ -49,7 +49,7 @@ Redfish 에서 Adapter(어떻게 수집하는가)와 Credential(누구로 인증
 
 ### 0.4 이번 변경에서 **하지 않는** 것 (명시)
 
-- Credential 후보 **순서를 바꾸지 않는다**. vault `accounts` 배열 순서 = 시도 순서 유지 (§9)
+- Credential 후보 순서를 바꾸지 않는다. vault `accounts` 배열 순서 = 시도 순서 유지 (§9)
 - OS/ESXi 에 backoff 를 추가하지 않는다 (§10.2)
 - Adapter YAML 의 `credentials:` 블록을 이번에 삭제하지 않는다 (§14, Phase B 로 분리)
 - Location 별 Master Password 를 이번에 도입하지 않는다 (§11)
@@ -197,7 +197,7 @@ ESXi 버전 / adapter_id / adapter priority.
 | **Credential Resolver** | 어떤 계정으로 인증할 것인가 | location, target_type, os_type\|vendor | credential_scope, vault_relpath (**Secret 없음**) |
 | **Adapter** | 그 대상에서 어떤 방식으로 수집할 것인가 | vendor, model, firmware, version, distribution | collect / normalize task 경로, capabilities |
 
-같은 `vendor` 값을 둘 다 입력으로 쓰지만 **서로의 산출물을 읽지 않는다.** 이것이 분리의 정의다.
+같은 `vendor` 값을 둘 다 입력으로 쓰지만 서로의 산출물을 읽지 않는다. 이것이 분리의 정의다.
 
 ---
 
@@ -211,8 +211,8 @@ ESXi 버전 / adapter_id / adapter priority.
   Gather stage env 는 `REPO_ROOT`(`:128`) / `ANSIBLE_CONFIG`(`:129`) /
   `ANSIBLE_JSON_OUTPUT_FILE`(`:130`) / `ANSIBLE_VERBOSITY`(`:131`) 4개뿐이고 `loc` 이 없다.
 - `ich/chj/yi` whitelist 는 코드에 없다. 파라미터 description 문자열(`:9`)에만 있다.
-- 잘못된 `loc` 은 Validate 에서 실패하지 않는다 — Validate stage 의 agent 자체가
-  `label "${params.loc}"`(`:53`)이라 **검증 코드가 실행되기도 전에** 노드 할당에서 멈춘다.
+- 잘못된 `loc` 은 Validate 에서 실패하지 않는다. Validate stage 의 agent 자체가
+  `label "${params.loc}"`(`:53`)이라 검증 코드가 실행되기도 전에 노드 할당에서 멈춘다.
 
 ### 3.2 전달 방식 선택 — **extra-vars**
 
@@ -226,12 +226,12 @@ ESXi 버전 / adapter_id / adapter priority.
 | 공통 config | 기각 | 전달 수단이 아니라 저장 수단이다. Location 값 자체는 실행 시점 입력이다 |
 
 채택 이유 4가지:
-1. **미정의가 즉시 에러**가 된다. `se_location` 이 없으면 Jinja 가 undefined 로 죽고, 그 실패는
+1. **미정의가 즉시 에러**가 된다. `se_location` 이 없으면 Jinja 가 undefined 로 죽고 그 실패는
    block/rescue 안에서 일어나 정상 failed envelope 으로 보고된다 (§6.3).
-2. Ansible 변수 우선순위 최상위 — play vars / role defaults 에 가려지지 않는다.
-3. Jenkins 콘솔의 `ansible-playbook` 명령줄에 그대로 남아 **감사 가능**하다.
+2. Ansible 변수 우선순위가 최상위라 play vars / role defaults 에 가려지지 않는다.
+3. Jenkins 콘솔의 `ansible-playbook` 명령줄에 그대로 남아 감사 가능하다.
    (Location 은 secret 이 아니다.)
-4. 로컬 재현이 `-e se_location=ich` 한 줄이다 — 테스트 가능성.
+4. 로컬 재현이 `-e se_location=ich` 한 줄이다(테스트 가능성).
 
 변수명은 `se_location` 으로 한다. `location` 은 Redfish 부품 위치(`PartLocation`) 등과
 어휘가 겹친다. `SE_` 접두는 기존 `SE_FORCE_LINUX_RAW_FALLBACK`(rule 10 R4) 선례를 따른다.
@@ -254,10 +254,10 @@ locations:
 ```
 
 - **Location ID 와 `agent_label` 을 분리**한다. 지금 값이 같다는 사실을 계약으로 굳히지 않는다.
-  Jenkins 는 `agent_label` 만 보고, Vault 경로와 `credential_scope` 는 Location ID 만 본다.
-- Ansible 로드 방식은 기존 선례를 그대로 쓴다 —
-  `lookup('file', lookup('env','REPO_ROOT') ~ '/common/vars/locations.yml') | from_yaml`.
-  이 패턴은 `redfish-gather/tasks/detect_vendor.yml:10` 이 `vendor_aliases.yml` 에 이미 쓰고 있고,
+  Jenkins 는 `agent_label` 만 보고 Vault 경로와 `credential_scope` 는 Location ID 만 본다.
+- Ansible 로드 방식은 기존 선례를 그대로 쓴다.
+  `lookup('file', lookup('env','REPO_ROOT') ~ '/common/vars/locations.yml') | from_yaml` 이다.
+  이 패턴은 `redfish-gather/tasks/detect_vendor.yml:10` 이 `vendor_aliases.yml` 에 이미 쓰고 있고
   `include_vars` 의 `name:` 옵션 경고를 피하려고 채택된 방식이다(`detect_vendor.yml:6-7` 주석).
 - `ich/chj/yi` 문자열은 이 파일에만 존재한다.
 
@@ -324,8 +324,8 @@ reason:           "resolved"
 
 **Secret 은 반환값에 없다.** username / password 는 §4.5 의 `include_vars` 이후에만 존재한다.
 
-**절대경로를 만들지 않는 이유** — `REPO_ROOT` 결합을 load task 로 미루면 순수 함수가
-파일시스템과 무관해져 단위테스트가 fixture 없이 돌고, 경로 조립 규칙이 한 곳
+절대경로를 만들지 않는 이유는 `REPO_ROOT` 결합을 load task 로 미루면 순수 함수가
+파일시스템과 무관해지기 때문이다. 단위테스트가 fixture 없이 돌고 경로 조립 규칙이 한 곳
 (`resolve_and_load.yml`)에만 남는다.
 
 ### 4.4 경로 조립 규칙 (전부)
@@ -345,7 +345,7 @@ redfish → vault/<location>/redfish/<vendor>.yml        (복구 계정 전용)
 > `role: primary` 를 넣으면 `recovery_accounts_of()` 가 그것을 버려 복구 후보가 0개가 된다.
 
 `location` / `os_type` / `vendor` 는 **전부 등록된 집합에서만** 온다
-(`known_locations` / 리터럴 2종 / `known_vendors`). 임의 문자열이 경로에 들어가지 않는다 —
+(`known_locations` / 리터럴 2종 / `known_vendors`). 임의 문자열이 경로에 들어가지 않는다.
 오타나 경로 주입으로 엉뚱한 파일을 여는 경우가 구조적으로 불가능하다.
 
 ### 4.5 Load Task — `common/tasks/credential/resolve_and_load.yml`
@@ -360,7 +360,7 @@ redfish → vault/<location>/redfish/<vendor>.yml        (복구 계정 전용)
    파일 부재와 복호화 실패를 구분하기 위해 `include_vars` 전에 둔다 (§15 테스트 9 vs 10).
 3. **로드** — `ansible.builtin.include_vars` with `name: _cred_vault_data`,
    `no_log: true`, `failed_when: false`, `register:`.
-   `include_vars` 는 vault 암호화 파일을 자동 복호화한다 —
+   `include_vars` 는 vault 암호화 파일을 자동 복호화한다.
    `redfish-gather/tasks/load_vault.yml:29-36` 이 이미 이 방식으로 동작 중이다.
    **`cacheable` 옵션을 쓰지 않는다** (rule 27 R6, `test_vault_dynamic_loading_m_c3.py:35,38` 이 고정).
 4. **정규화** — `_cred_accounts` 생성. **순서 보존** (§9).
@@ -369,7 +369,7 @@ redfish → vault/<location>/redfish/<vendor>.yml        (복구 계정 전용)
 
 ### 4.6 accounts 정규화 (3채널 공통)
 
-현재 Redfish 만 갖고 있는 정규화(`load_vault.yml:64-81`)를 공통으로 올린다.
+현재 Redfish 에만 있는 정규화(`load_vault.yml:64-81`)를 공통으로 올린다.
 
 ```
 _cred_accounts =
@@ -380,7 +380,7 @@ _cred_accounts =
 ```
 
 - **순서를 바꾸지 않는다.** 입력 배열 순서 = 출력 순서 (§9).
-- legacy 단일 자격 호환은 유지한다 —
+- legacy 단일 자격 호환은 유지한다.
   `test_vault_dynamic_loading_m_c3.py:110,113` 이 `ansible_user` / `ansible_password` 존재를 고정한다.
 - OS Linux 는 `ansible_become_password` 를 별도로 꺼내 `_cred_become_password` 로 노출한다 (§6.4).
 
@@ -423,8 +423,8 @@ vault/
 | Redfish (표준 수집) | **없음 — 전역 1벌** | `vault/common/redfish/standard.yml` (2026-08-12 정정) |
 | Redfish (복구) | location + vendor | `vault/<loc>/redfish/<vendor>.yml` |
 
-균일성을 위해 `vault/<loc>/esxi/default.yml` 로 맞추는 안은 기각한다 — 의미 없는 경로 조각이
-하나 늘고, "이 채널은 축이 하나" 라는 사실이 오히려 흐려진다.
+균일성을 위해 `vault/<loc>/esxi/default.yml` 로 맞추는 안은 기각한다. 의미 없는 경로 조각이
+하나 늘고 "이 채널은 축이 하나" 라는 사실이 오히려 흐려진다.
 
 ### 5.3 요구 조건 대조
 
@@ -438,9 +438,9 @@ vault/
 
 ### 5.4 `vault/.lab-credentials.yml` 은 건드리지 않는다
 
-resolver 대상이 아니고(평문, gitignored, lab 전용), 다음 5개 파일이 경로를 하드코딩한다:
+resolver 대상이 아니고(평문, gitignored, lab 전용) 다음 5개 파일이 경로를 하드코딩한다:
 `tests/e2e_browser/lab_loader.py:16`,
-cycle-015 의 probe 스크립트 4종 (해당 evidence 디렉터리는 삭제됐다 — git log 참조).
+cycle-015 의 probe 스크립트 4종 (해당 evidence 디렉터리는 삭제됐다. git log 참조).
 
 ### 5.5 파일 내부 Schema — **변경 없음**
 
@@ -457,7 +457,7 @@ ansible_user: "..."
 ansible_password: "..."
 ```
 
-키 이름 / 타입 / 의미를 바꾸지 않는다. **바뀌는 것은 파일이 놓이는 경로뿐이다.**
+키 이름 / 타입 / 의미를 바꾸지 않는다. 바뀌는 것은 파일이 놓이는 경로뿐이다.
 
 ---
 
@@ -477,8 +477,8 @@ PLAY 3 "windows"             (:464-691, hosts: _os_windows)
   try_credentials (:485-489)
 ```
 
-**중요**: PLAY 1 에는 `vars_files` 가 없다. 즉 vault 는 감지 이후에만 필요하고,
-os_type 은 Play 소속으로 이미 확정돼 있다 — **os_type 을 다시 판정할 필요가 없다.**
+**중요**: PLAY 1 에는 `vars_files` 가 없다. 즉 vault 는 감지 이후에만 필요하고 os_type 은
+Play 소속으로 이미 확정돼 있다. os_type 을 다시 판정할 필요가 없다.
 
 ### 6.2 변경
 
@@ -499,7 +499,7 @@ os_type 은 Play 소속으로 이미 확정돼 있다 — **os_type 을 다시 �
 
 - 파일이 없거나 `se_location` 이 미정의면 **play 자체가 죽는다.**
 - play 가 죽으면 `tasks:` 가 실행되지 않고 OUTPUT 태스크에 도달하지 못한다 →
-  **envelope 이 사라진다.** 이는 `requested target count == result envelope count`
+  envelope 이 사라진다. 이는 `requested target count == result envelope count`
   (CLAUDE.md §11, rule 11) 위반이다.
 - block 안 `include_tasks` + `failed_when: false` 는 실패가 `rescue:`(`:369`, `:621`)로 잡혀
   `build_failed_output.yml` 을 태우고 정상 failed envelope 을 만든다.
@@ -510,16 +510,16 @@ os_type 은 Play 소속으로 이미 확정돼 있다 — **os_type 을 다시 �
 ```yaml
 ansible_become_pass: "{{ ansible_become_password | default(ansible_password | default(omit)) }}"
 ```
-이 play var 는 **이미 죽은 값**이다 — `try_one_credential.yml:22-25` 가 후보마다
-`ansible_become_pass` 를 host fact 으로 `set_fact` 하고, host fact 이 play var 보다 우선한다.
-즉 vault 의 `ansible_become_password` 는 현재도 무시되고 SSH 비밀번호가 sudo 비밀번호로 쓰인다.
+이 play var 는 **이미 죽은 값**이다. `try_one_credential.yml:22-25` 가 후보마다
+`ansible_become_pass` 를 host fact 으로 `set_fact` 하고 host fact 이 play var 보다 우선한다.
+vault 의 `ansible_become_password` 는 현재도 무시되고 SSH 비밀번호가 sudo 비밀번호로 쓰인다.
 
 - **이번 변경의 방침**: 동작을 그대로 둔다. `include_vars` 가 `name:` 으로 로드하므로
-  `ansible_become_password` 가 top-level 로 주입되지 않는 차이가 생기지만,
-  값이 어차피 쓰이지 않으므로 **관측 가능한 변화가 없다.**
-- 단 `resolve_and_load.yml` 이 `_cred_become_password` 를 명시적으로 노출해 두어,
+  `ansible_become_password` 가 top-level 로 주입되지 않는 차이가 생기지만 값이 어차피
+  쓰이지 않아 관측 가능한 변화가 없다.
+- 단 `resolve_and_load.yml` 이 `_cred_become_password` 를 명시적으로 노출해 두어
   이 결함을 고치는 후속 작업이 값을 잃지 않게 한다.
-- 이 결함 자체는 **별도 이슈로 기록**한다 (§19 범위 밖 — 동작 변경이므로 이번에 섞지 않는다).
+- 이 결함 자체는 **별도 이슈로 기록**한다 (§19 범위 밖. 동작 변경이므로 이번에 섞지 않는다).
 
 ### 6.5 TO-BE 흐름
 
@@ -530,7 +530,7 @@ Windows:  Precheck → windows 판정 → (location + windows) → Vault Load �
 
 `try_credentials.yml` / `try_one_credential.yml` **두 파일은 수정하지 않는다.**
 입력 변수(`_os_accounts`)의 출처만 바뀐다. 이것이 중요한 이유:
-`tests/e2e/test_credential_probe_classification.py:31-35` 가 이 두 파일의 경로를 고정하고,
+`tests/e2e/test_credential_probe_classification.py:31-35` 가 이 두 파일의 경로를 고정하고
 `:73-75` 가 모듈 호출 횟수와 `retries:` 부재를 고정한다.
 
 ---
@@ -561,7 +561,7 @@ esxi-gather/site.yml  (단일 play, hosts: all, connection: local, strategy: fre
 ### 7.3 감시 항목 — `_e_user` / `_e_pass` play var
 
 `:35-36` 이 `ansible_user` / `ansible_password` 를 **`default()` 없이** 참조한다.
-현재 이것이 터지지 않는 이유는 Jinja 지연 평가다 —
+현재 이것이 터지지 않는 이유는 Jinja 지연 평가다.
 `_e_user` 의 첫 소비처가 `collect_facts.yml:8-9` 이고 그 시점에는
 `try_one_credential.yml:41-44` 가 이미 `_e_user`/`_e_pass`/`ansible_user`/`ansible_password` 를
 host fact 으로 덮어썼다. 인증 실패 시엔 `:71-80` 에서 abort 되어 평가되지 않는다.
@@ -571,14 +571,14 @@ host fact 으로 덮어썼다. 인증 실패 시엔 `:71-80` 에서 abort 되어
   `:35-36` 을 `| default('')` 로 감싸는 1줄 방어를 함께 넣는다 (동작 변화 없음).
 - `collect_dns.yml:22-23`, `collect_network_extended.yml:21-22,32-33,43-44,54-55` 는
   `_e_user` 대신 `ansible_user`/`ansible_password` 를 직접 읽는다. 이 역시 인증 성공 후 경로라
-  영향이 없지만, 일관성 결함으로 기록한다.
+  영향이 없지만 일관성 결함으로 기록한다.
 
 ### 7.4 ESXi 세대 정보는 계속 쓰지 않는다
 
 `precheck_bundle.probe_esxi` 가 무인증으로 `apiType` / `apiVersion` / `productLineId` / `version`
-을 확보하지만(`:999-1034`), 소비처는 `diagnosis.details` 하나뿐이다
-(`filter_plugins/diagnosis_mapper.py:62-65`). Credential 선택에 승격하지 않는다 — 정책상 ESXi 는
-Location 축 하나뿐이기 때문이다.
+을 확보하지만(`:999-1034`) 소비처는 `diagnosis.details` 하나뿐이다
+(`filter_plugins/diagnosis_mapper.py:62-65`). Credential 선택에 승격하지 않는다.
+정책상 ESXi 는 Location 축 하나뿐이기 때문이다.
 
 ---
 
@@ -607,7 +607,7 @@ site.yml:89-92   extract manager_layout
 site.yml:99-100  collect standard
 ```
 
-`load_vault.yml` 호출을 adapter 선택 **앞으로** 옮긴다. 옮기지 않아도 데이터 의존은 끊기지만,
+`load_vault.yml` 호출을 adapter 선택 **앞으로** 옮긴다. 옮기지 않아도 데이터 의존은 끊기지만
 순서를 앞으로 두면 "adapter 결과를 볼 수 없으므로 참조할 수 없다" 가 구조로 강제된다.
 `load_vault.yml` 이 adapter 에서 읽는 값은 `credentials.profile`(`:17`)과
 `credentials.fallback_profiles`(`:18`) 둘뿐이므로 이동에 다른 의존이 없다.
@@ -632,16 +632,16 @@ site.yml:99-100  collect standard
 **양방향 차집합 0.** `vault/<loc>/redfish/` 의 파일명 9종도 동일 집합이다.
 
 HPE CSUS 3200(`hpe_csus_3200.yml:130`) / Superdome Flex(`hpe_superdome_flex.yml:74`) 도
-`profile: "hpe"` 이고 canonical 도 `hpe` 다 — 다른 것은 **출력 표시값**뿐이며
-(`vendor_aliases.yml:121-123` `adapter_output_display` → `hpCsus`),
+`profile: "hpe"` 이고 canonical 도 `hpe` 다. 다른 것은 출력 표시값뿐이며
+(`vendor_aliases.yml:121-123` `adapter_output_display` → `hpCsus`)
 같은 파일 `:98-100` 이 "내부 canonical 은 vault 경로 라우팅에 그대로 쓰인다" 고 명시한다.
 
 비-generic adapter 는 vendor 매치 실패 시 `-9999` 로 실격되므로
 (`module_utils/adapter_common.py:277`) **vendor 가 맞지 않으면 선택될 수 없다.**
 
-> 따라서: **선택된 non-generic adapter 의 `credentials.profile` ≡ 감지된 canonical vendor.**
+> **선택된 non-generic adapter 의 `credentials.profile` ≡ 감지된 canonical vendor.**
 > `adapter.credentials.profile` 을 `_rf_detected_vendor` 로 교체하는 것은
-> 이 경우 **문자 그대로 같은 값**이며 vault 선택 결과가 바뀌지 않는다.
+> 이 경우 문자 그대로 같은 값이며 vault 선택 결과가 바뀌지 않는다.
 
 ### 8.3 의도된 유일한 동작 변경 — generic adapter 경로
 
@@ -664,8 +664,8 @@ HPE CSUS 3200(`hpe_csus_3200.yml:130`) / Superdome Flex(`hpe_superdome_flex.yml:
 
 두 번째 행이 실제로 발생하려면 canonical vendor 인데도 그 vendor 의 adapter 가 전부 실격되어야
 한다(예: `model_patterns` 가 있는 adapter 만 있고 model 이 예상 밖). 현재 9 vendor 모두
-model/firmware 패턴이 없는 vendor-generic adapter를 갖고 있어 실현 가능성은 낮지만,
-**회귀 확인 항목으로 명시**한다 (§15.3-R4).
+model/firmware 패턴이 없는 vendor-generic adapter 가 있어 실현 가능성은 낮다.
+그래도 **회귀 확인 항목으로 명시**한다 (§15.3-R4).
 
 ### 8.4 [선행 필수] Vendor 정규화 SoT 통합
 
@@ -677,24 +677,25 @@ model/firmware 패턴이 없는 vendor-generic adapter를 갖고 있어 실현 �
 | 2 | `redfish-gather/tasks/detect_vendor.yml:43-65` | Jinja, 정확 매칭 → **양방향** substring, dict 순회 순서 우선 | `'unknown'` |
 | 3 | `module_utils/adapter_common.py:67-107` `normalize_vendor` | 정확 매칭 → **정방향만**, 3자 미만 alias 는 토큰 일치, **최장 alias 우선** | **원문 소문자** |
 
-**오늘 사고가 나지 않는 이유**는 세 알고리즘이 같아서가 아니라, 1번이 이미 canonical 을 반환해
+**오늘 사고가 나지 않는 이유**는 1번이 이미 canonical 을 반환해
 (`:742` `return 'unknown'`, `:836` 반환 계약) 2·3번이 사실상 idempotent 하기 때문이다
-(9개 canonical 이 각자 자기 alias 목록에 소문자로 들어 있다).
+(9개 canonical 이 각자 자기 alias 목록에 소문자로 들어 있다). 세 알고리즘이 같아서가 아니다.
 
 Vault 경로가 vendor 에서 파생되는 순간 이 차이는 곧 **오선택**이 된다. 따라서:
 
 **통합 설계**
 
 1. **데이터 SoT** = `common/vars/vendor_aliases.yml` 의 canonical 키 집합.
-   Resolver 가 `vendor ∈ known_vendors` 를 **강제 검증**하고, 아니면 경로를 만들지 않는다(§4.3).
+   Resolver 가 `vendor ∈ known_vendors` 를 강제 검증한다. 통과하지 못하면 경로를
+   만들지 않는다(§4.3).
    → 세 정규화기 중 무엇이 이상한 값을 내더라도 **엉뚱한 파일을 열 수는 없다.**
 2. **알고리즘 SoT** = `adapter_common.normalize_vendor` 를 filter plugin
    (`filter_plugins/vendor_normalizer.py`) 으로 노출하고
    `detect_vendor.yml:43-65` 의 Jinja 정규화를 **삭제**한다. 구현 3 → 2.
-3. `redfish_gather.py` 의 `_FALLBACK_VENDOR_MAP`(`:611`)은 남긴다 —
+3. `redfish_gather.py` 의 `_FALLBACK_VENDOR_MAP`(`:611`)은 남긴다.
    rule 10 R2(핵심 library stdlib 우선) + rule 15(보호 경로) 때문에 module_utils import 를
    끌어들이지 않는다. 대신 **`vendor_aliases.yml` 과 동치임을 강제하는 드리프트 테스트를 신설**한다.
-   현재는 주석(`:605` "동기화 필요")뿐이고,
+   현재는 주석(`:605` "동기화 필요")뿐이고
    `tests/unit/test_vendor_normalize_aliases.py` 는 모듈 함수 결과만 검증할 뿐 두 맵의 동치는
    검증하지 않는다. (`:80` 이 이미 "채널 divergence" 를 기록해 둔 영역이다.)
 
@@ -731,15 +732,15 @@ Vault 경로가 vendor 에서 파생되는 순간 이 차이는 곧 **오선택*
 - `redfish-gather/tasks/collect_standard.yml:79` `loop: "{{ _rf_accounts | default([]) }}"`
 - 정렬 코드는 전 저장소에 0건
 
-따라서 §4.6 의 공통 정규화기는 **순서 보존(order-preserving)** 이어야 하며,
-이를 검증하는 테스트를 넣는다 (§15.2-T20).
+§4.6 의 공통 정규화기는 **순서 보존(order-preserving)** 이어야 하며 이를 검증하는 테스트를
+넣는다 (§15.2-T20).
 
 ### 9.2 왜 지금 role 기반 정렬을 넣지 않는가
 
 - **암호화된 vault 내부의 실제 배열 순서를 확인하지 않았다** (복호화하지 않음).
-  "현재 모두 primary-first 라 정렬을 넣어도 무변화" 라고 **단정할 수 없다.**
+  "현재 모두 primary-first 라 정렬을 넣어도 무변화" 라고 단정할 수 없다.
   만약 어떤 vault 가 recovery-first 라면, 정렬 도입은 그 대상의 인증 순서를 바꾸는
-  **관측 가능한 동작 변경**이고, Redfish 에서는 reconcile 진입 조건까지 건드릴 수 있다.
+  관측 가능한 동작 변경이고 Redfish 에서는 reconcile 진입 조건까지 건드릴 수 있다.
 - `scripts/ai/reorder_windows_vault_admin_primary.py` 의 존재는 과거에 수동 재정렬이 필요했다는
   **정황**이지 현재 상태의 증거가 아니다.
 - 이번 변경의 본질은 **경로 선택 축의 추가**다. 시도 순서 변경을 같이 넣으면 회귀 원인 분리가 어렵다.
@@ -756,26 +757,26 @@ Vault 경로가 vendor 에서 파생되는 순간 이 차이는 곧 **오선택*
 | 4 | `fallback_used` 메타 집계 | `collect_standard.yml:116-125`, `try_credentials.yml:44-53` |
 
 넷 다 **role 기반**이므로 순서를 건드리지 않는 이번 변경에 영향이 없다.
-특히 index 기반 식별 금지는 이미 테스트로 못 박혀 있다 —
-`tests/unit/test_account_reconcile_entry_gate.py:202-216`
-(`[recovery401, primary401]` 순서로 뒤집어도 `True`, `[primary200, recovery401]` 은 `False`).
+특히 index 기반 식별 금지는 이미 테스트로 못 박혀 있다.
+`tests/unit/test_account_reconcile_entry_gate.py:202-216` 이 `[recovery401, primary401]` 순서로
+뒤집어도 `True`, `[primary200, recovery401]` 은 `False` 임을 고정한다.
 
 ### 9.4 OS / ESXi 에는 reconcile 개념이 없다
 
 `account_service` / `recovery` / `_rf_primary_auth_rejected` 에 해당하는 로직이 없다.
 `role` 값은 `fallback_used` 집계에만 쓰인다(`try_credentials.yml:50-52`).
-이번 변경으로 그 상태를 바꾸지 않는다 — **OS/ESXi 에 Redfish reconciliation 을 확장하지 않는다**
+이번 변경으로 그 상태를 바꾸지 않는다. **OS/ESXi 에 Redfish reconciliation 을 확장하지 않는다**
 (CLAUDE.md §8).
 
 ### 9.5 운영 실수 대비 — 런타임이 아니라 검증으로 막는다
 
-recovery 가 배열 첫 번째에 들어가는 실수는 **런타임 정렬이 아니라 이관 검증 단계**에서 잡는다
-(§16 2단계, `vault_decrypt_check.py` 확장):
+recovery 가 배열 첫 번째에 들어가는 실수는 **이관 검증 단계**에서 잡는다. 런타임 정렬로 막는
+방식이 아니다 (§16 2단계, `vault_decrypt_check.py` 확장):
 
 - `accounts` 에 `role: primary` 가 정확히 1개 이상 존재
 - `role` 값이 `{primary, recovery, secondary}` 안에 있음
 - label 이 vendor 허용 집합(`test_adapter_vault_label_consistency.py:32-68`)과 정합
-- **경고**: `accounts[0].role != 'primary'` 인 경우 (차단이 아니라 경고 — 의도적일 수 있으므로)
+- **경고**: `accounts[0].role != 'primary'` 인 경우 (차단하지 않고 경고만 한다. 의도적일 수 있으므로)
 
 Secret 값은 출력하지 않는다.
 
@@ -792,7 +793,7 @@ Secret 값은 출력하지 않는다.
 | Redfish | `vault/<loc>/redfish/<vendor>.yml` **1개** |
 
 - 다른 Location 이나 다른 Vendor 의 vault 로 넘어가는 코드가 **존재하지 않는다.**
-  Hard cut 이라 폴백 분기 자체를 만들지 않고, `fallback_profiles` 루프(`load_vault.yml:49-60`)도
+  Hard cut 이라 폴백 분기 자체를 만들지 않고 `fallback_profiles` 루프(`load_vault.yml:49-60`)도
   이번에 삭제한다.
 - `ich + dell` 실패 → `chj + dell` 시도 없음, `ich + hpe` 시도 없음. **구조적으로 불가능.**
 - 대상 1대당 인증 시도 횟수 = 그 파일의 `accounts` 개수. **오늘과 동일.**
@@ -809,15 +810,15 @@ Secret 값은 출력하지 않는다.
 1. 후보 수가 늘지 않으므로 이번 변경이 잠금 위험을 **증가시키지 않는다**. 근거 없는 확장은
    하지 않는다(요구사항 "불필요한 구조 확장 금지").
 2. `tests/e2e/test_credential_probe_classification.py:75,79` 가 OS/ESXi 파일에
-   `retries:` / `until:` 이 없음을 고정하고 있고, `:73-74,78` 이 모듈 호출 1회를 고정한다.
+   `retries:` / `until:` 이 없음을 고정하고 `:73-74,78` 이 모듈 호출 1회를 고정한다.
    구조를 건드리면 이 계약을 함께 재작성해야 하는데, 이번 변경과 무관한 위험이다.
 3. Redfish 의 `sleep 5` 는 `:85` 가 `assert "sleep 5" in rf_text` 로 못 박고 있으므로 반드시 남긴다.
-   근거 주석(`try_one_account.yml:124-130`)이 vendor 임계까지 기록해 두었다 —
+   근거 주석(`try_one_account.yml:124-130`)이 vendor 임계까지 기록해 두었다:
    Dell iDRAC 5회/5분, HPE iLO 3회, Lenovo XCC 5회.
 
 **다만 실위험은 별도로 기록한다** (§19-④): Linux `pam_faillock`(RHEL STIG 기본 deny=3),
-Windows AD 계정 잠금 정책(흔히 5회/30분)은 후보가 3개만 되어도 1회 실행에서 임계에 닿을 수 있고,
-이는 **오늘 이미 존재하는 위험**이다. 이번 변경과 분리해 다룬다.
+Windows AD 계정 잠금 정책(흔히 5회/30분)은 후보가 3개만 되어도 1회 실행에서 임계에 닿을 수 있고
+이는 오늘 이미 존재하는 위험이다. 이번 변경과 분리해 다룬다.
 
 ### 10.3 Vendor 미지원 / Credential Set 부재 — 신규 `failure_code`
 
@@ -834,18 +835,18 @@ Windows AD 계정 잠금 정책(흔히 5회/30분)은 후보가 3개만 되어�
 | `errors[].message` | 기존 4번 문장 `_fr_credential_failed` **재사용** |
 | `errors[].detail` | `credential set not found: <credential_scope>` 또는 `credential set could not be decrypted: <credential_scope>` |
 
-**`failure_stage=auth` 를 유지하는 근거**: `failure_stage` 는 Root Cause 가 아니라
-**Workflow 가 멈춘 위치**다 (CLAUDE.md §9, `field_dictionary.yml:1443` "실행이 중단된 단계
+**`failure_stage=auth` 를 유지하는 근거**: `failure_stage` 는 **Workflow 가 멈춘 위치**다.
+Root Cause 를 가리키는 값이 아니다 (CLAUDE.md §9, `field_dictionary.yml:1443` "실행이 중단된 단계
 (원인이 아니다)"). 멈춘 위치는 자격증명 단계가 맞다. 유효 enum 6종
-(`reachable/port/protocol/auth/gather/fallback`) 중 다른 후보가 없다 — `gather` 는 인증 통과를
-전제하고, `fallback` 은 결과 객체 생성 실패를 뜻한다.
+(`reachable/port/protocol/auth/gather/fallback`) 중 다른 후보가 없다. `gather` 는 인증 통과를
+전제하고 `fallback` 은 결과 객체 생성 실패를 뜻한다.
 
 **`auth_success=null` 근거**: `false` 는 "구조화된 명시적 인증 거부" 를 의미한다(CLAUDE.md §9).
 시도 자체를 안 했으므로 `null`(미시도)이 정확하다.
 
 **사용자 문장을 새로 만들지 않는 근거**: 표준 5문장 집합은 사용자 확정 사항이고
-(`common/vars/failure_reasons.yml:41-63`), 운영자가 할 일은 결국 "자격증명 설정 확인" 으로 같다.
-code 는 **시스템 분기용 안정 식별자**, message 는 **사용자 안내**, detail 은 **기술 증거** —
+(`common/vars/failure_reasons.yml:41-63`) 운영자가 할 일은 결국 "자격증명 설정 확인" 으로 같다.
+code 는 시스템 분기용 안정 식별자, message 는 사용자 안내, detail 은 기술 증거다.
 이 3층 분리는 이미 저장소 계약이다(`build_failed_output.yml:42-51`).
 
 **Diagnosis Contract 영향 (전부 additive)**
@@ -863,7 +864,7 @@ code 는 **시스템 분기용 안정 식별자**, message 는 **사용자 안�
 | 9 | Portal 소비자 | **코드만으로 확인 불가.** 미지 code 에 대한 default 분기가 있는지 → §19-① |
 
 **차선안** (문서에 남기되 권장하지 않음): 기존 `AUTH_PROBE_FAILED` 재사용 + detail 로만 구분.
-schema 무변경이라는 장점이 있으나, "시도 후 거부" 와 "미시도" 를 시스템이 구분할 수 없어
+schema 무변경이라는 장점이 있으나 "시도 후 거부" 와 "미시도" 를 시스템이 구분할 수 없어
 이 설계의 목적(정확한 실패 추적성)에 반한다.
 
 **명명 대안**: 부재와 복호화 실패를 한 code 로 묶으므로 `CREDENTIAL_SET_UNAVAILABLE` 이
@@ -893,9 +894,9 @@ schema 무변경이라는 장점이 있으나, "시도 후 거부" 와 "미시�
 - Jenkins credential **1개**: `server-gather-vault-password`
   (`Jenkinsfile:159`, `Jenkinsfile_portal:160`, `Jenkinsfile_portal_test:161` — 전부 동일 ID, `string` 타입)
 - 공급 경로는 `--vault-password-file` **하나뿐**. `ansible.cfg:57` 의 `vault_password_file` 은
-  **주석 처리 = 비활성**. `vault_id` / `vault_identity_list` 는 저장소 전체 0건.
-- vault 12개 전부 `$ANSIBLE_VAULT;1.1;AES256` — **1.1 은 vault_id 라벨이 없는 포맷**이다.
-  즉 단일 키 운영이 파일 포맷 수준에서 확정돼 있다.
+  주석 처리 = 비활성. `vault_id` / `vault_identity_list` 는 저장소 전체 0건.
+- vault 12개가 전부 `$ANSIBLE_VAULT;1.1;AES256` 인데, **1.1 은 vault_id 라벨이 없는 포맷**이다.
+  단일 키 운영이 파일 포맷 수준에서 확정돼 있다.
 
 ### 11.2 A vs B 비교
 
@@ -912,8 +913,8 @@ schema 무변경이라는 장점이 있으나, "시도 후 거부" 와 "미시�
 ### 11.3 권장 — **A**, B 는 후속 독립 변경
 
 파일 분리만으로 "범위 명확화 + Location 단위 독립 회전" 이라는 운영 이득은 이미 확보된다.
-키 분리는 재암호화 + Jenkins credential 증설이 함께 걸리는 **별개 축**이며,
-이번 구조 변경과 섞으면 실패 시 원인 분리가 어렵다.
+키 분리는 재암호화 + Jenkins credential 증설이 함께 걸리는 **별개 축**이며 이번 구조 변경과
+섞으면 실패 시 원인 분리가 어렵다.
 
 ### 11.4 B 로 갈 때 — **`--vault-id` 는 필수가 아니다**
 
@@ -939,7 +940,7 @@ withCredentials([string(credentialsId: env.VAULT_CREDENTIAL_ID, variable: 'VAULT
 
 Resolver 는 **경로만** 반환하고(§4.3) 복호화는 Ansible 이 투명하게 처리한다.
 A → B 전환 시 `credential_common.py` / `credential_resolver.py` / `resolve_and_load.yml` 은
-**한 줄도 바뀌지 않는다.** 이것이 요구사항 "Master Password 선택 로직이 Credential Resolver 와
+한 줄도 바뀌지 않는다. 이것이 요구사항 "Master Password 선택 로직이 Credential Resolver 와
 과도하게 결합되지 않도록" 의 충족 방식이다.
 
 ---
@@ -981,7 +982,7 @@ stage('Resolve Location') {
 ```
 
 - **미등록 Location 은 여기서 build 실패** → agent 대기 이전 (요구사항 3 충족).
-- `readYaml` 은 Pipeline Utility Steps 플러그인 제공 — 같은 플러그인의 `readJSON` 이
+- `readYaml` 은 Pipeline Utility Steps 플러그인이 제공한다. 같은 플러그인의 `readJSON` 이
   `Jenkinsfile:97` 에서 이미 쓰이고 있어 설치가 확인된다.
 - `built-in` 노드 가용성은 `Jenkinsfile_portal:227` 의 Callback stage 가 이미 그 노드에서 돈다는
   사실로 확인된다.
@@ -1003,13 +1004,13 @@ stage('Resolve Location') {
 
 - **`Jenkinsfile_portal_test`**: `Jenkinsfile_portal` 과 **1줄 차이**뿐이다
   (`:18` `defaultValue: 'not-json'` 추가). 삭제해도 잃는 기능이 없다.
-- **`Jenkinsfile`**: 잃는 것은 **Stage 4 `E2E Regression` 하나**다 (`:208-236`) —
-  `pytest tests/e2e/` + `pytest tests/integration/ -m "not live"`.
+- **`Jenkinsfile`**: 잃는 것은 **Stage 4 `E2E Regression` 하나**다
+  (`:208-236`, `pytest tests/e2e/` + `pytest tests/integration/ -m "not live"`).
   `Jenkinsfile_portal` 에 대응 stage 가 없다.
   - `Validate Schema` 는 손실 없음: portal `:201-223` 이 동일하게
     `python3 tests/validate_field_dictionary.py` 를 실행한다.
   - → **이 게이트를 portal 로 옮길지 / 포기할지는 §19-⑦.**
-- **함께 갱신해야 하는 하네스·문서** (별도 커밋 — CLAUDE.md §13 "제품 코드와 Harness 작업을 섞지 않는다"):
+- **함께 갱신해야 하는 하네스·문서** (별도 커밋. CLAUDE.md §13 "제품 코드와 Harness 작업을 섞지 않는다"):
   `.claude/rules/80-ci-jenkins-policy.md` R1-A 표(pipeline 2종 → 1종),
   `.claude/rules/00-core-repo.md` ("Jenkins multi-pipeline 2종"),
   `docs/ai/catalogs/JENKINS_PIPELINES.md`,
@@ -1024,7 +1025,7 @@ stage('Resolve Location') {
   잘못된 값 자체가 입력되지 않으므로 agent 대기 문제가 사라진다.
 - **대가**: Location 추가 시 Jenkins Job 설정 수정이 필요해져 "코드 수정 없는 확장" 요구가
   일부 완화된다. registry(`locations.yml`)와 Job 설정이 **두 정본**이 되어 drift 위험이 생긴다.
-- 이 경우에도 Ansible 쪽 registry 검증(§13.2)은 그대로 둬서, drift 가 발생하면 gather 단계에서
+- 이 경우에도 Ansible 쪽 registry 검증(§13.2)은 그대로 둬서 drift 가 발생하면 gather 단계에서
   명시 실패하도록 한다.
 
 `built-in` 노드의 SCM checkout 가부는 **이 저장소 코드만으로 확인할 수 없다** → §19-⑥.
@@ -1041,12 +1042,12 @@ Jenkins   -e se_location=<id>
    → resolve_and_load.yml 이 _cred_location: "{{ se_location }}" 로 수령
 ```
 
-`os-gather` 는 4개 play 중 PLAY 2 / PLAY 3 에서만 필요하고,
-PLAY 1(detect) / PLAY 1.5(failed-output) 는 vault 를 쓰지 않으므로 참조하지 않는다.
+`os-gather` 는 4개 play 중 PLAY 2 / PLAY 3 에서만 필요하고 PLAY 1(detect) /
+PLAY 1.5(failed-output) 는 vault 를 쓰지 않으므로 참조하지 않는다.
 
 ### 13.2 Ansible 쪽 registry 검증 (이중 방어)
 
-Jenkins 가 이미 검증하지만, 로컬 실행·2안 채택·Job 설정 drift 를 대비해
+Jenkins 가 이미 검증하지만 로컬 실행·2안 채택·Job 설정 drift 를 대비해
 `resolve_and_load.yml` 이 `location ∈ known_locations` 를 다시 확인한다(§4.3 `unknown_location`).
 실패는 block 안에서 일어나므로 rescue → 정상 failed envelope 이 된다.
 
@@ -1065,11 +1066,11 @@ Jenkins 가 이미 검증하지만, 로컬 실행·2안 채택·Job 설정 drift
 | `redfish-gather/tasks/account_service.yml:99` | `vault profile={{ _rf_vault_profile }}; role=primary candidate=0` |
 | `redfish-gather/site.yml:132` | `vault/<loc>/redfish/{{ _rf_vendor }}.yml` |
 
-`site.yml:132` 는 **기존 결함**이기도 하다 — 실제로 연 파일은 `_rf_vault_profile` 인데
+`site.yml:132` 는 **기존 결함**이기도 하다. 실제로 연 파일은 `_rf_vault_profile` 인데
 메시지는 `_rf_vendor` 를 출력한다. generic adapter(profile=`""`)일 때 둘이 달라진다.
 이번 변경으로 두 값이 하나(`_cred_scope`)가 되면서 자연히 해소된다.
 
-이 문자열들은 전부 `fail:` 메시지 → `errors[].detail` 로 흘러가며,
+이 문자열들은 전부 `fail:` 메시지 → `errors[].detail` 로 흘러가며
 **사용자 노출 message 는 `failure_reasons.yml` 의 5문장에서만 나온다**(CLAUDE.md §10).
 `credential_scope` 는 경로 정보일 뿐 secret 이 아니므로 detail 에 두는 것이 맞다.
 
@@ -1091,10 +1092,10 @@ top-level 13필드는 건드리지 않는다.
   선택적 인자로 추가하거나, 각 채널이 `_diagnosis` 를 `combine` 하는 기존 지점에서 병합.
   후자가 변경 범위가 작다 (`redfish-gather/site.yml:242-260`, `os-gather/site.yml:302-325` 등이
   이미 `details` 를 combine 한다).
-- **secret 없음** — location/channel/vendor 조합 문자열뿐이다.
+- **secret 없음**. location/channel/vendor 조합 문자열뿐이다.
 - `schema/baseline_v1/*.json` 의 `details` 에 키가 하나 늘어난다 → baseline 10건 갱신 필요.
   `scripts/ai/hooks/envelope_change_check.py` 는 advisory(exit 0)이며 `diagnosis.*` 신규 sub-key 를
-  검출해 보고한다 — 의도된 변경임을 커밋 메시지에 명시한다.
+  검출해 보고한다. 의도된 변경임을 커밋 메시지에 명시한다.
 
 ### 13.5 rule 27 R6 (vault 자동 반영) 준수
 
@@ -1102,7 +1103,7 @@ top-level 13필드는 건드리지 않는다.
 - `_cred_accounts` 등을 host facts / fact cache 에 등록하지 않는다.
 - `ansible.cfg` 에 vault decrypt 캐시 옵션을 추가하지 않는다(현재도 없음).
 
-`tests/unit/test_vault_dynamic_loading_m_c3.py:35,38,70` 이 이 3가지를 고정하고 있고,
+`tests/unit/test_vault_dynamic_loading_m_c3.py:35,38,70` 이 이 3가지를 고정한다.
 새 load task 에도 같은 검사를 확장한다.
 
 ---
@@ -1131,8 +1132,8 @@ production 소비 코드가 0건이며 `tests/unit/test_adapter_vault_label_cons
 
 `credentials.profile` 을 즉시 지우지 않는 이유: `tests/unit/test_vault_dynamic_loading_m_c3.py:141`
 가 `load_vault.yml` 본문에 `credentials.profile` 문자열이 있을 것을 강제하므로
-그 테스트를 함께 고쳐야 하고, `test_hpe_superdome_flex_m_e2.py:121` 은 adapter YAML 쪽을 본다.
-필드를 남기면 후자는 그대로 통과하고, 전자만 수정하면 된다.
+그 테스트를 함께 고쳐야 하고 `test_hpe_superdome_flex_m_e2.py:121` 은 adapter YAML 쪽을 본다.
+필드를 남기면 후자는 그대로 통과하고 전자만 수정하면 된다.
 
 ### 14.3 Phase B (별도 cycle — §19-⑤)
 
@@ -1143,7 +1144,7 @@ production 소비 코드가 0건이며 `tests/unit/test_adapter_vault_label_cons
 | os 7개 / esxi 4개 `credentials:` | 제거 — 완전 dead. profile 이름이 실제 vault 파일명과 일치하지도 않는다 | 없음 |
 
 `test_adapter_vault_label_consistency.py` 가 검증하던 "adapter recovery label ⊆ vendor 허용 집합"
-의 가치는 **vault 검증 스크립트로 이관**한다 (§9.5, §16 2단계) — 원래 label 의 정본은
+의 가치는 **vault 검증 스크립트로 이관**한다 (§9.5, §16 2단계). 원래 label 의 정본은
 vault 파일이지 adapter 가 아니다.
 
 ### 14.4 Adapter 선택 로직은 건드리지 않는다
@@ -1156,7 +1157,7 @@ vault 파일이지 adapter 가 아니다.
 `test_csus_adapter_priority.py`)는 credential 관련 참조가 0건이라 영향받지 않는다.
 
 단, §8.4 의 정규화 통합으로 `normalize_vendor` 가 filter 로도 노출되므로
-그 함수의 **동작은 바뀌지 않아야 한다** (노출만 추가).
+그 함수의 동작은 바뀌지 않아야 한다 (노출만 추가).
 
 ---
 
@@ -1238,7 +1239,7 @@ python scripts/ai/hooks/output_schema_drift_check.py
 python scripts/ai/verify_vendor_boundary.py
 python scripts/ai/verify_harness_consistency.py
 ```
-고정 테스트 개수를 기준으로 삼지 않는다 — 실행 결과로 판단한다 (CLAUDE.md §16).
+고정 테스트 개수를 기준으로 삼지 않는다. 실행 결과로 판단한다 (CLAUDE.md §16).
 
 ---
 
@@ -1246,8 +1247,8 @@ python scripts/ai/verify_harness_consistency.py
 
 ### 16.1 원칙 — `git mv` 가 아니다
 
-Location 별 실제 Credential **값이 서로 다르므로**(사용자 확정) 이관은 파일 이동이 아니라
-**신규 작성**이다. 기존 flat vault 를 3벌 복사하는 것은 잘못된 값을 3곳에 심는 일이다.
+Location 별 실제 Credential **값이 서로 다르므로**(사용자 확정) 이관은 **신규 작성**이다.
+파일 이동이 아니다. 기존 flat vault 를 3벌 복사하는 것은 잘못된 값을 3곳에 심는 일이다.
 
 ### 16.2 4단계
 
@@ -1322,15 +1323,16 @@ force push / history rewrite 는 하지 않는다 (rule 93 R1).
 신규 vault 에 잘못된 값이 들어간 경우:
 
 1. **대상 장비 상태를 먼저 확인한다.** 잘못된 자격으로 반복 시도해 계정이 잠겼을 수 있다
-   (Dell iDRAC 5회/5분, HPE iLO 3회, Lenovo XCC 5회 — `try_one_account.yml:124-130`).
+   (Dell iDRAC 5회/5분, HPE iLO 3회, Lenovo XCC 5회. `try_one_account.yml:124-130`).
 2. **Redfish 는 값이 실제로 변경됐을 가능성**을 확인한다. reconcile 이 돌았다면
    AccountService 로 공통계정 password 가 동기화됐을 수 있다. 진입 조건은
-   `redfish-gather/site.yml:154` 의 `_rf_account_reconcile_allowed` —
-   `used_account.role == 'recovery'` AND `_rf_collect_ok` AND `_rf_primary_auth_rejected` 3개 동시 성립.
+   `redfish-gather/site.yml:154` 의 `_rf_account_reconcile_allowed` 다.
+   `used_account.role == 'recovery'` AND `_rf_collect_ok` AND `_rf_primary_auth_rejected` 3개
+   동시 성립이다.
    `_rf_account_service_meta` 의 `action` / `verification` / `dryrun` 으로 실제 write 여부를 판정한다
    (`account_service.yml:60-72`, `:155-167`).
-3. OS / ESXi 에는 write 경로가 없다 — 계정 잠금만 확인하면 된다.
-4. vault 값 자체의 복구는 git 이력(암호문)에서 이전 버전을 되돌리는 것으로 가능하지만,
+3. OS / ESXi 에는 write 경로가 없다. 계정 잠금만 확인하면 된다.
+4. vault 값 자체의 복구는 git 이력(암호문)에서 이전 버전을 되돌리는 것으로 가능하지만
    **그 값이 장비의 현재 값과 일치하는지는 별개 문제**다.
 
 ### 17.3 "Secret 값 불변" 을 전제하지 않는다
