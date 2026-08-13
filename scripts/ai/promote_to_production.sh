@@ -35,7 +35,13 @@ fi
 git fetch origin --quiet 2>/dev/null || true
 
 # production ↔ main 차이 파일 중 하네스 제외 = 순수 게더링 코드
-mapfile -t pure < <(git diff --name-only origin/production main | grep -vE "$HARNESS_RE" || true)
+# 2026-08-13 수정: `--no-renames` 필수.
+#   git 은 rename 을 감지하면 `--name-only` 에 **새 경로만** 출력한다. 그래서 문서를
+#   대량으로 옮긴 승격에서 옛 경로가 목록에 아예 안 들어갔고, production 에 옛 파일이
+#   그대로 남아 새 파일과 공존했다 (실제 발생: 2026-08-13 문서 구조 재편 — docs/ 가
+#   24개에서 43개로 불어났다). rename 을 두 개의 독립 변경(삭제 + 추가)으로 봐야
+#   아래 exists/gone 분기가 삭제를 제대로 잡는다.
+mapfile -t pure < <(git diff --no-renames --name-only origin/production main | grep -vE "$HARNESS_RE" || true)
 if [ "${#pure[@]}" -eq 0 ]; then
   echo "[promote] 순수 코드 차이 없음 — production 이미 최신."
   exit 0
