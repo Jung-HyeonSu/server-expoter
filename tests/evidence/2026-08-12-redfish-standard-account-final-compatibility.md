@@ -279,15 +279,15 @@ Dell 표준 비밀번호가 iDRAC Security Strengthen Policy 를 만족하지 �
 
 | 조건 | 상태 |
 |---|---|
-| 전체 테스트 PASS | ✅ 2794 passed |
-| 기존 Credential Contract 회귀 없음 | ✅ 기준선 대비 감소 0 |
-| Recovery final Gathering 0건 | ✅ 구조적으로 불가 (기존 계약 유지, 테스트로 고정) |
-| P0 Enumeration 안전성 증명 | ✅ 실미러 8호스트 + 단위 테스트 |
-| Vendor Strategy 선택 deterministic | ✅ 실미러 재생으로 고정 |
-| 검증 없는 Write success 0건 | ✅ 게이트가 `verified` 만 인정 |
-| **Controlled Pilot PASS** | ❌ 실장비 접근 불가 |
-| **2차 실행 Write 0 증명** | ❌ 실장비 접근 불가 |
-| **Dell HOLD 운영 결정** | ❌ 미결정 (E-6) |
+| 전체 테스트 PASS | [OK] 2794 passed |
+| 기존 Credential Contract 회귀 없음 | [OK] 기준선 대비 감소 0 |
+| Recovery final Gathering 0건 | [OK] 구조적으로 불가 (기존 계약 유지, 테스트로 고정) |
+| P0 Enumeration 안전성 증명 | [OK] 실미러 8호스트 + 단위 테스트 |
+| Vendor Strategy 선택 deterministic | [OK] 실미러 재생으로 고정 |
+| 검증 없는 Write success 0건 | [OK] 게이트가 `verified` 만 인정 |
+| **Controlled Pilot PASS** | [NG] 실장비 접근 불가 |
+| **2차 실행 Write 0 증명** | [NG] 실장비 접근 불가 |
+| **Dell HOLD 운영 결정** | [NG] 미결정 (E-6) |
 
 승격은 §5 절차가 끝난 뒤 `bash scripts/ai/promote_to_production.sh` 로 수행한다.
 

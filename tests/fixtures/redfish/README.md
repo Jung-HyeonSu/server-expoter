@@ -1,10 +1,10 @@
 # tests/fixtures/redfish
 
 Redfish 채널 fixture. BMC 가 실제로 돌려준 JSON 응답을 그대로 저장해서 mock 회귀
-입력으로 쓴다. 실장비 없이도 adapter 선택과 normalize 를 돌릴 수 있게 하는 자산이다.
+입력으로 쓴다. 실장비 없이도 adapter 선택과 normalize 를 돌려 보라고 모아 둔다.
 
-디렉터리는 대체로 `<vendor>` 또는 `<vendor>_<BMC 세대>` 로 나뉜다. 같은 vendor 라도
-펌웨어 세대가 다르면 응답 형태가 달라지기 때문이다 (예: `cisco_cimc_v2` ~ `v4`).
+같은 vendor 라도 펌웨어 세대가 다르면 응답 형태가 달라진다. 그래서 디렉터리도 대체로
+`<vendor>` 또는 `<vendor>_<BMC 세대>` 로 나뉜다 (예: `cisco_cimc_v2` ~ `v4`).
 
 | 디렉터리 | JSON | 출처 README |
 |---|---|---|
@@ -61,5 +61,5 @@ Redfish 채널 fixture. BMC 가 실제로 돌려준 JSON 응답을 그대로 저
 3. 해당 디렉터리 README 에 한 줄 추가 (rule 21 R2 — 출처 불명 fixture 금지)
 4. fixture 를 **고치는** 경우에는 영향 vendor baseline 회귀를 돌린다 (rule 21 R3)
 
-출처를 안 적으면 나중에 외부 계약이 바뀌었을 때 이 응답이 언제 기준인지 알 수 없어
-회귀 판정을 못 한다. 그게 규칙의 이유다.
+출처를 안 적으면 나중에 외부 계약이 바뀌었을 때 이 응답이 언제 기준인지 알 수 없다.
+그러면 회귀 판정을 못 한다.

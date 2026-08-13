@@ -468,7 +468,7 @@ git 4대 모두 표준 계정이 이미 존재해 `presence=absent` 조건 자�
 | **Cisco IMC Strong Password Policy 활성** | **8~14** |
 | **Inspur MinPasswordLength (고객 설정 가능)** | **최대 16 까지 상향 가능** |
 
-⚠️ **교집합이 빌 수 있다.** 어떤 사이트가 Cisco Strong Password(max 14)와 Inspur
+[WARN] **교집합이 빌 수 있다.** 어떤 사이트가 Cisco Strong Password(max 14)와 Inspur
 MinPasswordLength=16 을 동시에 운영하면, 두 정책을 모두 만족하는 **단일 비밀번호가
 수학적으로 존재하지 않는다.** 이것은 코드 버그가 아니라 제품 Contract 의 문제다.
 

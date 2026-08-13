@@ -417,16 +417,16 @@ Vendor × Family 매트릭스, `CURRENT_STATE.md`,
 
 # 6. Vendor / Family Plan
 
-✅ 완료(변경 불요) / 🔧 수정 / ➕ 추가 / ⏸ UNVERIFIED 유지
+[OK] 완료(변경 불요) / 🔧 수정 / ➕ 추가 / [HOLD] UNVERIFIED 유지
 
 ## 6.1 HPE
 
 | Family | 조치 | 내용 |
 |---|---|---|
-| `hpe_ilo4` | ✅ | `Oem/Hp` namespace, `documented` |
+| `hpe_ilo4` | [OK] | `Oem/Hp` namespace, `documented` |
 | `hpe_ilo5plus` | 🔧 **라벨만** | **분할하지 않는다.** `isolated_write_patch: True` **유지**(iLO5/6/7 전체 — Repository 안전 전략, HPE 공식 지원 동작). `props`: PCR `read_only`, AccountTypes `verify_only`(iLO6 1.64+/iLO7), Locked `unsupported` |
 | — Firmware Evidence | ➕ | iLO6 1.73 → `live_proven`/`proven`/advisory · iLO6 1.74 → `advisory_derived`/`documented`/advisory · iLO7 1.19·1.20 → `advisory_derived`/`documented`/advisory · **iLO5 / iLO6 1.75+ / iLO7 1.21+ → `safety_strategy`/`documented`/None** |
-| `generic`(CSUS/Superdome) | ⏸ | 01 §16/§21 |
+| `generic`(CSUS/Superdome) | [HOLD] | 01 §16/§21 |
 
 **Vendor mandatory 로 표기하지 않는다.** Password-only PATCH 는 HPE 공식 문서가 지원하는 동작이며,
 "반드시 단독이어야 한다"는 공식 계약이 아니다(01 §15).
@@ -435,63 +435,63 @@ Vendor × Family 매트릭스, `CURRENT_STATE.md`,
 
 | Family | 조치 | 내용 |
 |---|---|---|
-| `dell_slot_patch` (iDRAC7/8/9) | ✅ + 🔧 props | Locked `read_only`, PCR `unsupported`, AccountTypes `verify_only` |
-| `dell_idrac10_slot_patch` | ✅ + 🔧 props | 예약 slot {1,2} 유지 |
+| `dell_slot_patch` (iDRAC7/8/9) | [OK] + 🔧 props | Locked `read_only`, PCR `unsupported`, AccountTypes `verify_only` |
+| `dell_idrac10_slot_patch` | [OK] + 🔧 props | 예약 slot {1,2} 유지 |
 | 전 Dell | 🔧 **G-03** | `SYS474` / `RelatedProperties` / `Severity` 해석 |
 | 전 Dell | 🔧 **G-13** | `AccountLockoutThreshold=0` 이어도 IP Blocking 별도 예산 |
 | Basic Auth | 🔧 **G-18** | client 는 이미 선제 `Authorization` 전송 → `Unadvertised` 호환. 상태만 기록, `Disabled` 진단 분리 |
-| 세대 오분류 | ✅ **해소됨** | Firmware major 판정 |
+| 세대 오분류 | [OK] **해소됨** | Firmware major 판정 |
 
 ## 6.3 Lenovo
 
 | Family | 조치 | 내용 |
 |---|---|---|
 | `lenovo_purley_slot_patch` | 🔧 **G-20** | capability-first 정렬 + 부정 신호(hint xcc2/xcc3/whitley/amd → Purley 아님). PCR `unsupported` |
-| `lenovo_collection_post` (Whitley/AMD/TSM) | 🔧 props | PCR `writable`, Locked: XCC1 `read_only` / **TSM `writable`**. 204 no-body ✅ |
+| `lenovo_collection_post` (Whitley/AMD/TSM) | 🔧 props | PCR `writable`, Locked: XCC1 `read_only` / **TSM `writable`**. 204 no-body [OK] |
 | `lenovo_xcc_accounttypes` | 🔧 **분할** | ↓ |
 | ➕ `lenovo_xcc2_accounttypes` | ➕ | AccountTypes `writable`, PCR `writable` |
 | ➕ `lenovo_xcc3_accounttypes` | ➕ | AccountTypes `writable`, **PCR `unsupported`** |
-| `generic`(IMM2) | ⏸ | 03 §4 |
+| `generic`(IMM2) | [HOLD] | 03 §4 |
 | 보호 계정 | 🔧 **G-07** | `reserved_slot_ids:('HostBootStrap',)` 제거 → **`HostBootstrapAccount == true` Resource Property 를 최우선 근거**로 `protected` 분류. **XCC2 에도 존재**. 조회·진단 유지, candidate 에서만 제외. username 충돌 시 `protected_conflict` → Write 0. TSM IPMI ID 1 은 Family 보조 근거 |
-| `full_body_patch` | ✅ 유지 | XCC 권한 cache 손상 사이트 실측 반례 보존 (G-10) |
+| `full_body_patch` | [OK] 유지 | XCC 권한 cache 손상 사이트 실측 반례 보존 (G-10) |
 
 ## 6.4 Cisco
 
 | Family | 조치 | 내용 |
 |---|---|---|
 | ➕ `cisco_cimc3_instance_post` | ➕ | `create_uri: account_instance`, RoleId `admin` (G-14) |
-| `cisco_cimc_collection_post_id` | ✅ | `admin` + 명시 Id. **`id_range:(2,16)` half-open = 2..15 정합 — 변경 없음**(G-23 삭제) |
+| `cisco_cimc_collection_post_id` | [OK] | `admin` + 명시 Id. **`id_range:(2,16)` half-open = 2..15 정합 — 변경 없음**(G-23 삭제) |
 | `cisco_bmc_dynamic` | 🔧 props | **PCR `read_only`(existing)**, AccountTypes `verify_only`, Locked `writable` |
-| `generic`(X-Series) | ⏸ | 04 §24 |
-| Create 후 확정 | ✅ | Collection 재열거 + username exact match (:6263-6273) |
+| `generic`(X-Series) | [HOLD] | 04 §24 |
+| Create 후 확정 | [OK] | Collection 재열거 + username exact match (:6263-6273) |
 
 ## 6.5 Supermicro
 
 | Family | 조치 | 내용 |
 |---|---|---|
-| `supermicro_legacy` | ✅ + 🔧 props | `create_uri: accounts_collection`. Existing Password Repair 는 `unverified` 표기 |
+| `supermicro_legacy` | [OK] + 🔧 props | `create_uri: accounts_collection`. Existing Password Repair 는 `unverified` 표기 |
 | `supermicro_split_account` | 🔧 **§3.5 결정 규칙** | Generation+Firmware 를 **장비값**으로 확정하면 `create_uri = account_service_root` **실적용**(evidence `documented`). 확정 불가면 `accounts_collection` 하나만 사용 + `unverified` + one-shot. **양방향 Write fallback 절대 금지** |
 | Superchip 경계 | ➕ **G-19** | `_fw_at_least(firmware, 1, 4)` |
 | Presence | 🔧 **G-11** | username 존재만으로 healthy 금지 — AccountTypes 에 Redfish 포함 확인 |
-| `generic`(X9) | ⏸ | 05 §32 |
+| `generic`(X9) | [HOLD] | 05 §32 |
 
 ## 6.6 Inspur
 
 | Family | 조치 | 내용 |
 |---|---|---|
-| `inspur_m6` | ✅ **동작 유지** | Create = **POST Collection, If-Match 없음**. Repair = **PATCH Instance + GET ETag → If-Match**. 412 → 동일 URI·동일 payload·새 ETag **1회**. `Oem.Public.Status==0`. **이미 공식 계약과 일치** |
+| `inspur_m6` | [OK] **동작 유지** | Create = **POST Collection, If-Match 없음**. Repair = **PATCH Instance + GET ETag → If-Match**. 412 → 동일 URI·동일 payload·새 ETag **1회**. `Oem.Public.Status==0`. **이미 공식 계약과 일치** |
 | `inspur_m6` 표현 | 🔧 **G-22** | `etag_required` boolean → `if_match: {'create': False, 'repair': True}` (동작 변화 0) |
 | `inspur_m6` props | 🔧 | PCR `unverified`, Locked `unverified`, AccountTypes `unverified` (06 §16/§17/§18) |
-| `generic`(M5/M7) | ⏸ | 06 §24/§25 |
+| `generic`(M5/M7) | [HOLD] | 06 §24/§25 |
 
 ## 6.7 Huawei
 
 | 항목 | 조치 | 내용 |
 |---|---|---|
-| `huawei_ibmc` | ✅ | Collection POST + Instance PATCH |
-| Locked | ✅ | **제거하지 않는다.** `writable` 표기 + 실제 `locked=true` 일 때만 전송 |
+| `huawei_ibmc` | [OK] | Collection POST + Instance PATCH |
+| Locked | [OK] | **제거하지 않는다.** `writable` 표기 + 실제 `locked=true` 일 때만 전송 |
 | Redfish Login Interface | ➕ **G-05** | **읽기·진단만.** `login_interface` 로 관측값 보존, "계정 정상인데 표준 인증 실패" 시 원인 후보 노출. **repair OEM payload 는 근거 없어 구현하지 않는다**(07 §12/§37) |
-| AccountTypes / PCR | ✅ | 미전송 유지 |
+| AccountTypes / PCR | [OK] | 미전송 유지 |
 
 ## 6.8 Fujitsu
 
@@ -499,7 +499,7 @@ Vendor × Family 매트릭스, `CURRENT_STATE.md`,
 |---|---|---|
 | `generic_collection_post` (S4/S5/S6) | 🔧 **G-02** | `legacy_post_retry` 제거 → one deterministic write / no fallback |
 | RoleId | 🔧 **G-17** | `RedfishAdmin` ↔ `ManagerAccount.RoleId` literal 혼동 금지. 미지원 시 진단 |
-| Locked/Enabled/PCR/AccountTypes/ETag | ⏸ | 전부 `unverified` → **자동 Write 0** |
+| Locked/Enabled/PCR/AccountTypes/ETag | [HOLD] | 전부 `unverified` → **자동 Write 0** |
 | 구현 vs 조사 분리 | 📋 | **구현**: fallback 제거 + RoleId 진단 + Generation/Firmware 근거 보존. **조사**: 2026 `iRMC RESTful API Specification pack`(13.15MB) 원문 + PRIMERGY read-only mirror. 확보 전 Family 추가 없음 |
 
 ## 6.9 Quanta / QCT
@@ -507,9 +507,9 @@ Vendor × Family 매트릭스, `CURRENT_STATE.md`,
 | Family | 조치 | 내용 |
 |---|---|---|
 | ➕ `qct_legacy_redfish` / `qct_modern_redfish` / `qct_inhouse_openbmc` | ➕ 라벨 | 동작 = 현행 generic. **AST2600 만으로 OpenBMC 판정 금지. QCT Inhouse ≠ upstream master** |
-| AccountTypes | ✅ **금지 고정** | `["Redfish"]` generic 전송 금지(StrictAccountTypes). 현재 미전송을 **테스트로 고정** |
+| AccountTypes | [OK] **금지 고정** | `["Redfish"]` generic 전송 금지(StrictAccountTypes). 현재 미전송을 **테스트로 고정** |
 | PCR | 🔧 **G-02** | generic retry 제거 |
-| Locked / ETag | ⏸ | `unverified` — generic 적용 금지 |
+| Locked / ETag | [HOLD] | `unverified` — generic 적용 금지 |
 | Auth 진단 | ➕ **G-18** | `HTTPBasicAuth` / `Oem.OpenBMC.AuthMethods` 읽기 |
 
 ---

@@ -78,7 +78,7 @@ redfish-gather/tasks/normalize_standard.yml:
 | HPE     | StaticNameServers 응답 시 채워짐 | 기존 PowerCapacityWatts 응답 시 그대로 | 일부 펌웨어 component "" 응답 가능 — 필터 |
 | Lenovo  | NameServers 응답 시 채워짐 | 기존 PowerCapacityWatts 응답 시 그대로 | XCC firmware 모두 정상 |
 | Supermicro | NameServers 응답 시 채워짐 | 기존 PowerCapacityWatts 응답 시 그대로 | AMI MegaRAC 정상 |
-| Cisco   | ✅ 빈 배열 → ["10.100.13.9"] | ✅ null → 770/1540 | ✅ slot-1/2 N/A 제거 (7→5) |
+| Cisco   | [OK] 빈 배열 → ["10.100.13.9"] | [OK] null → 770/1540 | [OK] slot-1/2 N/A 제거 (7→5) |
 
 코드 변경은 모두 fallback (primary 키 응답 시 기존 동작 유지). primary 응답하는 vendor는 영향 없음.
 

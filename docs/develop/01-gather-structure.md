@@ -41,7 +41,7 @@ server-exporter 는 한 서버를 3가지 시점으로 본다.
         [ 호출자가 console log 파싱 또는 artifact 로 수령 ]
 ```
 
-핵심: **호출자는 IP 만 넘긴다.** 자격증명은 Ansible vault 에서 자동 로딩되고, 벤더는 BMC 가 보고하는 manufacturer 로 자동 감지된다.
+핵심: **호출자는 IP 만 넘긴다.** 자격증명은 Ansible vault 에서 자동 로딩되고 벤더는 BMC 가 보고하는 manufacturer 로 자동 감지된다.
 
 ---
 
@@ -135,7 +135,7 @@ Linux 는 환경에 따라 두 가지 모드로 동작한다.
 | Python 모드 | Python 3.9+ 설치됨 | setup / shell / command / getent 풀가동 |
 | Raw fallback | Python 미설치 또는 3.8 이하 | `raw` 모듈만 + 컨트롤러에서 Jinja2 파싱 |
 
-`SE_FORCE_LINUX_RAW_FALLBACK=true` 로 강제 raw 모드도 가능 (디버깅용). 6개 섹션 모두 raw 모드로도 수집 가능하며, 출력 JSON 형식은 100% 동일하다.
+`SE_FORCE_LINUX_RAW_FALLBACK=true` 로 강제 raw 모드도 가능 (디버깅용). 6개 섹션 모두 raw 모드로도 수집 가능하며 출력 JSON 형식은 100% 동일하다.
 
 ---
 
@@ -162,7 +162,7 @@ ESXi 는 `community.vmware` 컬렉션 + `pyvmomi` 9.0.0 의존. Agent 환경 설
 
 ## 6. redfish-gather
 
-세 채널 중 가장 단계가 많다. Redfish 는 무인증 ServiceRoot 호출로 벤더를 먼저 알아내고, 그 결과로 자격증명을 동적으로 로드한다.
+세 채널 중 가장 단계가 많다. Redfish 는 무인증 ServiceRoot 호출로 벤더를 먼저 알아내고 그 결과로 자격증명을 동적으로 로드한다.
 
 ```text
 site.yml (Play 1개)

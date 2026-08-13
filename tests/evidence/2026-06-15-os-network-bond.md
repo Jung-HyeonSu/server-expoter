@@ -111,6 +111,6 @@ parsed → VLAN vlan_id=100 vlan_parent=btest IP=198.51.100.10 / bond btest IP=1
 
 ## 5. 알려진 한계
 
-- **Windows**: 실 Windows 호스트 미제공 → LBFO/SET 수집은 코드 + 단위 테스트(realistic fixture)만 검증, 실장비 미검증. ⚠️ (후속: Windows Teaming 실장비 검증 필요)
+- **Windows**: 실 Windows 호스트 미제공 → LBFO/SET 수집은 코드 + 단위 테스트(realistic fixture)만 검증, 실장비 미검증. [WARN] (후속: Windows Teaming 실장비 검증 필요)
 - **python_ok 경로**: bond 부분(collector+filter)은 실 호스트 출력으로 검증. base interface 부분은 ansible setup fact 재구성으로 렌더(실 ip/sysfs 동일 소스). 전체 ansible-playbook 실행은 lab 의 호스트에 ansible 미설치로 미수행 → Jenkins 실 빌드 권장 (후속).
 - 802.3ad 의 per-slave state 는 `ip -d link`(전 모드 권위) 우선. `ip -d` 미지원 구형 + 802.3ad 조합에서는 /proc 에 "Currently Active Slave" 부재로 state 부정확 가능(드문 graceful 강등).

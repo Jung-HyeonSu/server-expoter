@@ -17,7 +17,7 @@ vSphere API 가 디스크 식별자를 노출하는지 실 ESXi 로 확인 → �
 - `collect_disks.yml` + `site.yml` 배선 + `normalize_storage.yml` physical_disks 채움.
 - field_dictionary: serial channel `[redfish,os]`→`[redfish,os,esxi]`, wwn `[os]`→`[os,esxi]`, id help 갱신.
 
-## 실측 검증 (✅)
+## 실측 검증 ([OK])
 
 - **로컬 pyvmomi** (esxi01 10.100.64.1 + esxi02 10.100.64.2, root, ESXi 7.0.3): 각 2 disks, serial+wwn(naa) 실값.
 - **gatherESXi #3 SUCCESS** (esxi02, GitLab main 빌드) — physical_disks 2개, **gather 출력 == 로컬 pyvmomi 정확 일치**:

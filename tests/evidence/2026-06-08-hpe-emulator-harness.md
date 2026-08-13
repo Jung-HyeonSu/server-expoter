@@ -44,19 +44,19 @@ HBA/FC 스토리지 경로는 실장비 검증 0. 에뮬레이터로 이 코드 
 에뮬레이터 **자체 버그** — `api_emulator/loader.py:740 randomize()` 에서 WWN
 `KeyError: '1'` 로 startup crash (DL360_Gen12 mockup 한정). 우리 코드 무관. 캡처 제외.
 
-## 검증 (✅ 확인층)
+## 검증 ([OK] 확인층)
 
-- ✅ **에뮬레이터 기동 확인**: `curl -k https://127.0.0.1:443/redfish/v1/` →
+- [OK] **에뮬레이터 기동 확인**: `curl -k https://127.0.0.1:443/redfish/v1/` →
   `Vendor: HPE`, `Oem keys: ['Hpe']`, Systems/Managers 링크 노출.
-- ✅ **골든 품질**: DL380a 산출 — `processors[0].model = INTEL(R) XEON(R) GOLD 6530`,
+- [OK] **골든 품질**: DL380a 산출 — `processors[0].model = INTEL(R) XEON(R) GOLD 6530`,
   `memory.slots` RDIMM 32768MB ECC, `storage.controllers`+`volumes`, `bmc.firmware_version
   = iLO 6 v1.66`, `probe_facts {firmware_hint:1.66, manager_type:iLO 6}`.
-- ✅ **오프라인 보장**: 에뮬레이터 컨테이너 중지(`docker rm -f`) 후
+- [OK] **오프라인 보장**: 에뮬레이터 컨테이너 중지(`docker rm -f`) 후
   `pytest tests/integration/test_hpe_emulator_replay.py` → **26 passed, 1 skipped**
   (live 스모크는 SE_EMULATOR_LIVE 미설정으로 skip). 네트워크 호출 0.
-- ✅ **전체 회귀 무영향**: `pytest tests/ --ignore=tests/e2e_browser` →
+- [OK] **전체 회귀 무영향**: `pytest tests/ --ignore=tests/e2e_browser` →
   **797 passed, 1 skipped** (10.3s). 기존 771 → +26 신규.
-- ✅ **py_compile**: 신규 4 파일 (emulator_harness/capture_emulator/test_hpe_emulator_replay/conftest) PASS.
+- [OK] **py_compile**: 신규 4 파일 (emulator_harness/capture_emulator/test_hpe_emulator_replay/conftest) PASS.
 
 ## 산출물
 
@@ -95,16 +95,16 @@ golden 재생성.
   (실장비 380 + 에뮬레이터 15, rule 25 R7-B 라벨), test 48파일/445→49파일/462. PROJECT_MAP
   fingerprint `--update`.
 
-### 견고화 후 검증 (✅ 확인층)
-- ✅ `pytest tests/integration/` → **44 passed / 4 skipped** (live 1 + FC-skip 3). 가드 self-test 통과.
-- ✅ 전체 `pytest tests/ --ignore=tests/e2e_browser` → **815 passed / 4 skipped** (10.5s). 무회귀.
-- ✅ py_compile 4 파일 / git add --renormalize / fingerprint drift 0.
+### 견고화 후 검증 ([OK] 확인층)
+- [OK] `pytest tests/integration/` → **44 passed / 4 skipped** (live 1 + FC-skip 3). 가드 self-test 통과.
+- [OK] 전체 `pytest tests/ --ignore=tests/e2e_browser` → **815 passed / 4 skipped** (10.5s). 무회귀.
+- [OK] py_compile 4 파일 / git add --renormalize / fingerprint drift 0.
 
 ### 검토에서 의도적으로 보류한 항목 (검증자 판정)
 - **Jenkins CI 편입** (medium): Jenkinsfile 은 보호 경로(rule 80, CLAUDE.md 절대금지 #2) →
   자율 편집 금지. 사용자 승인 후 진행 (NEXT_ACTIONS 등재).
-- **CURRENT_STATE/evidence ✅ 이모지** (uncertain): 전역 verification.md 가 ✅/⚠️/❌ 3상태를
-  강제하고 CURRENT_STATE 가 이미 ✅ 컨벤션 → 부분 치환은 파일 내부 일관성 악화. 거버넌스
+- **CURRENT_STATE/evidence [OK] 이모지** (uncertain): 전역 verification.md 가 [OK]/[WARN]/[NG] 3상태를
+  강제하고 CURRENT_STATE 가 이미 [OK] 컨벤션 → 부분 치환은 파일 내부 일관성 악화. 거버넌스
   결정(ADR) 전까지 현 상태 유지.
 - **main() list(set()) → sorted()** (info): 프로덕션 cosmetic 변경 + 게이트 유발 → 보류.
 

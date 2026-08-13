@@ -50,14 +50,14 @@ IP 를 `bonds[].addresses` 로 mirror → interfaces ↔ bonds 자동 일관.
 | `tests/fixtures/os/net/` | `rhel810_addr.txt`·`rhel96_addr.txt` 신규(실 ip -j 캡처), `rhel810_rawpath_stdout.txt` ADDRJSON append, `rhel810/rhel96_bond_network.expected.json` 재생성 |
 | `docs/develop/05-field-mapping.md`, `docs/contract/03-fields.md` | 주소 source 매핑 + 6.4.2 스키마 문서 |
 
-## 5. 테스트 결과 (✅ 확인함)
+## 5. 테스트 결과 ([OK] 확인함)
 
 - `pytest tests/unit tests/regression tests/e2e` → **1093 passed, 1 skipped, 9 xfailed, 0 failed**
 - `tests/unit/test_network_topology.py tests/unit/test_os_network_render.py` → 62 passed
 - `validate_field_dictionary.py` → PASS (0 failed) · `output_schema_drift_check.py` → exit 0 (sections=11, paths=160)
 - `verify_vendor_boundary.py` → exit 0 · `verify_harness_consistency.py` → exit 0
 
-## 6. 실장비 검증 (✅ 확인함 — live SSH)
+## 6. 실장비 검증 ([OK] 확인함 — live SSH)
 
 업데이트된 `_l_net_collector` 를 161/165 에 SSH 로 직접 실행 → 실 stdout 을 실제 필터 파이프라인
 (`merge_linux_addresses`→`build_linux_network`)에 투입한 결과:

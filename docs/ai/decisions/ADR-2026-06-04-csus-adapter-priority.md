@@ -48,12 +48,12 @@ lab 부재(baseline 은 MOCK) → 사용자 실측이 spec/mock 보다 우선(ru
 
 **무회귀 검증(실 코드/시뮬레이션)**: 정상 ProLiant Gen11→iLO6/`hp`, Gen12→iLO7/`hp`, empty facts→iLO7(불변), Dell→idrac9/`dell`. envelope 13 필드 shape 불변.
 
-## 5. 검증 (✅ 확인한 층 / ❌ 못 한 층 — 정직 보고)
+## 5. 검증 ([OK] 확인한 층 / [NG] 못 한 층 — 정직 보고)
 
-- ✅ pytest **762 pass**(e2e_browser 2 제외 — 내부망 Jenkins 환경 제약) / vendor-boundary PASS / harness-consistency PASS / py_compile PASS.
-- ✅ 실 adapter_common + 실 adapter YAML 시뮬레이션: model=CSUS/fw="" → `hpCsus`(post-B2), 무회귀 대조군 통과.
-- ✅ 실 `gather_system`(monkeypatch _get): System null → Chassis 폴백으로 hardware.vendor/model 채움.
-- ❌ **실 CSUS 장비 end-to-end**: 장비/raw JSON 부재 → 이 환경에서 확인 불가. 사용자 사이트 재실행으로 확인 필요.
+- [OK] pytest **762 pass**(e2e_browser 2 제외 — 내부망 Jenkins 환경 제약) / vendor-boundary PASS / harness-consistency PASS / py_compile PASS.
+- [OK] 실 adapter_common + 실 adapter YAML 시뮬레이션: model=CSUS/fw="" → `hpCsus`(post-B2), 무회귀 대조군 통과.
+- [OK] 실 `gather_system`(monkeypatch _get): System null → Chassis 폴백으로 hardware.vendor/model 채움.
+- [NG] **실 CSUS 장비 end-to-end**: 장비/raw JSON 부재 → 이 환경에서 확인 불가. 사용자 사이트 재실행으로 확인 필요.
 
 ## 6. 미해결 (NEXT_ACTIONS 등재 — rule 96 R1-C)
 
@@ -94,10 +94,10 @@ top-level `normalize_standard.yml` 이 **이미** summary fallback 보유:
 - `memory.slots[]` / `storage.physical_disks[]` / `network.interfaces[]` 의 top-level **상세**: partition System drill-in 부재라 summary 로 대체 불가. 데이터는 `data.multi_node` (B2 활성) 또는 Chassis/NetworkAdapters 에 있을 수 있음. **사용자 newer 펌웨어가 drill-in 을 노출하는지는 실 envelope 확인 필요** (전신 캡처는 미노출, 사용자 장비는 ServiceRoot.Product 노출하는 신 펌웨어라 다를 수 있음).
 
 ### 검증
-- ✅ AI 가 raw JSON 2개 직접 fetch (root.json/system.json) — subagent 보고와 일치 확인.
-- ✅ `cpu.model` fallback jinja2 3.1.6 render: CSUS→summary.Model / 정상→per-proc 우선 / 둘다없음→None.
-- ✅ pytest `test_csus_adapter_priority.py` 15 (cpu.model 2 guard 포함).
-- ❌ 실 CSUS 장비 end-to-end (cpu.model + multi_node 채워지는지): 장비 부재 — 사용자 확인 필요.
+- [OK] AI 가 raw JSON 2개 직접 fetch (root.json/system.json) — subagent 보고와 일치 확인.
+- [OK] `cpu.model` fallback jinja2 3.1.6 render: CSUS→summary.Model / 정상→per-proc 우선 / 둘다없음→None.
+- [OK] pytest `test_csus_adapter_priority.py` 15 (cpu.model 2 guard 포함).
+- [NG] 실 CSUS 장비 end-to-end (cpu.model + multi_node 채워지는지): 장비 부재 — 사용자 확인 필요.
 
 ## 9. Amendment 2026-06-04 (2) — CSUS-3200 전용 web 증거 (check_redfish 소스) + A1b model fallback
 
@@ -116,6 +116,6 @@ top-level `normalize_standard.yml` 이 **이미** summary fallback 보유:
 `gather_system` 에 `product_hint=ServiceRoot.Product` 전달 → `System.Model` 부재 시 **ServiceRoot.Product 우선 fallback** (Chassis.Model 보다 우선 — check_redfish 동일 패턴). 사용자 CSUS 는 ServiceRoot.Product="Compute Scale-up Server 3200" 노출 → 깨끗한 `hardware.model` (Chassis 의 "... Base" 접미사 회피). Additive — 정상 vendor 는 System.Model 보유 → 미발동.
 
 ### 검증
-- ✅ pytest 766 / test_csus_adapter_priority.py 17 (A1b 2 추가) / vendor-boundary PASS / py_compile PASS.
-- ✅ A1b: System.Model None + product_hint → model=product_hint (Chassis 보다 우선) / 정상 Dell System.Model 존재 → product_hint(BMC명) 무시.
-- ❌ 실 CSUS 장비: drill-in 실제 노출 여부 + cpu/memory/storage 채워짐 — 사용자 envelope 필요.
+- [OK] pytest 766 / test_csus_adapter_priority.py 17 (A1b 2 추가) / vendor-boundary PASS / py_compile PASS.
+- [OK] A1b: System.Model None + product_hint → model=product_hint (Chassis 보다 우선) / 정상 Dell System.Model 존재 → product_hint(BMC명) 무시.
+- [NG] 실 CSUS 장비: drill-in 실제 노출 여부 + cpu/memory/storage 채워짐 — 사용자 envelope 필요.

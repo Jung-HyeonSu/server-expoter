@@ -169,7 +169,7 @@ baseline 갱신 1건 — `tests/fixtures/redfish/dmtf_rackmount1/expected_output
 
 - unit 1186 / e2e 416 / integration 200 / regression 169 passed. 3 게이트 PASS.
 - Dell 기준선 3종만 갱신(전부 재생 산출값), 비-Dell baseline 9종 + 실미러 골든 3종 무변경.
-- ⚠ ansible 부재로 실제 playbook end-to-end envelope 은 미검증 (lab 이월).
+- [WARN] ansible 부재로 실제 playbook end-to-end envelope 은 미검증 (lab 이월).
 
 ### 관련
 

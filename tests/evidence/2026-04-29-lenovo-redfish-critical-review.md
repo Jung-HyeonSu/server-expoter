@@ -85,7 +85,7 @@ redfish-gather/tasks/normalize_standard.yml:
 |---|---|---|---|---|---|
 | Dell    | 영향 없음 (`_extract_oem_dell` 별도, ProductName 사용 안 함) | 영향 없음 (Dell 분기 없음 — 기존 oem dict 비었음) | StorageControllers[0].Name 응답 시 정확한 모델명 채워짐 | 'ethernet' 기본값 (정확) | NetworkPortCount > 0 응답 시 영향 없음 |
 | HPE     | 영향 없음 (`_extract_oem_hpe` 별도) | 영향 없음 (HPE 분기 기존 유지 — `ilo_version`) | 동일 | 동일 | 동일 |
-| Lenovo  | ✅ null → "ThinkSystem SR650 V2" | ✅ {} → {release_name} | ✅ "RAID Storage" → 실 모델명 | ✅ null → ethernet | ✅ 4건 → 1건 |
+| Lenovo  | [OK] null → "ThinkSystem SR650 V2" | [OK] {} → {release_name} | [OK] "RAID Storage" → 실 모델명 | [OK] null → ethernet | [OK] 4건 → 1건 |
 | Supermicro | 영향 없음 | 영향 없음 (Supermicro 분기 기존 유지 — `bmc_ip`) | 동일 | 동일 | 동일 |
 | Cisco   | 영향 없음 (`_OEM_EXTRACTORS` 미등록 — strategy=standard_only) | 영향 없음 | 동일 | 동일 | 동일 |
 

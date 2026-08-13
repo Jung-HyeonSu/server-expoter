@@ -63,7 +63,7 @@ errors: [{"section":"network_adapters",
 - vault `dell_fallback_2` 계정으로 ServiceRoot/System/Manager/Chassis GET 시도 → **전부 401**,
   이후 **연결 강제 종료(WinError 10054, IP 차단 추정)**.
 - **즉시 중단** — BMC/AD lockout 위험(AUDIT-2026-05-29 [HIGH]). 재시도 안 함.
-- 결과: **400 의 근본 사유(미구현 / 라이선스 / 기타)는 ❌ 미확정**. fix C 적용 후 다음 빌드의
+- 결과: **400 의 근본 사유(미구현 / 라이선스 / 기타)는 [NG] 미확정**. fix C 적용 후 다음 빌드의
   `errors[].detail` 로 확인 필요.
 - 부수: 복호화한 vault 평문 사본은 검증 직후 삭제함.
 
@@ -90,7 +90,7 @@ A 에서 `unsupported` 까지 제외한 게 핵심 — 안 하면 B 적용 후 `
 | YAML 파싱 | OK | `yaml.safe_load(normalize_standard.yml)` |
 | baseline 영향 | 0 | 10종 전부 `sections.network=success` 유지 (변경 전후 동일) |
 
-## 7. 미검증 (⚠️ — 이 환경 제약)
+## 7. 미검증 ([WARN] — 이 환경 제약)
 
 | 항목 | 사유 | 확인 방법 |
 |---|---|---|
@@ -172,7 +172,7 @@ stderr 를 표준 경로에서 걸러냄). 즉 진단 신호가 완전히 사라
 | back-compat | `test_system_uri_absent_keeps_single_path` (구 호출부) / `test_duplicate_uri_not_requested_twice` |
 | 게이트 | harness_consistency / vendor_boundary / output_schema_drift / envelope_change / jinja_compile / additive_only / status_logic / docs20_sync / adapter_origin **전부 rc=0** |
 
-## 12. 남은 미검증 (⚠️)
+## 12. 남은 미검증 ([WARN])
 
 | 항목 | 확인 방법 |
 |---|---|
@@ -235,7 +235,7 @@ MAC 4개가 `data.network.interfaces[]` 와 정확히 일치 → **Systems 경�
 | CSUS 보존 | `test_csus_wwpn_only_still_fc` + 실 CSUS 미러 replay 통과 |
 | 진짜 FC 보존 | 실 Dell R740 미러(FC.Slot.1/7, `NetDevFuncType=FibreChannel`) replay 통과 |
 
-**⚠️ 미검증**: 사이트에서 `storage.hbas` 가 실제로 `[]` 가 되는지 → 다음 빌드 확인 필요.
+**[WARN] 미검증**: 사이트에서 `storage.hbas` 가 실제로 `[]` 가 되는지 → 다음 빌드 확인 필요.
 
 ---
 
@@ -277,7 +277,7 @@ MAC 4개가 `data.network.interfaces[]` 와 정확히 일치 → **Systems 경�
   **orphan 경로 산출물**. orphan 분류는 포트 컨텍스트가 전무해 NDF 자체 신호에만 의존한다.
 - 부모 포트 상속 fix(#6) 후 **8/8 `hbas=0`**.
 
-**❌ 미확정**: 왜 그 2대만 orphan 분류에서 Ethernet 신호를 못 얻었는지(= NDF 의 `NetDevFuncType` /
+**[NG] 미확정**: 왜 그 2대만 orphan 분류에서 Ethernet 신호를 못 얻었는지(= NDF 의 `NetDevFuncType` /
 `Links` 가 나머지 6대와 어떻게 다른지). 펌웨어가 아니라면 호스트별 NIC personality(NPAR/FCoE offload)
 설정 차이가 후보지만 **raw 미확보라 추정에 불과**하다 (rule 25 R7-B — 추정을 실측으로 격상 금지).
 → 확정하려면 `capture-site-fixture` 로 그 2대의 NDF raw 캡처 필요. NEXT_ACTIONS 등재.
@@ -292,7 +292,7 @@ join 시도 (b) NDF.Id == Port.Id             → 불일치 ("...1-1-1" != "...1
 → 포트 컨텍스트 전무 + NDF 에 Ethernet 신호 없음 → 최후 WWPN 휴리스틱 → FibreChannel
 ```
 
-**⚠️ `NetDevFuncType` 이 정확히 부재인지 다른 값인지는 raw 없이 확정 불가** — 다만 `FCoE`/`FibreChannel`
+**[WARN] `NetDevFuncType` 이 정확히 부재인지 다른 값인지는 raw 없이 확정 불가** — 다만 `FCoE`/`FibreChannel`
 은 아니다(그랬다면 port_type 이 `FCoE` 이거나 강등 fix 이전부터 정상 FC 였을 것). 아래 fix 는
 어느 경우든 부모 포트의 Ethernet 신호로 덮으므로 두 가능성 모두 커버한다.
 
@@ -309,4 +309,4 @@ join 시도 (b) NDF.Id == Port.Id             → 불일치 ("...1-1-1" != "...1
 | 가드 유효성 | 상속을 제거하면 **1 failed** |
 | CSUS / R740 실미러 | replay 통과 (port-less NDF · 명시 FC 보존) |
 
-**⚠️ 미검증**: .52 / .152 에서 실제로 `hbas` 가 `[]` 가 되는지 → 다음 빌드.
+**[WARN] 미검증**: .52 / .152 에서 실제로 `hbas` 가 `[]` 가 되는지 → 다음 빌드.

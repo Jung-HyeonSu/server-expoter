@@ -44,9 +44,9 @@
 
 ## 사용자 제약 ("키 늘릴 이유 없음") 준수 검증
 
-- ✅ envelope 신규 키 **0건**. `_hoist_oem_extras` 가 target dict 의 **기존 키만** 채움 — 모르는 `_*` key 는 silently drop (forward-compat)
-- ✅ 새 키 추가 후보였던 BUG 들 (TPM vendor / BootProgress.LastBootTimeSeconds / BMC NIC gateway / subnet_mask) — 사용자 의도대로 **모두 제외**
-- ✅ `_network_meta` (cisco-review 신설), `_bios_date` (이번 hpe-review 신설) 등 internal 임시 키는 envelope 노출 전 모두 scrub:
+- [OK] envelope 신규 키 **0건**. `_hoist_oem_extras` 가 target dict 의 **기존 키만** 채움 — 모르는 `_*` key 는 silently drop (forward-compat)
+- [OK] 새 키 추가 후보였던 BUG 들 (TPM vendor / BootProgress.LastBootTimeSeconds / BMC NIC gateway / subnet_mask) — 사용자 의도대로 **모두 제외**
+- [OK] `_network_meta` (cisco-review 신설), `_bios_date` (이번 hpe-review 신설) 등 internal 임시 키는 envelope 노출 전 모두 scrub:
   - `_network_meta` → `_rf_d_bmc_clean` 단계에서 `bmc` dict 출력 시 제거
   - `_bios_date` → `_hoist_oem_extras` 가 hoist 후 OEM dict 에서 제거
 

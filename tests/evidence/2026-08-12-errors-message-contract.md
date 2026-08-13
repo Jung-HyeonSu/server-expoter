@@ -172,7 +172,7 @@
 
 - **실장비 / 실 Jenkins 실행 0건.** 이 환경에 `ansible-playbook` 이 없다. 모든 Ansible 검증은
   production YAML 에서 템플릿을 **추출해 Jinja 로 렌더**하는 방식이며, 실제 플레이북 실행이 아니다.
-  따라서 다음은 `⚠️ 했지만 미확인` 이다:
+  따라서 다음은 `[WARN] 했지만 미확인` 이다:
   - `ansible-playbook --syntax-check` (3채널)
   - 실제 BMC / ESXi / OS 대상 end-to-end envelope
   - Portal 화면에 실제로 어떤 문장이 뜨는지

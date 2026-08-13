@@ -44,18 +44,18 @@ SSH(paramiko) 로 96/161/165 의 lsblk `-o SERIAL,WWN` + udevadm 원천을 직�
 - 161/165 의 null 은 원천(lsblk+udev)이 모두 빈 값이라 정상 — 코드 버그 아님.
 - 참고: 96 sda 는 lsblk WWN(full 32hex `0x6f4ee080773b6500690a989a64edfae0`) 과 udev ID_WWN(short 16hex `0x6f4ee080773b6500`) 이 다름(util-linux #321 RAID short/full). 본 구현은 **lsblk 우선**이라 full WWN 채택(더 구체적).
 
-## 확인 사항 (✅)
+## 확인 사항 ([OK])
 
-- ✅ `serial`/`wwn` 키가 physical_disks 에 emit 됨 (build #41/#42 console OUTPUT).
-- ✅ **python_ok 경로 + raw fallback 경로 양쪽** 정상 (161=raw, 119/165=python).
-- ✅ 3대 빌드 SUCCESS — lsblk `-o ...,SERIAL,WWN` + udevadm 보강 task 가 빌드 깨뜨리지 않음.
-- ✅ virtio/VMware 가상디스크 → `serial=null, wwn=null` (연구 결과대로 정상, 누락 아님).
-- ✅ pytest 1254 passed (회귀 0), field_dictionary validator PASS.
+- [OK] `serial`/`wwn` 키가 physical_disks 에 emit 됨 (build #41/#42 console OUTPUT).
+- [OK] **python_ok 경로 + raw fallback 경로 양쪽** 정상 (161=raw, 119/165=python).
+- [OK] 3대 빌드 SUCCESS — lsblk `-o ...,SERIAL,WWN` + udevadm 보강 task 가 빌드 깨뜨리지 않음.
+- [OK] virtio/VMware 가상디스크 → `serial=null, wwn=null` (연구 결과대로 정상, 누락 아님).
+- [OK] pytest 1254 passed (회귀 0), field_dictionary validator PASS.
 
 ## 채널별 현황 (2026-06-22 재확인)
 
-- **OS Linux**: ✅ python_ok + raw fallback + **baremetal 실값**(#43) + VM null 모두 검증. false-null 없음.
-- **OS Windows**: ⚠️ live 미실행 — gatherOS 에 Windows 타깃 미제공. windows_baseline serial/wwn=null 은
+- **OS Linux**: [OK] python_ok + raw fallback + **baremetal 실값**(#43) + VM null 모두 검증. false-null 없음.
+- **OS Windows**: [WARN] live 미실행 — gatherOS 에 Windows 타깃 미제공. windows_baseline serial/wwn=null 은
   "VMware Virtual disk" 클래스 추론값. 실 Windows 확보 시 serial hex/swap 정규화 + WWN UniqueIdFormat 실측 필요.
 - **Redfish**: 코드 변경 없음. 이미 `physical_disks[].serial` emit (5 vendor baseline 실값: dell `S5CNNA0MC03697` 등).
   `wwn` 은 미수집. gatherRedfish live 는 본 세션 미실행(Jenkins API 간헐 빈응답 + BMC 타깃 미확정).
