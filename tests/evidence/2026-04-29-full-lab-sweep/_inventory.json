@@ -8,7 +8,7 @@
     ],
     "jenkins_job": "hshwang-gather",
     "jenkins_url": "http://10.100.64.152:8080",
-    "loc": "ich",
+    "loc": "ic",
     "agent": "jenkins-agent-ops (10.100.64.154)"
   },
   "redfish": {

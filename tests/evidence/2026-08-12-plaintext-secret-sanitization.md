@@ -44,11 +44,11 @@ digest 는 원문을 복원할 수 없으므로 이 문서와 게이트 코드�
 | git HPE/Lenovo recovery | `2b3b6862` | 14 | `docs/ai` 6, `tests/evidence` 5, 테스트 코드 2, `scripts` 1 | 아니오 | 예 |
 | Cisco recovery (전 Location) | `9477272a` | 8 | `docs/ai` 4, `tests/evidence` 2, `scripts` 1, 테스트 코드 1 | 아니오 | 예 |
 | 표준 계정 gen2 (회전됨) | `9b87f708` | 8 | `docs/ai` 4, `schema` 2, `tests/evidence` 1, 테스트 코드 1 | 아니오 | 예 |
-| ich/yi Dell recovery | `f28b309b` | 7 | `docs/ai` 3, 테스트 코드 2, `tests/evidence` 2 | 아니오 | 예 |
+| ic/yi Dell recovery | `f28b309b` | 7 | `docs/ai` 3, 테스트 코드 2, `tests/evidence` 2 | 아니오 | 예 |
 | 과거 자격 (회전됨) | `37a1db6b` | 7 | `docs/ai` 3, 테스트 코드 2, `tests/evidence` 2 | 아니오 | 예 |
 | 표준 계정 gen3 (직전 세대) | `a109e369` | 3 | `docs/ai` 3 | 아니오 | 예 |
 | 과거 Dell recovery | `1d8fe022` | 3 | `docs/ai` 2, `tests/evidence` 1 | 아니오 | 예 |
-| chj/ich/yi OS 계정 | `f3e3f831` | 2 | `docs/ai` 2 | 아니오 | 예 |
+| chj/ic/yi OS 계정 | `f3e3f831` | 2 | `docs/ai` 2 | 아니오 | 예 |
 
 `runtime_required` 가 전부 **아니오** 인 근거: 운영 경로는 자격증명을 오직
 **암호화된 `vault/**`** 에서만 읽는다. Vault master 는 Jenkins credential 로 주입돼
@@ -151,11 +151,11 @@ SECRET_VALUE_PATTERNS = tuple(re.compile(p) for p in (
 | digest8 | 현재 유효한가 | rotation 필요성 | 영향 범위 |
 |---|---|---|---|
 | `428829ae` | **예** — vault master 이자 git Location 의 OS/ESXi/Dell recovery | **최우선.** 단일 값이 vault 마스터 + 다수 운영 계정을 겸한다 | Jenkins credential, git Location 전 채널, Redis fact-cache |
-| `9892c533` | **예** — chj/ich/yi 의 HPE·Lenovo recovery | 높음 | 해당 Location Redfish recovery |
+| `9892c533` | **예** — chj/ic/yi 의 HPE·Lenovo recovery | 높음 | 해당 Location Redfish recovery |
 | `2b3b6862` | **예** — git HPE/Lenovo recovery | 높음 | git Redfish recovery |
 | `9477272a` | **예** — 전 Location Cisco recovery | 높음 | Cisco recovery |
-| `f28b309b` | **예** — ich/yi Dell recovery | 중간 | 해당 Location |
-| `f3e3f831` | **예** — chj/ich/yi OS 계정 | 중간 | 해당 Location OS 채널 |
+| `f28b309b` | **예** — ic/yi Dell recovery | 중간 | 해당 Location |
+| `f3e3f831` | **예** — chj/ic/yi OS 계정 | 중간 | 해당 Location OS 채널 |
 | `9b87f708` / `a109e369` / `1d8fe022` / `37a1db6b` | 아니오 (회전됨) | 불필요 | — |
 
 **판단**: 평문 제거만으로는 history 노출이 남으므로, 위 "현재 유효" 6종은 rotation

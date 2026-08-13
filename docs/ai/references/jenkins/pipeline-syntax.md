@@ -24,7 +24,7 @@ pipeline {
 - `agent any` — 아무 agent
 - `agent none` — top-level 없음, stage별 지정
 - `agent { label 'master' }` — 특정 라벨 (server-exporter agent-master 망 분리)
-- `agent { label 'ich' }` — loc별 agent
+- `agent { label 'ic' }` — loc별 agent
 - `agent { docker 'image:tag' }` — Docker
 
 server-exporter 패턴:
@@ -38,7 +38,7 @@ pipeline {
             steps { ... }
         }
         stage('Gather') {
-            agent { label "${params.LOC}" } // ich/chj/yi
+            agent { label "${params.LOC}" } // ic/chj/yi
             steps { ... }
         }
         stage('Validate Schema') {
@@ -58,7 +58,7 @@ pipeline {
 ```groovy
 parameters {
     choice(name: 'TARGET_TYPE', choices: ['os', 'esxi', 'redfish'])
-    choice(name: 'LOC', choices: ['ich', 'chj', 'yi'])
+    choice(name: 'LOC', choices: ['ic', 'chj', 'yi'])
     string(name: 'INVENTORY_JSON', defaultValue: '[]', description: 'JSON list')
     string(name: 'CALLBACK_URL', defaultValue: '', description: '결과 통보 URL')
 }
@@ -146,7 +146,7 @@ pipeline {
     agent none
     parameters {
         choice(name: 'TARGET_TYPE', choices: ['os', 'esxi', 'redfish'])
-        choice(name: 'LOC', choices: ['ich', 'chj', 'yi'])
+        choice(name: 'LOC', choices: ['ic', 'chj', 'yi'])
         text(name: 'INVENTORY_JSON', defaultValue: '[]')
         string(name: 'CALLBACK_URL', defaultValue: '')
     }

@@ -16,7 +16,7 @@
 | **Field Dictionary** | `schema/field_dictionary.yml`. 항목마다 `priority` 가 Must(모든 vendor 필수) / Nice(vendor-specific 허용) / Skip(의도적 미수집) 중 하나다. 개수는 적지 않는다 — `grep -c '^\s*priority:' schema/field_dictionary.yml` 로 그때 센다 (rule 00). |
 | **Baseline** | `schema/baseline_v1/{vendor}_baseline.json`. 실장비 회귀 기준선. schema 변경 시 영향 vendor 전수 회귀. |
 | **target_type** | `os` / `esxi` / `redfish` 셋 중 하나. inventory_json + 입력으로 채널 결정. |
-| **loc** | 운영 사이트. 정본은 `common/vars/locations.yml` (현재 ich / chj / yi / git). Jenkins agent 선택과 vault 경로에 쓰이고 코드 분기는 없다. |
+| **loc** | 운영 사이트. 정본은 `common/vars/locations.yml` (현재 ic / chj / yi / git). Jenkins agent 선택과 vault 경로에 쓰이고 코드 분기는 없다. |
 | **vendor_aliases** | `common/vars/vendor_aliases.yml`. 벤더 이름 정규화 메타 (예: "Dell EMC" → "dell"). |
 
 ## 진단 / 안전

@@ -18,7 +18,7 @@ JK_URL = "http://localhost:8080"
 JK_USER = "cloviradmin"
 JK_PASS = __import__("os").environ["LAB_SSH_PASS"]
 JOB = "hshwang-gather"
-LOC = "ich"
+LOC = "ic"
 
 OUT = Path("tests/evidence/2026-04-29-full-lab-sweep")
 INV = json.loads((OUT / "_inventory.json").read_text(encoding="utf-8"))

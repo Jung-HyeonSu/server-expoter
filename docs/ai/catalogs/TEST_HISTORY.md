@@ -1,5 +1,18 @@
 # TEST_HISTORY — server-exporter
 
+## 2026-08-14 — Location ID `ich` → `ic` 개명 회귀
+
+| 항목 | 결과 |
+|---|---|
+| `pytest tests/` | **3062 passed**, 10 skipped, 7 xfailed |
+| Location 직접 영향 4 파일 | `test_credential_resolver` / `test_location_registry` / `test_redfish_standard_recovery_contract` / `test_vault_check_no_secret_output` + `test_failure_code_contract` = 194 passed |
+| `vault_decrypt_check.py --layout-only` | `ic: 12/12` / `chj: 12/12` / `yi: 12/12` / `git: 12/12` |
+| `output_schema_drift_check` | exit 0 (sections=11 fd_paths=176) |
+| `verify_harness_consistency` | exit 0 |
+| YAML parse / `py_compile` | locations.yml / field_dictionary.yml / credential task 2종 / `credential_common.py` 전부 OK |
+| `ansible-playbook --syntax-check` | **미실행 — 환경 제약** (Windows 세션에 ansible 미설치). 변경분이 주석뿐이라 YAML parse 로 대체 |
+| **실장비** | **미실행** — Jenkins 노드 label 재설정(LOC-1) 전까지 `loc=ic` 잡이 Agent 를 못 잡는다 |
+
 ## 2026-08-13 — 계정 쓰기 계약 정합 (9 Vendor 조사 반영)
 
 | 항목 | 결과 |

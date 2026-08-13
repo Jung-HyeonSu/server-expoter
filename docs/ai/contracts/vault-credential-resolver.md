@@ -210,7 +210,7 @@ ESXi 버전 / adapter_id / adapter priority.
 - Ansible 로 가는 경로는 **0개**다. 3개 Jenkinsfile 전부 `-e` / `--extra-vars` 사용 0건.
   Gather stage env 는 `REPO_ROOT`(`:128`) / `ANSIBLE_CONFIG`(`:129`) /
   `ANSIBLE_JSON_OUTPUT_FILE`(`:130`) / `ANSIBLE_VERBOSITY`(`:131`) 4개뿐이고 `loc` 이 없다.
-- `ich/chj/yi` whitelist 는 코드에 없다. 파라미터 description 문자열(`:9`)에만 있다.
+- `ic/chj/yi` whitelist 는 코드에 없다. 파라미터 description 문자열(`:9`)에만 있다.
 - 잘못된 `loc` 은 Validate 에서 실패하지 않는다. Validate stage 의 agent 자체가
   `label "${params.loc}"`(`:53`)이라 검증 코드가 실행되기도 전에 노드 할당에서 멈춘다.
 
@@ -231,7 +231,7 @@ ESXi 버전 / adapter_id / adapter priority.
 2. Ansible 변수 우선순위가 최상위라 play vars / role defaults 에 가려지지 않는다.
 3. Jenkins 콘솔의 `ansible-playbook` 명령줄에 그대로 남아 감사 가능하다.
    (Location 은 secret 이 아니다.)
-4. 로컬 재현이 `-e se_location=ich` 한 줄이다(테스트 가능성).
+4. 로컬 재현이 `-e se_location=ic` 한 줄이다(테스트 가능성).
 
 변수명은 `se_location` 으로 한다. `location` 은 Redfish 부품 위치(`PartLocation`) 등과
 어휘가 겹친다. `SE_` 접두는 기존 `SE_FORCE_LINUX_RAW_FALLBACK`(rule 10 R4) 선례를 따른다.
@@ -245,8 +245,8 @@ ESXi 버전 / adapter_id / adapter priority.
 # Location 정본. Location 추가 = 이 파일에 3줄 + vault/<id>/ 디렉터리.
 # 코드(Python / Playbook / Jenkinsfile) 수정 불필요.
 locations:
-  ich:
-    agent_label: ich
+  ic:
+    agent_label: ic
   chj:
     agent_label: chj
   yi:
@@ -259,7 +259,7 @@ locations:
   `lookup('file', lookup('env','REPO_ROOT') ~ '/common/vars/locations.yml') | from_yaml` 이다.
   이 패턴은 `redfish-gather/tasks/detect_vendor.yml:10` 이 `vendor_aliases.yml` 에 이미 쓰고 있고
   `include_vars` 의 `name:` 옵션 경고를 피하려고 채택된 방식이다(`detect_vendor.yml:6-7` 주석).
-- `ich/chj/yi` 문자열은 이 파일에만 존재한다.
+- `ic/chj/yi` 문자열은 이 파일에만 존재한다.
 
 ### 3.4 확장 절차 (새 Location `newdc`)
 
@@ -304,10 +304,10 @@ def resolve_credential_scope(
 ### 4.3 반환값
 
 ```yaml
-credential_scope: "ich/redfish/dell"          # 사람이 읽는 범위 식별자
-vault_relpath:    "vault/ich/redfish/dell.yml"  # 저장소 상대 경로 (절대경로 아님)
+credential_scope: "ic/redfish/dell"          # 사람이 읽는 범위 식별자
+vault_relpath:    "vault/ic/redfish/dell.yml"  # 저장소 상대 경로 (절대경로 아님)
 selection_basis:
-  location:    "ich"
+  location:    "ic"
   target_type: "redfish"
   vendor:      "dell"       # os 채널이면 os_type, esxi 면 이 키 없음
 reason:           "resolved"
@@ -392,7 +392,7 @@ _cred_accounts =
 
 ```
 vault/
-  ich/
+  ic/
     os/
       linux.yml
       windows.yml
@@ -430,7 +430,7 @@ vault/
 
 | # | 조건 | 충족 방식 |
 |---|---|---|
-| 1 | 경로만 보고 범위 이해 | `vault/ich/redfish/dell.yml` 이 곧 `credential_scope: ich/redfish/dell` |
+| 1 | 경로만 보고 범위 이해 | `vault/ic/redfish/dell.yml` 이 곧 `credential_scope: ic/redfish/dell` |
 | 2 | Location 추가 용이 | 디렉터리 1개 + registry 3줄 (§3.4) |
 | 3 | Vendor 추가 용이 | `vault/<loc>/redfish/<vendor>.yml` 1개씩. `vendor_aliases.yml` canonical 키 추가는 기존 vendor 추가 9단계(rule 50 R2)에 이미 포함 |
 | 4 | Generation 때문에 파일이 늘지 않음 | 경로에 Generation 축 자체가 없다 |
@@ -795,7 +795,7 @@ Secret 값은 출력하지 않는다.
 - 다른 Location 이나 다른 Vendor 의 vault 로 넘어가는 코드가 **존재하지 않는다.**
   Hard cut 이라 폴백 분기 자체를 만들지 않고 `fallback_profiles` 루프(`load_vault.yml:49-60`)도
   이번에 삭제한다.
-- `ich + dell` 실패 → `chj + dell` 시도 없음, `ich + hpe` 시도 없음. **구조적으로 불가능.**
+- `ic + dell` 실패 → `chj + dell` 시도 없음, `ic + hpe` 시도 없음. **구조적으로 불가능.**
 - 대상 1대당 인증 시도 횟수 = 그 파일의 `accounts` 개수. **오늘과 동일.**
 
 ### 10.2 backoff — 현행 유지
@@ -1084,7 +1084,7 @@ top-level 13필드는 건드리지 않는다.
   "channel": "redfish",
   "adapter_candidate": "redfish_dell_idrac9",
   "checked_ports": [443],
-  "credential_scope": "ich/redfish/dell"
+  "credential_scope": "ic/redfish/dell"
 }
 ```
 
@@ -1169,11 +1169,11 @@ vault 파일이지 adapter 가 아니다.
 |---|---|---|---|
 | T1 | Location 정상 선택 | 순수 단위 | `tests/unit/test_credential_resolver.py` |
 | T2 | 존재하지 않는 Location | 순수 단위 | 동상 (`reason=unknown_location`, `vault_relpath=null`) |
-| T3 | OS Linux Vault 선택 | 순수 단위 | `vault/ich/os/linux.yml` |
-| T4 | OS Windows Vault 선택 | 순수 단위 | `vault/ich/os/windows.yml` |
-| T5 | ESXi Location Vault 선택 | 순수 단위 | `vault/ich/esxi.yml` |
-| T6 | Redfish Dell Vault 선택 | 순수 단위 | `vault/ich/redfish/dell.yml` |
-| T7 | Redfish HPE Vault 선택 | 순수 단위 | `vault/ich/redfish/hpe.yml` |
+| T3 | OS Linux Vault 선택 | 순수 단위 | `vault/ic/os/linux.yml` |
+| T4 | OS Windows Vault 선택 | 순수 단위 | `vault/ic/os/windows.yml` |
+| T5 | ESXi Location Vault 선택 | 순수 단위 | `vault/ic/esxi.yml` |
+| T6 | Redfish Dell Vault 선택 | 순수 단위 | `vault/ic/redfish/dell.yml` |
+| T7 | Redfish HPE Vault 선택 | 순수 단위 | `vault/ic/redfish/hpe.yml` |
 | T8 | 지원하지 않는 Vendor | 순수 단위 | `reason=vendor_unresolved` — **경로를 만들지 않음** |
 | T9 | Vault 파일 누락 | task 계층 | `tests/unit/test_credential_load_task.py` — `stat` 분기 → `credential_set_missing` |
 | T10 | Vault 복호화 실패 | task 계층 | 동상 → `credential_set_undecryptable` |
@@ -1181,7 +1181,7 @@ vault 파일이지 adapter 가 아니다.
 | T12 | Primary 성공 | e2e (기존 확장) | `test_redfish_multi_credential_auth.py` |
 | T13 | Primary 실패 + Recovery 성공 | 기존 유지 | `test_account_reconcile_entry_gate.py:179-188` (수정 불필요) |
 | T14 | 모든 Credential 실패 | 기존 유지 | `test_account_reconcile_entry_gate.py:191-199` |
-| T15 | Location 간 Credential 격리 | 순수 단위 | `ich`/`chj` 가 서로 다른 relpath, 폴백 경로 부재 |
+| T15 | Location 간 Credential 격리 | 순수 단위 | `ic`/`chj` 가 서로 다른 relpath, 폴백 경로 부재 |
 | T16 | Vendor 간 Credential 격리 | 순수 단위 | `dell`/`hpe` 동일 |
 | T17 | Generation 변경 시 선택 불변 | 순수 단위 | `vendor=dell` 고정, model/firmware 를 14G~17G 로 바꿔도 relpath 동일 |
 | T18 | 재실행 | task 계층 | `cacheable` 0건 / host facts 미등록 — `test_vault_dynamic_loading_m_c3.py` 패턴 확장 |

@@ -190,7 +190,7 @@ envelope 까지 잃었다.
 
 | Build | loc | 대상 | type | status | `credential_scope` | `recovery_credential_scope` | 최종 계정 role | sections | errors |
 |---|---|---|---|---|---|---|---|---|---|
-| #25 | ich | 10.100.64.96 | os | success | `ich/os/linux` | — | secondary | 6 | 0 |
+| #25 | ic | 10.100.64.96 | os | success | `ic/os/linux` | — | secondary | 6 | 0 |
 | #26 | chj | 10.100.64.120 | os | success | `chj/os/windows` | — | secondary | 7 | 0 |
 | #27 | yi | 10.100.64.1 | esxi | success | `yi/esxi` | — | secondary | 6 | 0 |
 | #28 | chj | 10.50.11.232 | redfish | success | **`common/redfish/standard`** | `chj/redfish/lenovo` | **primary** | 9 | 0 |
@@ -256,7 +256,7 @@ flat 삭제 후 실장비 6대가 정상 수집됐다 — flat 이 runtime 에 �
 - **HOLD-3 표준 계정 생성 경로(계정 부재 시 create)** — 실장비 미검증. 이번 대상은 전부
   계정이 이미 있었다 (`account_existed: true`). 모듈 단위 테스트로만 확인.
 - **HOLD-4 Location 별 값 분리** — 4 Location 이 아직 같은 복구 자격을 가리킨다.
-- **HOLD-5 물리 Runner 분리** — `ich/chj/yi/git` 4 label 이 단일 노드에 붙어 있다.
+- **HOLD-5 물리 Runner 분리** — `ic/chj/yi/git` 4 label 이 단일 노드에 붙어 있다.
 - **HOLD-6 Adapter `credentials:` Phase B 제거** — 더 이상 읽지 않지만 YAML 에 남아 있다.
 
 ## 10. 검증 게이트

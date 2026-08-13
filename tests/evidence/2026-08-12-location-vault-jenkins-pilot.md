@@ -10,7 +10,7 @@
 | # | 성공 조건 | 결과 |
 |---|---|---|
 | P1 | 신규 encrypted Location Vault 48개 구성/검증 | [PASS] |
-| P2 | `ich` Location Resolve | [PASS] |
+| P2 | `ic` Location Resolve | [PASS] |
 | P3 | `chj` Location Resolve | [PASS] |
 | P4 | `yi` Location Resolve | [PASS] |
 | P5 | `git` Location Resolve | [PASS] |
@@ -51,7 +51,7 @@
 ```
 vault/<loc>/os/linux.yml      vault/<loc>/os/windows.yml
 vault/<loc>/esxi.yml          vault/<loc>/redfish/<vendor>.yml × 9
-loc ∈ {ich, chj, yi, git}     → 12 × 4 = 48
+loc ∈ {ic, chj, yi, git}     → 12 × 4 = 48
 ```
 
 | 검증 항목 | 방법 | 결과 |
@@ -82,11 +82,11 @@ recovery 후보에만 적용하도록 고치고 회귀 2건을 추가했다
 
 ```
 Built-In Node       online  exec=1000  labels=[built-in]
-jenkins-agent-ops   online  exec=1000  labels=[chj, git, ich, jenkins-agent-ops,
+jenkins-agent-ops   online  exec=1000  labels=[chj, git, ic, jenkins-agent-ops,
                                                linux, os, redfish, windows, yi]
 ```
 
-> **중요 — 물리 Runner 는 1대다.** `ich/chj/yi/git` 4개 label 이 **같은 노드**
+> **중요 — 물리 Runner 는 1대다.** `ic/chj/yi/git` 4개 label 이 **같은 노드**
 > `jenkins-agent-ops` 에 붙어 있다. 따라서 이번 Pilot 이 증명한 것은
 > **Location → label → 노드 배정 경로가 동작한다**는 것이고,
 > **Location 별 물리 Runner 분리 / 망 분리는 증명하지 않았다.**
@@ -107,7 +107,7 @@ jenkins-agent-ops   online  exec=1000  labels=[chj, git, ich, jenkins-agent-ops,
 
 | loc | agent label | 근거 빌드 |
 |---|---|---|
-| ich | ich | #2, #5 |
+| ic | ic | #2, #5 |
 | chj | chj | #9, #11, #7 |
 | yi | yi | #4, #6, #12 |
 | git | git | #3, #8, #10 |
@@ -119,7 +119,7 @@ jenkins-agent-ops   online  exec=1000  labels=[chj, git, ich, jenkins-agent-ops,
 [Pipeline] { (Resolve Location)
 Running on Jenkins in /var/lib/jenkins/workspace/clovirone-server-gather-vault-pilot
 ERROR: [Resolve Location] 등록되지 않은 Location: 'invalid-location'
-       — 허용: [chj, git, ich, yi]. 새 Location 은 common/vars/locations.yml 에 등록하세요.
+       — 허용: [chj, git, ic, yi]. 새 Location 은 common/vars/locations.yml 에 등록하세요.
 Stage "Validate" skipped due to earlier failure(s)
 Stage "Gather" skipped …  Stage "Validate Schema" skipped …  Stage "Callback" skipped …
 Finished: FAILURE
@@ -134,7 +134,7 @@ Finished: FAILURE
 
 | 빌드 | Location | 대상 | target_type | vendor | credential_scope | status | auth | sections | 사용 후보 |
 |---|---|---|---|---|---|---|---|---|---|
-| #2 | ich | 10.100.64.96 | os | dell | `ich/os/linux` | success | true | 6 | `linux_fallback` (secondary, 2번째) |
+| #2 | ic | 10.100.64.96 | os | dell | `ic/os/linux` | success | true | 6 | `linux_fallback` (secondary, 2번째) |
 | #8 | git | 10.100.64.161 | os | vmware | `git/os/linux` | success | true | 6 | `linux_fallback` |
 | #9 | chj | 10.100.64.135 | os | vmware | `chj/os/linux` | success | true | 6 | `linux_fallback` |
 | #11 | chj | 10.100.64.120 | os | vmware | `chj/os/windows` | success | true | 7 | `windows_fallback` |
@@ -143,7 +143,7 @@ Finished: FAILURE
 | #7 | chj | 10.50.11.232 | redfish | lenovo | `chj/redfish/lenovo` | success | true | 9 | `common_infraops` (primary) |
 | #10 | git | 10.50.11.232 | redfish | lenovo | `git/redfish/lenovo` | success | true | 9 | `common_infraops` (primary) |
 | #6 | yi | 10.100.15.2 | redfish | cisco | `yi/redfish/cisco` | success | true | 9 | `common_infraops` (primary) |
-| #5 | ich | 10.50.11.231 | redfish | — | `null` | failed | null | 0 | — (TCP 실패) |
+| #5 | ic | 10.50.11.231 | redfish | — | `null` | failed | null | 0 | — (TCP 실패) |
 | #12 | yi | 10.50.11.231 | redfish | — | `null` | failed | null | 0 | — (TCP 실패) |
 
 ### 5.1 이 표에서 확인되는 것
@@ -173,7 +173,7 @@ Finished: FAILURE
 |---|---|---|
 | 10.100.64.135 | Windows Server 2022 | **RHEL 계열 Linux** `auto-install-test02.gooddi.lab`, Py 3.9.21 → Windows 대상 아님 |
 | 10.100.64.120 | cycle-015 에서 "사내 부재" 로 제거 | **살아 있다.** Windows 수집 성공 (7 sections). 2026-06-22 evidence 와 일치 |
-| 10.50.11.231 | HPE ProLiant DL380 Gen11 / iLO6 | **443 timeout** — ich / yi 두 Location 에서 각각 실패. 같은 대역의 10.50.11.232(Lenovo) 는 정상이므로 **경로 문제가 아니라 이 BMC 자체가 미응답** |
+| 10.50.11.231 | HPE ProLiant DL380 Gen11 / iLO6 | **443 timeout** — ic / yi 두 Location 에서 각각 실패. 같은 대역의 10.50.11.232(Lenovo) 는 정상이므로 **경로 문제가 아니라 이 BMC 자체가 미응답** |
 
 ## 6. runtime fallback 부재 (P15)
 
@@ -183,7 +183,7 @@ Finished: FAILURE
 flat `vault/<loc>/os/linux.yml` 은 workspace 에 그대로 존재하는 상태다.
 
 ```
-[Resolve Location] pilotnovault -> agent label 'ich'
+[Resolve Location] pilotnovault -> agent label 'ic'
 ip=10.100.64.161  target_type=os
 credential_scope = "pilotnovault/os/linux"
 status           = failed
@@ -197,7 +197,7 @@ errors[0].detail  = [task: linux | abort if credential set unavailable]
 ```
 
 - flat `vault/<loc>/os/linux.yml` 이 **바로 옆에 있는데도 쓰지 않았다** → flat fallback 부재 확인
-- `ich/chj/yi/git` 어느 vault 로도 넘어가지 않았다 → cross-location fallback 부재 확인
+- `ic/chj/yi/git` 어느 vault 로도 넘어가지 않았다 → cross-location fallback 부재 확인
 - `auth_success=null` (false 아님) → **미시도**와 `AUTH_PROBE_FAILED` 구분 유지
 - 사용자 메시지는 기존 5문장 중 4번을 재사용, 기술 근거는 `detail` 로 분리 (CLAUDE.md §10)
 

@@ -55,7 +55,11 @@ ESXi는 하이퍼바이저가 본 SMBIOS(`ansible_product_serial`), Linux는 DMI
 | Windows | 10.100.64.120 | |
 | Linux VM | 10.100.64.156 / .161 / .165 | .161은 Python 3.6 — raw fallback 검증 대상 |
 | Jenkins master | 10.100.64.152 / .153 | |
-| Jenkins agent | 10.100.64.154 / .155 | agent는 `ich/chj/yi/git` 4 label을 모두 갖는다 |
+| Jenkins agent | 10.100.64.154 / .155 | agent는 `ic/chj/yi/git` 4 label을 모두 갖는다 |
+
+> 2026-08-14: Location ID `ich` 를 `ic` 로 바꿨다 (`agent_label` 포함). **Jenkins 노드의 실제
+> label 은 아직 `ich` 다** — 재설정 전까지 `loc=ic` 잡은 Agent 를 못 잡고 대기한다.
+> NEXT_ACTIONS `LOC-1` 참조.
 
 미확인으로 남긴 것: `10.100.64.135`(2026-08-12 실측에서 Windows가 아니라 RHEL 계열이었다),
 `10.100.64.163` / `.167` / `.169`(사용자 제공 목록에 없다).

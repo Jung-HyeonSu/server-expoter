@@ -44,7 +44,7 @@ Timeout set to expire in 2 min 0 sec
 [Pipeline] {
 [Pipeline] readJSON
 [Pipeline] echo
-[Validate] OK — target_type=redfish, hosts=9개, loc=ich
+[Validate] OK — target_type=redfish, hosts=9개, loc=ic
 [Pipeline] }
 [Pipeline] // script
 [Pipeline] }

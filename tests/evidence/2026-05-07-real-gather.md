@@ -70,21 +70,21 @@ export ANSIBLE_CONFIG=$(pwd)/ansible.cfg
 
 INVENTORY_JSON='[{"service_ip":"10.100.64.161"}]' \
   ansible-playbook -i os-gather/inventory.sh os-gather/site.yml \
-  -e loc=ich -e target_type=os \
+  -e loc=ic -e target_type=os \
   --vault-password-file=~/.vault_pass_se_test \
   > _outputs/os_rhel810.json
 
 # Redfish:
 INVENTORY_JSON='[{"bmc_ip":"10.100.15.27"}]' \
   ansible-playbook -i redfish-gather/inventory.sh redfish-gather/site.yml \
-  -e loc=ich -e target_type=redfish \
+  -e loc=ic -e target_type=redfish \
   --vault-password-file=~/.vault_pass_se_test \
   > _outputs/redfish_dell_15_27.json
 
 # ESXi:
 INVENTORY_JSON='[{"service_ip":"10.100.64.1"}]' \
   ansible-playbook -i esxi-gather/inventory.sh esxi-gather/site.yml \
-  -e loc=ich -e target_type=esxi \
+  -e loc=ic -e target_type=esxi \
   --vault-password-file=~/.vault_pass_se_test \
   > _outputs/esxi_64_1.json
 

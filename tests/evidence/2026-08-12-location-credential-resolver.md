@@ -53,14 +53,14 @@
 
 ### 3.1 Resolver 단위 흐름
 
-`-e se_location=ich` 로 `resolve_and_load.yml` 직접 호출:
+`-e se_location=ic` 로 `resolve_and_load.yml` 직접 호출:
 
 | 케이스 | scope | reason | outcome |
 |---|---|---|---|
-| redfish + dell (vault 존재) | `ich/redfish/dell` | resolved | `loaded` (accounts 2) |
+| redfish + dell (vault 존재) | `ic/redfish/dell` | resolved | `loaded` (accounts 2) |
 | redfish + vendor 미상 | (없음) | `vendor_unresolved` | `not_resolved` |
-| os + linux (vault 부재) | `ich/os/linux` | resolved | `credential_set_missing` |
-| esxi (vault 부재) | `ich/esxi` | resolved | `credential_set_missing` |
+| os + linux (vault 부재) | `ic/os/linux` | resolved | `credential_set_missing` |
+| esxi (vault 부재) | `ic/esxi` | resolved | `credential_set_missing` |
 | `se_location=no-such-dc` | (없음) | `unknown_location` | `not_resolved` |
 | `se_location` **미전달** | (없음) | `unknown_location` | `not_resolved` |
 
@@ -82,17 +82,17 @@ TEST-NET(RFC 5737) 2개 대상 → **envelope 정확히 2개**. 둘 다
 
 ### 3.3 신규 실패 Contract — 같은 대상, credential set 유무만 다르게
 
-로컬 mock BMC (`ServiceRoot` 200 + `Vendor: Dell`, 그 외 401), `se_location=ich`:
+로컬 mock BMC (`ServiceRoot` 200 + `Vendor: Dell`, 그 외 401), `se_location=ic`:
 
-| `vault/ich/redfish/dell.yml` | `failure_stage` | `failure_code` | `auth_success` | `credential_scope` |
+| `vault/ic/redfish/dell.yml` | `failure_stage` | `failure_code` | `auth_success` | `credential_scope` |
 |---|---|---|---|---|
-| **부재** | `auth` | `CREDENTIAL_SET_UNAVAILABLE` | `null` | `ich/redfish/dell` |
-| **존재** (틀린 자격) | `auth` | `AUTH_PROBE_FAILED` | `false` | `ich/redfish/dell` |
+| **부재** | `auth` | `CREDENTIAL_SET_UNAVAILABLE` | `null` | `ic/redfish/dell` |
+| **존재** (틀린 자격) | `auth` | `AUTH_PROBE_FAILED` | `false` | `ic/redfish/dell` |
 
 - 사용자 문장은 두 경우 모두 4번 (`대상에 접속할 수 없습니다. 자격증명과 계정 권한을 확인하세요.`)
   → Portal 5문장 집합 불변.
 - 구분은 `failure_code` 와 `errors[].detail` 이 한다:
-  `Credential set 을 열 수 없습니다 (scope=ich/redfish/dell, outcome=credential_set_missing).`
+  `Credential set 을 열 수 없습니다 (scope=ic/redfish/dell, outcome=credential_set_missing).`
 - **`auth_success` 가 `null` vs `false` 로 갈린다** — 미시도와 명시적 거부의 구분이
   실제 실행에서 성립함을 확인.
 
@@ -211,9 +211,9 @@ Redfish / ESXi 는 성공·실패 양쪽에 반영됐는데 `os-gather` 는 resc
 
 | 시나리오 | vendor | credential_scope | failure_code | auth_success |
 |---|---|---|---|---|
-| ServiceRoot 정상 + vault 부재 | dell | `ich/redfish/dell` | `CREDENTIAL_SET_UNAVAILABLE` | `null` |
-| ServiceRoot 정상 + vault 존재, 자격 불일치 | dell | `ich/redfish/dell` | `AUTH_PROBE_FAILED` | `false` |
-| ServiceRoot 정상 + vault 존재, **자격 일치** | dell | `ich/redfish/dell` | (수집 단계) | **`true`** |
+| ServiceRoot 정상 + vault 부재 | dell | `ic/redfish/dell` | `CREDENTIAL_SET_UNAVAILABLE` | `null` |
+| ServiceRoot 정상 + vault 존재, 자격 불일치 | dell | `ic/redfish/dell` | `AUTH_PROBE_FAILED` | `false` |
+| ServiceRoot 정상 + vault 존재, **자격 일치** | dell | `ic/redfish/dell` | (수집 단계) | **`true`** |
 | Manufacturer 미등록(Contoso) + 무인증 응답 | null | **`null`** (vault 미접근) | `null` (success) | `true` |
 | TEST-NET 2대 (미도달) | null | `null` | `TCP_CONNECT_FAILED` | `null` |
 

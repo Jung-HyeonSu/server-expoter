@@ -1,5 +1,15 @@
 # server-exporter 다음 작업 (NEXT_ACTIONS)
 
+## Location ID `ich` → `ic` 개명 후속 (2026-08-14)
+
+> 정본: `common/vars/locations.yml`, `vault/ic/`
+
+| # | 항목 | 상태 | 내용 |
+|---|---|---|---|
+| LOC-1 | **Jenkins Agent 노드 label 재설정** | `[CRIT / 운영자]` | 저장소는 `id: ic` / `agent_label: ic` 로 바뀌었다. Jenkins 노드(10.100.64.154 / .155)의 Labels 에서 `ich` → `ic` 로 바꾸기 전까지 `loc=ic` 잡은 **Agent 를 못 잡고 무한 대기**한다. 저장소 밖 작업이라 AI 가 수행 불가 |
+| LOC-2 | `loc=ich` 호출자 갱신 | `[CRIT / 운영자]` | Portal 등 호출자가 `loc: "ich"` 를 보내면 `Resolve Location` stage 가 즉시 실패한다 (registry 미등록). 호출자 측 값 교체 필요 |
+| LOC-3 | `ic` Location 실장비 재검증 | `[PENDING]` | Vault 경로만 `vault/ich/` → `vault/ic/` 로 옮겼고 내용은 그대로다. 실행 검증은 LOC-1 완료 후 |
+
 ## 계정 쓰기 계약 정합 후속 (2026-08-13)
 
 > 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
@@ -45,7 +55,7 @@
 
 | # | 항목 | 상태 | 내용 |
 |---|---|---|---|
-| PWC-1 | **현재 유효 자격 6종 rotation** | [CRIT / 운영 결정] | 평문은 tracked content 에서 제거했지만 **git history 와 commit 메시지(약 13개)에는 남아 있다.** 따라서 아래는 여전히 노출된 것으로 취급해야 한다: vault master(`428829ae`, git OS/ESXi/Dell recovery 겸용 — **최우선**), chj·ich·yi HPE/Lenovo recovery(`9892c533`), git HPE/Lenovo recovery(`2b3b6862`), 전 Location Cisco recovery(`9477272a`), ich·yi Dell recovery(`f28b309b`), chj·ich·yi OS(`f3e3f831`). 영향 범위는 evidence §6.2 참조. **사용자 지시 §12 로 이번 cycle 에서 rotation 하지 않았다** |
+| PWC-1 | **현재 유효 자격 6종 rotation** | [CRIT / 운영 결정] | 평문은 tracked content 에서 제거했지만 **git history 와 commit 메시지(약 13개)에는 남아 있다.** 따라서 아래는 여전히 노출된 것으로 취급해야 한다: vault master(`428829ae`, git OS/ESXi/Dell recovery 겸용 — **최우선**), chj·ic·yi HPE/Lenovo recovery(`9892c533`), git HPE/Lenovo recovery(`2b3b6862`), 전 Location Cisco recovery(`9477272a`), ic·yi Dell recovery(`f28b309b`), chj·ic·yi OS(`f3e3f831`). 영향 범위는 evidence §6.2 참조. **사용자 지시 §12 로 이번 cycle 에서 rotation 하지 않았다** |
 | PWC-2 | Git history purge | [HOLD / 운영 결정] | 사용자 지시 §13 이 자동 재작성을 금지했다. PWC-1 rotation 이 선행되면 history purge 없이도 위험이 크게 줄어든다. purge 를 택하면 두 remote(github/gitlab) 협업자 전원 재클론이 필요하다 |
 | PWC-3 | untracked 로컬 잔여물 | [LOW / 운영자] | `.vault_pass`, `vault/.lab-credentials.yml`, `tests/reference/local/*`, `__pycache__/*.pyc` 에 값이 남아 있다. `.gitignore` 대상이라 저장소에는 없지만 작업 머신 로컬에는 있다 |
 | PWC-4 | **Adapter 세대 오선택 (근본 원인)** | [MED] | Adapter 선택이 **무인증 probe** 단계라 `model`/`firmware` fact 가 비어 priority 로만 결정된다. Family 판정은 Firmware 기준으로 교정했지만 `adapter_id` 자체는 여전히 틀린다(수집 tasks 는 동일해 수집 데이터 영향 없음). 근본 해결은 **인증 후 adapter 재선택**이며 collect/normalize/vendor 표시값에 모두 영향을 주는 별도 변경이다. GIT-4 와 동일 항목 |
@@ -70,7 +80,7 @@
 | GIT-4 | adapter 세대 오선택 2건 | [MED] | 10.100.15.34 는 iDRAC9(FW 7.10.70.00)인데 `redfish_dell_idrac10` 선택. 10.100.15.2 는 CIMC 4.1(2g)인데 `redfish_cisco_ucs_xseries` 선택. 계정 경로는 Capability 우선 판정으로 방어되지만 adapter 선택 자체는 별도 과제 |
 | GIT-5 | Dell 반복 Write 억제 | [MED] | 표준 인증이 계속 401 이면 매 실행마다 같은 PATCH 가 나간다(audit M-6, run 간 기억 없음). GIT-1 해소 전까지 Dell 대상은 dry-run 권장 |
 | GIT-6 | HPE 2차 실행 Write 0 미확인 | [CLOSED 2026-08-12] | **2026-08-12 4대 전부 1·2차 Write 0 확인.** 그 과정에서 iLO 쓰기 결함(비밀번호를 다른 속성과 묶으면 조용히 버림)이 드러나 수정했다 — evidence 2026-08-12-standard-password-convergence.md §3 |
-| GIT-7 | chj / ich / yi 실장비 미검증 | [PENDING] | 이번 cycle 은 사용자 지시로 **git 만** 실장비 검증했다. 나머지 3 Location 은 Vault 값만 반영 |
+| GIT-7 | chj / ic / yi 실장비 미검증 | [PENDING] | 이번 cycle 은 사용자 지시로 **git 만** 실장비 검증했다. 나머지 3 Location 은 Vault 값만 반영 |
 
 ### GIT-8 [부분 CLOSED 2026-08-12] 저장소 평문 자격 — tracked content 정리 완료, history 잔존
 
@@ -80,12 +90,12 @@
 | 자격 | 노출 파일 수 | 주 위치 |
 |---|---:|---|
 | vault 마스터 암호 (= Redis fact_caching 암호와 동일) | **373** | `tests/reference/agent/**` 289 (Jenkins agent `ansible.cfg` 덤프의 `fact_caching_connection = <host>:6379:0:<pw>`), `tests/evidence/**` 61, `docs/ai/**` 12 |
-| ich·chj HPE/Lenovo 복구 | 17 | docs / evidence |
+| ic·chj HPE/Lenovo 복구 | 17 | docs / evidence |
 | git Lenovo·HPE 복구 | 14 | docs / evidence / ticket |
 | git Cisco 복구 | 8 | LAB_INVENTORY 포함 |
-| ich·yi Dell 복구 | 7 | docs / evidence |
+| ic·yi Dell 복구 | 7 | docs / evidence |
 | 전역 표준 계정 | 3 | LAB_PENDING_MATRIX 등 |
-| chj·ich·yi OS | 2 | docs |
+| chj·ic·yi OS | 2 | docs |
 
 - 위 값들은 **이번에 배포한 자격과 동일**하다. 즉 저장소 읽기 권한 = 전 lab 자격 획득이다.
 - 기존 `[CRIT]` 항목(본 파일 아래쪽, `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md`)과 같은
@@ -933,7 +943,7 @@ Job: `clovirone-server-gather-vault-pilot` (운영 Job config 복제, `Jenkinsfi
 - [x] **P1 Location vault 구성 + 복호화** — 4 Location × 12 = 48개. flat 암호문 그대로 복사
       (git index blob 48/48 원본 동일). **실제 ansible-vault 복호화 경로 검증됨** — Jenkins
       credential `server-gather-vault-password` 로 풀어 실장비 인증 성공
-- [x] **P2 OS Linux / Windows** — `ich/os/linux`, `git/os/linux`, `chj/os/linux`, `chj/os/windows`
+- [x] **P2 OS Linux / Windows** — `ic/os/linux`, `git/os/linux`, `chj/os/linux`, `chj/os/windows`
 - [x] **P3 ESXi** — `yi/esxi`
 - [x] **P4 Redfish** — Dell `git/redfish/dell`, Lenovo `chj|git/redfish/lenovo`, Cisco `yi/redfish/cisco`
 - [x] **P5 built-in SCM checkout** — 가능. 설계 1안 성립, 2안(choice 파라미터) 불필요
@@ -946,7 +956,7 @@ Job: `clovirone-server-gather-vault-pilot` (운영 Job config 복제, `Jenkinsfi
 
 #### E-1. HPE Redfish 미검증 [HOLD — 장비]
 
-10.50.11.231 이 TCP 443 timeout (ich / yi 두 Location 각각 1회). 같은 대역
+10.50.11.231 이 TCP 443 timeout (ic / yi 두 Location 각각 1회). 같은 대역
 10.50.11.232(Lenovo) 는 정상 → BMC 자체 미응답. BMC 복구 후 재시도 필요.
 
 #### E-2. Dell primary credential drift [원인 규명됨 → E-6 으로 이관]
@@ -1003,7 +1013,7 @@ Job: `clovirone-server-gather-vault-pilot` (운영 Job config 복제, `Jenkinsfi
 
 #### E-5. 물리 Runner 분리 미검증
 
-`ich/chj/yi/git` 4 label 이 **단일 노드** `jenkins-agent-ops` 에 모두 붙어 있다. Location →
+`ic/chj/yi/git` 4 label 이 **단일 노드** `jenkins-agent-ops` 에 모두 붙어 있다. Location →
 label → 노드 배정 경로는 검증됐지만 망 분리는 검증되지 않았다.
 
 ### F. 사용자 결정 대기

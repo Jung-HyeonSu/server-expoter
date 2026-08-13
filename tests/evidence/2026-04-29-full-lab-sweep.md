@@ -1,7 +1,7 @@
 # Full Lab Sweep — 2026-04-29
 
 > production-audit (2026-04-29) + cycle-016 직후 실 lab 18대 전수 회귀 + JSON envelope 13 필드 검증.
-> Jenkins master 10.100.64.152 (운영) / Job: hshwang-gather / Agent: jenkins-agent-ops (10.100.64.154) / loc: ich.
+> Jenkins master 10.100.64.152 (운영) / Job: hshwang-gather / Agent: jenkins-agent-ops (10.100.64.154) / loc: ic.
 
 ## 0. 결론 요약
 
@@ -158,7 +158,7 @@ schema_version
 | 항목 | 값 |
 |---|---|
 | Jenkins | 2.541.2 (master 10.100.64.152, ubuntu 24.04.4) |
-| Agent | jenkins-agent-ops (10.100.64.154, labels: ich/chj/yi/git) |
+| Agent | jenkins-agent-ops (10.100.64.154, labels: ic/chj/yi/git) |
 | Repo branch | main |
 | Commits | production-audit (2026-04-29) + cycle-016 + cycle-015 grafana 제거 직후 |
 | Vault | server-gather-vault-password (Jenkins credentials store) |

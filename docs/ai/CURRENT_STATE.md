@@ -1,5 +1,22 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-14 — Location ID `ich` → `ic` 개명
+
+> 후속: `docs/ai/NEXT_ACTIONS.md` LOC-1 ~ LOC-3
+
+- Location ID 를 `ich` 에서 `ic` 로 바꿨다. `agent_label` 도 같이 `ic` 로 맞췄다
+  (사용자 결정 — 두 값을 분리해 둔 설계상 유지도 가능했으나 맞추기로 했다).
+- 실제 변경은 셋뿐이다: `vault/ich/` → `vault/ic/` 디렉터리 rename(내용 무변경),
+  `common/vars/locations.yml` 의 키와 label, 그리고 예시 문자열. **코드 분기는 0줄 바뀌었다** —
+  Location 목록 정본이 `locations.yml` 하나라서 나머지는 전부 주석·문서·테스트 샘플값이다.
+- 4 Location (`ic / chj / yi / git`) × 12 = 48개 + 전역 표준 1개 = 49개 vault 구성 유지.
+  `vault_decrypt_check.py --layout-only` 로 `ic: 12/12 존재` 확인.
+- **아직 반영 안 된 것**: Jenkins 노드의 실제 Labels 는 `ich` 다. 재설정 전까지 `loc=ic` 잡은
+  Agent 를 못 잡는다. 호출자가 보내는 `loc` 값도 함께 바뀌어야 한다 (저장소 밖 작업).
+- 과거 evidence 의 `ich` 문자열도 사용자 결정으로 함께 치환했다. 단
+  `tests/reference/esxi/10_100_64_2/` 의 `nexus-ich` 는 실제 ESXi VM 이름이라 그대로 뒀다 —
+  Location 참조가 아니고, 실측 덤프의 장비 사실을 고치면 fixture 가 거짓이 된다.
+
 ## 일자: 2026-08-13 — 9 Vendor 조사 반영: 계정 쓰기 계약 정합
 
 > 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`

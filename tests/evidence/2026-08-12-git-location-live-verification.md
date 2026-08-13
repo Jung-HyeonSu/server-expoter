@@ -22,17 +22,17 @@
 
 ```
 vault/common/redfish/standard.yml                      (전역 표준 1벌)
-vault/{chj,ich,yi}/redfish/{lenovo,dell,hpe}.yml       (9)
+vault/{chj,ic,yi}/redfish/{lenovo,dell,hpe}.yml       (9)
 vault/git/redfish/{lenovo,dell,hpe,cisco}.yml          (4)
-vault/{chj,ich,yi,git}/esxi.yml                        (4)
-vault/{chj,ich,yi,git}/os/linux.yml                    (4)
-vault/{chj,ich,yi,git}/os/windows.yml                  (4)
+vault/{chj,ic,yi,git}/esxi.yml                        (4)
+vault/{chj,ic,yi,git}/os/linux.yml                    (4)
+vault/{chj,ic,yi,git}/os/windows.yml                  (4)
 ```
 
 ### 변경하지 않은 파일 (20개)
 
-`vault/{chj,ich,yi,git}/redfish/{fujitsu,huawei,inspur,quanta,supermicro}.yml` +
-`vault/{chj,ich,yi}/redfish/cisco.yml`.
+`vault/{chj,ic,yi,git}/redfish/{fujitsu,huawei,inspur,quanta,supermicro}.yml` +
+`vault/{chj,ic,yi}/redfish/cisco.yml`.
 
 사용자가 이번에 제공하지 않은 Credential 이다. 지시 §8 에 따라 **확인만** 했다:
 전부 `role: recovery` 단독이고, 값은 vendor factory default 계열(예: `admin` 계정의

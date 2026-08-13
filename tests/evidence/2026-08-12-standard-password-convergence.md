@@ -3,7 +3,7 @@
 - 일자: 2026-08-12
 - 수행: AI (Claude Code), 사용자 지시로 실행
 - 기준 Commit: `26394474`
-- 대상 Location: **git 전용**. `chj` / `ich` / `yi` 장비에는 이번 cycle 에서 로그인·수집·계정
+- 대상 Location: **git 전용**. `chj` / `ic` / `yi` 장비에는 이번 cycle 에서 로그인·수집·계정
   쓰기를 **일절 수행하지 않았다** (Vault 값 변경도 없음).
 - 실행 환경: WSL Ubuntu / ansible-core 2.20.7 (Windows 로컬 `ansible-playbook` 은
   `os.get_blocking` 미지원으로 실행 불가)
@@ -227,7 +227,7 @@ Roles 어휘 → 기존 계정의 RoleId → adapter hint → generic** 순이�
   `presence=absent` 조건이 발생하지 않았다. 조건을 만들려면 운영 계정을 지워야 하므로
   하지 않았다 (사용자 지시 §9).
 - **DELETE 는 0건.** 계정 삭제/재생성 fallback 은 기본 비활성이며 이번에 켜지 않았다.
-- **chj / ich / yi 는 무접촉.** 로그인·수집·쓰기 모두 0건.
+- **chj / ic / yi 는 무접촉.** 로그인·수집·쓰기 모두 0건.
 - 실패 인증 예산: HPE 실패 실행에서 `auth_budget = {infraops: 3}` (iLO 임계 3). 수정 후
   1·2차 실행 모두 실패 인증 0.
 
@@ -252,7 +252,7 @@ ansible-playbook redfish-gather/site.yml -i redfish-gather/inventory.sh \
 ## 9. 이 문서가 증명하지 않는 것
 
 - Account **CREATE** 경로 (어느 Vendor 도 미검증)
-- `chj` / `ich` / `yi` 의 어떤 것도 (이번 cycle 무접촉)
+- `chj` / `ic` / `yi` 의 어떤 것도 (이번 cycle 무접촉)
 - HPE 의 **Repair 완주** — 결함 수정 후 재현하려면 계정을 다시 불일치 상태로 만들어야
   하는데, 조건을 인위적으로 만들지 않았다. 수정 근거는 §3 의 실장비 통제 실험과
   그 동작을 그대로 흉내 낸 회귀 테스트다.
