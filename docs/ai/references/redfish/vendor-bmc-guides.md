@@ -186,5 +186,5 @@
 ## 정본 reference
 
 - `.claude/ai-context/vendors/{vendor}.md` (5 vendor 메모)
-- `docs/ai/references/redfish/redfish-spec.md` (DMTF 표준)
+- 외부 API 공식 문서 (DMTF 표준)
 - `docs/reference/live-validation.md` (Round 검증 결과)

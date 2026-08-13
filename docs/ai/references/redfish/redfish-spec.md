@@ -18,7 +18,7 @@ Redfish는 DMTF (Distributed Management Task Force)가 만든 RESTful 서버 관
 server-exporter Vault 2단계 로딩 (rule 27):
 1. `/redfish/v1/` 무인증 GET → manufacturer 추출
 2. vendor_aliases.yml로 정규화 → vendor 결정
-3. `vault/redfish/{vendor}.yml` 로드
+3. `vault/<loc>/redfish/<vendor>.yml` 로드
 4. 인증으로 본 수집 재개
 
 ## 핵심 Resource 타입

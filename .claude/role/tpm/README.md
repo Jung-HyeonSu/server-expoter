@@ -13,8 +13,8 @@ Round 검증 진행률 / 릴리즈 / 문서 갱신 / 다중 세션 인계 / 일�
 
 ## 로드할 ai-context 문서
 1. `.claude/ai-context/common/repo-facts.md`
-2. `.claude/ai-context/common/project-map.md`
-3. `.claude/ai-context/common/convention-drift.md`
+2. `docs/ai/catalogs/PROJECT_MAP.md`
+3. `docs/ai/catalogs/CONVENTION_DRIFT.md`
 
 ## 자주 사용하는 Skills
 | Skill | 용도 |

@@ -1,7 +1,7 @@
 # Ansible Vault — server-exporter 시크릿 관리
 
 > Source: https://docs.ansible.com/ansible/latest/user_guide/vault.html
-> server-exporter 적용: `vault/{linux,windows,esxi}.yml + vault/redfish/{vendor}.yml`
+> server-exporter 적용: `vault/<loc>/os/{linux,windows}.yml + vault/<loc>/esxi.yml + vault/<loc>/redfish/<vendor>.yml`
 
 ## 핵심 명령
 
@@ -36,7 +36,7 @@ vault/
 ## Vault 파일 내용 예시
 
 ```yaml
-# vault/redfish/dell.yml (decrypt 후 보임)
+# vault/<loc>/redfish/dell.yml (decrypt 후 보임)
 vault_redfish_username: "service_account"
 vault_redfish_password: "..."
 ```
@@ -74,7 +74,7 @@ server-exporter Jenkins는 password 파일 또는 환경변수 사용 (Jenkins c
 
 # 2단계: vendor에 맞는 vault 동적 로드
 - include_vars:
-    file: "vault/redfish/{{ _rf_detected_vendor }}.yml"
+    file: "vault/<loc>/redfish/{{ _rf_detected_vendor }}.yml"
     name: _rf_vault
 
 # 3단계: 인증으로 본 수집
@@ -100,7 +100,7 @@ server-exporter는 일반적으로 **단일 vault password** (운영 단순화).
 ## 회전 절차 (rotate-vault skill)
 
 1. 기존 vault password 확보
-2. `ansible-vault rekey vault/redfish/{vendor}.yml` 새 password 입력
+2. `ansible-vault rekey vault/<loc>/redfish/<vendor>.yml` 새 password 입력
 3. 또는 외부 시스템 (BMC user) 자격증명 자체 변경 → vault 새로 encrypt
 4. Jenkins credentials 갱신
 5. dry-run 검증
@@ -119,7 +119,7 @@ server-exporter는 일반적으로 **단일 vault password** (운영 단순화).
 - 평문 vault commit (cycle-011: pre_commit_policy.py 제거됨, 운영자 권장 차단)
 - `--extra-vars "password=..."` 평문 CLI (Jenkins log 노출)
 - environment variable로 password 전달 (process list 노출 가능)
-- vault 파일을 직접 편집 (`vim vault/redfish/dell.yml`) — `ansible-vault edit` 사용
+- vault 파일을 직접 편집 (`vim vault/<loc>/redfish/dell.yml`) — `ansible-vault edit` 사용
 
 ## 적용 rule
 

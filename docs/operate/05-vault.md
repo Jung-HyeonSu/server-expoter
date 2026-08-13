@@ -63,10 +63,10 @@ Generation / Model / Firmware 는 **선택축이 아니다** (세대를 아는 �
 
 | 채널 | 이전 경로 |
 |---|---|
-| Linux | `vault/linux.yml` |
-| Windows | `vault/windows.yml` |
-| ESXi | `vault/esxi.yml` |
-| Redfish | `vault/redfish/{vendor}.yml` |
+| Linux | `vault/<loc>/os/linux.yml` |
+| Windows | `vault/<loc>/os/windows.yml` |
+| ESXi | `vault/<loc>/esxi.yml` |
+| Redfish | `vault/<loc>/redfish/<vendor>.yml` |
 
 **현재 코드는 이 경로를 읽지 않는다.** 런타임 폴백도 없다 — 신규 경로가 준비되지 않으면
 "조용히 옛 파일로 성공" 하는 대신 명시적으로 실패한다
@@ -171,8 +171,8 @@ Location 1곳 × 채널별 1대씩 실제 수집을 돌려 확인한다:
 
 **4단계 — flat vault 제거** (별도 커밋)
 
-3단계가 확인된 뒤에만. 삭제 대상: `vault/linux.yml`, `vault/windows.yml`,
-`vault/esxi.yml`, `vault/redfish/*.yml` 9개.
+3단계가 확인된 뒤에만. 삭제 대상: `vault/<loc>/os/linux.yml`, `vault/<loc>/os/windows.yml`,
+`vault/<loc>/esxi.yml`, `vault/<loc>/redfish/*.yml` 9개.
 (`vault/.lab-credentials.yml` 은 제외 — resolver 대상이 아닌 lab 전용 평문 파일)
 
 ## 4. Vault 자동 반영 메커니즘 (rule 27 R6)
@@ -214,14 +214,14 @@ grep -rn 'vault_password_file\|vault_identity\|VAULT_PASSWORD_FILE' ansible.cfg
 
 ### 4.2 자동 반영 처리 과정 (Mermaid)
 
-> 이 그림이 말하는 것: vault/redfish/{vendor}.yml 파일을 매 ansible run 마다 새로 읽어 `_rf_accounts` 로 정규화한다. 캐시 없음 — 다음 run 자동 반영.
+> 이 그림이 말하는 것: vault/<loc>/redfish/<vendor>.yml 파일을 매 ansible run 마다 새로 읽어 `_rf_accounts` 로 정규화한다. 캐시 없음 — 다음 run 자동 반영.
 
 ```mermaid
 flowchart TD
-    EDIT([vault/redfish/dell.yml<br/>password 변경]):::ok
+    EDIT([vault/<loc>/redfish/dell.yml<br/>password 변경]):::ok
     RUN_END([현재 run 종료<br/>_rf_vault_data / _rf_accounts 폐기]):::default
     NEW_RUN([ansible-playbook run N+1 시작]):::ok
-    INC[["include_vars<br/>vault/redfish/dell.yml<br/>(디스크 read — 캐시 없음)"]]:::ext
+    INC[["include_vars<br/>vault/<loc>/redfish/dell.yml<br/>(디스크 read — 캐시 없음)"]]:::ext
     DECRYPT[["ansible-vault decrypt<br/>(매 run 수행 — 캐시 없음)"]]:::ext
     DATA[/"_rf_vault_data<br/>(task scope, no_log)"/]:::default
     NORM["set_fact _rf_accounts<br/>= vault.accounts list<br/>(task scope, no host facts)"]:::default
@@ -249,14 +249,14 @@ flowchart TD
 
 ```bash
 # 1. 백업
-cp vault/redfish/dell.yml /tmp/dell-vault.bak
+cp vault/<loc>/redfish/dell.yml /tmp/dell-vault.bak
 
 # 2. 새 password 로 rekey
-ansible-vault rekey vault/redfish/dell.yml
+ansible-vault rekey vault/<loc>/redfish/dell.yml
 
 # 3. Jenkins credentials 갱신 (server-gather-vault-password — Secret text)
 # 4. 검증
-ansible-vault view vault/redfish/dell.yml
+ansible-vault view vault/<loc>/redfish/dell.yml
 ```
 
 ### 5.2 시나리오 B: 외부 BMC 사용자 자격증명 회전
@@ -266,7 +266,7 @@ ansible-vault view vault/redfish/dell.yml
 #    (BMC 운영자가 수행 — server-exporter 는 read-only)
 
 # 2. 새 자격증명으로 vault 다시 encrypt
-ansible-vault edit vault/redfish/dell.yml
+ansible-vault edit vault/<loc>/redfish/dell.yml
 #    안에서 vault_redfish_password 또는 accounts[].password 갱신
 
 # 3. 검증 — 다음 ansible run 에서 자동 반영
@@ -284,7 +284,7 @@ echo "$(date +%Y-%m-%d): Dell vault rotation (BMC user 변경)" \
 `rule 50 R2` 9단계 중 4단계.
 
 ```bash
-ansible-vault create vault/redfish/{vendor}.yml
+ansible-vault create vault/<loc>/redfish/<vendor>.yml
 # 안에 입력:
 # accounts:
 #   - username: "infraops"
@@ -316,7 +316,7 @@ ansible-vault create vault/redfish/{vendor}.yml
 | 항목 | 값 |
 |---|---|
 | primary username | `infraops` (모든 vendor 통일) |
-| primary password | `<vault/redfish/{vendor}.yml accounts[0].password>` (평문 미기재 — 2026-08-11 Phase 6-B) |
+| primary password | `<vault/<loc>/redfish/<vendor>.yml accounts[0].password>` (평문 미기재 — 2026-08-11 Phase 6-B) |
 | vault password (ansible-vault) | `<Jenkins Credential: server-gather-vault-password>` (평문 미기재 — 2026-08-11 Phase 6-B) |
 | recovery 정책 | vendor 공장 기본 자격 + (기존) lab/사이트 운영 자격 (Additive) |
 
@@ -394,7 +394,7 @@ BMC AccountService POST/PATCH → infraops 계정 생성/복구
 
 ### 1:1 정합 의무
 
-adapter (`adapters/redfish/{vendor}_*.yml`) 의 `credentials.recovery_accounts[*].vault_label` 은 vault (`vault/redfish/{vendor}.yml`) 의 `accounts[*].label` 와 **1:1 정합** 의무.
+adapter (`adapters/redfish/{vendor}_*.yml`) 의 `credentials.recovery_accounts[*].vault_label` 은 vault (`vault/<loc>/redfish/<vendor>.yml`) 의 `accounts[*].label` 와 **1:1 정합** 의무.
 
 - **정본** = vault `accounts[*].label` (운영자 결정)
 - adapter `vault_label` 은 vault 정본을 참조만 — adapter 가 vault 에 없는 label declare 시 `account_service.yml:31-41` label 매칭 chain 에서 skip 후 username fallback 으로 우회 (기능은 동작하나 label 매칭 활성화 안 됨 + 시도 회수 증가)
@@ -439,7 +439,7 @@ adapter `recovery_accounts` 변경은 **Additive only** 의무:
 
 ### 신규 adapter 추가 시 체크리스트
 
-1. vault `vault/redfish/{vendor}.yml` 의 `accounts[*].label` 확인 (정본)
+1. vault `vault/<loc>/redfish/<vendor>.yml` 의 `accounts[*].label` 확인 (정본)
 2. adapter `credentials.recovery_accounts` 에 vault label 와 동일 entry 추가
 3. 각 entry 에 `role: recovery` 명시
 4. `tests/unit/test_adapter_vault_label_consistency.py` 회귀 PASS 확인
@@ -450,7 +450,7 @@ adapter `recovery_accounts` 변경은 **Additive only** 의무:
 vault file 내 accounts list 순서 = multi-account fallback 시도 순서. 별도 role 정렬 없음.
 
 ```yaml
-# vault/redfish/dell.yml (예시)
+# vault/<loc>/redfish/dell.yml (예시)
 accounts:
   - username: "infraops"
     password: "..."
@@ -470,7 +470,7 @@ accounts:
 
 - 단서 3개 (4.1) 검증 → 0 결과 / 옵션 없음 확인
 - ansible run 1회 더 시도 (mid-run 변경은 반영 안 됨)
-- vault 파일 디스크 sync 확인 (`ls -la vault/redfish/{vendor}.yml` → mtime 업데이트)
+- vault 파일 디스크 sync 확인 (`ls -la vault/<loc>/redfish/<vendor>.yml` → mtime 업데이트)
 - ansible-vault decrypt 명령 직접 실행 → 새 내용 read 가능 확인
 
 ### 8.2 일부 host 인증 실패
@@ -481,7 +481,7 @@ accounts:
 
 ### 8.3 vault edit 도중 swap 파일 잔재
 
-- `vault/.swp`, `vault/redfish/.{vendor}.yml.swp` 파일 잔재 시 절대 commit 금지
+- `vault/.swp`, `vault/<loc>/redfish/.{vendor}.yml.swp` 파일 잔재 시 절대 commit 금지
 - `.gitignore` 에 `*.swp` 등록 (이미 적용)
 
 ## 9. 검증 절차 (회전 후 의무)

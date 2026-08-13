@@ -95,7 +95,7 @@ server-exporter `adapters/esxi/`:
 
 ## Best Practices for server-exporter
 
-1. **vault**: `vault/esxi.yml`의 `vault_esxi_user` (root) + `vault_esxi_password`
+1. **vault**: `vault/<loc>/esxi.yml`의 `vault_esxi_user` (root) + `vault_esxi_password`
 2. **validate_certs**: 자체 서명 인증서 환경 → `false` + 코드에 의도 주석 (cycle-011: rule 60 해제)
 3. **stdlib 보완**: 일부 vmware 모듈이 lxml 기반 — `pip install lxml`
 4. **Connection 재사용**: 한 host에 여러 facts → 각 모듈마다 connect/disconnect 발생. 가능하면 vmware_host_facts 한 번에
@@ -104,7 +104,7 @@ server-exporter `adapters/esxi/`:
 ## 정본 reference
 
 - `.claude/ai-context/external/integration.md` — vSphere API 노트
-- `docs/ai/references/python/pyvmomi.md` — pyvmomi SDK 설명
+- 외부 API 공식 문서 — pyvmomi SDK 설명
 - `adapters/esxi/*.yml` — 버전별 adapter
 
 ## 적용 rule

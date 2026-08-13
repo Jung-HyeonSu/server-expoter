@@ -13,7 +13,7 @@ pytest 단위/통합 + redfish-probe (실장비 / mock fixture) + baseline 회�
 - `tests/scripts/os_esxi_verify.sh` — OS/ESXi 검증
 
 ## 로드할 ai-context 문서
-1. `.claude/ai-context/common/project-map.md`
+1. `docs/ai/catalogs/PROJECT_MAP.md`
 2. `.claude/ai-context/common/repo-facts.md`
 3. `.claude/ai-context/output-schema/convention.md` — baseline 회귀 기준
 4. `.claude/ai-context/external/integration.md` — 외부 시스템 응답 형식

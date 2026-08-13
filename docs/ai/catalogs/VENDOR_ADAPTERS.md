@@ -204,7 +204,7 @@ credentials:
 
 ## origin 주석 일관성 (cycle 2026-05-07 M-K1)
 
-검증 도구: `python scripts/ai/hooks/adapter_origin_check.py --all --redfish-only`
+검증 도구: `python adapter origin 검사(제거됨) --all --redfish-only`
 
 | 검증 항목 | 결과 |
 |---|---|
@@ -266,7 +266,7 @@ for f in adapters/redfish/*.yml; do
 done
 
 # origin 주석 일관성 검증
-python scripts/ai/hooks/adapter_origin_check.py --all --redfish-only
+python adapter origin 검사(제거됨) --all --redfish-only
 ```
 
 ## 정본 reference
@@ -275,6 +275,6 @@ python scripts/ai/hooks/adapter_origin_check.py --all --redfish-only
 - `.claude/ai-context/vendors/{vendor}.md`
 - `docs/reference/live-validation.md`
 - `docs/develop/03-adapter-system.md`
-- `docs/ai/references/redfish/vendor-bmc-guides.md`
+- 외부 API 공식 문서
 - `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` (9 vendor × N gen × source URL 매트릭스 — M-K2)
 - `docs/ai/catalogs/COMPATIBILITY-MATRIX.md` (vendor × generation × section — M-L3)

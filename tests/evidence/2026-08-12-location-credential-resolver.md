@@ -114,7 +114,7 @@ TEST-NET(RFC 5737) 2개 대상 → **envelope 정확히 2개**. 둘 다
 | Adapter 선택 로직 무변경 | `adapter_common.py` / `adapter_loader.py` / `adapters/` diff 0 | [PASS] |
 | Redfish 5초 backoff 유지 | `try_one_account.yml:133` `sleep 5` 존재 | [PASS] |
 | OS/ESXi backoff 미추가 | 4개 파일 `retries:`/`until:` 0건 | [PASS] |
-| flat vault 미삭제 | `vault/*.yml` + `vault/redfish/*.yml` 12개 존재 | [PASS] |
+| flat vault 미삭제 | `vault/*.yml` + `vault/<loc>/redfish/*.yml` 12개 존재 | [PASS] |
 | runtime flat fallback 부재 | 신규/수정 코드에서 구 경로 참조 0건 | [PASS] |
 
 ---

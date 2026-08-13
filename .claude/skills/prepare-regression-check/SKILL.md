@@ -7,12 +7,12 @@ description: 변경된 코드 기반 회귀 테스트 대상 선정 + 테스트 
 
 ## 목적
 
-server-exporter 회귀 테스트 대상을 자동 선정. `.claude/policy/test-selection-map.yaml` 매핑 활용.
+server-exporter 회귀 테스트 대상을 자동 선정. 변경 경로 → 테스트 영역 매핑은 rule 91 R7 과 rule 92 R3 을 따른다.
 
 ## 절차
 
 1. **변경 파일 list 추출**: `git diff --name-only`
-2. **각 파일을 test-selection-map.yaml의 mapping과 매칭**:
+2. **각 파일을 아래 영역 매핑과 매칭**:
    - `os-gather/**` → 회귀: pytest probe + Linux/Windows 실장비
    - `redfish-gather/**` → probe_redfish + 영향 vendor baseline
    - `common/library/**` → 4단계 진단 회귀 (모든 채널)
@@ -56,6 +56,6 @@ server-exporter 회귀 테스트 대상을 자동 선정. `.claude/policy/test-s
 
 - **rule 40** (qa-pytest-baseline) 정본
 - rule 91 R7 / rule 92 R9 (자동 회귀 영역)
-- policy: `.claude/policy/test-selection-map.yaml`
+- rule: `91-task-impact-gate` R7, `92-dependency-and-regression-gate` R3
 - skill: `vendor-change-impact`, `run-baseline-smoke`, `task-impact-preview`
 - agent: `regression-planner`, `qa-regression-worker`

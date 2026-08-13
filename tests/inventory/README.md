@@ -7,15 +7,15 @@
 ## baseline vs supplemental 분리 원칙
 
 ### Baseline 장비 (기준선)
-기존 `redfish-gather/inventory.sh` + `vault/redfish/{vendor}.yml`(ansible-vault encrypted)로 관리.
+기존 `redfish-gather/inventory.sh` + `vault/<loc>/redfish/<vendor>.yml`(ansible-vault encrypted)로 관리.
 baseline credential 변경 금지.
 
 | 벤더 | vault 파일 | 비고 |
 |---|---|---|
-| Lenovo | vault/redfish/lenovo.yml | baseline 고정 |
-| HPE | vault/redfish/hpe.yml | baseline 고정 |
-| Dell | vault/redfish/dell.yml | baseline 고정 (R740 기준) |
-| Cisco | vault/redfish/cisco.yml | baseline 고정 |
+| Lenovo | vault/<loc>/redfish/lenovo.yml | baseline 고정 |
+| HPE | vault/<loc>/redfish/hpe.yml | baseline 고정 |
+| Dell | vault/<loc>/redfish/dell.yml | baseline 고정 (R740 기준) |
+| Cisco | vault/<loc>/redfish/cisco.yml | baseline 고정 |
 
 ### Supplemental 장비 (추가 검증)
 추가 evidence 수집 전용. baseline 정책을 변경하는 근거로 사용하면 안 됨.

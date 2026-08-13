@@ -17,7 +17,7 @@ Ansible 기반 3-channel 서버 정보 수집 개발. 각 채널이 자기 fragm
 2. `.claude/ai-context/output-schema/convention.md` — sections.yml + field_dictionary.yml 매핑 (gather 산출물 → output)
 3. `.claude/ai-context/vendors/{dell,hpe,lenovo,supermicro,cisco}.md` — 벤더 OEM 특이사항
 4. `.claude/ai-context/external/integration.md` — Redfish / IPMI / SSH / WinRM / vSphere
-5. `.claude/ai-context/common/project-map.md`
+5. `docs/ai/catalogs/PROJECT_MAP.md`
 6. `.claude/ai-context/common/repo-facts.md`
 
 ## 정본 reference (덮어쓰지 말 것)

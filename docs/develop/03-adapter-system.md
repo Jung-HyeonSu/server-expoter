@@ -64,7 +64,7 @@
     │
     ▼
 [ Step 4 ] 선택된 adapter 가 시키는 대로
-    - credentials.profile = "dell"  → vault/redfish/dell.yml 로드
+    - credentials.profile = "dell"  → vault/<loc>/redfish/dell.yml 로드
     - collect.standard_tasks = "redfish-gather/tasks/collect_standard.yml" 실행
     - collect.oem_tasks      = "redfish-gather/tasks/vendors/dell/collect_oem.yml" 실행
     - normalize.standard_tasks 실행 → fragment 생성
@@ -188,7 +188,7 @@ normalize:
   oem_tasks:      "redfish-gather/tasks/vendors/dell/normalize_oem.yml"
 
 credentials:
-  profile:           "dell"   # vault/redfish/dell.yml 을 로드
+  profile:           "dell"   # vault/<loc>/redfish/dell.yml 을 로드
   fallback_profiles: []
 
 graceful_degradation:

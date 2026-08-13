@@ -64,7 +64,7 @@
 | C1 | 사이트 fixture 캡처 (CSUS 3200 / Superdome Flex 각 1대) | RMC IP 확보 + Redfish 활성화 (`docs/operate/06-rmc-activation.md` 4 절) | `capture-site-fixture` — `tests/fixtures/redfish/hpe_csus_3200/` 17 파일 |
 | C2 | baseline JSON 추가 (`hpe_csus_3200_baseline.json` + `hpe_superdome_flex_baseline.json`) | C1 완료 | `update-vendor-baseline` (rule 13 R4) |
 | C3 | lab cycle `hpe-csus-rmc-lab-validation` round | C1 + C2 완료 | 신 round — mock fixture 정정 + adapter origin 갱신 |
-| C4 | vault 분리 결정 (`vault/redfish/hpe_csus.yml`) | 사용자 명시 승인 + 사이트 자격증명 정책 | rule 50 R2 단계 4 |
+| C4 | vault 분리 결정 (`vault/<loc>/redfish/hpe_csus.yml`) | 사용자 명시 승인 + 사이트 자격증명 정책 | rule 50 R2 단계 4 |
 | C5 | ServiceRoot.Product 실측 — 정확 model 문자열 | C1 | adapter `model_patterns` 정밀화 |
 | C6 | Managers / Systems / Chassis Member 개수 + ID 패턴 실측 | C1 | mock fixture RMC / PDHC0~N / Bay1.iLO5 / Partition0~N 검증 |
 | C7 | `Oem.Hpe.PartitionInfo` / `FlexNodeInfo` / `GlobalConfiguration` schema 실측 | C1 | `redfish-gather/tasks/vendors/hpe/normalize_oem.yml` `default({})` 정정 |

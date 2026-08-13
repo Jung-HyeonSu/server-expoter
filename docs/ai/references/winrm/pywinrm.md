@@ -105,7 +105,7 @@ Enable-WSManCredSSP -Role Server -Force
 
 1. **HTTPS 권장**: production은 5986 + 정식 cert 또는 self-signed + ignore
 2. **NTLM transport**: `ansible_winrm_transport: ntlm`
-3. **자격증명 vault**: `vault/windows.yml`의 `vault_windows_user/password`
+3. **자격증명 vault**: `vault/<loc>/os/windows.yml`의 `vault_windows_user/password`
 4. **timeout 명시**: `read_timeout_sec` / `operation_timeout_sec` (Ansible inventory 변수)
 5. **CredSSP는 신중**: double-hop 필요 시만. 보안 영향 큼
 

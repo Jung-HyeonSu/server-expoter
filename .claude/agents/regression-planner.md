@@ -17,4 +17,4 @@ server-exporter 회귀 테스트 계획.
 
 - skill: `prepare-regression-check`, `vendor-change-impact`, `run-baseline-smoke`
 - agent: `qa-regression-worker`, `baseline-validation-worker`
-- policy: `.claude/policy/test-selection-map.yaml`
+- 회귀 대상 선정은 rule 91 R7 / rule 92 R3 의 영역 목록을 따른다

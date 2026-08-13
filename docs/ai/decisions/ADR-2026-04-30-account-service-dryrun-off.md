@@ -66,8 +66,8 @@ server-exporter 명세서 (cycle-016 사용자 요구사항 #2 / #3 / #4):
 
 ## 관련
 
-- **이전 결정**: `docs/ai/archive/harness/cycle-014.md` — dryrun=true default 도입 사유 (lab 잠금 위험 회피)
-- **명세 reference**: `docs/ai/harness/cycle-016.md` 사용자 요구사항 #2 / #3 / #4
+- **이전 결정**: 아카이브(정리됨) — dryrun=true default 도입 사유 (lab 잠금 위험 회피)
+- **명세 reference**: cycle 로그(정리됨) 사용자 요구사항 #2 / #3 / #4
 - **rule**: rule 92 R5 (사용자 명시 결정 — OPS-5 매트릭스)
 - **카탈로그**: `docs/ai/catalogs/VENDOR_ADAPTERS.md` dryrun 정책 절
 

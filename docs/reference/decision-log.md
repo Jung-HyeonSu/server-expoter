@@ -725,7 +725,7 @@ CSUS3200 매칭 패턴이 부재하여 현재 `hpe_ilo.yml` (priority=10) generi
    - 기존: `(?i)Superdome|Flex`
    - 변경: `(?i)Superdome|Flex|Compute Scale-up|CSUS`
    - fragment field name (`oem_hpe_superdome`) 유지 — envelope shape 영향 0 (rule 13 R5)
-4. **vault profile = "hpe" 재사용** (rule 50 R2 단계 4) — 별도 `vault/redfish/hpe_csus.yml` 분리는 NEXT_ACTIONS 등재
+4. **vault profile = "hpe" 재사용** (rule 50 R2 단계 4) — 별도 `vault/<loc>/redfish/hpe_csus.yml` 분리는 NEXT_ACTIONS 등재
 5. **baseline / fixture SKIP** (rule 50 R2 단계 10 — lab 부재). NEXT_ACTIONS.md 에 4 항목 등재 (rule 96 R1-C)
 6. **firmware_patterns 추정**: `^[34]\\.[0-9]+\\..*` (RMC 3.x/4.x — Superdome Flex 2.x/3.x 후속, 사이트 실측 시 정정)
 
@@ -823,7 +823,7 @@ envelope `vendor` 는 외부 계약. `hpe` 로 필터링하던 다운스트림 �
 | 1 | 사이트 fixture 캡처 | BMC IP 확보 | capture-site-fixture skill |
 | 2 | baseline JSON 추가 (`schema/baseline_v1/hpe_csus_3200_baseline.json`) | 실장비 검증 후 | rule 13 R4 + update-vendor-baseline skill |
 | 3 | lab 도입 cycle (`hpe-csus-3200-lab-validation` round) | 별도 round 진입 | Round 검증 + 펌웨어 매트릭스 확정 |
-| 4 | vault 분리 결정 (`vault/redfish/hpe_csus.yml`) | 사용자 명시 승인 시 | 현재 hpe 재사용 — 사용자 결정 시 분리 |
+| 4 | vault 분리 결정 (`vault/<loc>/redfish/hpe_csus.yml`) | 사용자 명시 승인 시 | 현재 hpe 재사용 — 사용자 결정 시 분리 |
 
 ---
 
@@ -1338,7 +1338,7 @@ cycle-019 본 cycle 에서 7-loop + 10R extended audit P1 22건 적용 후, 사�
 | 1. vendor_aliases.yml 매핑 | 4 vendor alias 추가 | [OK] |
 | 2. adapter YAML 생성 | huawei_ibmc / inspur_isbmc / fujitsu_irmc / quanta_qct_bmc | [OK] |
 | 3. (선택) OEM tasks | 부재 (standard_only — 사이트 fixture 확보 후 보강) | DEFER |
-| 4. vault 생성 | vault/redfish/{vendor}.yml | **SKIP (사용자 명시)** |
+| 4. vault 생성 | vault/<loc>/redfish/<vendor>.yml | **SKIP (사용자 명시)** |
 | 5. baseline | schema/baseline_v1/{vendor}_baseline.json | DEFER (lab 부재) |
 | 6. ai-context | 내부 하네스 설정{vendor}.md 4종 | [OK] |
 | 7. vendor-boundary-map.yaml | huawei/inspur/fujitsu/quanta 추가 | [OK] |
@@ -1368,7 +1368,7 @@ cycle-019 본 cycle 에서 7-loop + 10R extended audit P1 22건 적용 후, 사�
 
 ### 사이트 도입 시 절차
 
-1. `vault/redfish/{vendor}.yml` 생성 (ansible-vault encrypt + username/password)
+1. `vault/<loc>/redfish/<vendor>.yml` 생성 (ansible-vault encrypt + username/password)
 2. `tests/redfish-probe/probe_redfish.py --vendor {vendor}` 실행
 3. `schema/baseline_v1/{vendor}_baseline.json` 생성
 4. `tests/evidence/<날짜>-{vendor}.md` Round 검증 기록

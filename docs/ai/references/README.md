@@ -70,7 +70,7 @@ docs/ai/references/
 - Declarative Pipeline (`jenkins/pipeline-syntax.md`)
 - 4-Stage (Validate / Gather / Validate Schema / E2E Regression)
 - agent-master 망 분리
-- `Jenkinsfile`, `Jenkinsfile_grafana`, `Jenkinsfile_portal` 3종
+- `Jenkinsfile`, `grafana 파이프라인(제거됨)`, `Jenkinsfile_portal` 3종
 
 ## 활용 원칙
 

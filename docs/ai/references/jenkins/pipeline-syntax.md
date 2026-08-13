@@ -2,7 +2,7 @@
 
 > Source: https://www.jenkins.io/doc/book/pipeline/syntax/
 > Fetched: 2026-04-27
-> 사용 위치 (server-exporter): `Jenkinsfile`, `Jenkinsfile_grafana`, `Jenkinsfile_portal`
+> 사용 위치 (server-exporter): `Jenkinsfile`, `grafana 파이프라인(제거됨)`, `Jenkinsfile_portal`
 
 ## Pipeline 기본 구조
 

@@ -38,14 +38,14 @@
 
 | Vault | accounts (순서 / role / label) |
 |---|---|
-| `vault/linux.yml` | (1) primary `linux_current` cloviradmin / (2) secondary `linux_fallback` infraops |
-| `vault/windows.yml` | (1) primary `windows_current` administrator / (2) secondary `windows_fallback` infraops <br/> *(사용자 명시: gooddit 제거 — 사내 부재)* |
-| `vault/esxi.yml` | (1) primary `esxi_current` root / (2) secondary `esxi_fallback` root |
-| `vault/redfish/dell.yml` | (1) primary `common_infraops` / (2-4) recovery `dell_current/_fallback_1/_fallback_2` / (5) recovery `lab_dell_root` |
-| `vault/redfish/hpe.yml` | (1) primary `common_infraops` / (2) recovery `hpe_current` / (3) recovery `hpe_fallback` |
-| `vault/redfish/lenovo.yml` | (1) primary `common_infraops` / (2) recovery `lenovo_current` / (3) recovery `lenovo_fallback` |
-| `vault/redfish/cisco.yml` | (1) primary `common_infraops` / (2) recovery `cisco_current` |
-| `vault/redfish/supermicro.yml` | (1) primary `common_infraops` *(lab 부재 — 검증 skip)* |
+| `vault/<loc>/os/linux.yml` | (1) primary `linux_current` cloviradmin / (2) secondary `linux_fallback` infraops |
+| `vault/<loc>/os/windows.yml` | (1) primary `windows_current` administrator / (2) secondary `windows_fallback` infraops <br/> *(사용자 명시: gooddit 제거 — 사내 부재)* |
+| `vault/<loc>/esxi.yml` | (1) primary `esxi_current` root / (2) secondary `esxi_fallback` root |
+| `vault/<loc>/redfish/dell.yml` | (1) primary `common_infraops` / (2-4) recovery `dell_current/_fallback_1/_fallback_2` / (5) recovery `lab_dell_root` |
+| `vault/<loc>/redfish/hpe.yml` | (1) primary `common_infraops` / (2) recovery `hpe_current` / (3) recovery `hpe_fallback` |
+| `vault/<loc>/redfish/lenovo.yml` | (1) primary `common_infraops` / (2) recovery `lenovo_current` / (3) recovery `lenovo_fallback` |
+| `vault/<loc>/redfish/cisco.yml` | (1) primary `common_infraops` / (2) recovery `cisco_current` |
+| `vault/<loc>/redfish/supermicro.yml` | (1) primary `common_infraops` *(lab 부재 — 검증 skip)* |
 
 **갱신 절차**: 로컬 평문 작성 → paramiko SSH 통해 Jenkins agent 154 의 `/opt/ansible-env/bin/ansible-vault encrypt --output=-` 실행 → 결과 binary 로 로컬 vault 파일 갱신 → 평문 임시 즉시 삭제 (`/tmp/vault_new` rm -rf). round-trip decrypt 검증 OK (label/role/순서 일치).
 

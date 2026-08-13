@@ -101,7 +101,7 @@ GET https://<BMC_IP>/redfish/v1/Systems/{첫 멤버}
 ### 단계 4 — adapter 선택 → vault 프로파일 결정
 
 `site.yml:63-70` (`adapter_loader` lookup) → `site.yml:87-88` → `tasks/load_vault.yml`.
-`load_vault.yml:17` 이 `_selected_adapter.credentials.profile` 로 `vault/redfish/{profile}.yml` 을 정하고, `:29-36` 에서 로드, `:64-81` 에서 `_rf_accounts` (username/password/label/role 리스트)로 정규화한다.
+`load_vault.yml:17` 이 `_selected_adapter.credentials.profile` 로 `vault/<loc>/redfish/{profile}.yml` 을 정하고, `:29-36` 에서 로드, `:64-81` 에서 `_rf_accounts` (username/password/label/role 리스트)로 정규화한다.
 
 **시리얼과의 관계**: `Systems/{id}` 는 인증 필요 endpoint 다(`ServiceRoot` 만 무인증). 여기서 자격증명을 못 얻으면 시리얼은 `null` 이 된다.
 

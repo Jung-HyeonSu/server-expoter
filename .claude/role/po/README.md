@@ -12,7 +12,7 @@
 
 ## 로드할 ai-context 문서
 1. `.claude/ai-context/common/repo-facts.md` — 현재 검증 기준 (Agent 10.100.64.154)
-2. `.claude/ai-context/common/project-map.md`
+2. `docs/ai/catalogs/PROJECT_MAP.md`
 3. `.claude/ai-context/vendors/` — 5개 벤더 OEM 메모
 
 ## 자주 사용하는 Skills

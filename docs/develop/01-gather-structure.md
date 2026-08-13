@@ -171,7 +171,7 @@ site.yml (Play 1개)
   tasks/detect_vendor.yml      → BMC manufacturer → vendor_aliases.yml 거쳐 정규화
                                  → _rf_detected_vendor = "dell" / "hpe" / ...
   adapter_loader (redfish)     → _selected_adapter = (예) redfish_dell_idrac9
-  tasks/load_vault.yml         → vault/redfish/dell.yml 등 동적 로드
+  tasks/load_vault.yml         → vault/<loc>/redfish/dell.yml 등 동적 로드
   tasks/collect_standard.yml   → 표준 endpoint 호출 (Systems / Chassis / Managers / Storage / ...)
                                  → Storage 실패 시 SimpleStorage 로 fallback
   tasks/normalize_standard.yml → 표준 fragment 생성 → merge
@@ -206,11 +206,11 @@ storage
 
 | 벤더 | 매칭 adapter | vault |
 |---|---|---|
-| Dell | `redfish_dell_idrac9` 외 | `vault/redfish/dell.yml` |
-| HPE | `redfish_hpe_ilo6` 외 | `vault/redfish/hpe.yml` |
-| Lenovo | `redfish_lenovo_xcc` 외 | `vault/redfish/lenovo.yml` |
-| Supermicro | `redfish_supermicro_*` | `vault/redfish/supermicro.yml` |
-| Cisco | `redfish_cisco_cimc` | `vault/redfish/cisco.yml` |
+| Dell | `redfish_dell_idrac9` 외 | `vault/<loc>/redfish/dell.yml` |
+| HPE | `redfish_hpe_ilo6` 외 | `vault/<loc>/redfish/hpe.yml` |
+| Lenovo | `redfish_lenovo_xcc` 외 | `vault/<loc>/redfish/lenovo.yml` |
+| Supermicro | `redfish_supermicro_*` | `vault/<loc>/redfish/supermicro.yml` |
+| Cisco | `redfish_cisco_cimc` | `vault/<loc>/redfish/cisco.yml` |
 
 신규 벤더 (Huawei / Inspur / Fujitsu / Quanta / HPE Superdome) 도 adapter 가 등록되어 있으나 lab 부재로 미검증. 상세는 `docs/reference/live-validation.md`.
 

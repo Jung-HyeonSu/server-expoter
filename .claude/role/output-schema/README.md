@@ -15,7 +15,7 @@
 ## 로드할 ai-context 문서
 1. `.claude/ai-context/output-schema/convention.md` — schema 매핑 / build_*.yml 빌더 / JSON envelope
 2. `.claude/ai-context/gather/convention.md` — 입력 fragment 형식 (gather 산출물)
-3. `.claude/ai-context/common/project-map.md`
+3. `docs/ai/catalogs/PROJECT_MAP.md`
 4. `.claude/ai-context/common/coding-glossary-ko.md` — sections / fields / baseline 용어
 
 ## 정본 reference

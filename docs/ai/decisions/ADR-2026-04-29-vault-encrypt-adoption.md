@@ -42,9 +42,9 @@ cycle-012 commit `29fee49a`에서 다음 일괄 적용:
 
 ```bash
 ansible-vault encrypt --vault-password-file <pwd> \
-  vault/linux.yml vault/windows.yml vault/esxi.yml \
-  vault/redfish/dell.yml vault/redfish/hpe.yml vault/redfish/lenovo.yml \
-  vault/redfish/supermicro.yml vault/redfish/cisco.yml
+  vault/<loc>/os/linux.yml vault/<loc>/os/windows.yml vault/<loc>/esxi.yml \
+  vault/<loc>/redfish/dell.yml vault/<loc>/redfish/hpe.yml vault/<loc>/redfish/lenovo.yml \
+  vault/<loc>/redfish/supermicro.yml vault/<loc>/redfish/cisco.yml
 ```
 
 vault password = `__REDACTED__` (운영팀 결정).
@@ -59,7 +59,7 @@ vault password = `__REDACTED__` (운영팀 결정).
 
 ### 3. Jenkinsfile×3 binding
 
-3 Jenkinsfile (`Jenkinsfile`, `Jenkinsfile_grafana`, `Jenkinsfile_portal`) 모두 Stage 2 (Gather) 직전에:
+3 Jenkinsfile (`Jenkinsfile`, `grafana 파이프라인(제거됨)`, `Jenkinsfile_portal`) 모두 Stage 2 (Gather) 직전에:
 
 ```groovy
 withCredentials([
@@ -117,12 +117,12 @@ credential 등록 절차 (Manage Jenkins → Credentials → Add Secret File) �
 
 - **OPS-3** Git history 잔존 평문 password 6종 회전 — 운영팀 일정 + 실 장비 + 새 PR에 encrypt 후 commit
 - **OPS-1** Jenkins 빌드 시범 1회 — credential binding 정상 동작 확인 (envelope `meta.auth.fallback_used` 노출 검증)
-- 새 vendor 추가 시 (rule 50 R2 9단계 절차): vault/redfish/{vendor}.yml 작성 후 즉시 encrypt + 본 ADR 절차 따름
+- 새 vendor 추가 시 (rule 50 R2 9단계 절차): vault/<loc>/redfish/<vendor>.yml 작성 후 즉시 encrypt + 본 ADR 절차 따름
 
 ## 관련
 
 - cycle-011 ADR: `ADR-2026-04-28-security-policy-removal.md` (보안 정책 해제 — 본 ADR의 전제)
-- cycle-012 보고서: `docs/ai/archive/harness/cycle-012.md`
-- handoff: `docs/ai/archive/handoff/2026-04-29-cycle-012.md`
+- cycle-012 보고서: 아카이브(정리됨)
+- handoff: 아카이브(정리됨)
 - plan: `C:\Users\hshwa\.claude\plans\1-snazzy-haven.md` (P0 Foundation에서 vault binding 명시)
 - rule: `93-branch-merge-gate` R1 (force push 금지 — 옵션 A2 거절 근거)

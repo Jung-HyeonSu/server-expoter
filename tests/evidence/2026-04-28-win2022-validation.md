@@ -111,6 +111,6 @@ tests/reference/os/win2022/10_100_64_135/
 ## 관련
 
 - ADR: `docs/ai/decisions/ADR-2026-04-28-security-policy-removal.md` (cycle-011 결정)
-- cycle: `docs/ai/harness/cycle-011.md`
+- cycle: cycle 로그(정리됨)
 - 정본: `tests/evidence/2026-04-28-reference-collection.md` (Round 11) — Win10 F4 발견 시점
 - next: F1 (Win10 자격 재확인) 후 동일 패턴으로 Win10 추가 검증 가능

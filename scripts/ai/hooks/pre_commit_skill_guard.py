@@ -67,8 +67,11 @@ def main() -> int:
 
     repo_root = Path(".").resolve()
     try:
+        # 2026-08-13: --diff-filter=d 필수. 이 옵션이 없으면 삭제된 SKILL.md 도 목록에
+        #   들어와 _check_skill_md 가 "파일 없음"을 위반으로 보고하고 commit 을 막는다.
+        #   skill 을 지우는 것은 정상 동작이므로 삭제는 형식 검증 대상이 아니다.
         r = subprocess.run(
-            ["git", "diff", "--cached", "--name-only"],
+            ["git", "diff", "--cached", "--name-only", "--diff-filter=d"],
             capture_output=True, text=True, cwd=str(repo_root), timeout=5,
             encoding="utf-8", errors="replace",
         )

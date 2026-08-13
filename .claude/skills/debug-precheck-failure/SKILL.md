@@ -125,4 +125,4 @@ python -c "import winrm; s = winrm.Session('<ip>', auth=('<user>','<pass>'), tra
 - skill: `classify-precheck-layer`, `debug-external-integrated-feature`, `rotate-vault`
 - agent: `precheck-engineer`
 - 정본: `docs/contract/04-failure-and-diagnosis.md`, `common/library/precheck_bundle.py`
-- reference: `docs/ai/references/redfish/redfish-spec.md`, `docs/ai/references/winrm/pywinrm.md`
+- reference: 외부 API 공식 문서, `docs/ai/references/winrm/pywinrm.md`

@@ -82,7 +82,7 @@
 - **분류**: catalog-stale
 - **설명**: 하네스 도입 문서에서 "4-Stage = Validate / Gather / Validate Schema / **E2E Regression**" 일반화 표기. 실측 결과:
   - `Jenkinsfile`: Stage 4 = E2E Regression ✓
-  - `Jenkinsfile_grafana`: Stage 4 = **Ingest** (Grafana 데이터 적재)
+  - `grafana 파이프라인(제거됨)`: Stage 4 = **Ingest** (Grafana 데이터 적재)
   - `Jenkinsfile_portal`: Stage 4 = **Callback** (호출자 통보)
 - **영향**: 문서/문서 간 불일치. 실 운영에 영향 없음.
 - **제안**: rule 80 (ci-jenkins-policy) 본문 정정 — Stage 4가 Jenkinsfile별로 다름을 명시. CLAUDE.md / design / Plan 1 동시 갱신.
@@ -91,7 +91,7 @@
 
 ## DRIFT-003 (2026-04-27)
 
-- **발견 위치**: `docs/ai/references/redfish/vendor-bmc-guides.md` ↔ 실 `adapters/redfish/`
+- **발견 위치**: 외부 API 공식 문서 ↔ 실 `adapters/redfish/`
 - **분류**: catalog-stale
 - **설명**: vendor-bmc-guides.md 작성 시 일부 adapter 이름 추정 — 실측에서 정정:
   - HPE: `hpe_synergy.yml` (없음) → 실제 `hpe_ilo4.yml`
@@ -100,7 +100,7 @@
 - **영향**: reference 문서 stale. VENDOR_ADAPTERS.md는 실측으로 정정됨.
 - **제안**: vendor-bmc-guides.md 동기화 (다음 cycle).
 - **상태**: resolved (2026-04-27 cycle-003)
-- **관련**: `docs/ai/catalogs/VENDOR_ADAPTERS.md`, `docs/ai/references/redfish/vendor-bmc-guides.md`
+- **관련**: `docs/ai/catalogs/VENDOR_ADAPTERS.md`, 외부 API 공식 문서
 
 ## DRIFT-004 (2026-04-27, resolved 2026-04-28)
 

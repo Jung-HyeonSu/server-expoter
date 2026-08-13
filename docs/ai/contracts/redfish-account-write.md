@@ -1,8 +1,8 @@
 # Redfish Account Write Contract — 구현 계획 (2026-08-12, rev.2)
 
 > **입력**: 9 Vendor Account Write Contract Delta Research 9건 (2026-08-12)
-> + `docs/ai/contracts/redfish-account-asis.md`
-> + `docs/ai/contracts/redfish-account-compat-matrix.md`
+> + AS-IS 전수조사(정리됨)
+> + Vendor × Family 매트릭스
 > + 현재 HEAD(`26394474`) 및 워킹트리 코드 실측
 >
 > **rev.2 변경 사유**: 사용자 검토 지시 10건 반영. 기존 설계 방향은 유지하고 해당 항목만 수정했다.
@@ -407,7 +407,7 @@ supermicro_split_account→ 유지 + create_uri 조건부 결정 (§3.5)
 
 ## 5.4 문서
 
-`docs/ai/contracts/redfish-account-compat-matrix.md`, `CURRENT_STATE.md`,
+Vendor × Family 매트릭스, `CURRENT_STATE.md`,
 `NEXT_ACTIONS.md`, `catalogs/EXTERNAL_CONTRACTS.md`, `catalogs/TEST_HISTORY.md`,
 `catalogs/LAB_PENDING_MATRIX.md`, `docs/reference/decision-log.md`, `docs/operate/05-vault.md`,
 `docs/ai/decisions/ADR-2026-08-12-account-write-contract.md`(신규, rule 70 R8 trigger 1),
@@ -882,8 +882,8 @@ Evidence 만 Firmware 별 구분 / **D-4** real-write default 현행 유지·Che
 | 구현 정본 | `redfish-gather/library/redfish_gather.py` (Family 표 :5076 / 선택 :5180 / provision :5548) |
 | Ansible | `redfish-gather/tasks/account_service.yml`, `account_service_try_one.yml`, `site.yml:148-153` |
 | Credential | `module_utils/credential_common.py:54-55`, `common/tasks/credential/` |
-| AS-IS 감사 | `docs/ai/contracts/redfish-account-asis.md` |
-| 호환성 Matrix | `docs/ai/contracts/redfish-account-compat-matrix.md` |
+| AS-IS 감사 | AS-IS 전수조사(정리됨) |
+| 호환성 Matrix | Vendor × Family 매트릭스 |
 | 실장비 Evidence | `tests/evidence/2026-08-12-{git-location-live-verification,standard-password-convergence,redfish-standard-account-separation}.md` |
 | 실미러 | `tests/reference/redfish/**` (Lenovo `HostBootstrapAccount` 실측 포함) |
 | DMTF 스키마 | `schema/redfish_dmtf_2026.1/ManagerAccount.v1_14_1.json:323` (`HostBootstrapAccount`) |

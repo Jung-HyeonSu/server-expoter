@@ -57,20 +57,20 @@ target_type 에 따라 IP 필드명이 다릅니다.
 ### os
 
 포트 감지로 Linux/Windows 자동 분기:
-- SSH 22 열림 → Linux → `vault/linux.yml`
-- WinRM 5986 또는 5985 열림 → Windows → `vault/windows.yml`
+- SSH 22 열림 → Linux → `vault/<loc>/os/linux.yml`
+- WinRM 5986 또는 5985 열림 → Windows → `vault/<loc>/os/windows.yml`
 - 둘 다 닫힘 → `status: failed`
 
 ### esxi
 
 단일 계정 로딩:
-- `vault/esxi.yml`
+- `vault/<loc>/esxi.yml`
 
 ### redfish
 
 2단계 벤더 감지:
 1. 빈 계정으로 Redfish ServiceRoot → `System.Manufacturer` 읽기
-2. 감지된 벤더에 맞는 `vault/redfish/{vendor}.yml` 로딩 (dell/hpe/lenovo/supermicro/cisco/huawei/inspur/fujitsu/quanta)
+2. 감지된 벤더에 맞는 `vault/<loc>/redfish/<vendor>.yml` 로딩 (dell/hpe/lenovo/supermicro/cisco/huawei/inspur/fujitsu/quanta)
 3. 올바른 계정으로 전체 재수집
 
 ---
@@ -129,7 +129,7 @@ OUTPUT JSON 의 `hostname` 필드도 ip 값으로 채워진다.
 
 ## Ansible 연결 파라미터 (vault 에서 로딩)
 
-### vault/linux.yml
+### vault/<loc>/os/linux.yml
 ```yaml
 ansible_user:     "..."
 ansible_password: "..."
@@ -138,7 +138,7 @@ ansible_password: "..."
 Ansible 연결 파라미터는 site.yml 의 `vars_files` 에서 자동 로딩:
 ```yaml
 vars_files:
-  - "{{ lookup('env', 'REPO_ROOT') }}/vault/linux.yml"
+  - "{{ lookup('env', 'REPO_ROOT') }}/vault/<loc>/os/linux.yml"
 ```
 
 ---

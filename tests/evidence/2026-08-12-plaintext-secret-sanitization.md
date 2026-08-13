@@ -123,7 +123,7 @@ SECRET_VALUE_PATTERNS = tuple(re.compile(p) for p in (
 | `scripts/ai/bug_tracker/agent_ops.py` | `os.environ.get("SE_AGENT_PASS", <실비밀번호>)` | 평문 기본값 제거 + 미설정 시 명확히 실패 |
 | `scripts/ai/bug_tracker/inventory_lab_linux.ini` | `ansible_password=<실비밀번호>` | `lookup('env','SE_LAB_SSH_PASS')` |
 | `scripts/ai/bug_tracker/capture_raw_linux.yml` | `echo <실비밀번호> \| sudo -S` (9곳) | `echo {{ ansible_become_password }} \| sudo -S` |
-| `scripts/ai/add_lab_recovery_to_all_vaults.py` | recovery 자격 표 평문 | `SE_LAB_RECOVERY_PASS` 환경변수 + DEPRECATED 표기 (대상 경로 `vault/redfish/*.yml` 는 flat vault 제거(`adc99570`)로 이미 부재) |
+| `scripts/ai/add_lab_recovery_to_all_vaults.py` | recovery 자격 표 평문 | `SE_LAB_RECOVERY_PASS` 환경변수 + DEPRECATED 표기 (대상 경로 `vault/<loc>/redfish/*.yml` 는 flat vault 제거(`adc99570`)로 이미 부재) |
 
 ---
 

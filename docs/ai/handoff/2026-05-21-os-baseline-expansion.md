@@ -24,7 +24,7 @@ OS baseline expansion cycle 진입 — rhel920 / rhel960 / rocky960 신규 basel
 
 진입 정보:
 - 3 IP: 10.100.64.163 (rhel920) / 10.100.64.165 (rhel960) / 10.100.64.169 (rocky960)
-- 실행 환경: Jenkins Agent (ansible-playbook + vault/linux.yml 자동 로드)
+- 실행 환경: Jenkins Agent (ansible-playbook + vault/<loc>/os/linux.yml 자동 로드)
 - 선행 cycle: F5 (system.runtime 9 필드 Linux/Windows 빌더 정착 후)
 
 각 baseline 추가 절차 (rule 13 R4):
@@ -57,7 +57,7 @@ OS baseline expansion cycle 진입 — rhel920 / rhel960 / rocky960 신규 basel
 |---|---|---|
 | 1 | 3 IP access (사용자 제공) | [OK] (2026-05-11 명시) |
 | 2 | F5 system.runtime 9 필드 빌더 적용 | [DONE 2026-05-11] |
-| 3 | Jenkins Agent + vault/linux.yml | [OK] (운영 환경) |
+| 3 | Jenkins Agent + vault/<loc>/os/linux.yml | [OK] (운영 환경) |
 | 4 | ansible-playbook + Python 3.12 + Linux ansible.posix | [OK] (운영 Agent) |
 
 ---

@@ -53,7 +53,7 @@ Password History 전용 property 는 이 펌웨어의 Attribute 목록에 **존�
 
 ## 일자: 2026-08-12 — 9 Vendor 계정 Write 계약 origin (공식 조사 반영)
 
-> 정본 매트릭스: `docs/ai/contracts/redfish-account-compat-matrix.md`
+> 정본 매트릭스: Vendor × Family 매트릭스
 > 아래는 `redfish_gather._ACCOUNT_FAMILIES` 각 항목의 근거 출처다 (rule 96 R1).
 
 | Family | 계약 | origin |
@@ -538,7 +538,7 @@ DMTF DSP8010 2026.2+ release / 사이트 펌웨어 schema 변경 관측 / 신규
 - **결정 (F)**: **(a) HPE sub-line** — `adapters/redfish/hpe_superdome_flex.yml` 신규 (priority=95, iLO 5 90 < Superdome Flex 95 < iLO 6 100)
 - **별도 vendor 거절 사유**: Manufacturer string 충돌 + vendor_aliases 정규화 모호 (rule 12 R1 위반 위험)
 - **OEM 재사용**: `redfish-gather/tasks/vendors/hpe/` 그대로 (Oem.Hpe 동일 namespace)
-- **vault 재사용**: `vault/redfish/hpe.yml` 그대로 (별도 vault 불필요)
+- **vault 재사용**: `vault/<loc>/redfish/hpe.yml` 그대로 (별도 vault 불필요)
 - **한계**: Multi-partition 시 첫 partition (`Partition0`) 만 수집. 전체 partition 수집은 별도 cycle (server-exporter 현재 Systems Members[0] 단일 진입 패턴).
 
 ### 외부 계약 변동 trigger
@@ -646,11 +646,11 @@ server-exporter envelope: `data.bmc.oem.{idrac_ipmi_version, idrac_last_inventor
 ### infraops 공통계정 password 통일 (사용자 명시)
 
 5 vault 모두 `__REDACTED__Infra` (15자, Dell Strengthen Policy 호환):
-- vault/redfish/dell.yml (cycle 2026-05-06 1차 갱신)
-- vault/redfish/hpe.yml (cycle 2026-05-06 2차)
-- vault/redfish/lenovo.yml (cycle 2026-05-06 2차)
-- vault/redfish/cisco.yml (cycle 2026-05-06 2차)
-- vault/redfish/supermicro.yml (cycle 2026-05-06 2차)
+- vault/<loc>/redfish/dell.yml (cycle 2026-05-06 1차 갱신)
+- vault/<loc>/redfish/hpe.yml (cycle 2026-05-06 2차)
+- vault/<loc>/redfish/lenovo.yml (cycle 2026-05-06 2차)
+- vault/<loc>/redfish/cisco.yml (cycle 2026-05-06 2차)
+- vault/<loc>/redfish/supermicro.yml (cycle 2026-05-06 2차)
 
 5 BMC 모두 infraops/__REDACTED__Infra HTTP 200 검증 완료.
 
@@ -893,7 +893,7 @@ precheck Stage 3 는 `POST https://{ip}:443/sdk` 로 vim25 `RetrieveServiceConte
 ## SSH (Linux gather)
 
 - 라이브러리: paramiko (Ansible 내부)
-- 인증: SSH key 또는 password (vault/linux.yml)
+- 인증: SSH key 또는 password (vault/<loc>/os/linux.yml)
 - privilege: become_method=sudo
 - Linux 2-tier: Python 3.9+ → setup/shell, 그 외 → raw
 
@@ -902,12 +902,12 @@ precheck Stage 3 는 `POST https://{ip}:443/sdk` 로 vim25 `RetrieveServiceConte
 - 라이브러리: pywinrm 0.5.0
 - 인증: NTLM (도메인) / Basic (로컬, HTTPS)
 - Port: 5985 (HTTP) / 5986 (HTTPS)
-- Vault: vault/windows.yml
+- Vault: vault/<loc>/os/windows.yml
 
 ## vSphere API (ESXi gather)
 
 - 라이브러리: pyvmomi 9.0.0 + community.vmware 6.2.0
-- 인증: vault/esxi.yml (root or SSO)
+- 인증: vault/<loc>/esxi.yml (root or SSO)
 - 버전 지원: 6.x / 7.x / 8.x (adapters/esxi/*.yml 분기)
 - pyvmomi 호환 매트릭스: 4 버전 backward (8.0.0 → 5.x ~ 8.x)
 
@@ -1259,11 +1259,11 @@ cycle-015 첫 연결성 검증에서 사용자 라벨 vs 실 Manufacturer drift 
 ## 정본 reference
 
 - `redfish-gather/library/redfish_gather.py` (정본 — 약 350줄, stdlib only)
-- `docs/ai/references/redfish/redfish-spec.md`
-- `docs/ai/references/redfish/python-clients.md` (stdlib vs library 비교)
-- `docs/ai/references/redfish/vendor-bmc-guides.md` (5 vendor BMC)
+- 외부 API 공식 문서
+- 외부 API 공식 문서 (stdlib vs library 비교)
+- 외부 API 공식 문서 (5 vendor BMC)
 - `docs/ai/references/winrm/pywinrm.md`
-- `docs/ai/references/python/pyvmomi.md`
+- 외부 API 공식 문서
 - `docs/ai/references/vmware/community-vmware-modules.md`
 - `.claude/ai-context/external/integration.md`
 

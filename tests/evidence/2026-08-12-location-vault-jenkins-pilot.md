@@ -45,7 +45,7 @@
 
 ## 2. Location Vault 48개 (P1)
 
-`vault/{linux,windows,esxi}.yml` + `vault/redfish/<vendor>.yml` 9개 = flat 12개를
+`vault/<loc>/os/{linux,windows}.yml + vault/<loc>/esxi.yml` + `vault/<loc>/redfish/<vendor>.yml` 9개 = flat 12개를
 **복호화하지 않고 암호문 파일 그대로** 4 Location 에 복사했다.
 
 ```
@@ -180,7 +180,7 @@ Finished: FAILURE
 정적 확인만으로는 "경로가 하나뿐" 을 증명할 수 없어 **음성 대조군**을 만들었다.
 
 임시 브랜치에 `pilotnovault` Location 을 등록하되 `vault/pilotnovault/` 는 **만들지 않았다.**
-flat `vault/linux.yml` 은 workspace 에 그대로 존재하는 상태다.
+flat `vault/<loc>/os/linux.yml` 은 workspace 에 그대로 존재하는 상태다.
 
 ```
 [Resolve Location] pilotnovault -> agent label 'ich'
@@ -196,7 +196,7 @@ errors[0].detail  = [task: linux | abort if credential set unavailable]
                     (scope=pilotnovault/os/linux, outcome=credential_set_missing). …
 ```
 
-- flat `vault/linux.yml` 이 **바로 옆에 있는데도 쓰지 않았다** → flat fallback 부재 확인
+- flat `vault/<loc>/os/linux.yml` 이 **바로 옆에 있는데도 쓰지 않았다** → flat fallback 부재 확인
 - `ich/chj/yi/git` 어느 vault 로도 넘어가지 않았다 → cross-location fallback 부재 확인
 - `auth_success=null` (false 아님) → **미시도**와 `AUTH_PROBE_FAILED` 구분 유지
 - 사용자 메시지는 기존 5문장 중 4번을 재사용, 기술 근거는 `detail` 로 분리 (CLAUDE.md §10)

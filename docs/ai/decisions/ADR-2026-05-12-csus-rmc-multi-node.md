@@ -236,7 +236,7 @@ Rollback trigger:
 | C1 | 사이트 fixture 캡처 (CSUS 3200 + Superdome Flex) | `capture-site-fixture` skill / PENDING (lab 부재) |
 | C2 | baseline JSON 추가 — `schema/baseline_v1/hpe_csus_3200_baseline.json` / `hpe_superdome_flex_baseline.json` | C1 완료 후 / PENDING |
 | C3 | lab 도입 cycle `hpe-csus-rmc-lab-validation` round | C1+C2 완료 후 / PENDING |
-| C4 | vault 분리 결정 (`vault/redfish/hpe_csus.yml`) | 사용자 명시 승인 / PENDING |
+| C4 | vault 분리 결정 (`vault/<loc>/redfish/hpe_csus.yml`) | 사용자 명시 승인 / PENDING |
 | C5 | ServiceRoot.Product 실측 — 정확한 model 문자열 | C1 / PENDING |
 | C6 | Managers / Systems / Chassis Member 개수 + ID 패턴 실측 | C1 / PENDING |
 | C7 | Oem.Hpe.PartitionInfo / FlexNodeInfo / GlobalConfiguration schema 실측 | C1 / PENDING |

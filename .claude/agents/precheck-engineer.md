@@ -43,4 +43,4 @@ model: sonnet
 
 - skill: `debug-precheck-failure`, `classify-precheck-layer`
 - rule: `27-precheck-guard-first`, `30-integration-redfish-vmware-os` (cycle-011: rule 60 해제)
-- reference: `docs/ai/references/redfish/redfish-spec.md`, `docs/ai/references/winrm/pywinrm.md`
+- reference: 외부 API 공식 문서, `docs/ai/references/winrm/pywinrm.md`

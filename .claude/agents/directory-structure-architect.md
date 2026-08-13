@@ -12,7 +12,7 @@ server-exporter 디렉터리 구조 설계.
 ## 검증 항목
 
 - 채널 / common / adapters / schema / tests 계층 명확
-- 새 모듈이 기존 ownership과 일관 (`.claude/policy/channel-ownership.yaml`)
+- 새 모듈이 기존 채널 경계와 일관 (rule 12 / rule 22)
 - PROJECT_MAP fingerprint 갱신
 
 ## 분류
@@ -22,5 +22,5 @@ server-exporter 디렉터리 구조 설계.
 ## 참조
 
 - skill: `plan-structure-cleanup`, `update-evidence-docs`
-- policy: `.claude/policy/channel-ownership.yaml`, `.claude/policy/project-map-fingerprint.yaml`
+- policy: `.claude/policy/project-map-fingerprint.yaml`
 - rule: `00-core-repo`, `70-docs-and-evidence-policy`

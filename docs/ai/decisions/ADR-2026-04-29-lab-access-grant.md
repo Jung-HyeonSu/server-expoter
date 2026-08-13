@@ -39,7 +39,7 @@ cycle-015 진입 시 사용자 명시 결정 (2026-04-29 채팅):
 | 영역 | 변경 |
 |---|---|
 | 신규 파일 (gitignored) | `vault/.lab-credentials.yml` + `inventory/lab/{os-linux,os-windows,redfish,esxi,jenkins}.json` + `inventory/lab/README.md` |
-| 신규 파일 (committed) | `requirements-test.txt`, `tests/e2e_browser/{__init__.py,conftest.py,lab_loader.py,test_jenkins_master.py,test_grafana_ingest.py,README.md}`, `docs/ai/catalogs/LAB_INVENTORY.md`, `tests/evidence/cycle-015/connectivity-2026-04-29.md`, 본 ADR, `docs/ai/archive/harness/cycle-015.md` |
+| 신규 파일 (committed) | `requirements-test.txt`, `tests/e2e_browser/{__init__.py,conftest.py,lab_loader.py,test_jenkins_master.py,test_grafana_ingest.py,README.md}`, `docs/ai/catalogs/LAB_INVENTORY.md`, `tests/evidence/cycle-015/connectivity-2026-04-29.md`, 본 ADR, 아카이브(정리됨) |
 | 수정 파일 | `.gitignore` (lab credential / inventory 추가 차단), `docs/ai/catalogs/{CONVENTION_DRIFT,EXTERNAL_CONTRACTS,FAILURE_PATTERNS}.md`, `docs/ai/{CURRENT_STATE,NEXT_ACTIONS}.md` |
 | 표면 카운트 | catalogs 8 → 9 (+LAB_INVENTORY) |
 | 호스트 권한 부여 | 28대 (Jenkins master 2 / agent 2 / OS 8 / Redfish 11 / ESXi 3 / 주의: Win Server 2022는 firewall closed) |

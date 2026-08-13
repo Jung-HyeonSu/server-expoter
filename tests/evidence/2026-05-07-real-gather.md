@@ -11,7 +11,7 @@
 | 실행 일시 | 2026-05-07 KST (08:46~08:54 UTC) |
 | Jenkins 에이전트 | 10.100.64.155 (cloviradmin) — Ubuntu 6.8 / Java 21 / Ansible 2.20.3 / Python 3.12 venv `/opt/ansible-env/` |
 | 코드 배포 | rsync 로 로컬 main 코드를 `~/se-realtest-2026-05-07/` 로 push |
-| 자격증명 | vault/{linux,windows,esxi}.yml + vault/redfish/{vendor}.yml (5 vendor 통일 — primary `infraops/__REDACTED__Infra` + recovery list, cycle 2026-04-29~2026-05-06) |
+| 자격증명 | vault/<loc>/os/{linux,windows}.yml + vault/<loc>/esxi.yml + vault/<loc>/redfish/<vendor>.yml (5 vendor 통일 — primary `infraops/__REDACTED__Infra` + recovery list, cycle 2026-04-29~2026-05-06) |
 | vault 비밀번호 | `__REDACTED__` (사용자 통일) |
 
 ## 3. 대상 장비 (사용자 제공)

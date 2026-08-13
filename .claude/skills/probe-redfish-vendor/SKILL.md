@@ -97,4 +97,4 @@ description: 새 벤더 / 새 펌웨어 / 의심 응답에 대해 deep_probe_red
 - skill: `add-new-vendor`, `update-vendor-baseline`, `debug-external-integrated-feature`
 - agent: `adapter-author`, `vendor-onboarding-worker`
 - 정본: `docs/reference/live-validation.md`, `tests/redfish-probe/deep_probe_redfish.py`
-- reference: `docs/ai/references/redfish/redfish-spec.md`
+- reference: 외부 API 공식 문서

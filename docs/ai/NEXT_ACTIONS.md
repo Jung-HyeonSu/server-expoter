@@ -33,7 +33,7 @@
 
 > **본 파일**: 진정 active PENDING 만 유지 (rule 70 R5 / R6 / R7 cycle 자문 정책).
 > **lab 매트릭스**: `docs/ai/catalogs/LAB_PENDING_MATRIX.md` (8 vendor × generation × 4 column).
-> **archive**: `docs/ai/archive/NEXT_ACTIONS-history-2026-04-to-05.md` (OPS-* + cycle-013/014/015/016 잔여).
+> **archive**: 아카이브(정리됨) (OPS-* + cycle-013/014/015/016 잔여).
 > **마지막 정리**: 2026-05-29 (audit-cleanup cycle).
 
 ---
@@ -102,7 +102,7 @@
 ## Redfish 계정 Reconcile 후속 (2026-08-12) — Family Strategy 도입 이후
 
 > 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
-> 매트릭스: `docs/ai/contracts/redfish-account-compat-matrix.md`
+> 매트릭스: Vendor × Family 매트릭스
 > 계획: `docs/ai/contracts/redfish-account-write.md`
 >
 > **[정정 2026-08-13]** 종전 이 자리의 "현재 어떤 BMC Family 도 `PROVEN` 이 아니다" 는
@@ -524,7 +524,7 @@
   **차단**: 본 검수 환경(Windows)은 ansible control node 미지원(`os.get_blocking` 부재 — 검증함). faithful baseline 은
   Linux control node 또는 lab Jenkins 의 실 site.yml 실행 필요 (rule 13 R4 — AI 임의 편집 금지).
   → **절차**: `_serve_fixtures_as_redfish.py` (TLS 래핑) 로 미러 서빙 → `ansible-playbook redfish-gather/site.yml`
-  (REPO_ROOT + vault/redfish/hpe.yml + inventory) → json_only 출력을 schema/baseline_v1/hpe_dl380_gen12_baseline.json
+  (REPO_ROOT + vault/<loc>/redfish/hpe.yml + inventory) → json_only 출력을 schema/baseline_v1/hpe_dl380_gen12_baseline.json
   (신 iLO7 baseline, 기존 iLO5 보존) + test_redfish_baseline.py 케이스 추가.
 
 ## Round 15 (2026-06-09 멀티에이전트 버그헌트) 후속
@@ -670,7 +670,7 @@
 
 | 항목 | 상태 | 진입 |
 |---|---|---|
-| rhel920 / rhel960 / rocky960 baseline 3건 신설 | **trigger 충족** (사용자 IP 제공 2026-05-11) | `docs/ai/handoff/2026-05-21-os-baseline-expansion.md` cold-start |
+| rhel920 / rhel960 / rocky960 baseline 3건 신설 | **trigger 충족** (사용자 IP 제공 2026-05-11) | handoff 문서(정리됨) cold-start |
 
 - 3 IP: 10.100.64.163 / 10.100.64.165 / 10.100.64.169
 - F5 system.runtime 9 필드 빌더 실측 검증 포함
@@ -693,7 +693,7 @@
 
 - **trigger**: RMC IP 확보 + Redfish 활성화 (`docs/operate/06-rmc-activation.md` 4 절)
 - **상세 8 항목 (C1~C8)**: `docs/ai/catalogs/LAB_PENDING_MATRIX.md` HPE 행
-- **handoff 후보 A**: `docs/ai/handoff/2026-05-11-next-cycles.md` "후보 A — HPE CSUS 3200 lab 검증"
+- **handoff 후보 A**: handoff 문서(정리됨) "후보 A — HPE CSUS 3200 lab 검증"
 - **ADR**: `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md`, `ADR-2026-05-29-hba-ib-csus.md`
 - **cycle 2026-05-29 (hba-ib-csus)**: baseline 을 전 공통 섹션 realistic mock 으로 채움 (FC HBA + RAID1 SATA + DDR5 + 3 partition canonical). 여전히 **mock** — C1 사이트 fixture 캡처 후 실 baseline 으로 교체 의무 ("검증됨" 주장 금지 — rule 25 R7-B).
 - **2026-06-08 에뮬레이터 범위 명시**: HPE 공식 iLO 에뮬레이터는 **CSUS/Superdome mockup 부재** → 본 항목(CSUS/Superdome)은 에뮬레이터로 못 메움. 실장비/사이트 fixture 가 유일 경로. (에뮬레이터는 iLO5/iLO6/Gen12 ProLiant 만 — `tests/integration/test_hpe_emulator_replay.py` 오프라인 회귀로 별도 커버.)
@@ -770,7 +770,7 @@
 | harness 자기개선 cycle | `/harness-cycle` (6단계 파이프라인) |
 | rule 28 측정 11종 drift 검사 | `measure-reality-snapshot` skill |
 | repo 정리 (죽은 코드 / 중복 / archive 후보) | `repo-hygiene-planner` agent |
-| `docs/ai/handoff/2026-05-11-next-cycles.md` 후보 B/C/D | handoff 후보 참조 |
+| handoff 문서(정리됨) 후보 B/C/D | handoff 후보 참조 |
 
 ---
 
@@ -793,7 +793,7 @@
 
 | 우선 | 항목 | 사유 | 결정 주체 |
 |---|---|---|---|
-| HIGH | `vault/linux.yml` primary 계정 교정 | 현재 primary=`infra/__REDACTED__` (161/165에서 인증 실패 → 매 host가 secondary fallback에 의존). 실 동작 계정은 `cloviradmin/__REDACTED__`(secondary). primary를 실 계정으로 교체하면 host당 1차 인증실패 지연 제거. 사용자가 기대한 `admin` 계정은 vault에 부재 | **사용자** (vault 보호경로 + rule 50/27, "적용하지말고" 지시) |
+| HIGH | `vault/<loc>/os/linux.yml` primary 계정 교정 | 현재 primary=`infra/__REDACTED__` (161/165에서 인증 실패 → 매 host가 secondary fallback에 의존). 실 동작 계정은 `cloviradmin/__REDACTED__`(secondary). primary를 실 계정으로 교체하면 host당 1차 인증실패 지연 제거. 사용자가 기대한 `admin` 계정은 vault에 부재 | **사용자** (vault 보호경로 + rule 50/27, "적용하지말고" 지시) |
 | MED | `json_only` unreachable/failed stderr 표면화 | 현재 OUTPUT 외 실패 전부 suppress → 사고 시 콘솔 무정보(이번 진단 난항의 근본). non-OUTPUT failed/unreachable을 stderr 구조화 출력(no_log 존중, stdout 계약 불변) | AI 가능(additive) — 승인 시 진행 |
 | LOW | `accounts` 빈 배열 edge case | accounts 비면 `abort if all credentials failed` skip → 본 gather task에서 unreachable 재발 가능 | AI 가능 — 별도 검토 |
 
@@ -803,8 +803,8 @@
 
 - rule: `70-docs-and-evidence-policy` R5 / R6 / R7 (보존 / archive / cycle 자문)
 - catalog: `LAB_PENDING_MATRIX.md`, `COMPATIBILITY-MATRIX.md`, `VENDOR_ADAPTERS.md`, `EXTERNAL_CONTRACTS.md`
-- archive: `docs/ai/archive/NEXT_ACTIONS-history-2026-04-to-05.md`
-- handoff: `docs/ai/handoff/2026-05-21-os-baseline-expansion.md` (F6), `docs/ai/handoff/2026-05-11-next-cycles.md` (4 후보)
+- archive: 아카이브(정리됨)
+- handoff: handoff 문서(정리됨) (F6), handoff 문서(정리됨) (4 후보)
 - ADR: `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md`
 
 ## Linux baseline 재캡처 발견 (2026-06-22, 161/166 접속)
@@ -941,7 +941,7 @@ Job: `clovirone-server-gather-vault-pilot` (운영 Job config 복제, `Jenkinsfi
 - [x] **P7 reconcile gate** — 경로 변경 후에도 게이트 불변 확인. dry-run 시 `verification: skipped`
 - [ ] **P8 Portal 의 미지 `failure_code` 처리** — `CREDENTIAL_SET_UNAVAILABLE` 수신 시 동작 (외부 시스템)
 - [ ] **P9 flat vault 제거** — **아직 아니다.** 아래 E-1~E-3 해소 후 별도 커밋.
-      대상: `vault/{linux,windows,esxi}.yml`, `vault/redfish/*.yml` 9개
+      대상: `vault/<loc>/os/{linux,windows}.yml + vault/<loc>/esxi.yml`, `vault/<loc>/redfish/*.yml` 9개
       (`vault/.lab-credentials.yml` 제외)
 
 #### E-1. HPE Redfish 미검증 [HOLD — 장비]

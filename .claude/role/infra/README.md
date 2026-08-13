@@ -13,7 +13,7 @@ Jenkins 파이프라인 / Ansible 실행 환경 (Agent 노드) / Vault 시크릿
 ## 로드할 ai-context 문서
 1. `.claude/ai-context/infra/convention.md` — Jenkins / Agent / Vault / Redis 컨벤션
 2. `.claude/ai-context/external/integration.md` — 외부 시스템 연동
-3. `.claude/ai-context/common/project-map.md`
+3. `docs/ai/catalogs/PROJECT_MAP.md`
 4. `.claude/ai-context/common/repo-facts.md`
 
 ## 정본 reference

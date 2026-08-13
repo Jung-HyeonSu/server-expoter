@@ -50,4 +50,4 @@ model: sonnet
 
 - skill: `add-new-vendor`, `score-adapter-match`, `review-adapter-change`, `update-vendor-baseline`
 - rule: `12-adapter-vendor-boundary`, `50-vendor-adapter-policy`, `96-external-contract-integrity`
-- reference: `docs/ai/references/redfish/redfish-spec.md`, `docs/ai/references/vmware/community-vmware-modules.md`
+- reference: 외부 API 공식 문서, `docs/ai/references/vmware/community-vmware-modules.md`

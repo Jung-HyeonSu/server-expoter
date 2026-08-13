@@ -2,7 +2,7 @@
 
 작성일: 2026-08-12
 기준 Commit: `5e72ac05` (변경 전) → 본 cycle 변경 후
-입력: 9 Vendor 공식조사 문서 9건 + `docs/ai/contracts/redfish-account-asis.md` + 현재 HEAD 코드 실측
+입력: 9 Vendor 공식조사 문서 9건 + AS-IS 전수조사(정리됨) + 현재 HEAD 코드 실측
 
 ---
 

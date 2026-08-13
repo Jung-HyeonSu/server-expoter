@@ -66,4 +66,4 @@ skill 결과를 사용자에게 제시하기 전, 별도 reviewer agent 호출:
 - rule 91 (task-impact-gate)
 - rule 25 R7 (자가 검수 금지)
 - skill: task-impact-preview, 모든 plan-*, review-* 등
-- workflow: `docs/ai/workflows/IMPACT_VALIDATION_TRIAD.md`
+- workflow: rule 91→95→92 연쇄

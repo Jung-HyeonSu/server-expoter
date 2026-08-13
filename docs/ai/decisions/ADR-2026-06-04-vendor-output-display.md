@@ -13,7 +13,7 @@
 - HPE Compute Scale-up Server 3200 (CSUS 3200) → `hpCsus`
 
 문제는 내부 canonical `hpe` 가 단순 표기가 아니라 **라우팅 키**라는 점:
-- adapter 선택 / `vault/redfish/hpe.yml` 경로 / `OEM_EXTRACTORS['hpe']` /
+- adapter 선택 / `vault/<loc>/redfish/hpe.yml` 경로 / `OEM_EXTRACTORS['hpe']` /
   account 복구 retry (`vendor == 'hpe'`) 가 모두 `hpe` 로 분기.
 - `Oem.Hpe` / `Oem.Hp` 는 Redfish spec OEM namespace (rule 96 외부 계약) — 불변.
 

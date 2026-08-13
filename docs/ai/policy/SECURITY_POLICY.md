@@ -7,8 +7,8 @@
 ## 1. 비밀값 관리
 
 ### Vault 구조
-- `vault/{linux,windows,esxi}.yml` — 채널별 자격증명
-- `vault/redfish/{vendor}.yml` — vendor별 BMC 자격증명
+- `vault/<loc>/os/{linux,windows}.yml + vault/<loc>/esxi.yml` — 채널별 자격증명
+- `vault/<loc>/redfish/<vendor>.yml` — vendor별 BMC 자격증명
 
 ### 원칙
 - 모든 vault 파일 ansible-vault encrypt 필수
@@ -19,7 +19,7 @@
 
 1. `/redfish/v1/` 무인증 GET → Manufacturer 추출
 2. vendor_aliases.yml로 vendor 정규화
-3. `vault/redfish/{vendor}.yml` 동적 로드
+3. `vault/<loc>/redfish/<vendor>.yml` 동적 로드
 4. 인증으로 본 수집 재개
 
 이 절차로 잘못된 vendor vault 로드 방지 (rule 27 R3).

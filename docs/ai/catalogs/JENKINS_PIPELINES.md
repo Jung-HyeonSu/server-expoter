@@ -1,7 +1,7 @@
 # JENKINS_PIPELINES — server-exporter
 
 > Jenkins multi-pipeline 2종 카탈로그. rule 28 #4-5 측정 대상 (TTL 7-14일).
-> 실측 (`grep stage Jenkinsfile*`) — 2026-04-29 (cycle-015 — `Jenkinsfile_grafana` 제거됨).
+> 실측 (`grep stage Jenkinsfile*`) — 2026-04-29 (cycle-015 — `grafana 파이프라인(제거됨)` 제거됨).
 
 ## 2종 Pipeline 4-Stage 매트릭스 (실측)
 
@@ -10,7 +10,7 @@
 | `Jenkinsfile` | Validate | Gather | Validate Schema | **E2E Regression** |
 | `Jenkinsfile_portal` | Validate | Gather | Validate Schema | **Callback** (호출자 통보) |
 
-> **cycle-015 변경**: `Jenkinsfile_grafana` 삭제 (사용자 명시 결정 — Grafana 적재 미사용).
+> **cycle-015 변경**: `grafana 파이프라인(제거됨)` 삭제 (사용자 명시 결정 — Grafana 적재 미사용).
 
 **[INFO]** Plan/design 문서에서 "4-Stage = Validate/Gather/Validate Schema/**E2E Regression**" 으로 일반화 표기했으나, 실측 결과 **Stage 4가 Jenkinsfile별로 다름**.
 
@@ -100,6 +100,6 @@ grep -E "callback_url|triggers|cron" Jenkinsfile*
 
 - [x] rule 80 R1-A에 pipeline별 Stage 4 차이 명시 (cycle-006) — closed 2026-04-28 full-sweep
 - [x] vault encrypt + credential `server-gather-vault-password` 등록 (cycle-012)
-- [x] **Jenkinsfile_grafana 제거** (cycle-015, 사용자 명시 결정)
+- [x] **grafana 파이프라인(제거됨) 제거** (cycle-015, 사용자 명시 결정)
 - [ ] Jenkins console에서 cron 표현식 실측 + 본 catalog 갱신
 - [ ] OPS-1 빌드 시범 1회 후 envelope `meta.auth.fallback_used` 값 추가 검증

@@ -7,7 +7,7 @@
 
 ## 컨텍스트 (Why)
 
-cycle 2026-05-01 종료 시점, 사용자 명시 "하네스 보강 작업 모두 수행해라 남겨두지말고 모두" 와 "하네스 전체 점검 하네스 작업을 마무리해라 전부해라". 본 cycle 종료 ticket `docs/ai/archive/tickets/2026-05-01-gather-coverage/HARNESS-RETROSPECTIVE.md` 의 B1~B8 부족 + D 신규 후보 + E 권한 완화 모두 일괄 적용.
+cycle 2026-05-01 종료 시점, 사용자 명시 "하네스 보강 작업 모두 수행해라 남겨두지말고 모두" 와 "하네스 전체 점검 하네스 작업을 마무리해라 전부해라". 본 cycle 종료 ticket 아카이브(정리됨) 의 B1~B8 부족 + D 신규 후보 + E 권한 완화 모두 일괄 적용.
 
 ### 2주간 학습 (HARNESS-RETROSPECTIVE A 절)
 
@@ -129,6 +129,6 @@ cycle 2026-05-01 종료 시점, 사용자 명시 "하네스 보강 작업 모두
 ## 관련
 
 - HARNESS-RETROSPECTIVE.md (G절 적용 결과)
-- docs/ai/harness/cycle-017.md (cycle 보고서)
+- cycle 로그(정리됨) (cycle 보고서)
 - ADR-2026-05-01-harness-full-permissions.md (권한 정책)
 - ADR-2026-04-28-rule12-oem-namespace-exception.md (rule 70 R8 첫 적용 사례)

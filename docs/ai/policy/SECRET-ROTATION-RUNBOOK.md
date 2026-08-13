@@ -47,8 +47,8 @@ done
 ```
 
 ### 3.2 실제 자격 교체 (BMC/호스트 — vault 안 값 자체)
-- Dell BMC `root` (= `__REDACTED__`), lab Linux SSH/sudo: 각 장비에서 암호 변경 후 `vault/redfish/dell.yml` / `vault/linux.yml` 갱신
-- primary `infraops/__REDACTED__Infra`: 전 벤더 BMC 에서 변경 후 `vault/redfish/{vendor}.yml` 갱신
+- Dell BMC `root` (= `__REDACTED__`), lab Linux SSH/sudo: 각 장비에서 암호 변경 후 `vault/<loc>/redfish/dell.yml` / `vault/<loc>/os/linux.yml` 갱신
+- primary `infraops/__REDACTED__Infra`: 전 벤더 BMC 에서 변경 후 `vault/<loc>/redfish/<vendor>.yml` 갱신
 - recovery `__REDACTED__` / `__REDACTED__`: HPE/Lenovo/Cisco BMC recovery 계정 변경 후 vault 갱신
 > 회전 후 `vault/**` 재암호화 (3.1 의 NEW 키로). 회전 전·후 모두 `git ls-files vault/` 가 암호화 상태인지 확인.
 
@@ -81,7 +81,7 @@ git filter-repo --replace-text <(printf '__REDACTED__==>REDACTED\n__REDACTED__In
 - **함**: 본 런북 작성 + 인벤토리. (task 6 docs cleanup 이 일부 완료-cycle 덤프 시크릿분을 HEAD 에서 부수적 제거 — 의도는 doc 정리.)
 
 ## 6. 검증 체크리스트 (회전 후)
-- [ ] `ansible-vault view vault/redfish/dell.yml` 가 NEW 키로만 열림 (옛 키 거부)
+- [ ] `ansible-vault view vault/<loc>/redfish/dell.yml` 가 NEW 키로만 열림 (옛 키 거부)
 - [ ] `git grep -I 'Goodmit0802\|__REDACTED__Infra\|__REDACTED__\|__REDACTED__'` → 0 (스크럽 선택 시)
 - [ ] Jenkins `redfish-account-provision-verify` job 이 credential binding 으로 동작
 - [ ] BMC 로그인: 옛 암호 거부 / NEW 암호 허용

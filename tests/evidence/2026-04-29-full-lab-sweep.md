@@ -133,7 +133,7 @@ schema_version
   - hostname resolution도 실패 (envelope의 hostname=ip 그대로)
   - diagnosis.precheck = null, diagnosis.details에 adapter_candidate / channel / checked_ports / product / redfish_version / selected_port / systems_uri 키만
 - **원인 후보**:
-  1. R740 자격증명이 R760의 root/__REDACTED__와 다름 (`vault/redfish/dell.yml` 단일 자격이라 R740만 다른 자격이면 실패)
+  1. R740 자격증명이 R760의 root/__REDACTED__와 다름 (`vault/<loc>/redfish/dell.yml` 단일 자격이라 R740만 다른 자격이면 실패)
   2. R740 BMC 환경 (방화벽 / Redfish off / 모델 차이)
   3. R740 펌웨어 버전 차이 (iDRAC9 vs iDRAC8)
 - **확인 필요** (rule 96 R2 — 외부 계약 디버깅 시 사용자 질의 우선):
@@ -170,7 +170,7 @@ schema_version
 |---|---|---|---|
 | F-A | rule 13 R5 example value 정정 (`"supported"` → `"success"`) + DRIFT entry | LOW | 사용자 PR 검토 (rule 70 R8 trigger 1) |
 | F-B | Dell R740 (10.50.11.162) 자격증명 / BMC 상태 사용자 확인 | MED | 외부 환경 (rule 96 R2) — site 점검 필요 |
-| F-C | (선택) `vault/redfish/dell.yml`을 host별 자격 분리 구조 검토 | LOW | F-B 결과 기반 |
+| F-C | (선택) `vault/<loc>/redfish/dell.yml`을 host별 자격 분리 구조 검토 | LOW | F-B 결과 기반 |
 | F-D | (이전 reference-collection의 잔여) 10.100.15.32 vendor / Cisco down 2대 / Win10 WinRM 환경 | LOW/MED | site/사용자 결정 |
 
 ## 9. 부속 파일
@@ -200,4 +200,4 @@ schema_version
 - rule 13 (output-schema-fields), 20 (output-json-callback), 31 (integration-callback), 80 (ci-jenkins-policy), 96 (external-contract-integrity)
 - `docs/contract/02-output-envelope.md`, `docs/operate/04-pipeline-runtime.md`
 - 정본: `common/tasks/normalize/build_output.yml`, `common/tasks/normalize/build_sections.yml`
-- 이전 cycle-015 cleanup (Jenkinsfile_grafana 제거), production-audit (2026-04-29)
+- 이전 cycle-015 cleanup (grafana 파이프라인(제거됨) 제거), production-audit (2026-04-29)

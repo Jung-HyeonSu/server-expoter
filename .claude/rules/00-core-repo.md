@@ -110,7 +110,7 @@ callback_plugins/json_only.py → JSON envelope
 
 - **문서 갱신 없이 코드만 변경** — 근거: 작업 이력과 컨벤션 위반을 추적할 수 없어 향후 유지보수자가 변경 의도 파악 불가
 - **테스트 없이 기능 추가** — 근거: 회귀 테스트 부재로 기존 기능 오동작 여부 검증 불가
-- **타 프로젝트 잔재 어휘 사용** — Java/Spring Boot/MyBatis/FTL/Vue/jQuery/Gradle/MariaDB/Flyway/Spock/Playwright/Bitbucket Pipelines는 server-exporter 본문에 등장하면 안 됨 (`verify_harness_consistency.py` 검출). **예외 (Allowed)**: 본 rule 본문 (정의 목적 인용), `.claude/ai-context/common/ecc-adoption-summary.md` (도입 배경 단일 메타 위치), `.claude/ai-context/common/convention-drift.md` (drift 출처 메타), `.claude/policy/test-selection-map.yaml` (검출 도구 설명)
+- **타 프로젝트 잔재 어휘 사용** — Java/Spring Boot/MyBatis/FTL/Vue/jQuery/Gradle/MariaDB/Flyway/Spock/Playwright/Bitbucket Pipelines는 server-exporter 본문에 등장하면 안 됨 (`verify_harness_consistency.py` 검출). **예외 (Allowed)**: 본 rule 본문 (정의 목적 인용)
 
 ## 보호 경로 (참고용 — 정책 강제 해제됨)
 

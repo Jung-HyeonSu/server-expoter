@@ -3,7 +3,7 @@
 > **작성일**: 2026-08-12
 > **성격**: 설계 확정용 문서. **코드는 수정하지 않았다.**
 > **기준**: 실제 코드. README / docs 서술은 근거로 쓰지 않았다.
-> **선행 자료**: `docs/ai/contracts/vault-credential-selection.md` (코드 전수 조사).
+> **선행 자료**: 자격증명 선택 추적(정리됨) (코드 전수 조사).
 > 그 문서의 인용은 **전부 현재 코드로 재확인한 것만** 이 문서에 옮겼다.
 >
 > **라인 번호 기준**: HEAD `c7817510`.
@@ -82,9 +82,9 @@ flowchart TD
 
     INV[inventory.sh<br/>IP 외 전 필드 폐기]:::plain
 
-    OSV[(vault/linux.yml<br/>vault/windows.yml)]:::store
-    EXV[(vault/esxi.yml)]:::store
-    RFV[(vault/redfish/&lt;profile&gt;.yml)]:::store
+    OSV[(vault/<loc>/os/linux.yml<br/>vault/<loc>/os/windows.yml)]:::store
+    EXV[(vault/<loc>/esxi.yml)]:::store
+    RFV[(vault/<loc>/redfish/&lt;profile&gt;.yml)]:::store
 
     OSP[os-gather vars_files<br/>site.yml:218 / :471]:::plain
     EXP[esxi-gather vars_files<br/>site.yml:28]:::plain
@@ -173,7 +173,7 @@ flowchart TD
 | OS Vault | `vars_files` 정적 (`site.yml:218`,`:471`) | block 내 동적 로딩 |
 | ESXi Vault | `vars_files` 정적 (`site.yml:28`) | block 내 동적 로딩 |
 | Redfish Vault | `adapter.credentials.profile` (`load_vault.yml:17`) | `(location, vendor)` |
-| Vault 경로 | `vault/{linux,windows,esxi}.yml`, `vault/redfish/<v>.yml` | `vault/<loc>/...` |
+| Vault 경로 | `vault/<loc>/os/{linux,windows}.yml + vault/<loc>/esxi.yml`, `vault/<loc>/redfish/<v>.yml` | `vault/<loc>/...` |
 | Credential set 부재 | generic 이면 빈 자격 1회, 아니면 경고 후 진행 | 명시 실패 (`CREDENTIAL_SET_NOT_FOUND`) |
 | 후보 순서 | vault 배열 순서 | **불변** (§9) |
 
@@ -470,10 +470,10 @@ PLAY 1 "os-gather | detect"  (site.yml:25-135, hosts: all, connection: local)
   precheck (:60-76) → _detected_os (:82) → add_host 3분기 (:91-135)
 PLAY 1.5 "failed-output"     (:142-205, hosts: _os_failed)   ← 감지 실패 envelope
 PLAY 2 "linux"               (:210-459, hosts: _os_linux)
-  vars_files: vault/linux.yml (:218)     ← play 시작 시 정적 로딩
+  vars_files: vault/<loc>/os/linux.yml (:218)     ← play 시작 시 정적 로딩
   try_credentials (:237-241, _os_accounts = accounts)
 PLAY 3 "windows"             (:464-691, hosts: _os_windows)
-  vars_files: vault/windows.yml (:471)
+  vars_files: vault/<loc>/os/windows.yml (:471)
   try_credentials (:485-489)
 ```
 
@@ -484,14 +484,14 @@ os_type 은 Play 소속으로 이미 확정돼 있다 — **os_type 을 다시 �
 
 | 위치 | 현재 | 변경 |
 |---|---|---|
-| `os-gather/site.yml:218` | `vars_files: .../vault/linux.yml` | **제거** |
-| `os-gather/site.yml:471` | `vars_files: .../vault/windows.yml` | **제거** |
+| `os-gather/site.yml:218` | `vars_files: .../vault/<loc>/os/linux.yml` | **제거** |
+| `os-gather/site.yml:471` | `vars_files: .../vault/<loc>/os/windows.yml` | **제거** |
 | `:219-220`, `:472-473` | `failure_reasons.yml` | **유지** (rescue 가 참조) |
 | PLAY 2 `:237` 직전 | — | `include_tasks: common/tasks/credential/resolve_and_load.yml` 삽입 (`_cred_os_type: linux`) |
 | PLAY 3 `:485` 직전 | — | 동일 (`_cred_os_type: windows`) |
 | `:241`, `:252` | `_os_accounts: "{{ accounts \| default([]) }}"` | `"{{ _cred_accounts \| default([]) }}"` |
 | `:489`, `:500` | 동일 | 동일 |
-| `:247`, `:495` | 실패 메시지의 `vault/linux.yml` / `vault/windows.yml` | `{{ _cred_scope }}` 로 교체 |
+| `:247`, `:495` | 실패 메시지의 `vault/<loc>/os/linux.yml` / `vault/<loc>/os/windows.yml` | `{{ _cred_scope }}` 로 교체 |
 
 ### 6.3 왜 `vars_files` 템플릿이 아니라 동적 로딩인가 — **rule 11 보호**
 
@@ -541,7 +541,7 @@ Windows:  Precheck → windows 판정 → (location + windows) → Vault Load �
 
 ```
 esxi-gather/site.yml  (단일 play, hosts: all, connection: local, strategy: free)
-  vars_files: vault/esxi.yml (:28)
+  vars_files: vault/<loc>/esxi.yml (:28)
   vars: _e_user = ansible_user (:35) / _e_pass = ansible_password (:36)
   precheck (:48-54) → abort if failed (:56-63)
   try_credentials (:66-69, _e_accounts = accounts)
@@ -552,11 +552,11 @@ esxi-gather/site.yml  (단일 play, hosts: all, connection: local, strategy: fre
 
 | 위치 | 현재 | 변경 |
 |---|---|---|
-| `esxi-gather/site.yml:28` | `vars_files: .../vault/esxi.yml` | **제거** |
+| `esxi-gather/site.yml:28` | `vars_files: .../vault/<loc>/esxi.yml` | **제거** |
 | `:29-30` | `failure_reasons.yml` | **유지** |
 | `:66` 직전 | — | `include_tasks: common/tasks/credential/resolve_and_load.yml` 삽입 |
 | `:69`, `:80` | `_e_accounts: "{{ accounts \| default([]) }}"` | `"{{ _cred_accounts \| default([]) }}"` |
-| `:75` | 메시지의 `vault/esxi.yml` | `{{ _cred_scope }}` |
+| `:75` | 메시지의 `vault/<loc>/esxi.yml` | `{{ _cred_scope }}` |
 
 ### 7.3 감시 항목 — `_e_user` / `_e_pass` play var
 
@@ -629,7 +629,7 @@ site.yml:99-100  collect standard
 ```
 {cisco, dell, fujitsu, hpe, huawei, inspur, lenovo, quanta, supermicro}
 ```
-**양방향 차집합 0.** `vault/redfish/` 의 파일명 9종도 동일 집합이다.
+**양방향 차집합 0.** `vault/<loc>/redfish/` 의 파일명 9종도 동일 집합이다.
 
 HPE CSUS 3200(`hpe_csus_3200.yml:130`) / Superdome Flex(`hpe_superdome_flex.yml:74`) 도
 `profile: "hpe"` 이고 canonical 도 `hpe` 다 — 다른 것은 **출력 표시값**뿐이며
@@ -1056,14 +1056,14 @@ Jenkins 가 이미 검증하지만, 로컬 실행·2안 채택·Job 설정 drift
 
 | 위치 | 현재 문자열 |
 |---|---|
-| `os-gather/site.yml:247` | `vault/linux.yml 의 accounts 와 ...` |
-| `os-gather/site.yml:495` | `vault/windows.yml 의 accounts 와 ...` |
-| `esxi-gather/site.yml:75` | `vault/esxi.yml 의 accounts 와 ...` |
-| `redfish-gather/tasks/load_vault.yml:41` | `vault 파일 로드 실패: vault/redfish/{{ _rf_vault_profile }}.yml` |
-| `redfish-gather/tasks/collect_standard.yml:36` | `vault accounts 비어 있음 (vault/redfish/{{ _rf_vault_profile }}.yml)` |
-| `redfish-gather/tasks/account_service.yml:78` | `vault/redfish/{{ _rf_vault_profile }}.yml 갱신 후 재시도` |
+| `os-gather/site.yml:247` | `vault/<loc>/os/linux.yml 의 accounts 와 ...` |
+| `os-gather/site.yml:495` | `vault/<loc>/os/windows.yml 의 accounts 와 ...` |
+| `esxi-gather/site.yml:75` | `vault/<loc>/esxi.yml 의 accounts 와 ...` |
+| `redfish-gather/tasks/load_vault.yml:41` | `vault 파일 로드 실패: vault/<loc>/redfish/{{ _rf_vault_profile }}.yml` |
+| `redfish-gather/tasks/collect_standard.yml:36` | `vault accounts 비어 있음 (vault/<loc>/redfish/{{ _rf_vault_profile }}.yml)` |
+| `redfish-gather/tasks/account_service.yml:78` | `vault/<loc>/redfish/{{ _rf_vault_profile }}.yml 갱신 후 재시도` |
 | `redfish-gather/tasks/account_service.yml:99` | `vault profile={{ _rf_vault_profile }}; role=primary candidate=0` |
-| `redfish-gather/site.yml:132` | `vault/redfish/{{ _rf_vendor }}.yml` |
+| `redfish-gather/site.yml:132` | `vault/<loc>/redfish/{{ _rf_vendor }}.yml` |
 
 `site.yml:132` 는 **기존 결함**이기도 하다 — 실제로 연 파일은 `_rf_vault_profile` 인데
 메시지는 `_rf_vendor` 를 출력한다. generic adapter(profile=`""`)일 때 둘이 달라진다.
@@ -1278,8 +1278,8 @@ Location 별 실제 Credential **값이 서로 다르므로**(사용자 확정) 
 
 **4단계 — flat vault 제거** (별도 커밋)
 - 3단계가 **실환경에서 확인된 뒤에만** 수행한다.
-- 삭제 대상: `vault/linux.yml`, `vault/windows.yml`, `vault/esxi.yml`,
-  `vault/redfish/*.yml` 9개. (`vault/.lab-credentials.yml` 은 제외 — §5.4)
+- 삭제 대상: `vault/<loc>/os/linux.yml`, `vault/<loc>/os/windows.yml`, `vault/<loc>/esxi.yml`,
+  `vault/<loc>/redfish/*.yml` 9개. (`vault/.lab-credentials.yml` 은 제외 — §5.4)
 
 ### 16.3 선행 작업 — Vendor 정규화 통합 (§8.4)
 
@@ -1371,7 +1371,7 @@ force push / history rewrite 는 하지 않는다 (rule 93 R1).
 | `esxi-gather/site.yml:75` | 메시지 경로 → `_cred_scope` |
 | `redfish-gather/site.yml:68` 직후 | resolve_and_load include (adapter 선택 앞) |
 | `redfish-gather/site.yml:95-96` | 기존 load vault include 제거 |
-| `redfish-gather/site.yml:132` | `vault/redfish/{{ _rf_vendor }}.yml` → `_cred_scope` |
+| `redfish-gather/site.yml:132` | `vault/<loc>/redfish/{{ _rf_vendor }}.yml` → `_cred_scope` |
 | `redfish-gather/site.yml:242-260` | `diagnosis.details.credential_scope` 병합 |
 | `redfish-gather/tasks/load_vault.yml:15-19` | adapter 참조 제거 |
 | 동 `:29-36` | 경로를 `_cred_*` 기반으로 |
@@ -1399,8 +1399,8 @@ force push / history rewrite 는 하지 않는다 (rule 93 R1).
 |---|---|
 | `Jenkinsfile` | 3단계 |
 | `Jenkinsfile_portal_test` | 3단계 |
-| `vault/linux.yml`, `vault/windows.yml`, `vault/esxi.yml` | 4단계 |
-| `vault/redfish/*.yml` 9개 | 4단계 |
+| `vault/<loc>/os/linux.yml`, `vault/<loc>/os/windows.yml`, `vault/<loc>/esxi.yml` | 4단계 |
+| `vault/<loc>/redfish/*.yml` 9개 | 4단계 |
 
 ### 18.4 별도 커밋 (하네스·문서)
 

@@ -10,10 +10,10 @@
 
 | vendor | generation | 사이트 BMC | adapter file | vault | OEM tasks | baseline |
 |---|---|---|---|---|---|---|
-| Dell | iDRAC10 | 5대 | `adapters/redfish/dell_idrac10.yml` (priority=120) | `vault/redfish/dell.yml` (encrypted) | `redfish-gather/tasks/vendors/dell/` | `schema/baseline_v1/dell_baseline.json` |
-| HPE | iLO7 | 1대 | `adapters/redfish/hpe_ilo7.yml` (priority=120) | `vault/redfish/hpe.yml` (encrypted) | `redfish-gather/tasks/vendors/hpe/` | `schema/baseline_v1/hpe_baseline.json` |
-| Lenovo | XCC3 | 1대 | `adapters/redfish/lenovo_xcc3.yml` (priority=120) | `vault/redfish/lenovo.yml` (encrypted) | `redfish-gather/tasks/vendors/lenovo/` | `schema/baseline_v1/lenovo_baseline.json` |
-| Cisco | UCS X-series | 1대 | `adapters/redfish/cisco_ucs_xseries.yml` (priority=110) | `vault/redfish/cisco.yml` (encrypted) | **`redfish-gather/tasks/vendors/cisco/` (cycle 2026-05-07 M-J1 신설)** | `schema/baseline_v1/cisco_baseline.json` |
+| Dell | iDRAC10 | 5대 | `adapters/redfish/dell_idrac10.yml` (priority=120) | `vault/<loc>/redfish/dell.yml` (encrypted) | `redfish-gather/tasks/vendors/dell/` | `schema/baseline_v1/dell_baseline.json` |
+| HPE | iLO7 | 1대 | `adapters/redfish/hpe_ilo7.yml` (priority=120) | `vault/<loc>/redfish/hpe.yml` (encrypted) | `redfish-gather/tasks/vendors/hpe/` | `schema/baseline_v1/hpe_baseline.json` |
+| Lenovo | XCC3 | 1대 | `adapters/redfish/lenovo_xcc3.yml` (priority=120) | `vault/<loc>/redfish/lenovo.yml` (encrypted) | `redfish-gather/tasks/vendors/lenovo/` | `schema/baseline_v1/lenovo_baseline.json` |
+| Cisco | UCS X-series | 1대 | `adapters/redfish/cisco_ucs_xseries.yml` (priority=110) | `vault/<loc>/redfish/cisco.yml` (encrypted) | **`redfish-gather/tasks/vendors/cisco/` (cycle 2026-05-07 M-J1 신설)** | `schema/baseline_v1/cisco_baseline.json` |
 
 → **Out of scope (rule 92 R2)**: 위 4 vendor × 1 generation 코드 path **변경 금지** (envelope shape 영향 0).
 
@@ -167,7 +167,7 @@ cycle 2026-05-07 Phase 2 신설 helper 7종 (`redfish_gather.py` +338 lines, std
   ```bash
   ls adapters/redfish/*.yml | wc -l
   ls redfish-gather/tasks/vendors/ | wc -l
-  python scripts/ai/hooks/adapter_origin_check.py --all --redfish-only
+  python adapter origin 검사(제거됨) --all --redfish-only
   ```
 
 ---

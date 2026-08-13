@@ -214,14 +214,14 @@ echo -e "---\nansible_user: CHANGE_ME\nansible_password: CHANGE_ME" > vault/${GA
 | 4 | `redfish-gather/tasks/vendors/{vendor}/collect_oem.yml + normalize_oem.yml` | 선택 (vendor 특이 endpoint 시) | vendor-specific endpoint 미수집 |
 | 5 | `schema/baseline_v1/{vendor}_baseline.json` | **의무 (실측 후)** / lab 부재 시 NEXT_ACTIONS 등재 | 회귀 테스트 미보호 → drift 가능 |
 
-`vault/redfish/{vendor}.yml` (자격증명) + 내부 벤더 노트{vendor}.md` (도메인 노트) 도 의무 (rule 50 R2 9단계).
+`vault/<loc>/redfish/<vendor>.yml` (자격증명) + 내부 벤더 노트{vendor}.md` (도메인 노트) 도 의무 (rule 50 R2 9단계).
 
 ### 9 단계 (rule 50 R2 정본)
 
 1. `common/vars/vendor_aliases.yml` 매핑 추가
 2. `adapters/{channel}/{vendor}_*.yml` adapter 생성 (priority 정책표 — `docs/10` 3.5절)
 3. (선택) `redfish-gather/tasks/vendors/{vendor}/` OEM tasks
-4. `vault/redfish/{vendor}.yml` 생성 (ansible-vault encrypt) — lab 부재 시 placeholder + 사용자 명시 승인
+4. `vault/<loc>/redfish/<vendor>.yml` 생성 (ansible-vault encrypt) — lab 부재 시 placeholder + 사용자 명시 승인
 5. `schema/baseline_v1/{vendor}_baseline.json` 추가 (실장비 검증 후) — lab 부재 시 단계 10 등재
 6. 내부 벤더 노트{vendor}.md` 추가
 7. 벤더 경계 정책 갱신

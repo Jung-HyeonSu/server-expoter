@@ -106,7 +106,7 @@ curl -k -s -u <user>:<password> https://<rmc-ip>/redfish/v1/Chassis
 
 | 증상 | 의심 원인 | 진단 |
 |---|---|---|
-| ServiceRoot 401 | 자격증명 오류 / role 부족 | vault/redfish/hpe.yml 점검 |
+| ServiceRoot 401 | 자격증명 오류 / role 부족 | vault/<loc>/redfish/hpe.yml 점검 |
 | ServiceRoot 404 | RMC Redfish API 비활성 | 4.2 Web GUI 확인 |
 | ServiceRoot timeout | 방화벽 / TCP 443 차단 | precheck phase port 검토 |
 | Managers Members 1개만 (RMC 누락) | RMC role / namespace 권한 부족 | RMC role 권한 격상 |

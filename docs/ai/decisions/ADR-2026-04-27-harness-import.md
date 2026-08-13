@@ -82,8 +82,8 @@ clovirone-base/.claude/를 server-exporter 도메인으로 풀스펙 포팅.
 
 ## 관련
 
-- 설계서: `docs/superpowers/specs/2026-04-27-harness-refactor-design.md`
-- 실행 계획: `docs/superpowers/plans/2026-04-27-harness-refactor-plan-1-foundation.md`
+- 설계서: 하네스 이식 계획(정리됨)
+- 실행 계획: 하네스 이식 계획(정리됨)
 - 정본: `CLAUDE.md` (Tier 0 보강)
 - commits: ef5335b → b152898 → d87af96 → 31526c3 → ee82f1b → 031b32e → 63eaceb → 183a79e → 2b3268f → 145a0b1
 

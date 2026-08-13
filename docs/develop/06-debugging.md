@@ -20,7 +20,7 @@
 | Windows gather 부분 실패 | `os-gather/tasks/windows/gather_*.yml` | WinRM debug — pywinrm |
 | ESXi gather 부분 실패 | `esxi-gather/tasks/collect_*.yml + normalize_*.yml` | community.vmware 모듈 출력 |
 | Precheck 4단계 어디서 막힘 | `common/library/precheck_bundle.py` + `diagnosis.details` | `debug-precheck-failure` skill |
-| Vault 로딩 실패 | `redfish-gather/tasks/load_vault.yml` | `vault/redfish/{vendor}.yml` 존재 / 권한 |
+| Vault 로딩 실패 | `redfish-gather/tasks/load_vault.yml` | `vault/<loc>/redfish/<vendor>.yml` 존재 / 권한 |
 | Callback 실패 | `Jenkinsfile_portal` post 단계 | `callback_plugins/json_only.py` + URL 정규화 |
 | 회귀 사고 (A 고치고 B 깨짐) | `pytest tests/regression/` | `tests/regression/test_cross_channel_consistency.py` |
 

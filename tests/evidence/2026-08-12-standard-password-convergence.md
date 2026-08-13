@@ -30,7 +30,7 @@ Vault 검증 (전량):
 vault 파일 49개 — decrypt 실패 0, YAML 실패 0
 Redfish role=primary 항목: 정확히 1개 → vault/common/redfish/standard.yml
 Redfish role=recovery 항목: 41개 (Location × Vendor)
-flat vault(vault/*.yml, vault/redfish/*): 0개
+flat vault(vault/*.yml, vault/<loc>/redfish/*): 0개
 cross-location / cross-vendor fallback: 코드 경로 부재 (§6 참조)
 ```
 

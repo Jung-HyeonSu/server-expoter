@@ -62,4 +62,4 @@ curl -k -u service_account:... https://10.x.x.1/redfish/v1/Systems/System.Embedd
 - skill: `task-impact-preview`, `probe-redfish-vendor`, `debug-precheck-failure`
 - agent: `integration-impact-reviewer`, `change-impact-analyst`
 - catalog: `docs/ai/catalogs/EXTERNAL_CONTRACTS.md`
-- reference: `docs/ai/references/redfish/redfish-spec.md`
+- reference: 외부 API 공식 문서

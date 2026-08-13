@@ -81,7 +81,7 @@
 ## 2026-05-01 — 외부 계약 advisory 다수 등재 (F91/F97/F104/F125/F126 — 10R extended audit)
 
 - 카테고리: external-contract-drift (advisory)
-- 발견 위치: 10-Round Extended Web Audit (`docs/ai/archive/tickets/2026-05-01-gather-coverage/WEB-EXTENDED-AUDIT-10R-2026-05-01.md`)
+- 발견 위치: 10-Round Extended Web Audit (아카이브(정리됨))
 - 증상: 외부 계약 변종 / 보안 advisory / vendor 차이 — 사고 재현 전 사전 등재
 - 등재 항목:
   - **F91 CVE-2024-54085** — AMI MegaRAC SPx Authentication Bypass (Critical 10.0). server-exporter read-only → 영향 0. 운영팀 BMC 펌웨어 업그레이드 권장.

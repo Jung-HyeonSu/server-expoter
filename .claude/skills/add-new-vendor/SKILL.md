@@ -115,4 +115,4 @@ Round X 추가 (Huawei iBMC 3.x 검증)
 - skill: `probe-redfish-vendor`, `update-vendor-baseline`, `score-adapter-match`, `vendor-change-impact`, `measure_field_usage_matrix.py` (단계 8 — 필드 분류 검증)
 - agent: `vendor-onboarding-worker` (이 skill의 메인 실행자), `adapter-author`
 - 정본: `docs/develop/04-add-vendor.md`, `docs/reference/live-validation.md`
-- reference: `docs/ai/references/redfish/redfish-spec.md` (BMC 매핑)
+- reference: 외부 API 공식 문서 (BMC 매핑)
