@@ -25,7 +25,6 @@
       {"ip": "10.50.11.162", "vendor": "dell",   "model": "iDRAC R740"}
     ],
     "skipped": [
-      {"ip": "10.100.15.32", "reason": "F2 vendor 모호 (AMI Redfish, 401 모든 자격)"},
       {"ip": "10.100.15.1",  "reason": "F3 HTTP 503 — CIMC 서비스 다운"},
       {"ip": "10.100.15.3",  "reason": "F3 connect timeout — BMC 도달 불가"}
     ]

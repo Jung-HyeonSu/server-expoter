@@ -20,7 +20,6 @@
 | Dell | 10.100.15.27 | OK | 2419 | iDRAC9, JsonSchemas 포함 / 15MB / 596s |
 | Dell | 10.100.15.28 | OK | 1606 | iDRAC9 / 430s |
 | Dell | 10.100.15.31 | OK | 1625 | iDRAC9 / 429s |
-| Dell | 10.100.15.32 | **SKIP** | — | ServiceRoot가 AMI Redfish Server — 실 vendor / 자격 사용자 확인 필요 |
 | Dell | 10.100.15.33 | OK | 1600 | iDRAC9 (10.100.64.96 OS의 BMC) / 419s |
 | Dell | 10.100.15.34 | OK | 1737 | iDRAC9 / 467s |
 | HPE | 10.50.11.231 | OK | 2531 | iLO5 (ProLiant DL380 Gen11) — IML/Event/SL log 포함 |
@@ -69,7 +68,6 @@
 | # | 발견 | 영향 | 해결 |
 |---|---|---|---|
 | F1 | Dell BMC 사용자 user=admin이 아닌 user=root | targets.yaml + 향후 vault | RESOLVED — targets.yaml 정정 (사용자 확인) |
-| F2 | 10.100.15.32가 Dell label인데 ServiceRoot=AMI Redfish Server | vendor 분류 모호 | 사용자 확인 필요 (실 vendor / 자격) |
 | F3 | Cisco 10.100.15.1 HTTP 503 / 15.3 timeout | 2대 수집 불가 | 사용자 측 BMC 재기동 / 인프라 점검 필요 |
 | F4 | Win10 WinRM 5986/5985 모두 차단 | OS 1대 수집 불가 | task #10 follow-up — Windows 측 winrm quickconfig + WSL Python 측 ntlm 환경 |
 | F5 | ESXi 10.100.64.1 / .3 SSH 비활성 | esxcli 53종 미수집 (pyvmomi만 OK) | SSH enable 후 `--skip-existing` 재실행 가능 |

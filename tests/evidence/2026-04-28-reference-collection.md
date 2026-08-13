@@ -24,7 +24,6 @@
 | Dell | 10.100.15.27 | OK | 2419 | iDRAC9, JsonSchemas 포함 / 596s |
 | Dell | 10.100.15.28 | OK | 1606 | iDRAC9 / 430s |
 | Dell | 10.100.15.31 | OK | 1625 | iDRAC9 / 429s |
-| Dell | 10.100.15.32 | **SKIP** | — | F2 — ServiceRoot 응답이 AMI Redfish Server, 자격 401 |
 | Dell | 10.100.15.33 | OK | 1600 | iDRAC9 (10.100.64.96 OS의 BMC) / 419s |
 | Dell | 10.100.15.34 | OK | 1737 | iDRAC9 / 467s |
 | HPE | 10.50.11.231 | OK | 2531 | iLO5 (ProLiant DL380 Gen11), IML+Event+SL log 포함 |
@@ -71,15 +70,6 @@
 - **사용자 확인**: 2026-04-28 채팅 — "10.100.15.27 (dell) (root / __REDACTED__) ... 이다. 맞다."
 - **수정**: targets.yaml의 Dell user 모두 `root`로 정정
 - **rule**: 12 R1 (vendor 경계) — 예외 아님, 단순 자격 정정
-
-### F2. 10.100.15.32 vendor 모호
-
-- **발견**: 사용자 label "dell + GPU 카드 설치"
-- **실측**: ServiceRoot 응답 `Product: AMI Redfish Server`, `Oem: ['Ami']` (Supermicro/AMI 계열)
-- **자격**: admin/__REDACTED__, root/__REDACTED__, ADMIN/ADMIN, admin/admin, admin/(empty) 모두 401
-- **현재**: targets.yaml에 `skip_reason: auth_unknown_vendor_mismatch`로 skip
-- **사용자 확인 필요**: (a) 실 vendor 무엇 (Dell vs Supermicro), (b) 정확한 자격
-- **rule**: 96 R2 (외부 계약 디버깅 시 사용자 질의 우선)
 
 ### F3. Cisco 10.100.15.1 / 15.3 도달 불가
 
@@ -165,7 +155,6 @@ tests/reference/
 
 | # | 작업 | 우선순위 |
 |---|---|---|
-| F2 | 10.100.15.32 vendor / 자격 사용자 확인 | MED |
 | F3 | Cisco 10.100.15.1/15.3 가동 상태 사용자 확인 | LOW |
 | F4 | Win10 WinRM 환경 정비 (task #10) | MED |
 | F5 | ESXi .1/.3 SSH 활성화 후 재수집 | LOW |

@@ -171,7 +171,7 @@ schema_version
 | F-A | rule 13 R5 example value 정정 (`"supported"` → `"success"`) + DRIFT entry | LOW | 사용자 PR 검토 (rule 70 R8 trigger 1) |
 | F-B | Dell R740 (10.50.11.162) 자격증명 / BMC 상태 사용자 확인 | MED | 외부 환경 (rule 96 R2) — site 점검 필요 |
 | F-C | (선택) `vault/<loc>/redfish/dell.yml`을 host별 자격 분리 구조 검토 | LOW | F-B 결과 기반 |
-| F-D | (이전 reference-collection의 잔여) 10.100.15.32 vendor / Cisco down 2대 / Win10 WinRM 환경 | LOW/MED | site/사용자 결정 |
+| F-D | (이전 reference-collection의 잔여) Cisco down 2대 / Win10 WinRM 환경 | LOW/MED | site/사용자 결정 |
 
 ## 9. 부속 파일
 

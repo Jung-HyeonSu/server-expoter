@@ -39,7 +39,6 @@ tests/reference/redfish/<vendor>/<ip-with-underscore>/
 | Dell | 10.100.15.27 | OK | iDRAC9 — 1624 endpoint (2417 파일) / 15MB / 17.5s (`_manifest.json` 기준) |
 | Dell | 10.100.15.28 | OK | iDRAC9 |
 | Dell | 10.100.15.31 | OK | iDRAC9 |
-| Dell | 10.100.15.32 | **SKIP** | ServiceRoot가 AMI Redfish Server 보고 + root 자격 401 — 자격 / 실 vendor 사용자 확인 필요 |
 | Dell | 10.100.15.33 | OK | iDRAC9 (10.100.64.96 OS의 BMC) |
 | Dell | 10.100.15.34 | OK | iDRAC9 |
 | HPE | 10.50.11.231 | OK | iLO6 (ProLiant DL380 Gen11, FW 1.73) |

@@ -195,13 +195,11 @@
 ## DRIFT-011 (2026-04-29, open)
 
 - **발견 위치**:
-  - `inventory/lab/redfish.json:11` — 사용자 라벨 `_vendor: dell` (BMC 10.100.15.32 — GPU 호스트)
   - `inventory/lab/redfish.json:6-8` — 사용자 라벨 `_vendor: cisco` (BMC 10.100.15.1, 15.2, 15.3)
   - `tests/evidence/cycle-015/connectivity-2026-04-29.md` 5절
 - **분류**: external-contract-drift (rule 96 R1)
-- **설명**: cycle-015 첫 lab 권한 직후 연결성 검증에서 `GET /redfish/v1/` 무인증 응답 (rule 27 R3 1단계) 결과 사용자 라벨 vs Redfish Manufacturer 불일치 2건 발견:
-  1. **10.100.15.32** (사용자: "dell, GPU 카드 설치") → `Vendor='AMI', Product='AMI Redfish Server', RedfishVersion=1.11.0` — AMI MegaRAC = Supermicro / Asrock / whitebox 가능. 현재 adapter 매칭으로는 `redfish_generic.yml` 또는 `supermicro_bmc.yml` 후보 (Dell adapter 매칭 안 됨 → 기존 baseline 회귀 영향 0).
-  2. **10.100.15.2** (사용자: "cisco") → `Product='TA-UNODE-G1', RedfishVersion=1.2.0` — 표준 Cisco UCS Product 아님 (UCS C-series는 보통 `Product='UCS C220 M5'` 형식). TA-UNODE는 Tetration / TelePresence / 3rd party 가능성.
+- **설명**: cycle-015 첫 lab 권한 직후 연결성 검증에서 `GET /redfish/v1/` 무인증 응답 (rule 27 R3 1단계) 결과 사용자 라벨 vs Redfish Manufacturer 불일치 1건 발견:
+  1. **10.100.15.2** (사용자: "cisco") → `Product='TA-UNODE-G1', RedfishVersion=1.2.0` — 표준 Cisco UCS Product 아님 (UCS C-series는 보통 `Product='UCS C220 M5'` 형식). TA-UNODE는 Tetration / TelePresence / 3rd party 가능성.
 - **영향**: 본 실장비 회귀 진입 전 식별 필요. 현재는 이론상의 vendor 라벨 vs 실 Manufacturer drift라 baseline 갱신 시 잘못된 vendor adapter 적용 위험.
 - **제안**:
   1. 호스트 물리 라벨 확인 (사용자 lab 직접 확인)

@@ -978,14 +978,7 @@ precheck Stage 3 는 `POST https://{ip}:443/sdk` 로 vim25 `RetrieveServiceConte
 
 ## 실 lab 발견 — 비표준 BMC (2026-04-29 cycle-015)
 
-cycle-015 첫 연결성 검증에서 사용자 라벨 vs 실 Manufacturer drift 2건 (DRIFT-011):
-
-### ~~AMI Redfish Server 1.11.0 (10.100.15.32)~~ — RESOLVED
-
-- ~~사용자 라벨: dell (GPU 카드 설치)~~
-- ~~실 응답: `Vendor='AMI', Product='AMI Redfish Server', RedfishVersion=1.11.0`~~
-- **resolved (cycle-015)**: 사내 lab 부재 확인 → `inventory/lab/redfish.json` + `vault/.lab-credentials.yml`에서 제거. OPS-12 closed.
-- 보존 이유: AMI Redfish 1.11.0 응답 형식은 향후 AMI MegaRAC BMC (Supermicro 등) 추가 시 reference로 활용
+cycle-015 첫 연결성 검증에서 사용자 라벨 vs 실 Manufacturer drift 1건 (DRIFT-011):
 
 ### ~~TA-UNODE-G1 RedfishVersion 1.2.0 (10.100.15.2)~~ — RESOLVED
 

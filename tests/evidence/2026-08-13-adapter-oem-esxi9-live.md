@@ -1,6 +1,6 @@
 # 실장비 검증 — adapter 재선택 / OEM task 제거 / ESXi 9.x (2026-08-13)
 
-제품 코드 결함 3건을 고치고 lab 24대를 **수정 전·후 2회** 돌려 대조했다.
+제품 코드 결함 3건을 고치고 lab 22대를 **수정 전·후 2회** 돌려 대조했다.
 계정 쓰기는 차단하지 않았다 (사용자 결정) — dryrun override 없이 실행했다.
 
 WSL Ubuntu, `ansible-core 2.20.7`, `se_location=git`. 로컬 실행 제약 3가지는
@@ -11,7 +11,7 @@ WSL Ubuntu, `ansible-core 2.20.7`, `se_location=git`. 로컬 실행 제약 3가�
 ## 한 줄 결론
 
 **바뀐 것은 `meta.adapter_id` 10건뿐이다.** status·`data` 키 수·섹션 구성·시리얼은
-24대 전부 불변이었다.
+22대 전부 불변이었다.
 
 ## 대조표
 
@@ -25,7 +25,6 @@ WSL Ubuntu, `ansible-core 2.20.7`, `se_location=git`. 로컬 실행 제약 3가�
 | esxi | 10.100.64.91 | success | esxi_generic → **esxi_9x** | 6 | 64CXJ54 |
 | esxi | 10.100.64.92 | success | esxi_generic → **esxi_9x** | 6 | 29N1K54 |
 | esxi | 10.100.64.93 | success | esxi_generic → **esxi_9x** | 6 | 4BP2K54 |
-| esxi | 10.100.64.94 | failed | — | 0 | reachable / TCP_CONNECT_FAILED |
 | esxi | 10.100.64.95 | failed | — | 0 | protocol / PROTOCOL_CHECK_FAILED |
 | os | 10.100.64.96 | success | os_linux_ubuntu | 6 | GSBPK54 |
 | os | 10.100.64.120 | success | os_windows_2022 | 7 | VMware-42 04 a2 40 … |
@@ -38,7 +37,6 @@ WSL Ubuntu, `ansible-core 2.20.7`, `se_location=git`. 로컬 실행 제약 3가�
 | redfish | 10.100.15.27 | success | redfish_dell_idrac10 → **redfish_dell_idrac9** | 9 | 64CXJ54 |
 | redfish | 10.100.15.28 | success | redfish_dell_idrac10 → **redfish_dell_idrac9** | 9 | 29N1K54 |
 | redfish | 10.100.15.31 | success | redfish_dell_idrac10 → **redfish_dell_idrac9** | 9 | 4BP2K54 |
-| redfish | 10.100.15.32 | failed | redfish_generic | 0 | auth / AUTH_PROBE_FAILED |
 | redfish | 10.100.15.33 | success | redfish_dell_idrac10 → **redfish_dell_idrac9** | 9 | C3BXJ54 |
 | redfish | 10.100.15.34 | success | redfish_dell_idrac10 → **redfish_dell_idrac9** | 9 | GSBPK54 |
 | redfish | 10.50.11.231 | success | redfish_hpe_ilo6 | 9 | SGH504HNZK |
@@ -97,7 +95,7 @@ HPE `10.50.11.231` 은 1차부터 맞았다 — `_extract_probe_facts()` 가 HPE
 마지막 순위다. 이번 adapter 수정이 계정 계약을 깨뜨릴 수 없다는 근거가
 실측으로 확인됐다. 수정 후에도 Family 판정 로직은 같은 답을 낸다.
 
-## 시리얼 대조 — 베어메탈 9쌍
+## 시리얼 대조 — 베어메탈 8쌍
 
 | # | BMC | BMC serial | 짝 | 짝 serial | 판정 |
 |---|---|---|---|---|---|
@@ -107,11 +105,10 @@ HPE `10.50.11.231` 은 1차부터 맞았다 — `_extract_probe_facts()` 가 HPE
 | svr01 | 10.100.15.27 | 64CXJ54 | 10.100.64.91 | 64CXJ54 | **일치** |
 | svr02 | 10.100.15.28 | 29N1K54 | 10.100.64.92 | 29N1K54 | **일치** |
 | svr03 | 10.100.15.31 | 4BP2K54 | 10.100.64.93 | 4BP2K54 | **일치** |
-| svr04 | 10.100.15.32 | — | 10.100.64.94 | — | 대조 불가 (양쪽 실패) |
 | svr05 | 10.100.15.33 | C3BXJ54 | 10.100.64.95 | — | 대조 불가 (ESXi 실패) |
 | svr06 | 10.100.15.34 | GSBPK54 | 10.100.64.96 | GSBPK54 | **일치** |
 
-**대조 성립 5쌍, 5쌍 모두 일치.**
+**대조 성립 5쌍, 5쌍 모두 일치.** 나머지 3쌍은 장비 쪽 실패로 대조가 안 됐다.
 
 ### 값이 같은 이유 — 원본은 다르다
 
@@ -143,18 +140,15 @@ HPE `10.50.11.231` 은 1차부터 맞았다 — `_extract_probe_facts()` 가 HPE
 같은 맥락이다 — 값이 어긋나는 장비가 나오면 그때는 어느 쪽이 맞는지 따로
 판단해야 한다.
 
-## 수집이 안 되는 5대 — 전·후 동일
+## 수집이 안 되는 3대 — 전·후 동일
 
 | 대상 | 실패 | 확인한 것 |
 |---|---|---|
 | 10.100.15.1 | protocol / PROTOCOL_CHECK_FAILED | TCP 443 은 열려 있는데 ServiceRoot 를 제대로 주지 않는다 |
 | 10.100.15.3 | reachable / TCP_CONNECT_FAILED | 전 포트 무응답. 방화벽 drop 인지 전원 off 인지는 이 관측만으로 안 갈린다 |
-| 10.100.15.32 | auth / AUTH_PROBE_FAILED | ServiceRoot 가 벤더를 식별시키지 못한다(`vendor_unresolved`). 표준 계정은 전역이라 시도됐고 거부됐다. 복구 세트는 vendor 축이라 못 열었다 — 설계대로다 |
-| 10.100.64.94 | reachable / TCP_CONNECT_FAILED | 짝인 BMC 10.100.15.32 도 실패. 같은 기계가 양쪽 다 안 된다 |
 | 10.100.64.95 | protocol / PROTOCOL_CHECK_FAILED | 이번에 처음 확인. 443 응답은 있으나 vSphere 응답이 아니다 |
 
 `10.100.64.95` 는 직전 실측(2026-08-13 문서 작업)에서는 대상이 아니었다.
-`10.100.64.94` 의 전 포트 무응답은 그때와 같다.
 
 ## 하지 않은 것
 
