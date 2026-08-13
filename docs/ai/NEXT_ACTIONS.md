@@ -590,7 +590,7 @@
 ### 0.9 (2026-06-09 견고화 사이클) merge_fragment 가드 Jenkins 통합 검증 [PENDING — Jenkins Agent]
 
 - **항목**: `common/tasks/normalize/merge_fragment.yml` 의 data 병합 concat 분기 `is not mapping` 가드(커밋 `6378453`) — list↔dict 오염 시 `bv+fv` TypeError 를 else(fv 우선)로 graceful 강등.
-- **로컬 검증 완료(✅)**: 실 YAML 식을 추출해 Jinja2 로 렌더(`tests/unit/test_merge_fragment_render.py` 5건) — 정상 list+list concat 불변 + 오염 list↔dict graceful 확인.
+- **로컬 검증 완료([OK])**: 실 YAML 식을 추출해 Jinja2 로 렌더(`tests/unit/test_merge_fragment_render.py` 5건) — 정상 list+list concat 불변 + 오염 list↔dict graceful 확인.
 - **잔여(Jenkins)**: 전체 ansible set_fact 통합(실 `union` 필터 + `no_log` + 3-채널 gather 흐름)에서 회귀 0 확인. 분류 `[ANSIBLE]`. 정상 입력 결과 불변이라 위험 낮음(Additive).
 
 ### 0.11 (2026-06-09 적대적 robustness 루프 R1~R14 수렴) 잔여
@@ -621,13 +621,13 @@
 
 | 항목 | 상태 | 비고 |
 |---|---|---|
-| cpu.sockets/cores/threads, memory.total | ✅ 기존 BUG-13/14 fallback 으로 이미 summary 채움 | 추가 작업 불요 |
-| cpu.model | ✅ 2026-06-04 fallback 추가 (normalize_standard.yml L483) | jinja2 render 검증 |
-| data.multi_node (전 partition 상세) | ✅ B2 가 CSUS adapter 선택 → manager_layout → 수집 활성 (구 ilo6 오선택 시 null 이었음) | 실 장비 확인 권장 |
-| **memory.slots / storage.physical_disks / network.interfaces 의 top-level 상세** | ⚠️ partition System drill-in 부재라 summary 대체 불가. multi_node/Chassis 에 있을 수 있음 | **실 envelope 필요** — 사용자 newer 펌웨어가 drill-in 노출하는지 확인 |
+| cpu.sockets/cores/threads, memory.total | [OK] 기존 BUG-13/14 fallback 으로 이미 summary 채움 | 추가 작업 불요 |
+| cpu.model | [OK] 2026-06-04 fallback 추가 (normalize_standard.yml L483) | jinja2 render 검증 |
+| data.multi_node (전 partition 상세) | [OK] B2 가 CSUS adapter 선택 → manager_layout → 수집 활성 (구 ilo6 오선택 시 null 이었음) | 실 장비 확인 권장 |
+| **memory.slots / storage.physical_disks / network.interfaces 의 top-level 상세** | [WARN] partition System drill-in 부재라 summary 대체 불가. multi_node/Chassis 에 있을 수 있음 | **실 envelope 필요** — 사용자 newer 펌웨어가 drill-in 노출하는지 확인 |
 | **실 envelope/raw JSON 1회 캡처** | trigger 충족 | 사용자 — 가장 정확. `capture-site-fixture`, sanitize 후 fixture |
 | 실 baseline 교체 (현 MOCK) | 보류 (rule 96 R1-C) | 사용자 실측 후 (rule 13 R4) |
-| **end-to-end 확인** (vendor=hpCsus + hardware + cpu.model + multi_node 채워짐) | ❌ 이 환경 확인 불가 | 사용자 사이트 재실행 |
+| **end-to-end 확인** (vendor=hpCsus + hardware + cpu.model + multi_node 채워짐) | [NG] 이 환경 확인 불가 | 사용자 사이트 재실행 |
 
 > 전신(Superdome Flex 280) 캡처는 ServiceRoot.Product 부재였으나 **사용자 CSUS 는 노출** = 신 펌웨어. 사용자 장비가 정본(rule 25 R7-A-1) — 실 envelope 으로 잔여 null 필드 확정 필요.
 
@@ -720,7 +720,7 @@
 
 - **상태**: 사용자 승인(2026-06-08) 후 구현 완료. Jenkins Stage 4(E2E Regression)가 e2e 회귀 + `tests/integration/ -m "not live"`(HPE 에뮬레이터 오프라인 회귀)를 별도 invocation 으로 실행, 둘 중 하나라도 FAIL 시 stage 실패. 동반 갱신(`docs/operate/04-pipeline-runtime.md` / rule 80 R1-A / JENKINS_PIPELINES) 완료.
 - **구현 노트**: tests/e2e 와 tests/integration 이 둘 다 top-level `conftest` module 을 써서 단일 멀티-디렉터리 호출 시 ImportError → **별도 pytest 호출 + RC 합산**으로 해결 (Jenkinsfile L217-231). integration conftest 의 전역 `sys.path.insert` 도 제거(e2e conftest shadow 방지).
-- **잔여 (⚠️ AI 환경 밖)**: 실제 Jenkins agent 에서 1회 green 확인 — `/opt/ansible-env` venv 가 redfish_gather(stdlib + ansible stub) import 가능한지. 로컬에선 동일 셸 로직 시뮬레이션 PASS(e2e 157 + integration 44, FINAL_RC=0) 확인했으나 **실 agent 실행은 미확인**. 첫 빌드 모니터링 필요.
+- **잔여 ([WARN] AI 환경 밖)**: 실제 Jenkins agent 에서 1회 green 확인 — `/opt/ansible-env` venv 가 redfish_gather(stdlib + ansible stub) import 가능한지. 로컬에선 동일 셸 로직 시뮬레이션 PASS(e2e 157 + integration 44, FINAL_RC=0) 확인했으나 **실 agent 실행은 미확인**. 첫 빌드 모니터링 필요.
 
 ### 2.3 8 vendor × generation 후속 매트릭스
 

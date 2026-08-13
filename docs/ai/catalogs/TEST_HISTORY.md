@@ -15,29 +15,29 @@
 
 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
 
-미증명 유지: Account CREATE (조건 미발생 — 4대 모두 표준 계정 정상),
-Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
+미증명 유지: Account CREATE 는 조건이 발생하지 않았다. 4대 모두 표준 계정이 정상이었다.
+Supermicro / Huawei / Inspur / Fujitsu / Quanta 는 실장비 0대.
 
 
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
 ## 2026-08-12 (q) — Vault 갱신 후 전량 회귀 + git 실장비 검증
 
-- **정적 회귀**: unit **1792** / regression **169 (+7 xfailed)** / e2e **590 (+6 skipped)** /
-  integration(not live) **243 (+3 skipped)** = **2794 passed**, 실패 0.
-  (Vault 값 변경이 코드 회귀를 유발하지 않음을 확인)
+- **정적 회귀**: unit 1792 / regression 169 (+7 xfailed) / e2e 590 (+6 skipped) /
+  integration(not live) 243 (+3 skipped) = **2794 passed**, 실패 0.
+  Vault 값 변경이 코드 회귀를 유발하지 않음을 확인했다.
 - **py_compile**: `redfish_gather.py`, `precheck_bundle.py`, `credential_common.py`,
-  `credential_resolver.py`, `credential_accounts.py` — 전부 OK.
+  `credential_resolver.py`, `credential_accounts.py` 전부 OK.
 - **ansible syntax-check** (WSL ansible-core 2.20.7): os / esxi / redfish 전부 exit=0.
 - **Gate**: verify_vendor_boundary 0 / verify_harness_consistency 0 /
   output_schema_drift_check 0 / validate_field_dictionary PASS /
   **vault_decrypt_check 전량 통과(exit=0)**.
-- **실장비 7대상 (git Location)** — production 과 동일한 ansible-playbook 호출.
+- **실장비 7대상 (git Location)**: production 과 동일한 ansible-playbook 을 호출했다.
   성공 6 / HOLD 1(Dell). Redfish 3대는 `credential_scope=common/redfish/standard` +
   used_role=primary + **Account Write 0**, Lenovo·Cisco 는 **2차 실행 Write 0** 까지 확인.
-- **read-only Redfish probe** — Dell 2대(.34/.27), Lenovo, HPE, Cisco 의 ServiceRoot /
+- **read-only Redfish probe**: Dell 2대(.34/.27), Lenovo, HPE, Cisco 에서 ServiceRoot /
   Manager / AccountService / Roles / Accounts / OEM Attributes / Attribute Registry 를
-  쓰기 0건으로 수집. Dell 비밀번호 정책 규명의 근거.
+  쓰기 0건으로 수집했다. Dell 비밀번호 정책을 규명한 근거다.
 - 정본: `tests/evidence/2026-08-12-git-location-live-verification.md`
 
 ## 2026-08-12 (p) — Redfish 계정 Reconcile Family Strategy 회귀
@@ -45,23 +45,23 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 - **기준선(변경 전 직접 측정)**: unit+regression 1907 passed / 7 xfailed (66.55s),
   e2e 587 passed / 6 skipped (13.07s), integration(not live) 200 passed / 3 skipped (1.71s)
   = **2694 passed**.
-- **변경 후**: unit+regression **1961** (18.05s), e2e **590** (12.46s),
-  integration **243** (2.75s) = **2794 passed**, 실패 0.
+- **변경 후**: unit+regression 1961 (18.05s), e2e 590 (12.46s),
+  integration 243 (2.75s) = **2794 passed**, 실패 0.
 - **신규 파일**
-  - `tests/unit/test_account_capability_and_presence.py` (20) — 3-상태 열거 / 4-상태 존재 판정 /
-    ServiceRoot 링크 추종 / 정책 파싱 / **부분 조회 실패 시 Write 0건** 회귀(C-1).
-  - `tests/unit/test_account_family_and_write_contract.py` (33) — Family 결정성, Dell iDRAC10
+  - `tests/unit/test_account_capability_and_presence.py` (20). 3-상태 열거 / 4-상태 존재 판정 /
+    ServiceRoot 링크 추종 / 정책 파싱, 그리고 **부분 조회 실패 시 Write 0건** 회귀(C-1).
+  - `tests/unit/test_account_family_and_write_contract.py` (33). Family 결정성, Dell iDRAC10
     reserved slot 2, Cisco Roles 어휘 기반 판정, Lenovo Purley slot PATCH, Supermicro
     Firmware 경계, Inspur OEM Status/ETag, 검증 의무화, check_mode, lockout 예산,
     상태 수렴(Disabled/Locked/Role/PasswordChangeRequired/AccountTypes).
   - `tests/integration/account_replay.py` + `tests/integration/test_account_reconcile_replay.py` (43)
-    — **실장비 미러 재생** (Dell 5호스트 / HPE 1 / Lenovo 1 / Cisco 1). 감사 D-8 해소.
-  - `tests/unit/account_seam.py` — 기존 3-tuple fake 를 discovery dict 로 감싸는 공용 seam.
+    로 **실장비 미러 재생** (Dell 5호스트 / HPE 1 / Lenovo 1 / Cisco 1). 감사 D-8 해소.
+  - `tests/unit/account_seam.py` 는 기존 3-tuple fake 를 discovery dict 로 감싸는 공용 seam 이다.
 - **갱신 파일**: 계정 관련 unit 5종 + e2e 2종. seam 이동(`account_service_get` ->
   `account_service_discover`)과 의도된 동작 변경(POST 사다리 제거 / 검증 의무화 /
   `verification='none'` 불인정 / backoff 조건화)을 반영.
-- **부수 효과**: 계정 테스트에 `time.sleep` monkeypatch autouse fixture 를 넣어 audit M-9
-  (8개 테스트가 각 6초 블로킹) 해소. unit+regression 수트가 **66.55s -> 18.05s**.
+- **부수 효과**: 계정 테스트에 `time.sleep` monkeypatch autouse fixture 를 넣어 audit M-9 을
+  해소했다. 8개 테스트가 각 6초씩 블로킹하던 건이다. unit+regression 수트가 **66.55s -> 18.05s**.
 - **Ansible syntax-check** (WSL Ubuntu, ansible-core 2.20.7): os/esxi/redfish 전부 exit=0.
 - **게이트**: verify_vendor_boundary exit=0 (신규 Family 표 13라인 `# nosec rule12-r1` 표기 후),
   verify_harness_consistency exit=0, output_schema_drift_check exit=0,
@@ -70,51 +70,52 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 
 ## 2026-08-11 (o) — Dell 대표 시리얼 교정 회귀 (ServiceRoot Service Tag)
 
-- **신규**: `tests/unit/test_dell_service_tag_serial.py` **41건** —
+- **신규**: `tests/unit/test_dell_service_tag_serial.py` 41건.
   ServiceTag 정상 + System 정상(fixture `dell` / `dell_r760` / `real_dell_r740`) /
   ServiceTag 정상 + System 수집 실패(→ partial+null 금지) / ServiceTag 없음 4종 /
   invalid 10종(`NA` `N/A` `None` `Not Specified` `To Be Filled By O.E.M.`
-  `System Serial Number` `0` `00000000` `""` 공백) /
-  **폴백 금지 실증** 14케이스(결과에 `SerialNumber`·`SKU`·`ChassisServiceTag`·`NodeID` 0회 등장) /
-  무인증↔인증 ServiceRoot 노출 차이 + 재조회 횟수 / **serial null 0건 불변식** / 비-Dell 무회귀.
-- **신규**: `tests/e2e/test_redfish_baseline.py::TestDellServiceTagIsRepresentativeSerial` —
+  `System Serial Number` `0` `00000000` `""` 공백).
+  **폴백 금지 실증** 14케이스에서는 결과에 `SerialNumber`·`SKU`·`ChassisServiceTag`·`NodeID` 가
+  0회 등장한다. 무인증↔인증 ServiceRoot 노출 차이와 재조회 횟수도 확인.
+  **serial null 0건 불변식** / 비-Dell 무회귀.
+- **신규**: `tests/e2e/test_redfish_baseline.py::TestDellServiceTagIsRepresentativeSerial`.
   최종 envelope 의 `data.hardware.serial` == `correlation.serial_number` ==
-  raw fixture `Oem.Dell.ServiceTag` (기대값 하드코딩 없이 fixture 에서 읽어 비교).
+  raw fixture `Oem.Dell.ServiceTag` 를 비교한다. 기대값은 하드코딩하지 않고 fixture 에서 읽는다.
 - **기준선 갱신 (Dell 3종만, 전부 재생 산출값)**:
   `real_dell_r740/expected_output.json` `CNIVC0098G0600`→`J0KV603` ·
   `dell_r760_output.json` `CNIVC004950455`→`64CXJ54` ·
   `schema/baseline_v1/dell_baseline.json` `CNIVC009CP0282`→`2BJ8033`.
   비-Dell baseline 9종 + 실미러 골든 3종(HPE/Lenovo/CSUS) **무변경 통과**.
-- **실장비 대조 7대** — reference 미러 5대 + fixture 2대 전부 `Oem.Dell.ServiceTag` 존재,
+- **실장비 대조 7대**: reference 미러 5대 + fixture 2대 전부 `Oem.Dell.ServiceTag` 가 있고
   `SerialNumber` 와 상이. R760-6 은 Redfish `GSBPK54` == Linux SMBIOS Type 1 `GSBPK54`.
 - **결과**: unit 1186 passed / e2e 416 passed·6 skipped / integration 200 passed·3 skipped /
   regression 169 passed·7 xfailed. `validate_field_dictionary` / `verify_vendor_boundary` /
   `verify_harness_consistency` PASS.
-- **실 Jenkins 실행 (2026-08-11 사후)** — job `clovirone-server-gather`:
+- **실 Jenkins 실행 (2026-08-11 사후)**, job `clovirone-server-gather`:
   - **#188** `target_type=redfish`, BMC 10.100.15.27 / 10.100.15.34 → 각각
     `hardware.serial` = `correlation.serial_number` = `64CXJ54` / `GSBPK54`,
     status=success, errors 0, envelope 13필드 일치, Stage 3 Validate Schema PASS,
     콘솔 전체 `CNIVC` 0회.
   - **#189** `target_type=os`, 10.100.64.96 (위 .34 의 짝) → `correlation.serial_number=GSBPK54`.
   - 동일 `system_uuid` 위에서 두 채널 serial **SAME** (교정 전 DIFFERENT).
-  - 두 빌드 `UNSTABLE` 은 미라우팅 콜백(`192.0.2.1`) timeout — 수집 무관 (rule 31 R2).
+  - 두 빌드 `UNSTABLE` 은 미라우팅 콜백(`192.0.2.1`) timeout 때문이며 수집과는 무관하다 (rule 31 R2).
 - 증거: `tests/evidence/2026-08-11-dell-serial-service-tag.md`.
 
 ## 2026-08-11 (m) — 실환경 검증 (Phase 6-A)
 
 - **실장비 실측** (lab 네트워크 직접 도달):
-  - ESXi 3대(10.100.64.1/2/3, 전부 7.0.3 build-20842708) — `/sdk` POST wire 응답 확인.
+  - ESXi 3대(10.100.64.1/2/3, 전부 7.0.3 build-20842708) 에서 `/sdk` POST wire 응답 확인.
     `versionId=6.0` 수락 / HTTP 200 / `RetrieveServiceContentResponse` /
     `about.apiType=HostAgent` / `apiVersion=7.0.3.0` / `parse_service_content` True.
-  - BMC 11대 — 9대 `probe_redfish` OK. **무인증 ServiceRoot 401/403 = 0대**.
-    cisco .1 은 502/503 흔들림(테스트 flaky 위험), cisco .3 다운.
-  - OS 7대 — Linux 5대 SSH identification 확인(`SSH-2.0-OpenSSH_8.0/8.7/9.6p1`),
-    rhel920 .163 은 전 포트 timeout(= `TCP_CONNECT_FAILED` 실제 사례).
-  - Windows 1대 — 수정 전 401 실패 → **수정 후 200 + IdentifyResponse 확인**.
+  - BMC 11대 중 9대는 `probe_redfish` OK. **무인증 ServiceRoot 401/403 = 0대**.
+    cisco .1 은 502/503 으로 흔들려 테스트 flaky 위험. cisco .3 다운.
+  - OS 7대 중 Linux 5대는 SSH identification 확인(`SSH-2.0-OpenSSH_8.0/8.7/9.6p1`).
+    rhel920 .163 은 전 포트 timeout 이며 `TCP_CONNECT_FAILED` 의 실제 사례다.
+  - Windows 1대는 수정 전 401 실패, **수정 후 200 + IdentifyResponse 확인**.
 - **Linux 실제 Ansible CLI**: `ansible-playbook --syntax-check` 3 채널 exit 0
   (WSL Ubuntu 24.04.3 / ansible-core 2.20.7 / vault 암호 적용). **최초 실제 통과**.
-- **신규**: `tests/unit/test_soap_header_case_preserved.py` **15건** —
-  `http.client` 를 seam 으로 잡아 헤더 이름 정규화 재발을 차단.
+- **신규**: `tests/unit/test_soap_header_case_preserved.py` 15건.
+  `http.client` 를 seam 으로 잡아 헤더 이름 정규화 재발을 차단한다.
   `WSMANIDENTIFY` / `SOAPAction` / `Content-Type` 보존, 요청 shape 불변,
   http/https 분기, 비-2xx status 보존, timeout·refused 분류, max_bytes, 민감정보 미포함,
   실장비 응답 그대로를 넣은 `probe_os` 통합 확인.
@@ -127,7 +128,7 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 
 ## 2026-08-11 (l) — Portal Grid 실패 사유 + 자격 실패 분류 검증 (Phase 5-A)
 
-- **신규**: `tests/e2e/test_failure_reason_case_matrix.py` **27건**
+- **신규**: `tests/e2e/test_failure_reason_case_matrix.py` 27건
   - 18 Case 를 최종 diagnosis 까지 렌더 (precheck 6건은 `run_module()` 실제 실행,
     rescue 12건은 site.yml `_diagnosis` 템플릿 추출 렌더)
   - **§29 단계 진행 관계 Contract**: 문장이 주장하는 앞 단계 성공을 Machine Diagnosis 로
@@ -136,16 +137,16 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
   - reachable 단계가 "통신은 되지만" 을, port 단계가 "서버는 응답하지만" 을 쓰지 않는지
   - `정보 수집 후` 는 수집 성공이 관측된 경로에서만
   - 18 Case 전수 민감정보 미노출
-- **신규**: `tests/e2e/test_credential_probe_classification.py` **13건** — 4 채널 자격 probe
+- **신규**: `tests/e2e/test_credential_probe_classification.py` 13건. 4 채널 자격 probe
   파일이 문자열 파싱으로 인증 실패를 확정하지 않는지, `auth_success` 를 분산 판정하지 않는지,
   **인증 시도 횟수 / retry / lockout backoff 가 그대로인지**, 403 을 거부로 만들지 않는지
-- **신규**: `tests/unit/test_redfish_auth_evidence.py` **14건** — `auth_evidence` 가
+- **신규**: `tests/unit/test_redfish_auth_evidence.py` 14건. `auth_evidence` 가
   자격증명 요청의 첫 정수 status 만 기록 / 무인증 요청 미기록 / status=0 미기록 /
   첫 관측 고정 / 반환값 불변 / invocation 단위 초기화 / 자격증명 미포함 / 문자열 미수용
 - **갱신**: `test_failure_reason_contract.py` 에 §26·§27 단언 추가
   (관리 포트 `22/443/5985/5986` 금지, HTTP status 금지, timeout 초 금지,
-  내부 기술 용어 14종 금지) + OS 포트 실패 검증을 precheck 실제 실행 기반으로 교체 +
-  삭제한 PLAY 1.5 덮어쓰기 태스크가 되살아나면 실패하는 가드
+  내부 기술 용어 14종 금지). OS 포트 실패 검증은 precheck 실제 실행 기반으로 교체했고,
+  삭제한 PLAY 1.5 덮어쓰기 태스크가 되살아나면 실패하는 가드를 넣었다
 - **갱신**: `test_esxi_precheck_contract.py` / `test_os_candidate_search.py` /
   `test_os_precheck_polling.py` / `test_failure_code_contract.py` 를 새 문구 계약으로
 - **동기화**: `schema/examples/redfish_{failed,not_supported}.json`,
@@ -155,7 +156,7 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
   integration 200 / regression 169 / field_dictionary PASS
 - **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0
 - **정적**: py_compile 2파일 / YAML 78파일 파싱 / Jinja2 문자열 스칼라 893개 컴파일 0오류
-- **보정 회귀 (2026-08-11)**: `tests/e2e/test_redfish_multi_credential_auth.py` **29건**
+- **보정 회귀 (2026-08-11)**: `tests/e2e/test_redfish_multi_credential_auth.py` 29건
   - 사용자 지정 8 조합(401+401 / timeout+401 / 401+timeout / 403+401 / 401+403 /
     transport+401 / 401+성공 / 단일 401) → **1번과 8번만 false, 나머지 전부 null**
   - 경계: 후보 0개 / 관측 누락 / 관측 초과 / 비-401 혼입 10종 / 후보 1·2·3·5개 전부 401
@@ -164,21 +165,21 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
   - 판정식은 **실제 Jinja2 `select('equalto', 401)`** 로도 동일 결과 교차 확인
 - **전체 회귀 (보정 후)**: `pytest tests/` → **1760 passed, 11 skipped, 7 xfailed**
   (unit 1063 / e2e 328 / integration 200 / regression 169)
-- **미실행**: `ansible-playbook --syntax-check` — Windows 개발 환경에 `ansible-playbook`
-  부재. 성공으로 표기하지 않는다.
+- **미실행**: `ansible-playbook --syntax-check`. Windows 개발 환경에 `ansible-playbook` 이
+  없다. 성공으로 표기하지 않는다.
 
 ## 2026-08-10 (k) — ESXi vim25 SOAP 판정 검증 (Phase 4-B)
 
-- **신규 fixture**: `tests/fixtures/esxi/` (README 에 출처 기록 — rule 21 R2)
-  - `lab/esxi_7_0_3_service_content.xml` — lab ESXi **3대**(10.100.64.1/2/3, 모두
+- **신규 fixture**: `tests/fixtures/esxi/` (README 에 출처 기록, rule 21 R2)
+  - `lab/esxi_7_0_3_service_content.xml` 은 lab ESXi 3대(10.100.64.1/2/3, 모두
     ESXi 7.0.3 build-20842708, `apiType=HostAgent` / `apiVersion=7.0.3.0`)의 실측
     AboutInfo(`tests/reference/esxi/*/pyvmomi_host_dump.json` → `config_product`)를
-    pyVmomi 직렬화기로 감싼 것. 생성 후 pyVmomi `SoapResponseDeserializer` 로 되읽어
+    pyVmomi 직렬화기로 감싼 것이다. 생성 후 pyVmomi `SoapResponseDeserializer` 로 되읽어
     `vim.ServiceInstanceContent` 복원까지 확인.
-  - `synthetic/` — ESXi 6.0 / 6.7 / 8.0 / vCenter 8.0 ServiceContent(합성) +
+  - `synthetic/` 에는 ESXi 6.0 / 6.7 / 8.0 / vCenter 8.0 ServiceContent(합성) +
     vim25 Fault 2종 + 일반 SOAP Fault 1종(음성 표본).
   - **wire capture 아님** — 해당 버전을 "검증 완료" 로 표기하지 않는다.
-- **재작성**: `tests/unit/test_precheck_probe_esxi.py` **54건**
+- **재작성**: `tests/unit/test_precheck_probe_esxi.py` 54건
   - 요청 검증: `POST /sdk` / `RetrieveServiceContent` 본문 / SOAP 1.1 Content-Type /
     `SOAPAction: "urn:vim25/6.0"` / ServiceContent 전용 본문 상한 / **자격증명 미전송** /
     TLS 정책 유지 / **retry 없음(요청 1회)**
@@ -190,8 +191,8 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
     apiType 없음 / apiVersion 공백 / 네임스페이스 없는 Response /
     **HTTP 200·301·302·401·403·404·405·500·503 단독**
   - Evidence 위생: 실패 사유에 raw SOAP 덤프 금지 / 본문 상한 초과 거부
-- **신규**: `tests/unit/test_esxi_precheck_contract.py` **14건** — `run_module()` 전 경로에서
-  Diagnosis 계약 고정. protocol_supported / `auth_success` 항상 `null`(401·403 포함) /
+- **신규**: `tests/unit/test_esxi_precheck_contract.py` 14건. `run_module()` 전 경로에서
+  Diagnosis 계약을 고정한다. protocol_supported / `auth_success` 항상 `null`(401·403 포함) /
   `protocol` + `PROTOCOL_CHECK_FAILED` / Phase 1 failure_reason 문구 / probe_facts 키 집합
   불변 / TCP 실패 시 Probe 미전송 / timeout 전달 / 민감정보 미노출
 - **수정**: `test_os_candidate_search.py`·`test_os_precheck_integration.py` 의 esxi 회귀
@@ -204,14 +205,14 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 - **OS / Redfish 회귀 0**: `probe_os` / `ssh_banner_check` / `parse_identify_response` /
   `probe_redfish` / `parse_service_root` / `http_get` 전부 미변경. 공통 `http_post_soap` 는
   인자만 추가했고 **기본값이 종전과 같아** WinRM Identify 동작 불변.
-- **미실행**: `ansible-playbook --syntax-check` — Windows 개발 환경에 `ansible-playbook`
-  부재(POSIX 전용 `os.get_blocking` 의존). 성공으로 표기하지 않는다.
+- **미실행**: `ansible-playbook --syntax-check`. Windows 개발 환경에는 `ansible-playbook` 이
+  없다. POSIX 전용 `os.get_blocking` 에 의존하기 때문이다. 성공으로 표기하지 않는다.
   대안으로 YAML 파싱 28파일 + Jinja2 문자열 스칼라 239개 컴파일 0오류 확인.
 
 ## 2026-08-10 (j) — Redfish ServiceRoot 판정 검증 (Phase 4-A)
 
-- **신규**: `tests/unit/test_redfish_service_root_fixtures.py` **40건** —
-  저장소의 ServiceRoot 응답을 **전수** 판정.
+- **신규**: `tests/unit/test_redfish_service_root_fixtures.py` 40건.
+  저장소의 ServiceRoot 응답을 **전수** 판정한다.
   - `service_root.json` 28개 (cisco 4 / dell 5 / fujitsu 2 / hpe 6 / huawei 3 /
     inspur 1 / lenovo 3 / quanta 1 / supermicro 3) → **전부 PASS**
   - `recording.json` 의 비인증 `noauth::` 10개 (DMTF 표준 mockup 1 + HPE 에뮬레이터 5 +
@@ -235,15 +236,16 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 - **OS / ESXi**: `probe_os` / `probe_esxi` / 후보 탐색 / 포트 폴링 미변경.
   `http_get` 도 미변경(Phase 3-B 에서 추가한 headers 키 그대로). 두 채널 회귀 0.
 - **schema/**: 파일 변경 0
-- **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows, `os.get_blocking` POSIX 전용).
-  대체로 YAML 파싱 5종 + Jinja2 166 표현식 전수 컴파일 실패 0.
+- **환경 제약**: `ansible-playbook --syntax-check` **미실행**. Windows 에서는
+  `os.get_blocking` 이 POSIX 전용이다. 대신 YAML 파싱 5종과 Jinja2 166 표현식을
+  전수 컴파일해 실패 0.
 - **실장비 미검증 영역**: ServiceRoot 에서 인증을 요구하는 펌웨어. 저장소에 캡처가 없어
   제거된 401/403 예외가 실제로 필요한지 확인할 수 없다. 해당 장비를 만나면
   PROTOCOL_CHECK_FAILED 로 차단된다.
 
 ## 2026-08-10 (i) — WinRM WS-Management Identify 판정 검증 (Phase 3-B 최종)
 
-- **재작성**: `tests/unit/test_precheck_probe_os.py` **30건**.
+- **재작성**: `tests/unit/test_precheck_probe_os.py` 30건.
   - Positive: 5985 / 5986 정상 IdentifyResponse, 네임스페이스 표기 변형 2종,
     Identify 요청 형식(SOAP POST + `WSMANIDENTIFY: unauthenticated` + `/wsman` + verify=False)
   - **False Positive 11조합 전부 거부**: 단순 200(일반 웹서버 HTML) / 401 / 403 / 404 /
@@ -262,8 +264,9 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 - **Redfish/ESXi**: `http_get` 미변경(새 `http_post_soap` 분리) → 두 채널 소비 경로 영향 0.
   regression 169 · integration 200 · baseline 10 통과.
 - **schema/**: 파일 변경 0
-- **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows, `os.get_blocking` POSIX 전용).
-  대체로 YAML 파싱 5종 + Jinja2 166 표현식 전수 컴파일 실패 0.
+- **환경 제약**: Windows 개발 환경이라 `ansible-playbook --syntax-check` 는 **미실행**
+  (`os.get_blocking` 이 POSIX 전용). 대체 수단은 YAML 파싱 5종 + Jinja2 166 표현식
+  전수 컴파일이며 실패 0.
 - **한계 (보고 대상)**: lab 에 Windows WinRM 실장비가 없어 IdentifyResponse 는 **규격 기반**이며
   실측 캡처가 아니다. 네임스페이스 표기(http/https, .xsd 유무)를 4가지 허용해 방어했으나
   실장비 확보 시 실제 응답으로 재확인이 필요하다.
@@ -273,8 +276,8 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 
 ## 2026-08-10 (h) — OS Protocol 판정 강화 검증 (Phase 3-B)
 
-- **신규**: `tests/unit/test_os_candidate_search.py` **24건** — run_module 을 실제로 돌려
-  후보 탐색 전 경로 검증.
+- **신규**: `tests/unit/test_os_candidate_search.py` 24건. run_module 을 실제로 돌려
+  후보 탐색 전 경로를 검증한다.
   - Case 1~4 정상 판정(5986 / 5985 / 22) + scheme + checked_ports
   - Case 12 열린 포트는 있으나 프로토콜 전멸 → `protocol` + `PROTOCOL_CHECK_FAILED`,
     `port_open=true` / `protocol_supported=false` / `detected_os=None`
@@ -284,7 +287,7 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
   - Case 14 checked_ports 5조합 (중복 없음)
   - 폴링 인자 보존 (포트별 예산 2초 / poll 1초 / 순서)
   - Case 18 redfish/esxi 는 후보 탐색을 타지 않음 + probe_protocol=false 경로 잔존 확인
-- **재작성**: `tests/unit/test_precheck_probe_os.py` **23건**. 종전 상태 코드 whitelist
+- **재작성**: `tests/unit/test_precheck_probe_os.py` 23건. 종전 상태 코드 whitelist
   테스트(200/401/403/405/503 → WinRM)를 폐기하고 헤더 근거 기반으로 교체.
   - **False Positive 8조합**: nginx/Apache 의 200 / 404 / 403 / 405 / 503 /
     `Basic realm="Restricted"` 401 / 헤더 없음 → **전부 거부**
@@ -298,15 +301,16 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 - **Jenkins 등가**: Stage 3 PASS / e2e 258 / integration 200 / unit 929 / regression 169
 - **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0
 - **Baseline / schema**: 파일 변경 0
-- **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows, `os.get_blocking` POSIX 전용).
-  대체로 YAML 파싱 5종 + Jinja2 166 표현식 전수 컴파일 실패 0.
+- **환경 제약**: `ansible-playbook --syntax-check` 는 **미실행** 이다. Windows 이고
+  `os.get_blocking` 이 POSIX 전용이다. 갈음한 확인은 YAML 파싱 5종, Jinja2 166 표현식
+  전수 컴파일 실패 0.
 - **구현 한계 (보고 대상)**: 자격증명 없이 WS-Management handshake 를 완결할 수 없어 WinRM
   판정은 **헤더 근거 기반**이다. (2) `Server=Microsoft-HTTPAPI + 인증요구` 는 결정적 증거가
   아니라 강한 정황이다. 완전한 판정은 Credential Probe 영역이며 이번 범위 밖이다.
 
 ## 2026-08-10 (g) — Phase 3-A 보정 검증 (폴링 복원 / 문구 정정)
 
-- **신규**: `tests/unit/test_os_precheck_polling.py` **21건**.
+- **신규**: `tests/unit/test_os_precheck_polling.py` 21건.
   실제 시간 기반 소켓 상태 전환을 만들 수 없어 **결정적 mock clock** 사용
   (`pb.time.monotonic` / `pb.time.sleep` 대체 → 실제 대기 0초).
   - **핵심 회귀 Case**: t=0 에 닫혀 있고 t=1.0 에 기동되는 서비스 →
@@ -326,14 +330,14 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 - **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel exit 0
 - **Baseline**: 10건 변경 없음
 - **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows, `os.get_blocking` POSIX 전용).
-  대체로 YAML 파싱 5종 + Jinja2 165 표현식 전수 컴파일 실패 0.
+  대체 확인으로 YAML 파싱 5종, Jinja2 165 표현식 전수 컴파일 실패 0.
 - **wait_for 실측 근거**: `ansible/modules/wait_for.py` argument_spec
   (`timeout=300`, `connect_timeout=5`, `sleep=1`, `delay=0`) + started 분기 폴링 루프 :619-628.
 
 ## 2026-08-10 (f) — OS 공통 Precheck 통합 검증 (Phase 3-A)
 
-- **신규**: `tests/unit/test_os_precheck_integration.py` **18건** — `run_module()` 을 실제로
-  돌려 포트별 결과를 주입한다(네트워크 0).
+- **신규**: `tests/unit/test_os_precheck_integration.py` 18건. `run_module()` 을 실제로
+  돌려 포트별 결과를 주입한다. 네트워크는 0.
   - Case 1~3 포트 우선순위 + OS Type + scheme + checked_ports
   - Case 4~7 전 포트 timeout / 전 포트 refused / 혼합 4조합 / DNS 실패
   - Case 8~9 IPv6 → IPv4 graceful degradation (주소군 순서)
@@ -343,8 +347,8 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
   - **Cross-channel**: redfish/esxi 는 probe_protocol 기본 true 로 Stage 3 유지,
     checked_ports=[443] 불변
 - **수정**: `test_precheck_detail_propagation.py` 의 포트 순서 회귀를 공통 모듈 정본
-  (`CHANNEL_DEFAULT_PORTS['os']`) 기준으로 재작성 + `_check_ports` 실측 probed 목록 검증 추가.
-  `test_failure_code_contract.py` 의 OS 매핑 예외 제거(해소됨) →
+  (`CHANNEL_DEFAULT_PORTS['os']`) 기준으로 재작성하고 `_check_ports` 실측 probed 목록 검증을
+  추가했다. `test_failure_code_contract.py` 의 OS 매핑 예외 제거(해소됨) →
   code↔stage 전 채널 1:1 로 강화. `test_failure_reason_contract.py` OS 포트 전멸 3분기 검증.
 - **PLAY 1 → PLAY 1.5 배선 시뮬레이션**: site.yml 템플릿을 직접 추출해 7 시나리오 렌더.
   OS 판정 / stage / code / auth / checked_ports / reason 전부 기대와 일치.
@@ -352,9 +356,9 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 - **Jenkins 등가**: Stage 3 PASS / Stage 4-a 258 / Stage 4-b 200 / unit 868 / regression 169
 - **하네스**: harness / boundary / output_schema_drift / envelope_change / cross_channel 전부 exit 0
 - **Baseline**: 10건 shape·값 검사 통과 (변경 없음)
-- **환경 제약**: `ansible-playbook --syntax-check` **미실행** (Windows 에서 Ansible CLI 진입부가
-  POSIX 전용 `os.get_blocking` 호출). 대체로 YAML 파싱 5종 + Jinja2 163 표현식 전수 컴파일
-  실패 0 + 7 시나리오 실제 렌더 수행. lab/Jenkins 재확인 필요.
+- **환경 제약**: `ansible-playbook --syntax-check` **미실행**. Windows 에서 Ansible CLI 진입부가
+  POSIX 전용 `os.get_blocking` 을 호출한다. 대체로 YAML 파싱 5종 + Jinja2 163 표현식 전수
+  컴파일 실패 0, 그리고 7 시나리오 실제 렌더까지 수행했다. lab/Jenkins 재확인 필요.
 - **알려진 동작 차이 (보고 대상)**: `wait_for` 는 timeout 안에서 재시도(polling)하지만
   `tcp_check_ex` 는 포트당 1회 시도다. 부팅 중 서비스가 t=1.5s 에 열리는 경계 사례에서
   결과가 달라질 수 있다. 재시도 정책 변경은 이번 범위 밖이라 1회 시도를 채택했다.
