@@ -51,11 +51,11 @@
 
 ### Stage 3 — Validate Schema (정합)
 
-**역할**: envelope 13 필드 + sections 10 + field_dictionary 83 정합.
+**역할**: envelope 13 필드 + `schema/sections.yml` 의 섹션 + `field_dictionary.yml` 항목 정합.
 **위치**: `tests/validate_field_dictionary.py` (Jenkinsfile 193~203, Stage 'Validate Schema')
 **실패 시 확인**:
 - `schema/field_dictionary.yml` 갱신 누락 (rule 13 R1 3종 동반)
-- `schema/sections.yml` 의 sections 11 정의 누락
+- `schema/sections.yml` 에 섹션 정의 누락
 - `common/tasks/normalize/build_output.yml` envelope 13 필드 (rule 13 R5)
 
 ### Stage 4 — E2E Regression / Callback (pipeline 별)

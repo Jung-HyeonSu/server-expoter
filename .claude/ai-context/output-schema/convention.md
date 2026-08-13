@@ -39,9 +39,9 @@ callback_plugins/json_only.py가 OUTPUT 태스크에만 JSON 직렬화. 표준 1
 
 새 섹션 추가는 sections.yml + field_dictionary.yml + baseline_v1 3종 동반 갱신 (rule 13).
 
-## 3. Field Dictionary 47 Must
+## 3. Field Dictionary 의 Must / Nice / Skip
 
-`schema/field_dictionary.yml`에서 분류 (실측 2026-07-02 = 47 Must / 115 Nice / 6 Skip = 168 entries, 18 section prefixes):
+`schema/field_dictionary.yml` 에서 분류한다. 개수는 여기 적지 않는다 (rule 00) — 필요하면 그때 센다:
 - **Must (39)**: 모든 vendor의 모든 baseline에 존재해야 함. 누락 시 schema validate FAIL (Jenkins Stage 3).
 - **Nice (29)**: vendor-specific 허용. 있으면 좋고 없어도 OK.
 - **Skip (6)**: 의도적 미수집 (예: 너무 큰 stack trace).

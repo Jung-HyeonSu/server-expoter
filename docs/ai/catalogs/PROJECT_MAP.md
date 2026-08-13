@@ -32,7 +32,7 @@ server-exporter/
 │   └── tasks/vendors/{vendor}/      (OEM tasks — dell/hpe/lenovo/supermicro)
 ├── schema/
 │   ├── sections.yml         # 11 섹션 정의
-│   ├── field_dictionary.yml # 47 Must + 115 Nice + 6 Skip = 168 entries (2026-07-02 재실측, 18 section prefixes)
+│   ├── field_dictionary.yml # 항목별 priority = Must / Nice / Skip (개수는 세지 않는다 — rule 00)
 │   ├── fields/              # 섹션별 상세
 │   ├── baseline_v1/         # 9 baseline JSON (redfish 5 + esxi/ubuntu/windows + rhel810_raw_fallback)
 │   ├── examples/            # success/partial/failed

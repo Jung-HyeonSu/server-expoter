@@ -13,7 +13,7 @@
 | **Adapter 점수** | `score = priority × 1000 + specificity × 10 + match_score`. 높을수록 우선. priority=0(generic) / 10(기본 벤더) / 50-100(세대별) / +match.model_patterns. |
 | **adapter_loader** | lookup plugin (`lookup_plugins/adapter_loader.py`). adapters/ 스캔 → match 평가 → 점수 계산 → 정렬 → 최고 점수 반환 (또는 generic fallback). |
 | **Sections (11)** | system, hardware, bmc, cpu, memory, storage, network, firmware, users, power, thermal. `schema/sections.yml`에 정의. |
-| **Field Dictionary** | `schema/field_dictionary.yml`. 47 Must (모든 vendor 필수) + 115 Nice (vendor-specific 허용) + 6 Skip (의도적 미수집) = 168 entries (실측 2026-07-02). |
+| **Field Dictionary** | `schema/field_dictionary.yml`. 항목마다 `priority` 가 Must(모든 vendor 필수) / Nice(vendor-specific 허용) / Skip(의도적 미수집) 중 하나다. 개수는 적지 않는다 — `grep -c '^\s*priority:' schema/field_dictionary.yml` 로 그때 센다 (rule 00). |
 | **Baseline** | `schema/baseline_v1/{vendor}_baseline.json`. 실장비 회귀 기준선. schema 변경 시 영향 vendor 전수 회귀. |
 | **target_type** | `os` / `esxi` / `redfish` 셋 중 하나. inventory_json + 입력으로 채널 결정. |
 | **loc** | 운영 사이트. 정본은 `common/vars/locations.yml` (현재 ich / chj / yi / git). Jenkins agent 선택과 vault 경로에 쓰이고 코드 분기는 없다. |

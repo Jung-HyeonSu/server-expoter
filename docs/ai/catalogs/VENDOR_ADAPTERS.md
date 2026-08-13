@@ -9,7 +9,7 @@
 >   - **adapter origin 최신화**: hpe_csus_3200 / hpe_ilo7 / lenovo_xcc3 = "lab 부재/추정" → "1회 실 캡처 검증" 승격.
 >     dell_idrac9 = R740 14G 캡처 보강. CSUS firmware_patterns 에 실 1.x Additive (휴면 — 선택 시 facts.firmware 빈값, 실측 확인).
 >   - **priority 정정**: 본 표가 구 96/95(csus/superdome) 표기였으나 실제 adapter 는 **102/101** (2026-06-04 ADR-csus-adapter-priority).
->   - **field_dictionary**: 83 → **134 entries** (47 Must / 81 Nice / 6 Skip — 2026-06-14 재실측, HPE DL380 cycle).
+>   - **field_dictionary**: 개수는 적지 않는다 (rule 00). `grep -c '^\s*priority:' schema/field_dictionary.yml` 로 센다.
 >   - **발견(gated)**: Dell/Lenovo 는 무인증 ServiceRoot 에 model 부재 → 세대 adapter 가 priority 로만 선택
 >     (Dell→idrac10, Lenovo→xcc3 가 항상). collect/normalize tasks 동일이라 수집 데이터 무영향, diagnosis 라벨만 cosmetic. NEXT_ACTIONS 등재.
 >
