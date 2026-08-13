@@ -1,13 +1,13 @@
 # tests/reference/ — 실장비 종합 참조 데이터
 
-> **이 폴더는** 실장비 한 대에서 가능한 모든 raw 정보 (Redfish 전체 endpoint, OS 명령 결과, ESXi pyvmomi dump 등) 를 한 번에 긁어와 보관하는 "참조용 자료실" 입니다.
+> 이 폴더는 실장비 한 대에서 뽑을 수 있는 raw 정보를 한 번에 다 긁어와 보관하는 참조용 자료실입니다. Redfish 전체 endpoint, OS 명령 결과, ESXi pyvmomi dump 등이 여기 들어옵니다.
 >
 > 회귀 테스트의 입력으로 직접 사용되지는 않습니다 — 회귀 입력은 `tests/fixtures/`, 기준선은 `schema/baseline_v1/` 입니다.
 >
-> **언제 이 폴더를 보는가?**
-> - 새 벤더 / 새 펌웨어가 들어왔을 때 "어떤 endpoint 가 응답하는지" 전수 비교
-> - 새 schema 필드 후보를 검토할 때 "그 정보가 raw 어디에 있는지" 추적
-> - 펌웨어 업그레이드 후 응답 변경 비교 (회귀 분석)
+> 언제 이 폴더를 보는가?
+> - 새 벤더 / 새 펌웨어가 들어왔을 때 어떤 endpoint 가 응답하는지 전수 비교
+> - 새 schema 필드 후보를 검토할 때 그 정보가 raw 어디에 있는지 추적
+> - 펌웨어 업그레이드 후 응답 변경을 회귀 분석으로 비교
 > - 정상 시점의 raw 응답을 보존해뒀다가 장애 시점과 비교
 
 최초 수집: 2026-04-28 (Round 11 검증 단위)
@@ -68,15 +68,15 @@ tests/reference/**/.crawl_inflight/
 
 ## 사용 시나리오
 
-1. **새 vendor 온보딩**: `redfish/<vendor>/` 디렉터리에서 그 vendor의 endpoint 구조 파악 → adapter YAML metadata (`tested_against`, `oem_path`) 채움
+1. **새 vendor 온보딩**: `redfish/<vendor>/` 디렉터리에서 그 vendor의 endpoint 구조를 파악하고 adapter YAML metadata (`tested_against`, `oem_path`) 채움
 2. **새 schema 필드 후보 검토**: `redfish/<vendor>/<ip>/_summary.txt`에서 OEM endpoint list 확인 → 어느 vendor에 어떤 데이터가 있는지 비교
-3. **OS 매핑 검증**: `os/<distro>/<ip>/cmd_*.txt`로 raw 명령 출력과 ansible setup facts 비교 → field_dictionary 갱신 검증
-4. **회귀 비교**: 펌웨어 / OS 업그레이드 후 동일 명령 다시 수집 → diff
+3. **OS 매핑 검증**: `os/<distro>/<ip>/cmd_*.txt`의 raw 명령 출력을 ansible setup facts와 대조해 field_dictionary 갱신 검증
+4. **회귀 비교**: 펌웨어 / OS 업그레이드 후 동일 명령을 다시 수집해 diff
 5. **장애 분석 사전 자료**: 정상 동작 시점의 endpoint 응답을 확보해두고 장애 시점과 비교
 
 ## 재수집
 
-수집 자격 (`local/targets.yaml`)을 채운 후 (sample 참조):
+sample을 참고해 수집 자격 (`local/targets.yaml`)을 채운 후:
 
 ```bash
 # Redfish (Windows에서 직접 실행 가능)
@@ -100,10 +100,10 @@ wsl python3 tests/reference/scripts/gather_agent_env.py --skip-existing
 
 ## 수집 후 정리
 
-수집 완료 → 사용자 검토 → 다음 결정:
-1. raw 디렉터리 자체를 commit (디스크 비용 vs 가치)
-2. 일부 vendor / 일부 카테고리만 commit (예: BMC raw는 commit, OS sudoers 같은 민감 파일은 제외)
-3. `local/targets.yaml` 삭제 (자격 평문 제거)
+수집이 끝나면 사용자 검토를 거쳐 다음을 결정:
+1. 디스크 비용과 가치를 견줘 raw 디렉터리 자체를 commit
+2. BMC raw는 commit하고 OS sudoers 같은 민감 파일은 제외하는 식으로 일부 vendor / 일부 카테고리만 commit
+3. 자격 평문을 남기지 않도록 `local/targets.yaml` 삭제
 
 ## 관련
 
