@@ -10,8 +10,8 @@ rule 13 R8 정본 3종 변경 시 4 시나리오 매트릭스 (A/B/C/D) 동반 �
 
 동반 갱신 4 곳:
 - common/tasks/normalize/build_status.yml 본문 주석 (4 시나리오 매트릭스 정본)
-- docs/19_decision-log.md (M-A2 / 2026-05-06 결정 trace)
-- docs/20_json-schema-fields.md (호출자 reference)
+- docs/reference/decision-log.md (M-A2 / 2026-05-06 결정 trace)
+- docs/contract/03-fields.md (호출자 reference)
 - tests/ status mock fixture (시나리오 B 재현)
 
 Blocking (exit 1) — cycle 2026-05-11 격상.
@@ -54,8 +54,8 @@ CANONICAL_FILES: tuple[str, ...] = (
 )
 
 COMPANION_PATHS: tuple[str, ...] = (
-    "docs/19_decision-log.md",
-    "docs/20_json-schema-fields.md",
+    "docs/reference/decision-log.md",
+    "docs/contract/03-fields.md",
 )
 
 TESTS_PREFIX = "tests/"
@@ -119,7 +119,7 @@ def self_test() -> int:
             ["common/tasks/normalize/build_status.yml"],
             (
                 ["common/tasks/normalize/build_status.yml"],
-                ["docs/19_decision-log.md", "docs/20_json-schema-fields.md",
+                ["docs/reference/decision-log.md", "docs/contract/03-fields.md",
                  "tests/*status* 또는 *scenario* mock fixture"],
             ),
         ),
@@ -127,8 +127,8 @@ def self_test() -> int:
             "정본 + 동반 4종 모두 → 통과",
             [
                 "common/tasks/normalize/build_status.yml",
-                "docs/19_decision-log.md",
-                "docs/20_json-schema-fields.md",
+                "docs/reference/decision-log.md",
+                "docs/contract/03-fields.md",
                 "tests/test_status_scenarios.py",
             ],
             (["common/tasks/normalize/build_status.yml"], []),
@@ -148,7 +148,7 @@ def self_test() -> int:
             ["common\\tasks\\normalize\\build_errors.yml"],
             (
                 ["common/tasks/normalize/build_errors.yml"],
-                ["docs/19_decision-log.md", "docs/20_json-schema-fields.md",
+                ["docs/reference/decision-log.md", "docs/contract/03-fields.md",
                  "tests/*status* 또는 *scenario* mock fixture"],
             ),
         ),
@@ -158,7 +158,7 @@ def self_test() -> int:
                 "common/tasks/normalize/build_status.yml",
                 "common/tasks/normalize/build_sections.yml",
                 "common/tasks/normalize/build_errors.yml",
-                "docs/20_json-schema-fields.md",
+                "docs/contract/03-fields.md",
                 "tests/test_scenario_b.py",
             ],
             (
@@ -167,15 +167,15 @@ def self_test() -> int:
                     "common/tasks/normalize/build_sections.yml",
                     "common/tasks/normalize/build_errors.yml",
                 ],
-                ["docs/19_decision-log.md"],
+                ["docs/reference/decision-log.md"],
             ),
         ),
         (
             "tests 안에 status/scenario hint 없는 파일 → 회귀 누락",
             [
                 "common/tasks/normalize/build_status.yml",
-                "docs/19_decision-log.md",
-                "docs/20_json-schema-fields.md",
+                "docs/reference/decision-log.md",
+                "docs/contract/03-fields.md",
                 "tests/test_unrelated.py",
             ],
             (

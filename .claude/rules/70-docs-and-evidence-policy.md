@@ -32,7 +32,7 @@
   | 보안 이슈 발견 | `docs/ai/policy/SECURITY_POLICY.md` |
   | 다음 작업 식별 | `docs/ai/NEXT_ACTIONS.md` |
   | 실패·반복 실수 | `docs/ai/catalogs/FAILURE_PATTERNS.md` (append-only) |
-  | Round 검증 | `tests/evidence/<날짜>-<vendor>.md` + `docs/19_decision-log.md` |
+  | Round 검증 | `tests/evidence/<날짜>-<vendor>.md` + `docs/reference/decision-log.md` |
   | 외부 시스템 계약 변경 | `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` |
   | 벤더 어댑터 추가 | `docs/ai/catalogs/VENDOR_ADAPTERS.md` + `.claude/ai-context/vendors/` |
 - **Allowed**: 영향 없는 항목은 skip 가능. 단 "X 영향 없음" 명시

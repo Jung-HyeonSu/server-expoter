@@ -37,12 +37,12 @@ OS baseline expansion cycle 진입 — rhel920 / rhel960 / rocky960 신규 basel
 4. update-vendor-baseline skill 절차 follow (실측 vs 기존 ubuntu/rhel810 비교)
 5. F5 system.runtime 빌더 안정성 — 신규 baseline 3건에서 9 필드 모두 채워지면 빌더 검증 완료
 6. pytest tests/ 회귀 PASS
-7. docs/19_decision-log.md entry + docs/ai/CURRENT_STATE.md 갱신
+7. docs/reference/decision-log.md entry + docs/ai/CURRENT_STATE.md 갱신
 8. commit + push (rule 93 R1 자율 — github + gitlab 동시)
 9. NEXT_ACTIONS.md F6 [PENDING] → [DONE] 갱신
 
 진입 전 read 권장:
-- docs/16_os-esxi-mapping.md (Linux/Windows 필드 매핑)
+- docs/develop/05-field-mapping.md (Linux/Windows 필드 매핑)
 - schema/baseline_v1/ubuntu_baseline.json + rhel810_raw_fallback_baseline.json
   (기존 OS baseline 형식 비교)
 - os-gather/tasks/linux/gather_system.yml (F5 system.runtime 9 필드 정본)
@@ -80,7 +80,7 @@ OS baseline expansion cycle 진입 — rhel920 / rhel960 / rocky960 신규 basel
   - `docs/ai/catalogs/TEST_HISTORY.md` — 실 수집 + evidence
   - `schema/baseline_v1/{name}_baseline.json` × 3
   - `tests/evidence/2026-MM-DD-{name}.md` × 3
-  - `docs/19_decision-log.md` — Round entry
+  - `docs/reference/decision-log.md` — Round entry
   - `docs/ai/NEXT_ACTIONS.md` F6 [DONE] 표기
 - [ ] NEXT_ACTIONS 갱신
 - [ ] (선택) git 태그 `v-os-baseline-2026-MM-DD`
@@ -115,5 +115,5 @@ OS baseline expansion cycle 진입 — rhel920 / rhel960 / rocky960 신규 basel
 
 - rule: `13-output-schema-fields` R4 (baseline 실측 기반), `22-fragment-philosophy`, `92-dependency-and-regression-gate`
 - skill: `update-vendor-baseline`, `prepare-regression-check`
-- 정본: `docs/16_os-esxi-mapping.md`, `os-gather/tasks/linux/gather_system.yml` (F5 system.runtime 9 필드)
+- 정본: `docs/develop/05-field-mapping.md`, `os-gather/tasks/linux/gather_system.yml` (F5 system.runtime 9 필드)
 - baseline 기존: `schema/baseline_v1/{ubuntu,rhel810_raw_fallback,windows}_baseline.json`

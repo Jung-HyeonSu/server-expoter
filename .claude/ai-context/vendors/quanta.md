@@ -45,7 +45,7 @@
 
 ## Reference
 
-- `docs/19_decision-log.md` — 2026-05-01 신규 vendor 4종 도입 결정
+- `docs/reference/decision-log.md` — 2026-05-01 신규 vendor 4종 도입 결정
 - ticket F47 (cycle 2026-05-01 — git history) — 본 vendor cold-start ticket
 - QuantaGrid D54Q-2U: https://www.qct.io/product/index/Server/rackmount-server/2U-Rackmount-Server/QuantaGrid-D54Q-2U
 - QCT D54Q-2U Spec PDF: exalit.com

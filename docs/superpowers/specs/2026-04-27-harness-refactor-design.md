@@ -334,7 +334,7 @@ harness-architect, harness-evolution-coordinator, harness-governor, harness-obse
 - **기존 docs/01~19 운영 문서 수정**
 - **기존 CLAUDE.md/GUIDE_FOR_AI.md/REQUIREMENTS.md/README.md 내용 변경** (CLAUDE.md는 Tier 0 패턴 흡수 목적의 보강만 허용 — append-only)
 - **새 벤더/채널 추가 작업** (하네스 인프라만 깐다, 실 도메인 작업은 별도 티켓)
-- **Jenkins/Agent 인프라 변경** (docs/03_agent-setup.md 영역)
+- **Jenkins/Agent 인프라 변경** (docs/operate/02-agent-node.md 영역)
 - **clovirone-base 폴더 정리** (참조용으로 그대로 두며, 향후 사용자가 별도 정리)
 
 ---
@@ -365,7 +365,7 @@ harness-architect, harness-evolution-coordinator, harness-governor, harness-obse
 - 출처 하네스: `clovirone-base/.claude/` 전체
 - 출처 패턴: `clovirone-base/CLAUDE.md` (Tier 0 정본), `clovirone-base/docs/ai/*` (AI 협업 문서 패턴)
 - 대상 정본: `CLAUDE.md`, `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`, `README.md`
-- 대상 운영 문서: `docs/01_jenkins-setup.md` ~ `docs/19_decision-log.md`
+- 대상 운영 문서: `docs/operate/01-jenkins-master.md` ~ `docs/reference/decision-log.md`
 - 대상 코드: `os-gather/`, `esxi-gather/`, `redfish-gather/`, `common/`, `adapters/`, `schema/`
 
 ---

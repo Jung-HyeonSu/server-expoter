@@ -49,5 +49,5 @@ cron 표현식 변경은 rule 92 R5와 동일 정신 — **사용자 명시 승�
 - skill: `task-impact-preview`, `investigate-ci-failure`
 - agent: `jenkins-refactor-worker`, `jenkinsfile-engineer`, `scheduler-refactor-worker`
 - script: `scripts/ai/hooks/pre_commit_jenkinsfile_guard.py`
-- 정본: `docs/17_jenkins-pipeline.md`
+- 정본: `docs/operate/04-pipeline-runtime.md`
 - command: `/scheduler-guide`

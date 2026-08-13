@@ -65,7 +65,7 @@ server-exporter 는 한 서버를 3가지 시점으로 본다.
 - OS-gather 만 호출 → OS 와 계정 그림이 풍부, BMC 정보는 빈 칸
 - 둘 다 호출 → 한 서버 전체 그림 완성
 
-상세 호환 표는 `docs/22_compatibility-matrix.md`.
+상세 호환 표는 `docs/reference/compatibility-matrix.md`.
 
 ---
 
@@ -156,7 +156,7 @@ site.yml (Play 1개)
   build_*  → output
 ```
 
-ESXi 는 `community.vmware` 컬렉션 + `pyvmomi` 9.0.0 의존. Agent 환경 설치 필요는 `docs/03_agent-setup.md`.
+ESXi 는 `community.vmware` 컬렉션 + `pyvmomi` 9.0.0 의존. Agent 환경 설치 필요는 `docs/operate/02-agent-node.md`.
 
 ---
 
@@ -212,11 +212,11 @@ storage
 | Supermicro | `redfish_supermicro_*` | `vault/redfish/supermicro.yml` |
 | Cisco | `redfish_cisco_cimc` | `vault/redfish/cisco.yml` |
 
-신규 벤더 (Huawei / Inspur / Fujitsu / Quanta / HPE Superdome) 도 adapter 가 등록되어 있으나 lab 부재로 미검증. 상세는 `docs/13_redfish-live-validation.md`.
+신규 벤더 (Huawei / Inspur / Fujitsu / Quanta / HPE Superdome) 도 adapter 가 등록되어 있으나 lab 부재로 미검증. 상세는 `docs/reference/live-validation.md`.
 
 > [!NOTE]
 > 위 "매칭 adapter" 와 vault 는 내부 canonical 이름(`hpe` 등)을 쓴다.
-> 호출자에게 나가는 envelope `vendor` 값은 표시값으로 한 번 더 매핑된다 — HPE → `hp`, HPE Compute Scale-up 패밀리(CSUS 3200 + Superdome Flex) → `hpCsus`, 나머지는 canonical 그대로. 상세는 `docs/20_json-schema-fields.md`.
+> 호출자에게 나가는 envelope `vendor` 값은 표시값으로 한 번 더 매핑된다 — HPE → `hp`, HPE Compute Scale-up 패밀리(CSUS 3200 + Superdome Flex) → `hpCsus`, 나머지는 canonical 그대로. 상세는 `docs/contract/03-fields.md`.
 
 ---
 
@@ -248,7 +248,7 @@ storage
 - `inventory_hostname = ip` 로 통일. 호스트명 사전 등록 안 한다.
 - 자격증명은 inventory 에 안 들어간다. vault 에서 자동 로딩.
 
-입력 JSON 스펙은 `docs/05_inventory-json-spec.md`.
+입력 JSON 스펙은 `docs/contract/01-input.md`.
 
 ---
 
@@ -262,7 +262,7 @@ storage
 
 **`build_output.yml` 도 `merge_fragment.yml` 도 안 만진다.** 정규화 엔진은 fragment 패턴만 따르면 자동으로 동작한다.
 
-상세 절차 7단계 체크리스트는 `docs/14_add-new-gather.md`.
+상세 절차 7단계 체크리스트는 `docs/develop/04-add-vendor.md`.
 
 ---
 
@@ -270,10 +270,10 @@ storage
 
 | 보고 싶은 것 | 파일 |
 |---|---|
-| Fragment 가 어떻게 envelope 으로 합쳐지나 | `docs/07_normalize-flow.md` |
-| 실패 처리 패턴 (block / rescue / always) | `docs/08_failure-handling.md` |
-| 새 섹션 / 새 채널 추가 절차 | `docs/14_add-new-gather.md` |
-| Adapter 점수 계산과 벤더 자동 감지 | `docs/10_adapter-system.md` |
-| 출력 JSON 키 의미 | `docs/20_json-schema-fields.md` |
-| 진단 4단계 상세 | `docs/11_precheck-module.md` |
-| inventory_json 입력 형식 | `docs/05_inventory-json-spec.md` |
+| Fragment 가 어떻게 envelope 으로 합쳐지나 | `docs/develop/02-normalize-flow.md` |
+| 실패 처리 패턴 (block / rescue / always) | `docs/contract/04-failure-and-diagnosis.md` |
+| 새 섹션 / 새 채널 추가 절차 | `docs/develop/04-add-vendor.md` |
+| Adapter 점수 계산과 벤더 자동 감지 | `docs/develop/03-adapter-system.md` |
+| 출력 JSON 키 의미 | `docs/contract/03-fields.md` |
+| 진단 4단계 상세 | `docs/contract/04-failure-and-diagnosis.md` |
+| inventory_json 입력 형식 | `docs/contract/01-input.md` |

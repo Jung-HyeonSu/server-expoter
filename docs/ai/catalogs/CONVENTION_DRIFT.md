@@ -87,7 +87,7 @@
 - **영향**: 문서/문서 간 불일치. 실 운영에 영향 없음.
 - **제안**: rule 80 (ci-jenkins-policy) 본문 정정 — Stage 4가 Jenkinsfile별로 다름을 명시. CLAUDE.md / design / Plan 1 동시 갱신.
 - **상태**: resolved (2026-04-27 cycle-003)
-- **관련**: rule 80, `docs/ai/catalogs/JENKINS_PIPELINES.md`, `docs/01_jenkins-setup.md`, `docs/17_jenkins-pipeline.md`
+- **관련**: rule 80, `docs/ai/catalogs/JENKINS_PIPELINES.md`, `docs/operate/01-jenkins-master.md`, `docs/operate/04-pipeline-runtime.md`
 
 ## DRIFT-003 (2026-04-27)
 

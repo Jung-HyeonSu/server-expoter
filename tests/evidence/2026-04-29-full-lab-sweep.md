@@ -198,6 +198,6 @@ schema_version
 ## 10. 관련 문서
 
 - rule 13 (output-schema-fields), 20 (output-json-callback), 31 (integration-callback), 80 (ci-jenkins-policy), 96 (external-contract-integrity)
-- `docs/09_output-examples.md`, `docs/17_jenkins-pipeline.md`
+- `docs/contract/02-output-envelope.md`, `docs/operate/04-pipeline-runtime.md`
 - 정본: `common/tasks/normalize/build_output.yml`, `common/tasks/normalize/build_sections.yml`
 - 이전 cycle-015 cleanup (Jenkinsfile_grafana 제거), production-audit (2026-04-29)

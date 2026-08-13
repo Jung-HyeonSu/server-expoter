@@ -47,12 +47,12 @@
 3. `tests/redfish-probe/probe_redfish.py --vendor huawei` 실행
 4. `schema/baseline_v1/<vendor>_baseline.json (huawei 는 lab 부재로 미생성)` 생성
 5. `tests/evidence/<날짜>-huawei.md` Round 검증 기록
-6. `docs/13_redfish-live-validation.md` Round 갱신
+6. `docs/reference/live-validation.md` Round 갱신
 7. `capture-site-fixture` skill 으로 사이트 fixture 캡처
 
 ## Reference
 
-- `docs/19_decision-log.md` — 2026-05-01 신규 vendor 4종 도입 결정
+- `docs/reference/decision-log.md` — 2026-05-01 신규 vendor 4종 도입 결정
 - ticket F44 (cycle 2026-05-01 — git history) — 본 vendor cold-start ticket
 - Huawei iBMC 공식 docs: support.huawei.com
 - Huawei-iBMC-Cmdlets (vendor 공식 GitHub): https://github.com/Huawei/Huawei-iBMC-Cmdlets

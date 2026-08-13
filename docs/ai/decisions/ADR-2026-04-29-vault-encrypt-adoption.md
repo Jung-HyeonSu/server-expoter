@@ -75,7 +75,7 @@ withCredentials([
 }
 ```
 
-### 4. docs/01_jenkins-setup.md 갱신
+### 4. docs/operate/01-jenkins-master.md 갱신
 
 credential 등록 절차 (Manage Jenkins → Credentials → Add Secret File) 추가.
 

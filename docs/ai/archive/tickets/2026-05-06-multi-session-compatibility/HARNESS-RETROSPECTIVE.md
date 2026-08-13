@@ -58,7 +58,7 @@
 - **왜 발생** (원인): vault 운영 가이드에 "다음 run 부터 자동 반영" 명시 부재. cache 메커니즘 (Redis fact_cache vs task scope vs BMC 권한 cache) 분리 명시 필요.
 - **무엇을 학습** (insight): vault 동작 메커니즘이 ansible 표준 (include_vars 캐시 없음) 이지만 사용자에게 명시 필요. F50 phase 4 BMC 권한 cache 와 vault 자동 반영 분리 명시.
 - **하네스 보강 후보**:
-  - docs: `docs/21_vault-operations.md` 신설 (M-C1/C2/C3 결과 정본화 — 5 시나리오 + cache 매트릭스 + BMC 분리)
+  - docs: `docs/operate/05-vault.md` 신설 (M-C1/C2/C3 결과 정본화 — 5 시나리오 + cache 매트릭스 + BMC 분리)
   - skill: `rotate-vault` 보강 (M-C 결과 — 다음 run 부터 자동 반영 명시)
   - rule 27 R6 (다음 추가): vault 변경 후 다음 run 자동 반영 단서 3개 (single-run NO / rekey PARTIAL / BMC lock-out)
 
@@ -92,7 +92,7 @@
 
 ### 학습 8: 정본 docs/20 신설의 호출자 계약 효과
 
-- **무엇이 일어났나** (관찰): M-F1 docs/20_json-schema-fields.md 신설 (625 라인) + M-F2 §11 (200 라인) → envelope 13 + sections 10 + field_dictionary 65 + 3채널 비교 정본 통합.
+- **무엇이 일어났나** (관찰): M-F1 docs/contract/03-fields.md 신설 (625 라인) + M-F2 §11 (200 라인) → envelope 13 + sections 10 + field_dictionary 65 + 3채널 비교 정본 통합.
 - **왜 발생** (원인): 사용자 "json스키마 키값이 무엇을 의미하는지 모르겠어" 명시 → 정본 reference 부재. build_output.yml / sections.yml / field_dictionary.yml 정본은 있으나 통합 의미 문서 부재.
 - **무엇을 학습** (insight): 호출자 계약 안정성을 위해 envelope 의미 docs 가 critical. 정본 코드 변경 시 docs 동기화 필요 (rule 13 R5 / rule 96 R1-B 정합).
 - **하네스 보강 후보**:
@@ -148,9 +148,9 @@
 
 | docs | 의도 | 우선 |
 |---|---|---|
-| `docs/20_json-schema-fields.md` | M-F1 산출물 (이미 [DONE]) | P0 (완료) |
-| `docs/21_vault-operations.md` | M-C1/C2/C3 결과 정본화 — vault 자동 반영 + 5 시나리오 + BMC 분리 | P2 |
-| `docs/22_compatibility-matrix.md` | M-D1 산출물 정본화 — 240 cell 매트릭스 + Gap 우선 분류 | P3 |
+| `docs/contract/03-fields.md` | M-F1 산출물 (이미 [DONE]) | P0 (완료) |
+| `docs/operate/05-vault.md` | M-C1/C2/C3 결과 정본화 — vault 자동 반영 + 5 시나리오 + BMC 분리 | P2 |
+| `docs/reference/compatibility-matrix.md` | M-D1 산출물 정본화 — 240 cell 매트릭스 + Gap 우선 분류 | P3 |
 
 ## script / 자동화 후보
 

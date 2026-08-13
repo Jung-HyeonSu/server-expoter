@@ -28,4 +28,4 @@ model: sonnet
 
 - skill: `scheduler-change-playbook`, `task-impact-preview`
 - rule: `80-ci-jenkins-policy`, `31-integration-callback`
-- 정본: `docs/17_jenkins-pipeline.md`
+- 정본: `docs/operate/04-pipeline-runtime.md`

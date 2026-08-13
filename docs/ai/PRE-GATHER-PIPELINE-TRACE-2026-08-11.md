@@ -56,7 +56,7 @@ def inventory = inventoryMap[params.target_type]    // :147
 | 오보 | 실제 | 재확인 |
 |---|---|---|
 | "메인 `Jenkinsfile` 에 `REPO_ROOT` 설정이 없다" | **있다** | `Jenkinsfile:57` `REPO_ROOT = "${WORKSPACE}"` |
-| "`docs/21_vault-operations.md` 에 평문 비밀번호가 기재돼 있다" | **이미 제거됨** (Phase 6-B). 해당 문서는 "평문은 vault 안에만" 으로 정리된 상태 | `grep -c` 결과 0건 |
+| "`docs/operate/05-vault.md` 에 평문 비밀번호가 기재돼 있다" | **이미 제거됨** (Phase 6-B). 해당 문서는 "평문은 vault 안에만" 으로 정리된 상태 | `grep -c` 결과 0건 |
 
 ---
 
@@ -761,16 +761,16 @@ precheck 결과를 그대로 쓴다 (`:169-183`).
 
 | # | 상태 | 위치 | 내용 |
 |---|---|---|---|
-| D-1 | `[NG]` | `docs/17_jenkins-pipeline.md:35` | "두 Jenkinsfile 은 Stage 1~3 이 같고 Stage 4 만 다르다" — 실제로는 Stage 1 의 `skipDefaultCheckout` + 파라미터 3종 추가 검증, Stage 2 의 실행 방식(`sh` vs `ansiblePlaybook`)·timeout(60 vs 20)·`stash`/`deleteDir` 이 모두 다르다 |
+| D-1 | `[NG]` | `docs/operate/04-pipeline-runtime.md:35` | "두 Jenkinsfile 은 Stage 1~3 이 같고 Stage 4 만 다르다" — 실제로는 Stage 1 의 `skipDefaultCheckout` + 파라미터 3종 추가 검증, Stage 2 의 실행 방식(`sh` vs `ansiblePlaybook`)·timeout(60 vs 20)·`stash`/`deleteDir` 이 모두 다르다 |
 | D-2 | `[NG]` | `docs/17:39-43` | 파라미터 표에 3종만 — portal 의 `deploymentEnvironmentId`/`callbackUrl`/`verbosity` 누락 |
 | D-3 | `[NG]` | `docs/17:66-71, 119-135, 161` | `ANSIBLE_CONFIG` 를 "미설정 — 추가 권장 / 우선순위 높음" 으로 안내. 실제로는 `Jenkinsfile:58` + `Jenkinsfile_portal:129` 에 **이미 설정됨** (완료된 작업이 미완료로 남음) |
 | D-4 | `[NG]` | `docs/17:103-106` | credential 표가 `vault-pass` (Secret **file**) + "미등록" — 실제는 `server-gather-vault-password` (Secret **text**), 세 곳에서 사용 중 (`Jenkinsfile:159`, `Jenkinsfile_portal:160`, `jenkins/jobs/.../config.xml:22`) |
 | D-5 | `[NG]` | `docs/17:91-99` | 필수 플러그인 표에 **HTTP Request 누락** — `Jenkinsfile_portal:290` 이 `httpRequest` 스텝 사용 (2026-06-22 도입) |
 | D-6 | `[NG]` | `docs/17:121-125, 137-143` | "artifact 저장 미구현 — 추가 권장" — `Jenkinsfile:249-253` 에 이미 구현됨 |
 | D-7 | `[INFO]` | `docs/17` 전체 | Callback stage / `callbackUrl` / `deploymentEnvironmentId` / `verbosity` 스펙이 **문서에 없음**. portal 파이프라인의 핵심인데 사람용 문서 공백 |
-| D-8 | `[NG]` | `docs/05_inventory-json-spec.md` | **IPv4 형식 검증과 중복 IP 거부가 명세에 없음**. 호출자가 중복 IP 를 보내면 playbook 이 시작조차 못 하는데 계약서에 없다 (`inventory.sh:89-91`) |
+| D-8 | `[NG]` | `docs/contract/01-input.md` | **IPv4 형식 검증과 중복 IP 거부가 명세에 없음**. 호출자가 중복 IP 를 보내면 playbook 이 시작조차 못 하는데 계약서에 없다 (`inventory.sh:89-91`) |
 | D-9 | `[NG]` | `docs/05:50` vs `Jenkinsfile:115-120` | "`vendor` 는 보내지 않는다(자동 감지)" ↔ "redfish 는 vendor 필드 권장(없으면 WARNING)" 상충. `Jenkinsfile_portal` 에는 vendor 로직 자체가 없다 |
-| D-10 | `[NG]` | `docs/21_vault-operations.md` §4.1 | "`ansible.cfg` 에 `vault_password_file` 만 있어야 함" — 실제는 `:57` 주석 처리(비활성). 문서대로 grep 하면 주석이 잡혀 "있다"고 오판한다 |
+| D-10 | `[NG]` | `docs/operate/05-vault.md` §4.1 | "`ansible.cfg` 에 `vault_password_file` 만 있어야 함" — 실제는 `:57` 주석 처리(비활성). 문서대로 grep 하면 주석이 잡혀 "있다"고 오판한다 |
 | D-11 | `[NG]` | `docs/21` §5.2 | `vault_redfish_password` 키 회전 안내 — **이 키를 읽는 코드가 저장소에 없다**. 그대로 따르면 아무 효과 없는 편집을 하게 된다 |
 | D-12 | `[NG]` | `docs/21` §6.5 | dryrun 기본값을 `false` 로 안내 — 실제 `account_service.yml:50-53` 은 Phase 6-B 로 뒤집혀 **기본이 시뮬레이션**이고 진입 게이트 성립 시에만 쓰기가 켜진다 |
 | D-13 | `[NG]` | `docs/21` §6.5 | account_service 진입 조건 3개로 안내 — 실제는 **`_rf_primary_auth_rejected`(primary 가 401 로 명시 거부)** 조건이 추가돼 있다 (`redfish-gather/site.yml:149-154`). 문서대로면 timeout 으로 primary 가 실패해도 BMC 계정을 덮어쓰는 것으로 읽히는데, 코드가 명시적으로 막은 시나리오다 |

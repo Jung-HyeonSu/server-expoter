@@ -134,7 +134,7 @@ Recovery 는 최종 Gathering 에 절대 사용하지 않는다 — Standard 를
 | **G-22** | ETag 계약이 Family 단위 boolean (`REPRESENTATION`) | `etag_required: True/False` 하나. 소비는 Repair 경로에만 (:5866, :5891) → **현재 동작은 M6 공식 계약과 정확히 일치** | 06 §5/§11/§29: Create = **POST Collection (If-Match 없음)**, Repair = **PATCH Instance + GET ETag → If-Match** | **동작 결함 없음.** 이름이 `etag_required` 라 Create 에도 적용해야 하는 것처럼 읽힌다 | **YES — Operation 단위 표현으로 교체 (동작 변화 0)** | **LOW** | OFFICIAL |
 | **G-23** | ~~Cisco id_range off-by-one~~ | ~~`(2,16)` → 2..15~~ | — | **삭제.** 실측 결과 half-open 규약이고 진단 문자열(`id_range={lo}-{hi-1}`)도 `2-15` 로 정확하다. Cisco 문서(ID 1 예약, 1–15)와 정합 | **NO — 근거 없는 수정 금지** | — | 저장소 실측 (§1.2 A27) |
 | **G-24** | `isolated_write_patch` 가 defaults 에 없음 (`REPRESENTATION`) | `hpe_ilo5plus` 에만 존재, `.get()` 으로 읽음 | 일관성 | 다른 모든 플래그는 defaults 에 선언 | **YES** | **LOW** | 저장소 실측 |
-| **G-25** | 문서 ↔ 실측 drift 3건 | ① Matrix §2.1 이 iDRAC10 Fixture Evidence 를 실미러 `10_100_15_34` 로 적었으나 그 미러는 **FW 7.10.70.00 / 16G Monolithic = iDRAC9**. iDRAC10 미러는 저장소에 **없다** ② `NEXT_ACTIONS.md:75` "어떤 Family 도 PROVEN 아님" stale ③ `docs/21_vault-operations.md:362-365,:379-381` 이 2026-08-12 이전 진입 조건·`dryrun` 기본값 서술 | 실측 | 다음 작업자가 잘못된 근거로 판단 | **YES (문서 교정)** | **MED** | 저장소 실측 |
+| **G-25** | 문서 ↔ 실측 drift 3건 | ① Matrix §2.1 이 iDRAC10 Fixture Evidence 를 실미러 `10_100_15_34` 로 적었으나 그 미러는 **FW 7.10.70.00 / 16G Monolithic = iDRAC9**. iDRAC10 미러는 저장소에 **없다** ② `NEXT_ACTIONS.md:75` "어떤 Family 도 PROVEN 아님" stale ③ `docs/operate/05-vault.md:362-365,:379-381` 이 2026-08-12 이전 진입 조건·`dryrun` 기본값 서술 | 실측 | 다음 작업자가 잘못된 근거로 판단 | **YES (문서 교정)** | **MED** | 저장소 실측 |
 | **G-26** | 운영 Job 에 dryrun override 없음 | `Jenkinsfile_portal:219` override 부재 → 401 게이트가 열리면 운영 실쓰기 | ACC-D3 | — | **NO — 현행 유지 확정**(사용자 D-4). 본 계획의 실장비 검증은 Check Mode 우선 | **MED** | 저장소 실측 |
 
 ## 2.1 조사 결과와 **충돌하지 않음이 확인된** 항목 (수정 불요)
@@ -409,7 +409,7 @@ supermicro_split_account→ 유지 + create_uri 조건부 결정 (§3.5)
 
 `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`, `CURRENT_STATE.md`,
 `NEXT_ACTIONS.md`, `catalogs/EXTERNAL_CONTRACTS.md`, `catalogs/TEST_HISTORY.md`,
-`catalogs/LAB_PENDING_MATRIX.md`, `docs/19_decision-log.md`, `docs/21_vault-operations.md`,
+`catalogs/LAB_PENDING_MATRIX.md`, `docs/reference/decision-log.md`, `docs/operate/05-vault.md`,
 `docs/ai/decisions/ADR-2026-08-12-account-write-contract.md`(신규, rule 70 R8 trigger 1),
 `tests/evidence/2026-08-12-account-write-contract-alignment.md`(신규)
 
@@ -650,7 +650,7 @@ Fujitsu 는 API Pack 원문 확보 전 Family 추가 없음.
 
 1. **Matrix §2.1 "iDRAC10 Fixture Evidence = 실미러 `10_100_15_34`" 삭제** — 그 미러는 FW 7.10.70.00 / 16G Monolithic = **iDRAC9**. iDRAC10 미러는 저장소에 없다.
 2. `NEXT_ACTIONS.md:75` "어떤 Family 도 PROVEN 아님" stale 교정 + ACC-D1 ↔ GIT-1 정합.
-3. `docs/21_vault-operations.md:362-365, :379-381` 진입 조건 / `dryrun` 기본값 교정.
+3. `docs/operate/05-vault.md:362-365, :379-381` 진입 조건 / `dryrun` 기본값 교정.
 
 ## 9.4 Property Contract 표 반영
 

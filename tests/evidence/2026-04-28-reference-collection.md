@@ -175,5 +175,5 @@ tests/reference/
 ## rule / 정본 참조
 
 - rule 13 (output-schema-fields), 21 (output-baseline-fixtures), 96 (external-contract-integrity), 70 (docs-and-evidence-policy)
-- 정본 문서: `docs/13_redfish-live-validation.md`, `docs/19_decision-log.md`
+- 정본 문서: `docs/reference/live-validation.md`, `docs/reference/decision-log.md`
 - skill: `update-vendor-baseline`, `probe-redfish-vendor`, `add-new-vendor`

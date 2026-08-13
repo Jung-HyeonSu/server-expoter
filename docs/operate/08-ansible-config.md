@@ -3,7 +3,7 @@
 > **이 문서는** server-exporter 저장소가 사용하는 Ansible 의 프로젝트 고유 설정을 정리한다.
 > ansible.cfg 의 의미, 커스텀 플러그인 경로, 환경변수, vault 사용 방법, 로컬 실행 예시 등을 다룬다.
 >
-> Agent 노드 자체의 설치 / 컬렉션 / Python 패키지 절차는 본 문서가 아니라 `docs/03_agent-setup.md` 5절을 참고한다.
+> Agent 노드 자체의 설치 / 컬렉션 / Python 패키지 절차는 본 문서가 아니라 `docs/operate/02-agent-node.md` 5절을 참고한다.
 > 버전 요건은 `REQUIREMENTS.md` 4절.
 
 ---
@@ -105,6 +105,6 @@ ansible-playbook esxi-gather/site.yml -i esxi-gather/inventory.sh
 
 | 다음 작업 | 문서 |
 |---|---|
-| Agent 노드 자체 설치 | [03_agent-setup.md](03_agent-setup.md) |
+| Agent 노드 자체 설치 | [02-agent-node.md](02-agent-node.md) |
 | 환경 요건 | [REQUIREMENTS.md](../REQUIREMENTS.md) |
-| Vault 운영 | [21_vault-operations.md](21_vault-operations.md) |
+| Vault 운영 | [05-vault.md](05-vault.md) |

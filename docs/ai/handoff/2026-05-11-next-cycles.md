@@ -48,7 +48,7 @@ HPE Compute Scale-up Server 3200 (CSUS 3200) lab 검증 cycle 진입.
 8. pytest 회귀 + commit + push (rule 93 R1 자율)
 
 진입 전 read 권장: adapters/redfish/hpe_csus_3200.yml /
-docs/13_redfish-live-validation.md §16 / docs/ai/NEXT_ACTIONS.md HPE CSUS 3200 행
+docs/reference/live-validation.md §16 / docs/ai/NEXT_ACTIONS.md HPE CSUS 3200 행
 ```
 
 ### 후보 B — harness 자기개선 cycle [lab 없이 즉시 가능]

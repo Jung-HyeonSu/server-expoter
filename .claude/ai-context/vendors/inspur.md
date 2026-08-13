@@ -45,7 +45,7 @@
 
 ## Reference
 
-- `docs/19_decision-log.md` — 2026-05-01 신규 vendor 4종 도입 결정
+- `docs/reference/decision-log.md` — 2026-05-01 신규 vendor 4종 도입 결정
 - ticket F45 (cycle 2026-05-01 — git history) — 본 vendor cold-start ticket
 - Inspur NF5280M5 User Manual: manualzz.com
 - Inspur Information White Paper (2023): inspur.com

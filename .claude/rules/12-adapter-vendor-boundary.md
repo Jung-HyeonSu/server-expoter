@@ -88,4 +88,4 @@
 - skill: `add-new-vendor`, `score-adapter-match`, `verify-adapter-boundary`, `vendor-change-impact`
 - agent: `adapter-author`, `vendor-onboarding-worker`, `adapter-boundary-reviewer`, `vendor-boundary-guardian`
 - policy: `.claude/policy/vendor-boundary-map.yaml`
-- 정본: `docs/10_adapter-system.md`, `docs/14_add-new-gather.md`
+- 정본: `docs/develop/03-adapter-system.md`, `docs/develop/04-add-vendor.md`

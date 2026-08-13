@@ -128,7 +128,7 @@ tests/evidence/2026-04-29-esxi-bug-fix.md         (NEW, 본 문서)
 ## 6. 후속 추적 (rule 70)
 
 - `docs/ai/CURRENT_STATE.md` — production-audit cycle 후속 entry
-- `docs/19_decision-log.md` — Round 12 등재
+- `docs/reference/decision-log.md` — Round 12 등재
 - `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` — community.vmware 6.2.0 vmnic / vmhba / vswitch 키 매핑 정본
 
 ---

@@ -51,7 +51,7 @@ Stage 3/4는 venv Python을 사용한다 (`. /opt/ansible-env/bin/activate`).
 ```
 
 > 포털은 ip만 전달한다. 계정은 vault에서 자동 로딩된다.
-> 상세 명세는 [docs/05_inventory-json-spec.md](05_inventory-json-spec.md) 참조.
+> 상세 명세는 [docs/contract/01-input.md](../contract/01-input.md) 참조.
 
 ## 3. 환경변수 설정
 
@@ -108,7 +108,7 @@ ansiblePlaybook(
 ## 7. Jenkins Agent 요구사항
 
 > Python / Java / Ansible / 패키지 버전 요건은 `REQUIREMENTS.md` 4절 참조.
-> 설치 절차는 `docs/03_agent-setup.md` 3-5절 참조.
+> 설치 절차는 `docs/operate/02-agent-node.md` 3-5절 참조.
 
 | 항목 | 요구사항 |
 |------|---------|
@@ -169,6 +169,6 @@ post {
 
 | 다음 작업 | 문서 |
 |---|---|
-| Jenkins Job 등록 | [04_job-registration.md](04_job-registration.md) |
-| 호출자 입력 형식 | [05_inventory-json-spec.md](05_inventory-json-spec.md) |
-| 실패 처리 정책 | [08_failure-handling.md](08_failure-handling.md) |
+| Jenkins Job 등록 | [03-job-registration.md](03-job-registration.md) |
+| 호출자 입력 형식 | [../contract/01-input.md](../contract/01-input.md) |
+| 실패 처리 정책 | [../contract/04-failure-and-diagnosis.md](../contract/04-failure-and-diagnosis.md) |

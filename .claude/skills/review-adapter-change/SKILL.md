@@ -72,4 +72,4 @@ adapter YAML 변경 전문 리뷰. server-exporter의 adapter는 vendor 분기 �
 - rule 11 (gather-output-boundary, OEM tasks)
 - skill: `score-adapter-match`, `probe-redfish-vendor`, `update-vendor-baseline`
 - agent: `adapter-author`, `adapter-boundary-reviewer`, `schema-mapping-reviewer`
-- 정본: `docs/10_adapter-system.md`
+- 정본: `docs/develop/03-adapter-system.md`

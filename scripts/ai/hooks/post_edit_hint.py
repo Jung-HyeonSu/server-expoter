@@ -26,7 +26,7 @@ HINT_RULES = [
     (r"os-gather/.*\.yml$", "test",
      "OS gather 변경 → tests/redfish-probe + 실장비 검증 권장"),
     (r"os-gather/.*\.yml$", "doc",
-     "GUIDE_FOR_AI.md Fragment 철학 / docs/06_gather-structure.md 확인"),
+     "GUIDE_FOR_AI.md Fragment 철학 / docs/develop/01-gather-structure.md 확인"),
     (r"esxi-gather/.*\.yml$", "test",
      "ESXi gather 변경 → community.vmware 의존성 + ESXi 실장비 검증"),
     (r"redfish-gather/.*\.yml$", "test",
@@ -40,7 +40,7 @@ HINT_RULES = [
     (r"adapters/.*\.yml$", "test",
      "Adapter YAML 변경 → score-adapter-match 디버깅 + 해당 벤더 baseline"),
     (r"adapters/.*\.yml$", "doc",
-     "docs/10_adapter-system.md / .claude/ai-context/vendors/ 갱신 검토"),
+     "docs/develop/03-adapter-system.md / .claude/ai-context/vendors/ 갱신 검토"),
 
     # 출력 schema
     (r"schema/sections\.yml$", "doc",
@@ -56,7 +56,7 @@ HINT_RULES = [
 
     # Jenkins
     (r"^Jenkinsfile($|_)", "doc",
-     "Jenkins 파이프라인 변경 → docs/17_jenkins-pipeline.md / 4-Stage 검증 통과"),
+     "Jenkins 파이프라인 변경 → docs/operate/04-pipeline-runtime.md / 4-Stage 검증 통과"),
 
     # Vault
     (r"^vault/", "doc",

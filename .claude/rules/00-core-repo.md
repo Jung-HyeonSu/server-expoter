@@ -78,7 +78,7 @@ callback_plugins/json_only.py → JSON envelope
 - 테스트 수행 → `docs/ai/catalogs/TEST_HISTORY.md` 기록
 - 구조 변경 → `docs/ai/catalogs/PROJECT_MAP.md` + `python scripts/ai/check_project_map_drift.py --update`
 - drift 발견 → `docs/ai/catalogs/CONVENTION_DRIFT.md`
-- Round 검증 결과 → `tests/evidence/<날짜>-<주제>.md` + `docs/19_decision-log.md`
+- Round 검증 결과 → `tests/evidence/<날짜>-<주제>.md` + `docs/reference/decision-log.md`
 
 ### Rule 번호 선택 가이드
 
@@ -141,4 +141,4 @@ callback_plugins/json_only.py → JSON envelope
 
 - skills: `update-evidence-docs`, `investigate-ci-failure`, `task-impact-preview`
 - agents: `ci-failure-investigator`, `change-impact-analyst`
-- docs: `docs/06_gather-structure.md`, `docs/ai/catalogs/PROJECT_MAP.md`
+- docs: `docs/develop/01-gather-structure.md`, `docs/ai/catalogs/PROJECT_MAP.md`

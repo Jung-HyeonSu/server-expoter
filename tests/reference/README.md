@@ -112,5 +112,5 @@ wsl python3 tests/reference/scripts/gather_agent_env.py --skip-existing
 | `tests/fixtures/` | 회귀 테스트의 input (raw 응답) |
 | `schema/baseline_v1/` | 회귀 테스트의 기준선 (정답지) |
 | `tests/evidence/` | Round 단위 검증 결과 (`tests/evidence/2026-04-28-reference-collection.md` 등) |
-| [docs/13_redfish-live-validation.md](../../docs/13_redfish-live-validation.md) | 검증 라운드 누적 |
-| [docs/14_add-new-gather.md](../../docs/14_add-new-gather.md) | 새 gather / 새 벤더 추가 절차 |
+| [docs/reference/live-validation.md](../../docs/reference/live-validation.md) | 검증 라운드 누적 |
+| [docs/develop/04-add-vendor.md](../../docs/develop/04-add-vendor.md) | 새 gather / 새 벤더 추가 절차 |

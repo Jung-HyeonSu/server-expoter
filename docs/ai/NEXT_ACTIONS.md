@@ -283,7 +283,7 @@
 
 ## NetworkAdapters 400 마스킹 fix 후속 (2026-08-03) — 사이트 재검증
 
-> 상세: `tests/evidence/2026-08-03-network-adapters-400-masking.md` + `docs/19_decision-log.md` 2026-08-03.
+> 상세: `tests/evidence/2026-08-03-network-adapters-400-masking.md` + `docs/reference/decision-log.md` 2026-08-03.
 > 코드 fix 3종 적용 + pytest 1302 passed. 아래는 **이 환경에서 확인 불가**한 항목.
 
 - [x] **[DONE 2026-08-03] 1차 재빌드 확인 (#3)**: 8대 전부 `status=success` + `sections.network=success`,
@@ -372,7 +372,7 @@
 
 ## OEM cascade graceful degradation — os/esxi 확장 + 라이브 검증 (2026-06-16)
 
-> 상세·근거: `docs/19_decision-log.md` 2026-06-16 항목. CSUS 실 게더링에서 HPE OEM dict conditional(Bug A)
+> 상세·근거: `docs/reference/decision-log.md` 2026-06-16 항목. CSUS 실 게더링에서 HPE OEM dict conditional(Bug A)
 > + `site.yml` 단일 block/rescue cascade(Bug B) 발견. Bug A 전면 수정 / Bug B 는 redfish 만 적용(사용자 승인 2026-06-16).
 
 - [ ] **[HIGH / lab] 라이브 검증**: 실 CSUS 3200(4노드) 또는 오프라인 replay 로 게더링 재실행 → `status=success`(9 섹션) + OEM 경고 `errors[]` 확인. ansible 필요(Windows 미지원이라 정적 검증만 완료).
@@ -494,7 +494,7 @@
 - [x] ~~**[LOW] network 섹션 매핑 충돌 (NET-SEC-MAP)**~~ — **해소 2026-08-03** (사이트 Dell 8대에서 실발동).
   `_rf_aux_sections: ['network_adapters']` 도입 — 보조 섹션을 collected/failed/**unsupported** 세 fragment
   전부에서 제외해 섹션 status 를 주 수집만으로 결정. 400 도 capability 부재로 분류(+`errors[].detail` 에
-  ExtendedInfo 보존). 회귀 27건 신규. 상세: `docs/19_decision-log.md` 2026-08-03 +
+  ExtendedInfo 보존). 회귀 27건 신규. 상세: `docs/reference/decision-log.md` 2026-08-03 +
   `tests/evidence/2026-08-03-network-adapters-400-masking.md`.
 - [ ] **[LOW] Rmp 관리어댑터 / multi_node.chassis name / ResourceBlock count**: Rmp(관리 NIC, MAC 은 bmc.mac_address 존재)
   placeholder 필터 drop / chassis name 미emit(envelope shape) / ResourceBlock proc·mem count=0(ComputerSystem-type 충실).
@@ -691,7 +691,7 @@
 
 ### 2.2 HPE CSUS 3200 / Superdome Flex RMC (lab 부재)
 
-- **trigger**: RMC IP 확보 + Redfish 활성화 (`docs/22_rmc-activation-guide.md` 4 절)
+- **trigger**: RMC IP 확보 + Redfish 활성화 (`docs/operate/06-rmc-activation.md` 4 절)
 - **상세 8 항목 (C1~C8)**: `docs/ai/catalogs/LAB_PENDING_MATRIX.md` HPE 행
 - **handoff 후보 A**: `docs/ai/handoff/2026-05-11-next-cycles.md` "후보 A — HPE CSUS 3200 lab 검증"
 - **ADR**: `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md`, `ADR-2026-05-29-hba-ib-csus.md`

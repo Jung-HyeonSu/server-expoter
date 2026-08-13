@@ -287,5 +287,5 @@ Dell 자격 값 결정(HOLD-1) 후 재검증 → 승격 순서를 권한다.
 - 설계: `docs/ai/VAULT-CREDENTIAL-RESOLVER-DESIGN-2026-08-12.md`
 - AS-IS 조사: `docs/ai/REDFISH-STANDARD-ACCOUNT-ASIS-AUDIT-2026-08-12.md`
 - 직전 Pilot: `tests/evidence/2026-08-12-location-vault-jenkins-pilot.md`
-- 운영 절차: `docs/21_vault-operations.md`
+- 운영 절차: `docs/operate/05-vault.md`
 - 후속: `docs/ai/NEXT_ACTIONS.md`

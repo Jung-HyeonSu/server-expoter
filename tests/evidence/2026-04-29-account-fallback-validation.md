@@ -160,7 +160,7 @@ Lenovo / HPE post-recovery 재실행:
 | **OPS-AS-DELL-1** Dell iDRAC9 AccountService noop 진단 | HIGH (P2 흐름 핵심) | 코드 진단 작업 (visibility 보강 필요) |
 | **OPS-AS-CISCO-1** Cisco CIMC 다른 펌웨어 모델 검증 | LOW (lab 1대 정책 결정 후 재검토) | 외부 의존 — 다른 Cisco BMC 모델 lab 부재 |
 | **OPS-AS-SMC-1** Supermicro 실 lab BMC 확보 | MED | 외부 의존 — lab 환경 부재 |
-| **DOC-EVIDENCE-1** 본 evidence + Round 검증으로 docs/19_decision-log.md 업데이트 | MED | — |
+| **DOC-EVIDENCE-1** 본 evidence + Round 검증으로 docs/reference/decision-log.md 업데이트 | MED | — |
 
 ---
 

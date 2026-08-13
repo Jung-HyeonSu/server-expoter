@@ -29,7 +29,7 @@
 3. probe_redfish.py 또는 deep_probe_redfish.py 로 실장비 검증
 4. baseline_v1/{vendor}_baseline.json 생성 (rule 13 R4)
 5. tests/evidence/<날짜>-<vendor>-<generation>.md 작성
-6. docs/13_redfish-live-validation.md Round 갱신
+6. docs/reference/live-validation.md Round 갱신
 7. 본 매트릭스 [PENDING] → [DONE] 갱신
 
 ---
@@ -61,14 +61,14 @@
 
 | # | 항목 | trigger | skill / 파일 |
 |---|---|---|---|
-| C1 | 사이트 fixture 캡처 (CSUS 3200 / Superdome Flex 각 1대) | RMC IP 확보 + Redfish 활성화 (`docs/22_rmc-activation-guide.md` 4 절) | `capture-site-fixture` — `tests/fixtures/redfish/hpe_csus_3200/` 17 파일 |
+| C1 | 사이트 fixture 캡처 (CSUS 3200 / Superdome Flex 각 1대) | RMC IP 확보 + Redfish 활성화 (`docs/operate/06-rmc-activation.md` 4 절) | `capture-site-fixture` — `tests/fixtures/redfish/hpe_csus_3200/` 17 파일 |
 | C2 | baseline JSON 추가 (`hpe_csus_3200_baseline.json` + `hpe_superdome_flex_baseline.json`) | C1 완료 | `update-vendor-baseline` (rule 13 R4) |
 | C3 | lab cycle `hpe-csus-rmc-lab-validation` round | C1 + C2 완료 | 신 round — mock fixture 정정 + adapter origin 갱신 |
 | C4 | vault 분리 결정 (`vault/redfish/hpe_csus.yml`) | 사용자 명시 승인 + 사이트 자격증명 정책 | rule 50 R2 단계 4 |
 | C5 | ServiceRoot.Product 실측 — 정확 model 문자열 | C1 | adapter `model_patterns` 정밀화 |
 | C6 | Managers / Systems / Chassis Member 개수 + ID 패턴 실측 | C1 | mock fixture RMC / PDHC0~N / Bay1.iLO5 / Partition0~N 검증 |
 | C7 | `Oem.Hpe.PartitionInfo` / `FlexNodeInfo` / `GlobalConfiguration` schema 실측 | C1 | `redfish-gather/tasks/vendors/hpe/normalize_oem.yml` `default({})` 정정 |
-| C8 | RMC 활성화 / Subscription License / 펌웨어 요구 실측 | C1 + C4 | `docs/22_rmc-activation-guide.md` 4 절 정정 |
+| C8 | RMC 활성화 / Subscription License / 펌웨어 요구 실측 | C1 + C4 | `docs/operate/06-rmc-activation.md` 4 절 정정 |
 
 #### HPE 에뮬레이터 mock-tier 커버리지 (2026-06-08 — 실장비 PENDING 과 별개)
 
@@ -168,5 +168,5 @@
 - rule: `50-vendor-adapter-policy` R2 단계 10, `96-external-contract-integrity` R1-A / R1-B / R1-C, `13-output-schema-fields` R4
 - skill: `capture-site-fixture`, `update-vendor-baseline`, `add-new-vendor`, `add-vendor-no-lab`
 - catalog: `COMPATIBILITY-MATRIX.md`, `VENDOR_ADAPTERS.md`, `EXTERNAL_CONTRACTS.md`
-- 정본: `docs/13_redfish-live-validation.md`, `docs/14_add-new-gather.md`, `docs/22_rmc-activation-guide.md`
+- 정본: `docs/reference/live-validation.md`, `docs/develop/04-add-vendor.md`, `docs/operate/06-rmc-activation.md`
 - ADR: `ADR-2026-05-12-csus-rmc-multi-node.md`

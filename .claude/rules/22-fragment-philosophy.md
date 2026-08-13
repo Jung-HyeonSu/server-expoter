@@ -165,7 +165,7 @@
 - skill: `validate-fragment-philosophy`, `task-impact-preview`, `add-new-vendor`
 - agent: `fragment-engineer`, `gather-refactor-worker`, `adapter-author`
 - 정본: `GUIDE_FOR_AI.md` "Fragment 철학" / "Fragment 추가 체크리스트" / "새 gather 템플릿"
-- 정본: `docs/06_gather-structure.md`, `docs/07_normalize-flow.md`
+- 정본: `docs/develop/01-gather-structure.md`, `docs/develop/02-normalize-flow.md`
 
 ## 승인 기록
 

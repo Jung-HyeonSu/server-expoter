@@ -62,4 +62,4 @@ server-exporter의 검증 / 차단 logic을 적절한 layer에 배치. 너무 �
 - rule 95 R1 (silent degradation 의심)
 - skill: `debug-precheck-failure`, `task-impact-preview`
 - agent: `precheck-engineer`
-- 정본: `docs/11_precheck-module.md`
+- 정본: `docs/contract/04-failure-and-diagnosis.md`

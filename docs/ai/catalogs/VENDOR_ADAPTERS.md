@@ -273,8 +273,8 @@ python scripts/ai/hooks/adapter_origin_check.py --all --redfish-only
 
 - `.claude/policy/vendor-boundary-map.yaml`
 - `.claude/ai-context/vendors/{vendor}.md`
-- `docs/13_redfish-live-validation.md`
-- `docs/10_adapter-system.md`
+- `docs/reference/live-validation.md`
+- `docs/develop/03-adapter-system.md`
 - `docs/ai/references/redfish/vendor-bmc-guides.md`
 - `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` (9 vendor × N gen × source URL 매트릭스 — M-K2)
 - `docs/ai/catalogs/COMPATIBILITY-MATRIX.md` (vendor × generation × section — M-L3)

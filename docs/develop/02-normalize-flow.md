@@ -199,8 +199,8 @@ gather 안에서 `_merged_data` 나 `_all_errors` 를 set_fact 로 직접 고침
 
 | 보고 싶은 것 | 파일 |
 |---|---|
-| 출력 JSON 의 키 의미 | `docs/20_json-schema-fields.md` |
-| 채널 구조 (어떤 채널이 어떤 gather 호출하나) | `docs/06_gather-structure.md` |
+| 출력 JSON 의 키 의미 | `docs/contract/03-fields.md` |
+| 채널 구조 (어떤 채널이 어떤 gather 호출하나) | `docs/develop/01-gather-structure.md` |
 | Fragment 철학 (왜 자기 영역만 만지나) | `GUIDE_FOR_AI.md` 의 Fragment 절 |
 | 빌더 코드 본체 | `common/tasks/normalize/build_*.yml` |
 | 누적 합치기 코드 | `common/tasks/normalize/merge_fragment.yml` |

@@ -173,7 +173,7 @@ boundary_principles:
   - "adapter 점수: priority * 1000 + specificity * 10 + match_score (높을수록 우선)"
   - "vendor_aliases.yml은 어떤 코드에서도 정규화 메타로 참조 가능"
 
-# 새 벤더 추가 절차 (3단계, docs/14_add-new-gather.md 참조)
+# 새 벤더 추가 절차 (3단계, docs/develop/04-add-vendor.md 참조)
 add_vendor_steps:
   1: "common/vars/vendor_aliases.yml에 벤더 이름 매핑 추가"
   2: "adapters/redfish/{vendor}_*.yml adapter YAML 생성 (match / capabilities / collect / normalize 4 키 + metadata origin 주석)"

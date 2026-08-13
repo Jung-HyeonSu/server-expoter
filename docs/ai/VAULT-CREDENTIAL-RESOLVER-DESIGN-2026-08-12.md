@@ -853,7 +853,7 @@ code 는 **시스템 분기용 안정 식별자**, message 는 **사용자 안�
 | # | 위치 | 변경 |
 |---|---|---|
 | 1 | `schema/field_dictionary.yml:1460-1462` | enum 7 → 8 |
-| 2 | `docs/20_json-schema-fields.md` | 동기화 의무 (rule 13 R7) |
+| 2 | `docs/contract/03-fields.md` | 동기화 의무 (rule 13 R7) |
 | 3 | `common/library/precheck_bundle.py:182-190` `REASON_BY_FAILURE_CODE` | `+1` 매핑 → `REASON_CREDENTIAL_FAILED` |
 | 4 | `common/vars/failure_reasons.yml:29-36` | 매핑 주석 `+1` (두 정본 글자 동일 — drift 테스트가 강제) |
 | 5 | `tests/e2e/test_failure_code_contract.py:55` (코드 집합), `:68` (code→stage frozenset) | `CREDENTIAL_SET_NOT_FOUND: {"auth"}` 추가 |
@@ -1272,7 +1272,7 @@ Location 별 실제 Credential **값이 서로 다르므로**(사용자 확정) 
   `lookup_plugins/credential_resolver.py`, `common/tasks/credential/resolve_and_load.yml`,
   `filter_plugins/vendor_normalizer.py`
 - 수정: 3개 site.yml, `load_vault.yml`, `detect_vendor.yml`, `Jenkinsfile_portal`,
-  `schema/field_dictionary.yml`, `docs/20_json-schema-fields.md`, baseline 10건
+  `schema/field_dictionary.yml`, `docs/contract/03-fields.md`, baseline 10건
 - 삭제: `Jenkinsfile`, `Jenkinsfile_portal_test`
 - 하네스·문서 갱신(§12.4)은 **별도 커밋**으로 분리 (CLAUDE.md §13)
 
@@ -1389,7 +1389,7 @@ force push / history rewrite 는 하지 않는다 (rule 93 R1).
 | `schema/baseline_v1/*.json` 10건 | `details.credential_scope` |
 | `common/library/precheck_bundle.py:182-190` | `REASON_BY_FAILURE_CODE` +1 |
 | `common/vars/failure_reasons.yml:29-36` | 매핑 주석 +1 |
-| `docs/20_json-schema-fields.md` | 동기화 (rule 13 R7) |
+| `docs/contract/03-fields.md` | 동기화 (rule 13 R7) |
 | `scripts/ai/vault_decrypt_check.py` | 검증 확장 (§16 2단계) |
 | §15.3 의 테스트 R1, R10~R12, R17 | 갱신 |
 
@@ -1406,8 +1406,8 @@ force push / history rewrite 는 하지 않는다 (rule 93 R1).
 
 `.claude/rules/80-ci-jenkins-policy.md`, `.claude/rules/00-core-repo.md`,
 `docs/ai/catalogs/JENKINS_PIPELINES.md`, `scripts/ai/hooks/pre_commit_jenkinsfile_guard.py`,
-`CLAUDE.md` §15, `docs/21_vault-operations.md`(vault 경로 구조),
-`docs/ai/CURRENT_STATE.md` / `docs/19_decision-log.md` (rule 70 R1).
+`CLAUDE.md` §15, `docs/operate/05-vault.md`(vault 경로 구조),
+`docs/ai/CURRENT_STATE.md` / `docs/reference/decision-log.md` (rule 70 R1).
 
 ---
 

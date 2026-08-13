@@ -20,7 +20,7 @@ server-exporter는 엔터프라이즈급 멀티벤더 서버 정보 수집 파�
 1. `CLAUDE.md` (Tier 0 정본) — 5분 읽기
 2. `GUIDE_FOR_AI.md` Fragment 철학 — 가장 중요한 도메인 규칙
 3. `REQUIREMENTS.md` — 벤더 / 펌웨어 검증 기준
-4. `docs/06_gather-structure.md` — 3-channel 흐름
+4. `docs/develop/01-gather-structure.md` — 3-channel 흐름
 
 ### 신규 AI 세션
 

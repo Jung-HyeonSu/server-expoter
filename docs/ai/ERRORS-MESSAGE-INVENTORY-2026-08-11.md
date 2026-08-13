@@ -12,8 +12,8 @@
 >
 > 현재 계약과 변경 내역은 다음을 정본으로 본다:
 > - `tests/evidence/2026-08-12-errors-message-contract.md` (변경·검증 기록)
-> - `docs/19_decision-log.md` 2026-08-12 항목 (왜 그렇게 결정했나)
-> - `docs/20_json-schema-fields.md` §4-1 (`errors[]` 원소 계약 — 호출자용)
+> - `docs/reference/decision-log.md` 2026-08-12 항목 (왜 그렇게 결정했나)
+> - `docs/contract/03-fields.md` §4-1 (`errors[]` 원소 계약 — 호출자용)
 > - `common/vars/failure_reasons.yml` / `common/vars/section_messages.yml` (문장 정본)
 > - `filter_plugins/errors_normalizer.py` (정규화 정본)
 >

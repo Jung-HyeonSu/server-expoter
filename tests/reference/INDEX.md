@@ -111,7 +111,7 @@ wsl python3 tests/reference/scripts/gather_agent_env.py --skip-existing
 2. 위 재실행 명령 (`--skip-existing`로 신규/누락분만)
 3. 본 INDEX.md 표 갱신 (수치 실측 후)
 4. `tests/evidence/<날짜>-<주제>.md` evidence 추가
-5. 영향 시 `docs/19_decision-log.md` Round 갱신
+5. 영향 시 `docs/reference/decision-log.md` Round 갱신
 
 ## 관련
 

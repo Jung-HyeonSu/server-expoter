@@ -11,7 +11,7 @@ HPE 의 스케일업 서버 군 (CSUS 3200 / Superdome Flex / Flex 280) 은 단�
 
 server-exporter 는 cycle 2026-05-12 부터 RMC primary 시스템의 전 Partition/Manager/Chassis 를 수집한다 (ADR-2026-05-12, `data.multi_node` Additive 컨테이너).
 
-cycle 2026-06-09 (ADR-2026-06-09) 부터 CSUS 3200 Redfish 모델 전체를 수집한다 — nPartition 별 부팅 순서(`partitions[].boot`), chassis 별 Thermal(`chassis[].thermal`, Power 와 쌍), RMC LogServices(`managers[].log_services`), CompositionService/ResourceBlocks(`multi_node.composition` — 각 ResourceBlock ↔ chassis 대응), Fabrics/FlexGrid(`multi_node.fabrics` — NUMAlink Switches+Endpoints). 상세 shape 는 `docs/20_json-schema-fields.md` 9절 (`data.multi_node` 확장 컴포넌트) 참조.
+cycle 2026-06-09 (ADR-2026-06-09) 부터 CSUS 3200 Redfish 모델 전체를 수집한다 — nPartition 별 부팅 순서(`partitions[].boot`), chassis 별 Thermal(`chassis[].thermal`, Power 와 쌍), RMC LogServices(`managers[].log_services`), CompositionService/ResourceBlocks(`multi_node.composition` — 각 ResourceBlock ↔ chassis 대응), Fabrics/FlexGrid(`multi_node.fabrics` — NUMAlink Switches+Endpoints). 상세 shape 는 `docs/contract/03-fields.md` 9절 (`data.multi_node` 확장 컴포넌트) 참조.
 
 ## 2. 알려진 위험 신호
 
@@ -98,7 +98,7 @@ curl -k -s -u <user>:<password> https://<rmc-ip>/redfish/v1/Chassis
 1. `tests/evidence/<YYYY-MM-DD>-csus-3200-site.md` — 실측 결과 + 환경 (펌웨어 / 라이선스 / 모델)
 2. `tests/fixtures/redfish/hpe_csus_3200/` 실 응답으로 합성 fixture 교체 (lab 도입 cycle)
 3. `schema/baseline_v1/hpe_csus_3200_baseline.json` 교체 (현재 mock-derived → 실측 baseline, rule 13 R4)
-4. `docs/19_decision-log.md` Round 신 항목
+4. `docs/reference/decision-log.md` Round 신 항목
 
 → NEXT_ACTIONS C1~C8 (`docs/ai/NEXT_ACTIONS.md`) 참조.
 
@@ -116,7 +116,7 @@ curl -k -s -u <user>:<password> https://<rmc-ip>/redfish/v1/Chassis
 ## 7. 관련
 
 - ADR: `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md`
-- envelope reference: `docs/20_json-schema-fields.md` 9절 (`data.multi_node`)
+- envelope reference: `docs/contract/03-fields.md` 9절 (`data.multi_node`)
 - adapter: `adapters/redfish/hpe_csus_3200.yml` / `hpe_superdome_flex.yml`
 - 외부 계약: `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` HPE 절
 - NEXT_ACTIONS: `docs/ai/NEXT_ACTIONS.md` C1~C8

@@ -22,10 +22,10 @@ Ansible 기반 3-channel 서버 정보 수집 개발. 각 채널이 자기 fragm
 
 ## 정본 reference (덮어쓰지 말 것)
 - `GUIDE_FOR_AI.md` — Fragment 철학 정본
-- `docs/06_gather-structure.md` — 3-channel 구조
-- `docs/07_normalize-flow.md` — Fragment 정규화 흐름
-- `docs/10_adapter-system.md` — Adapter 점수 / 매트릭스
-- `docs/11_precheck-module.md` — Precheck 4단계
+- `docs/develop/01-gather-structure.md` — 3-channel 구조
+- `docs/develop/02-normalize-flow.md` — Fragment 정규화 흐름
+- `docs/develop/03-adapter-system.md` — Adapter 점수 / 매트릭스
+- `docs/contract/04-failure-and-diagnosis.md` — Precheck 4단계
 
 ## 자주 사용하는 Skills
 | Skill | 용도 |

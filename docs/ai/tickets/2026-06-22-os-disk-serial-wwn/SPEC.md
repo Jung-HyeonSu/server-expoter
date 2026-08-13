@@ -35,7 +35,7 @@
 2. `os-gather/tasks/linux/gather_storage.yml` — lsblk `-o ...,SERIAL,WWN` + normalize(python+raw) + udevadm 보강
 3. `os-gather/tasks/windows/gather_storage.yml` — serial/wwn 수집 + 정규화
 4. `schema/baseline_v1/{ubuntu,rhel810_raw_fallback,windows}_baseline.json` — **실측 후** (ubuntu 현 baseline=virtio "Virtual disk" → serial/wwn null)
-5. `docs/16_os-esxi-mapping.md` + `docs/20_json-schema-fields.md`
+5. `docs/develop/05-field-mapping.md` + `docs/contract/03-fields.md`
 6. `tests/evidence/2026-06-22-os-disk-serial-wwn.md` + 회귀 fixture
 7. gather 주석 origin (web source URL, rule 96 R1-A)
 

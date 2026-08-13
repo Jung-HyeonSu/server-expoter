@@ -36,4 +36,4 @@ model: sonnet
 
 - skill: `task-impact-preview`, `validate-fragment-philosophy`, `prepare-regression-check`
 - rule: `10-gather-core`, `11-gather-output-boundary`, `22-fragment-philosophy`
-- 정본: `GUIDE_FOR_AI.md`, `docs/06_gather-structure.md`
+- 정본: `GUIDE_FOR_AI.md`, `docs/develop/01-gather-structure.md`

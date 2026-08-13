@@ -187,4 +187,4 @@
 
 - `.claude/ai-context/vendors/{vendor}.md` (5 vendor 메모)
 - `docs/ai/references/redfish/redfish-spec.md` (DMTF 표준)
-- `docs/13_redfish-live-validation.md` (Round 검증 결과)
+- `docs/reference/live-validation.md` (Round 검증 결과)

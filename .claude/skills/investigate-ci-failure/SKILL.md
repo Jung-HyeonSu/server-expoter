@@ -24,7 +24,7 @@ server-exporter Jenkins 실패 분석. 파이프라인은 `Jenkinsfile`(4 stage,
 1. **Jenkins console log 수집** (Jenkins UI 또는 `gh run view`)
 2. **Stage 식별**: 어느 Stage에서 실패
 3. **Stage별 분석**:
-   - Stage 1: 입력 spec (`docs/05_inventory-json-spec.md`) 비교
+   - Stage 1: 입력 spec (`docs/contract/01-input.md`) 비교
    - Stage 2: ansible -vvv 로그 + precheck 진단 (debug-precheck-failure skill)
    - Stage 3: output_schema_drift_check.py 결과
    - Stage 4: 영향 vendor baseline diff
@@ -63,4 +63,4 @@ server-exporter Jenkins 실패 분석. 파이프라인은 `Jenkinsfile`(4 stage,
 - rule 95 R1 R2 (의심 패턴 + 개발자 답변 검증)
 - skill: `debug-precheck-failure`, `debug-external-integrated-feature`, `update-vendor-baseline`, `task-impact-preview`
 - agent: `ci-failure-investigator`, `qa-regression-worker`
-- 정본: `docs/17_jenkins-pipeline.md`
+- 정본: `docs/operate/04-pipeline-runtime.md`

@@ -42,5 +42,5 @@ model: sonnet
 
 - skill: `scheduler-change-playbook`, `investigate-ci-failure`, `task-impact-preview`
 - rule: `80-ci-jenkins-policy`, `31-integration-callback`, `92-dependency-and-regression-gate`
-- 정본: `docs/01_jenkins-setup.md`, `docs/04_job-registration.md`, `docs/17_jenkins-pipeline.md`
+- 정본: `docs/operate/01-jenkins-master.md`, `docs/operate/03-job-registration.md`, `docs/operate/04-pipeline-runtime.md`
 - script: `scripts/ai/hooks/pre_commit_jenkinsfile_guard.py`

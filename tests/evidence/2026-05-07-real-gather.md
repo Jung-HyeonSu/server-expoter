@@ -207,4 +207,4 @@ schema/field_dictionary.yml                                  — 65 entries 그�
 ## 10. 관련
 
 - 정본: rule 13 (`13-output-schema-fields`), rule 22 (`22-fragment-philosophy`), rule 24 R5 (commit + push), rule 70 R1 (evidence 갱신)
-- 카탈로그: `docs/ai/CURRENT_STATE.md`, `docs/ai/catalogs/TEST_HISTORY.md`, `docs/19_decision-log.md`
+- 카탈로그: `docs/ai/CURRENT_STATE.md`, `docs/ai/catalogs/TEST_HISTORY.md`, `docs/reference/decision-log.md`

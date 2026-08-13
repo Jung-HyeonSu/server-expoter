@@ -21,5 +21,5 @@ server-exporter Jenkins / Agent 인프라 배포.
 
 ## 참조
 
-- 정본: `docs/01_jenkins-setup.md`, `docs/03_agent-setup.md`, `docs/04_job-registration.md`
+- 정본: `docs/operate/01-jenkins-master.md`, `docs/operate/02-agent-node.md`, `docs/operate/03-job-registration.md`
 - agent: `release-manager`, `jenkinsfile-engineer`

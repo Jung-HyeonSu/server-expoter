@@ -41,7 +41,7 @@ description: 실장비 검증 결과로 schema/baseline_v1/{vendor}_baseline.jso
 - pytest tests/regression/ -k dell PASS
 
 ### 후속
-- docs/19_decision-log.md "Round X" 추가
+- docs/reference/decision-log.md "Round X" 추가
 - docs/ai/catalogs/TEST_HISTORY.md append
 - adapter dell_idrac9.yml의 metadata.tested_against에 "7.x" 추가 (rule 96 R1)
 ```
@@ -67,7 +67,7 @@ description: 실장비 검증 결과로 schema/baseline_v1/{vendor}_baseline.jso
 7. **adapter origin 주석 갱신** (rule 96 R1): metadata.tested_against / 마지막 동기화 일자
 8. **evidence 보존** (rule 21 R4): Round 검증 결과 tests/evidence/에
 9. **문서 갱신**:
-   - docs/19_decision-log.md "Round X"
+   - docs/reference/decision-log.md "Round X"
    - docs/ai/catalogs/TEST_HISTORY.md
    - docs/ai/CURRENT_STATE.md
 10. **PR squash 머지** (rule 93 R5)
@@ -92,7 +92,7 @@ description: 실장비 검증 결과로 schema/baseline_v1/{vendor}_baseline.jso
 - rule 96 R1 (origin 주석 갱신)
 - skill: `probe-redfish-vendor`, `update-output-schema-evidence`, `prepare-regression-check`
 - agent: `qa-regression-worker`, `baseline-validation-worker`, `schema-mapping-reviewer`
-- 정본: `docs/13_redfish-live-validation.md`
+- 정본: `docs/reference/live-validation.md`
 - 정본: `schema/baseline_v1/`, `tests/evidence/`
 
 ## 보안

@@ -184,10 +184,10 @@ echo -e "---\nansible_user: CHANGE_ME\nansible_password: CHANGE_ME" > vault/${GA
 
 | 다음 작업 | 문서 |
 |---|---|
-| 수집 구조 (왜 채널이 셋인가) | [06_gather-structure.md](06_gather-structure.md) |
-| Fragment 정규화 과정 (왜 자기 섹션만 만지나) | [07_normalize-flow.md](07_normalize-flow.md) |
-| Adapter 시스템 (점수 계산) | [10_adapter-system.md](10_adapter-system.md) |
-| 새 벤더 추가 시 검증 절차 | [13_redfish-live-validation.md](13_redfish-live-validation.md) |
+| 수집 구조 (왜 채널이 셋인가) | [01-gather-structure.md](01-gather-structure.md) |
+| Fragment 정규화 과정 (왜 자기 섹션만 만지나) | [02-normalize-flow.md](02-normalize-flow.md) |
+| Adapter 시스템 (점수 계산) | [03-adapter-system.md](03-adapter-system.md) |
+| 새 벤더 추가 시 검증 절차 | [../reference/live-validation.md](../reference/live-validation.md) |
 
 ## 자주 막히는 곳
 
@@ -225,8 +225,8 @@ echo -e "---\nansible_user: CHANGE_ME\nansible_password: CHANGE_ME" > vault/${GA
 5. `schema/baseline_v1/{vendor}_baseline.json` 추가 (실장비 검증 후) — lab 부재 시 단계 10 등재
 6. `.claude/ai-context/vendors/{vendor}.md` 추가
 7. `.claude/policy/vendor-boundary-map.yaml` 갱신
-8. `docs/13_redfish-live-validation.md` Round 갱신
-9. `docs/19_decision-log.md` ADR 추가
+8. `docs/reference/live-validation.md` Round 갱신
+9. `docs/reference/decision-log.md` ADR 추가
 
 ### 단계 10 — lab 부재 vendor 처리 (rule 50 R2 단계 10 / rule 96 R1-A + R1-C)
 

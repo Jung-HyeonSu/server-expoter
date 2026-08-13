@@ -28,7 +28,7 @@ cycle 2026-05-06-multi-session-compatibility 종료 시 M-G1 산출물로 22 P2/
 
 - **rule 27 R6** 신설 — vault 자동 반영 단서 3개 (cacheable / fact_caching / decrypt 캐시)
 - **skill rotate-vault 보강** — 자동 반영 메커니즘 + 회전 후 다음 run 자동 반영 흐름 명시
-- **docs/21_vault-operations.md** 신설 — M-C 결과 정본화
+- **docs/operate/05-vault.md** 신설 — M-C 결과 정본화
 
 ### C. cycle 오케스트레이션 묶음 (5 항목)
 
@@ -50,7 +50,7 @@ cycle 2026-05-06-multi-session-compatibility 종료 시 M-G1 산출물로 22 P2/
 
 - **hook post_commit_compatibility_matrix_check.py** 신설 — adapter capabilities 변경 시 docs/22 advisory
 - **hook pre_commit_additive_only_check.py** 신설 — 호환성 cycle Additive 검증
-- **docs/22_compatibility-matrix.md** 신설 — M-D1 240 cell 정본화
+- **docs/reference/compatibility-matrix.md** 신설 — M-D1 240 cell 정본화
 - **script scripts/ai/measure_compatibility_matrix.py** 신설 — rule 28 #12 자동 측정
 
 ## 결과 (Impact)

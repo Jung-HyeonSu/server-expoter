@@ -63,7 +63,7 @@
 - **vault**: `vault/<loc>/redfish/hpe.yml` 재사용 (별도 vault 불필요).
 - **OEM tasks**: `redfish-gather/tasks/vendors/hpe/` 재사용 (Oem.Hpe 동일 namespace).
 - **lab**: 부재 — web sources 8건 (CSUS) + 14건 (Superdome Flex) (rule 96 R1-A). 사이트 실측 시 정정 가능.
-- **활성화 위험**: HPE community 7200359 — 사이트 RMC Redfish 비활성화 / 라이선스 부재 사례. `diagnosis.details.rmc_activation_check` 메타로 진단 hint. `docs/22_rmc-activation-guide.md` 참조.
+- **활성화 위험**: HPE community 7200359 — 사이트 RMC Redfish 비활성화 / 라이선스 부재 사례. `diagnosis.details.rmc_activation_check` 메타로 진단 hint. `docs/operate/06-rmc-activation.md` 참조.
 
 ### cycle 2026-05-12 (ADR-2026-05-12) — RMC 멀티-노드 정식 지원
 
@@ -73,7 +73,7 @@
 | envelope | `data.multi_node` Additive 컨테이너 (enabled/layout/summary/partitions[]/managers[]/chassis[]). `diagnosis.details.multi_node_layout` + `rmc_activation_check` Additive |
 | adapter | `vendor_notes.multi_node_support: true` (CSUS 3200 + Superdome Flex) |
 | schema | `field_dictionary.yml` +9 nice entries (`multi_node.*` + `diagnosis.details.*_check`) |
-| docs | `docs/20_json-schema-fields.md` 7-bis 절 + `docs/22_rmc-activation-guide.md` 신규 |
+| docs | `docs/contract/03-fields.md` 7-bis 절 + `docs/operate/06-rmc-activation.md` 신규 |
 | fixtures | `tests/fixtures/redfish/hpe_csus_3200/` 7 파일 합성 (3-partition × 4-manager × 3-chassis) |
 | tests | `tests/unit/test_{classify_rmc_label,resolve_all_members,hpe_csus_multi_node}.py` 29 PASS |
 
@@ -111,7 +111,7 @@ C1~C8: `docs/ai/NEXT_ACTIONS.md` 참조. 사이트 fixture 캡처 + baseline + l
 
 ## Reference
 
-- `docs/13_redfish-live-validation.md`
+- `docs/reference/live-validation.md`
 - HPE iLO Redfish API guide (외부)
 - `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` (M-E1 entry — Superdome Flex 14 sources)
 - ticket M-E1 (cycle 2026-05-06 — git history) (web 검색 결과)

@@ -8,10 +8,10 @@
 본 문서는 인덱스. 본문은 정본 참조 (rule 70 중복 보존 금지):
 
 - `GUIDE_FOR_AI.md` — Fragment 철학, 변수 네이밍, 실패 처리 패턴
-- `docs/06_gather-structure.md` — 3-channel 구조
-- `docs/07_normalize-flow.md` — Fragment 정규화 흐름
-- `docs/08_failure-handling.md` — block/rescue/always 실패 처리
-- `docs/11_precheck-module.md` — 4단계 진단
+- `docs/develop/01-gather-structure.md` — 3-channel 구조
+- `docs/develop/02-normalize-flow.md` — Fragment 정규화 흐름
+- `docs/contract/04-failure-and-diagnosis.md` — block/rescue/always 실패 처리
+- `docs/contract/04-failure-and-diagnosis.md` — 4단계 진단
 
 ## 1. Fragment 철학 (rule 22)
 

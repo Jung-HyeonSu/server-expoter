@@ -141,7 +141,7 @@ docs/ai/tickets/2026-05-07-all-vendor-coverage/
 ### 외부 의존 (lab 도입 시까지 보류)
 
 - 모든 lab 부재 vendor 의 실 검증 (mock fixture + 정적 검증으로 본 cycle 종료)
-- Round 검증 / docs/13_redfish-live-validation.md 갱신 (사이트 검증 4 vendor 만 [PASS] 표시)
+- Round 검증 / docs/reference/live-validation.md 갱신 (사이트 검증 4 vendor 만 [PASS] 표시)
 - vault primary `infraops` 실 회전 검증 (mock 시뮬만 — 실 BMC 도입 후 별도 cycle)
 - baseline_v1/{vendor}_baseline.json — lab 부재 vendor 는 SKIP (rule 13 R4)
 
@@ -209,7 +209,7 @@ docs/ai/tickets/2026-05-07-all-vendor-coverage/
 | `docs/ai/catalogs/VENDOR_ADAPTERS.md` | W5 (M-L2) |
 | `docs/ai/catalogs/COMPATIBILITY-MATRIX.md` | W5 (M-L3) |
 | `docs/ai/NEXT_ACTIONS.md` | W5 (M-L1) |
-| `docs/13_redfish-live-validation.md` | W5 (M-L4) |
+| `docs/reference/live-validation.md` | W5 (M-L4) |
 | `adapters/redfish/{vendor}_*.yml` | vendor 영역 worker (W1=Supermicro / W2=Huawei,Inspur / W3=Fujitsu,Quanta,Superdome / W4=기존 4 vendor) |
 | `redfish-gather/tasks/vendors/{vendor}/` | vendor 영역 worker (위와 동일 분배) |
 | `tests/fixtures/redfish/{vendor}_*/` | vendor 영역 worker |

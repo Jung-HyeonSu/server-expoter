@@ -93,7 +93,7 @@ data:
 
 - ServiceRoot 401/404/connection refused → `errors[0].message`: "ServiceRoot 응답 실패 — RMC Redfish API 활성화 미상 (HPE community 7200359 참조)"
 - `diagnosis.details.rmc_activation_check` (true/false/null) + `diagnosis.details.multi_node_layout` (string/null) Additive
-- `docs/22_rmc-activation-guide.md` 신규 — HPE RMC Redfish 활성화 절차 + community 트러블슈팅
+- `docs/operate/06-rmc-activation.md` 신규 — HPE RMC Redfish 활성화 절차 + community 트러블슈팅
 
 **근거**: HPE community 7200359 위험 신호 대응. diagnosis.details 영역은 freeform dict — Additive 안전.
 

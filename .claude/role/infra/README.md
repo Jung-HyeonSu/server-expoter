@@ -17,12 +17,12 @@ Jenkins 파이프라인 / Ansible 실행 환경 (Agent 노드) / Vault 시크릿
 4. `.claude/ai-context/common/repo-facts.md`
 
 ## 정본 reference
-- `docs/01_jenkins-setup.md` — Jenkins 설치 / 자격증명 / RBAC
-- `docs/02_redis-install.md` — Redis 설정
-- `docs/03_agent-setup.md` — Agent 노드 구성 (방화벽 / 패키지 / 노드 등록)
-- `docs/04_job-registration.md` — Jenkins Job 등록 / 네이밍
-- `docs/17_jenkins-pipeline.md` — Jenkins 파이프라인 런타임
-- `docs/18_ansible-project-config.md` — ansible.cfg
+- `docs/operate/01-jenkins-master.md` — Jenkins 설치 / 자격증명 / RBAC
+- `docs/operate/02-agent-node.md` — Redis 설정
+- `docs/operate/02-agent-node.md` — Agent 노드 구성 (방화벽 / 패키지 / 노드 등록)
+- `docs/operate/03-job-registration.md` — Jenkins Job 등록 / 네이밍
+- `docs/operate/04-pipeline-runtime.md` — Jenkins 파이프라인 런타임
+- `docs/operate/08-ansible-config.md` — ansible.cfg
 
 ## 자주 사용하는 Skills
 | Skill | 용도 |

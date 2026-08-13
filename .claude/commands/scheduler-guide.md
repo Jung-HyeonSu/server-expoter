@@ -57,4 +57,4 @@ cron 표현식 변경은 **사용자 명시 승인** 필수 (rule 92 R5와 동�
 - skill: `scheduler-change-playbook`, `task-impact-preview`, `investigate-ci-failure`
 - agent: `jenkins-refactor-worker`, `jenkinsfile-engineer`, `release-manager`, `deploy-orchestrator`
 - rule: 80, 92 R5
-- 정본: `docs/17_jenkins-pipeline.md`
+- 정본: `docs/operate/04-pipeline-runtime.md`

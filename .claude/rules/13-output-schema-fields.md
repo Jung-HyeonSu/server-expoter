@@ -46,7 +46,7 @@
   1. probe_redfish.py로 실장비 응답 수집
   2. 정규화된 결과를 baseline_v1/{vendor}_baseline.json에 저장
   3. tests/evidence/<날짜>-<vendor>.md에 검증 환경 기록
-  4. Round 검증 docs/19_decision-log.md에 추가
+  4. Round 검증 docs/reference/decision-log.md에 추가
 - **Forbidden**: AI가 임의로 baseline 수정 (실측 없이)
 - **Why**: baseline은 회귀 기준선. 실측 없는 수정은 회귀를 무력화
 
@@ -71,7 +71,7 @@
 
 ### R7. envelope 정본 변경 시 docs/20 갱신 의무
 
-- **Default**: 다음 정본 변경 시 `docs/20_json-schema-fields.md` 동기화 갱신 의무 (cycle 2026-05-06 M-G2 추가)
+- **Default**: 다음 정본 변경 시 `docs/contract/03-fields.md` 동기화 갱신 의무 (cycle 2026-05-06 M-G2 추가)
   - `common/tasks/normalize/build_output.yml` (envelope 13 필드 정본)
   - `schema/sections.yml` (sections 10 정의)
   - `schema/field_dictionary.yml` (Must/Nice/Skip 분류)
@@ -89,8 +89,8 @@
   - `common/tasks/normalize/build_errors.yml` (errors[] 분리 영역)
 - **시나리오 매트릭스 정본** (변경 시 동반 갱신 위치):
   - `common/tasks/normalize/build_status.yml` 본문 주석 (24~31 line, 4 시나리오 표)
-  - `docs/20_json-schema-fields.md` (호출자 reference)
-  - `docs/19_decision-log.md` (의사결정 trace)
+  - `docs/contract/03-fields.md` (호출자 reference)
+  - `docs/reference/decision-log.md` (의사결정 trace)
   - `tests/` mock fixture (시나리오 B 재현 — M-A3 commit `78611714` 회귀 13건)
 - **Allowed**: 4 시나리오 결과가 변경되지 않는 cosmetic 변경 (주석 다듬기 / 들여쓰기) 시 매트릭스 갱신 skip 가능. 단 commit 메시지 명시 ("status 매트릭스 영향 없음 — cosmetic only")
 - **Forbidden**:
@@ -133,4 +133,4 @@
 - rule: `20-output-json-callback`, `21-output-baseline-fixtures`, `22-fragment-philosophy`
 - skill: `update-output-schema-evidence`, `update-vendor-baseline`, `plan-schema-change`, `verify-json-output`
 - agent: `schema-mapping-reviewer`, `schema-reviewer`, `schema-migration-worker`, `output-schema-refactor-worker`, `baseline-validation-worker`
-- 정본: `docs/09_output-examples.md`, `docs/16_os-esxi-mapping.md`
+- 정본: `docs/contract/02-output-envelope.md`, `docs/develop/05-field-mapping.md`

@@ -29,4 +29,4 @@ server-exporter **회귀 테스트** 전문 에이전트.
 
 - skill: `prepare-regression-check`, `run-baseline-smoke`, `update-vendor-baseline`
 - rule: `40-qa-pytest-baseline`, `21-output-baseline-fixtures`
-- 정본: `docs/13_redfish-live-validation.md`
+- 정본: `docs/reference/live-validation.md`

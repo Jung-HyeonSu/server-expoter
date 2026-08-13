@@ -15,7 +15,7 @@
 | **BMC primary 계정** | `__REDACTED__Infra` (`infraops`) | 5 벤더 통일 primary Redfish 계정 | 전 벤더 BMC 인증 장악 |
 | **BMC recovery** | `__REDACTED__` (HPE admin / Lenovo USERID), `__REDACTED__` (Cisco admin) | 공장/복구 계정 — 최고 권한 fallback | BMC 복구 경로 장악 |
 
-> 정본 확인: `docs/21_vault-operations.md` (vault 암호 = `__REDACTED__`), `jenkins/jobs/redfish-account-provision-verify/config.xml:100` (`echo '__REDACTED__' > .vault_pass`).
+> 정본 확인: `docs/operate/05-vault.md` (vault 암호 = `__REDACTED__`), `jenkins/jobs/redfish-account-provision-verify/config.xml:100` (`echo '__REDACTED__' > .vault_pass`).
 
 ## 2. 노출 인벤토리 (추적 파일 기준 — 2026-05-29 실측)
 
@@ -27,7 +27,7 @@
 | 활성 코드 (주석/예시) | 4 | `redfish-gather/tasks/try_one_account.yml:48` (주석), `schema/output_examples/redfish_dell_idrac10.jsonc:11`, `schema/output_examples/README.md:75` | site 실측 결과/예시에 평문 |
 | dead 일회용 스크립트 | 5 | `scripts/ai/bug_tracker/{inventory_lab_linux.ini,inventory_lab_linux.yml,capture_raw_linux.yml,agent_ops.py}`, `scripts/ai/add_lab_recovery_to_all_vaults.py` | 이미 실행됨 — 재실행 불필요. `echo PASS \| sudo -S` 형태는 런타임 `ps` 노출도 |
 | 테스트 | 3 | `tests/unit/test_account_provision_*.py`, `tests/e2e/test_envelope_failure_modes.py` | redaction 테스트가 실제 값을 regex 로 박아둠 |
-| 문서 (정본) | 2 | `docs/21_vault-operations.md`, `CLAUDE.md` (이력 주석) | vault 암호 문서화 |
+| 문서 (정본) | 2 | `docs/operate/05-vault.md`, `CLAUDE.md` (이력 주석) | vault 암호 문서화 |
 | raw 캡처 (reference) | 289 | `tests/reference/os/**/cmd_sudoers.txt` 등 | `echo PASS \| sudo` 가 명령 출력에 누출. 사용자 결정 "tests/reference 전부 유지" |
 | evidence | 65 | `tests/evidence/**/dmi_*.txt` 등 | 동일 누출 패턴. 구조화 raw 캡처라 보존 |
 
@@ -43,7 +43,7 @@ for f in $(git ls-files 'vault/**/*.yml'); do
   ansible-vault rekey --new-vault-password-file <(echo "$NEW") "$f"
 done
 # Jenkins credential 'server-gather-vault-password' 값을 NEW 로 갱신
-# (docs/21_vault-operations.md 시나리오 A 참조)
+# (docs/operate/05-vault.md 시나리오 A 참조)
 ```
 
 ### 3.2 실제 자격 교체 (BMC/호스트 — vault 안 값 자체)
@@ -89,5 +89,5 @@ git filter-repo --replace-text <(printf '__REDACTED__==>REDACTED\n__REDACTED__In
 
 ## 관련
 - rule: `60-security-and-secrets`(해제됨, 참고), `93-branch-merge-gate` R1(force-push), `27-precheck-guard-first` R6(vault)
-- 정본: `docs/21_vault-operations.md`, `docs/ai/policy/SECURITY_POLICY.md`
+- 정본: `docs/operate/05-vault.md`, `docs/ai/policy/SECURITY_POLICY.md`
 - 인접 권고(인증 동작): `docs/ai/AUDIT-2026-05-29.md` §AUTH (lockout/dryrun)

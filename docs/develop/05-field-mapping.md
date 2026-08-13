@@ -144,7 +144,7 @@
 
 - `source` ∈ {redfish, os, esxi} 로 출처 식별. `wwpn`/`node_guid` 로 동일 장치 cross-channel 상관.
 - FC/IB 미보유 호스트 → 빈 list (graceful, error 아님). `port_type` ∈ {FibreChannel, FCoE, iSCSI}.
-- 상세: [20_json-schema-fields.md §6.3.1](20_json-schema-fields.md), `schema/field_dictionary.yml`.
+- 상세: [../contract/03-fields.md §6.3.1](../contract/03-fields.md), `schema/field_dictionary.yml`.
 
 ---
 
@@ -152,6 +152,6 @@
 
 | 다음 작업 | 문서 |
 |---|---|
-| envelope 13 필드 + field 의미 | [20_json-schema-fields.md](20_json-schema-fields.md) |
-| 채널별 실제 응답 예시 | [09_output-examples.md](09_output-examples.md) |
+| envelope 13 필드 + field 의미 | [../contract/03-fields.md](../contract/03-fields.md) |
+| 채널별 실제 응답 예시 | [../contract/02-output-envelope.md](../contract/02-output-envelope.md) |
 | OS / ESXi 환경 요건 | [REQUIREMENTS.md](../REQUIREMENTS.md) |

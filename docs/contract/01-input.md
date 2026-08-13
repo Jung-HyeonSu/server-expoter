@@ -160,7 +160,7 @@ vars_files:
 
 | 다음 작업 | 문서 |
 |---|---|
-| 받게 될 응답 형식 | [09_output-examples.md](09_output-examples.md) |
-| 응답 필드 의미 사전 | [20_json-schema-fields.md](20_json-schema-fields.md) |
-| 실패 시 호출자 처리 | [08_failure-handling.md](08_failure-handling.md) |
-| Jenkins Job 자체 호출 절차 | [04_job-registration.md](04_job-registration.md) |
+| 받게 될 응답 형식 | [02-output-envelope.md](02-output-envelope.md) |
+| 응답 필드 의미 사전 | [03-fields.md](03-fields.md) |
+| 실패 시 호출자 처리 | [04-failure-and-diagnosis.md](04-failure-and-diagnosis.md) |
+| Jenkins Job 자체 호출 절차 | [../operate/03-job-registration.md](../operate/03-job-registration.md) |

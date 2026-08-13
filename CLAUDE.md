@@ -140,10 +140,10 @@ Cycle/Round History, 긴 Troubleshooting, Vendor별 전체 구현, AI Harness Hi
 
 ## 18. Key Documentation
 `README.md`, `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`,
-`docs/05_inventory-json-spec.md`, `docs/06_gather-structure.md`,
-`docs/07_normalize-flow.md`, `docs/08_failure-handling.md`,
-`docs/10_adapter-system.md`, `docs/11_precheck-module.md`,
-`docs/12_diagnosis-output.md`, `docs/17_jenkins-pipeline.md`,
-`docs/19_decision-log.md`, `docs/20_json-schema-fields.md`,
-`docs/21_vault-operations.md`, `docs/22_compatibility-matrix.md`,
-`docs/23_debugging-entrypoints.md`.
+`docs/contract/01-input.md`, `docs/develop/01-gather-structure.md`,
+`docs/develop/02-normalize-flow.md`, `docs/contract/04-failure-and-diagnosis.md`,
+`docs/develop/03-adapter-system.md`, `docs/contract/04-failure-and-diagnosis.md`,
+`docs/contract/04-failure-and-diagnosis.md`, `docs/operate/04-pipeline-runtime.md`,
+`docs/reference/decision-log.md`, `docs/contract/03-fields.md`,
+`docs/operate/05-vault.md`, `docs/reference/compatibility-matrix.md`,
+`docs/develop/06-debugging.md`.

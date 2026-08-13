@@ -72,7 +72,7 @@ RBAC Pattern 과 일치해야 권한이 자동 적용된다.
 |---------|------|------|
 | `loc` | 필수 | 어느 사이트 Agent 에서 실행할지 (`ich` / `chj` / `yi`) |
 | `target_type` | 자동 (Job 별 기본값) | `os` / `esxi` / `redfish` |
-| `inventory_json` | 필수 | 대상 IP 배열 (os/esxi: `service_ip`, redfish: `bmc_ip`). 형식은 [05_inventory-json-spec.md](05_inventory-json-spec.md) 참조 |
+| `inventory_json` | 필수 | 대상 IP 배열 (os/esxi: `service_ip`, redfish: `bmc_ip`). 형식은 [../contract/01-input.md](../contract/01-input.md) 참조 |
 
 `target_type` 의 기본값은 각 Job 의 Configure 화면에서 지정한다 (esxi-gather Job 은 `esxi`, redfish-gather Job 은 `redfish`).
 `Jenkinsfile` 의 choice 파라미터 자체에는 기본값이 없어 파이프라인 기본은 첫 항목 `os` 다. 그래서 esxi/redfish Job 은 Configure 에서 기본값을 바꿔 둬야 호출자가 매번 보내지 않아도 된다.
@@ -83,9 +83,9 @@ RBAC Pattern 과 일치해야 권한이 자동 적용된다.
 
 | 다음 작업 | 문서 |
 |---|---|
-| 호출자 입력 형식 자세히 | [05_inventory-json-spec.md](05_inventory-json-spec.md) |
-| 파이프라인 4-Stage 동작 이해 | [17_jenkins-pipeline.md](17_jenkins-pipeline.md) |
-| Job 동작 검증 | [13_redfish-live-validation.md](13_redfish-live-validation.md) |
+| 호출자 입력 형식 자세히 | [../contract/01-input.md](../contract/01-input.md) |
+| 파이프라인 4-Stage 동작 이해 | [04-pipeline-runtime.md](04-pipeline-runtime.md) |
+| Job 동작 검증 | [../reference/live-validation.md](../reference/live-validation.md) |
 
 ## 자주 막히는 곳
 

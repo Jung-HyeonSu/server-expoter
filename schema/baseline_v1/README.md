@@ -63,7 +63,7 @@ mock-derived baseline 의 필수 marker (양쪽 모두):
 
 1. 실장비에서 새로 응답을 수집한다 (`tests/redfish-probe/probe_redfish.py` 등).
 2. 새 응답을 `baseline_v2/` 같은 별도 폴더로 저장한다.
-3. 운영 변경 사유 / 검증 환경을 `tests/evidence/<날짜>-<주제>.md` 와 `docs/19_decision-log.md` 에 기록한다.
+3. 운영 변경 사유 / 검증 환경을 `tests/evidence/<날짜>-<주제>.md` 와 `docs/reference/decision-log.md` 에 기록한다.
 4. 회귀 비교 도구의 기준 폴더를 `baseline_v1` → `baseline_v2` 로 점진 전환한다.
 
 본 폴더의 파일은 절대 in-place 로 덮어쓰지 않는다는 점이 핵심입니다 — 그래야만 회귀의 의미가 보존됩니다.
@@ -76,6 +76,6 @@ mock-derived baseline 의 필수 marker (양쪽 모두):
 |------|------|
 | `tests/fixtures/` | 회귀 테스트의 입력 (raw 응답) |
 | `tests/evidence/` | Round 단위 검증 결과 |
-| [`../../docs/09_output-examples.md`](../../docs/09_output-examples.md) | 채널별 응답 실제 예시 |
-| [`../../docs/13_redfish-live-validation.md`](../../docs/13_redfish-live-validation.md) | 실장비 검증 라운드 |
-| [`../../docs/20_json-schema-fields.md`](../../docs/20_json-schema-fields.md) | envelope 13 필드 + 83 필드 의미 사전 |
+| [`../../docs/contract/02-output-envelope.md`](../../docs/contract/02-output-envelope.md) | 채널별 응답 실제 예시 |
+| [`../../docs/reference/live-validation.md`](../../docs/reference/live-validation.md) | 실장비 검증 라운드 |
+| [`../../docs/contract/03-fields.md`](../../docs/contract/03-fields.md) | envelope 13 필드 + 83 필드 의미 사전 |

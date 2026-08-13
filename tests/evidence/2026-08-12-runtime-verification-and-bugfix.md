@@ -391,7 +391,7 @@ Resolver production 승격 승인·검증  본 세션에서 확인 불가 — �
 ```
 
 `main -> production` 승격 대상 순수 코드 **32 파일** 중 **31 파일이 Resolver 소유**이고,
-본 Phase 소유는 `docs/19_decision-log.md` **1 파일**뿐이다.
+본 Phase 소유는 `docs/reference/decision-log.md` **1 파일**뿐이다.
 
 `scripts/ai/promote_to_production.sh` 는 `origin/production ↔ main` 의 순수 코드 차이를
 **전량** 승격한다. 파일 선택 인자가 없고, 저장소에 다른 공식 선택 승격 경로도 없다.

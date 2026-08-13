@@ -1179,7 +1179,7 @@ Pilot 시점(HEAD `89403d75`)의 검증은 **지연 없는 즉시 1회 GET** 이
 
 | 문서 | 문서 내용 | 실제 코드 |
 |---|---|---|
-| `docs/21_vault-operations.md:38`, `:50`, `:293` | `Redfish = location + vendor → vault/<location>/redfish/<vendor>.yml` | 표준은 `vault/common/redfish/standard.yml` 전역 상수 (`credential_common.py:54`) |
+| `docs/operate/05-vault.md:38`, `:50`, `:293` | `Redfish = location + vendor → vault/<location>/redfish/<vendor>.yml` | 표준은 `vault/common/redfish/standard.yml` 전역 상수 (`credential_common.py:54`) |
 | `CLAUDE.md:46`, `:57` | "Vendor 확인 후 해당 Vendor Credential Profile 을 로드하는 2단계 구조", "Standard Account 는 선택된 Vendor Credential Profile 의 `role: primary`" | 표준은 vendor 와 무관. `load_vault.yml:49-56` 이 vendor 미식별에도 표준을 시도한다고 명시 |
 | `docs/ai/VAULT-CREDENTIAL-RESOLVER-DESIGN-2026-08-12.md:336`, `:415` | Redfish scope 1개 (`location + vendor`) | scope 2개 (standard 전역 / recovery location+vendor) |
 
@@ -1335,7 +1335,7 @@ docs/ai/VAULT-CREDENTIAL-SELECTION-TRACE-2026-08-12.md
 docs/ai/VAULT-CREDENTIAL-RESOLVER-DESIGN-2026-08-12.md
 docs/ai/catalogs/EXTERNAL_CONTRACTS.md              (Dell Security Strengthen Policy)
 docs/ai/catalogs/LAB_INVENTORY.md
-docs/21_vault-operations.md
+docs/operate/05-vault.md
 CLAUDE.md                                           (§6 / §8)
 ```
 

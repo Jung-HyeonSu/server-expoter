@@ -49,7 +49,7 @@
 
 ## Reference
 
-- `docs/19_decision-log.md` — 2026-05-01 신규 vendor 4종 도입 결정
+- `docs/reference/decision-log.md` — 2026-05-01 신규 vendor 4종 도입 결정
 - ticket F46 (cycle 2026-05-01 — git history) — 본 vendor cold-start ticket
 - iRMCtools (vendor 공식 GitHub): https://github.com/fujitsu/iRMCtools
 - iRMC-REST-API (vendor 공식 GitHub): https://github.com/fujitsu/iRMC-REST-API

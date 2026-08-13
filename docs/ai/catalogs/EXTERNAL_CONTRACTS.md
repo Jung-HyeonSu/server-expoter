@@ -146,7 +146,7 @@ HPE CSUS 3200 / Lenovo XCC3 / DMTF 표준 mockup)에서 **부모가 노출한 �
 
 - server-exporter 적용: `gather_network_adapters_chassis` 수집 경로 후보 2종(Chassis 1순위 → Systems fallback,
   Additive) + `_extended_info`(DSP0266 `error.@Message.ExtendedInfo` 보존). 400→unsupported 분류는 **철회**.
-  상세 `docs/19_decision-log.md` 2026-08-03 정정 절.
+  상세 `docs/reference/decision-log.md` 2026-08-03 정정 절.
 - source (rule 96 R1-A):
   - https://www.dell.com/support/manuals/en-us/poweredge-r730/idrac8_redfishapiguide_2.70.70.70/networkadapter-collection (확인 2026-08-03)
   - https://www.dell.com/support/manuals/en-us/poweredge-r730/idrac8_redfishapiguide_2.70.70.70/networkadapter-instance (확인 2026-08-03)

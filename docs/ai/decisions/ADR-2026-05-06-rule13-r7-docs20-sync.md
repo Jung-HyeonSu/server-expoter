@@ -24,7 +24,7 @@ envelope 13 필드 / sections 10 / field_dictionary 65 의 의미는 다음 4 �
 호출자 시스템 (Jenkins downstream / 모니터링 / 외부 통합) 은 정본 코드를 직접 읽지 않음. 통합 reference 부재로:
 - envelope 키의 의미 / status 시나리오 모름 → 사용자 의심 발생
 - 정본 변경 (예: cycle 2026-05-01 PowerSubsystem fallback) 시 호출자 측 파싱 영향 추적 불가
-- M-F1 docs/20_json-schema-fields.md 신설 (625 라인) 로 통합 reference 확보
+- M-F1 docs/contract/03-fields.md 신설 (625 라인) 로 통합 reference 확보
 
 ### M-G1 학습 (HARNESS-RETROSPECTIVE.md 학습 8)
 
@@ -42,7 +42,7 @@ envelope 13 필드 / sections 10 / field_dictionary 65 의 의미는 다음 4 �
 
 > **R7. envelope 정본 변경 시 docs/20 갱신 의무**
 >
-> - **Default**: 다음 정본 변경 시 `docs/20_json-schema-fields.md` 동기화 갱신 의무
+> - **Default**: 다음 정본 변경 시 `docs/contract/03-fields.md` 동기화 갱신 의무
 >   - `common/tasks/normalize/build_output.yml` (envelope 13 필드 정본)
 >   - `schema/sections.yml` (sections 10 정의)
 >   - `schema/field_dictionary.yml` (Must/Nice/Skip 분류)

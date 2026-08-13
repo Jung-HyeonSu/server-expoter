@@ -21,7 +21,7 @@
 | # | 우려 | 진단 | 처리 | 산출물 |
 |---|---|---|---|---|
 | 1 | 가독성 (Redfish) | 함수 분리 OK, docstring + priority 정책 부재 | **Fix (소형)** | redfish_gather.py 4 함수 docstring + `_ACCOUNT_CREATE_STRATEGY` 매핑 (Phase C/H) |
-| 2 | 디버깅 어려움 | adapter 선택 추적 불가, 실패 stage→파일 매핑 부재 | **Fix (중형)** | `docs/23_debugging-entrypoints.md` 신설 + adapter_loader.py -vvv 강화 (Phase C) |
+| 2 | 디버깅 어려움 | adapter 선택 추적 불가, 실패 stage→파일 매핑 부재 | **Fix (중형)** | `docs/develop/06-debugging.md` 신설 + adapter_loader.py -vvv 강화 (Phase C) |
 | 3 | 디렉터리 구조 | 책임 분산 OK, 진입 가이드 부재 | **문서화** | 5개 README (common/normalize/schema/tests/redfish-library) (Phase G) |
 | 4 | 벤더 분리 (합집합 vs 교집합) | **합집합 모델 맞음** (개발자 의도와 일치) | **명세 보강** | docs/14 절차 B + `_ACCOUNT_CREATE_STRATEGY` 매트릭스 (Phase F/H) |
 | 5 | 신규 세대/모델 | rule 50 R2 9단계 있으나 priority 정책 + 5 파일 매트릭스 부재 | **Fix (소형)** | docs/14 절차 B + docs/10 priority 정책표 (Phase C/F) |

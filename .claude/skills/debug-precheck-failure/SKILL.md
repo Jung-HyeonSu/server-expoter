@@ -124,5 +124,5 @@ python -c "import winrm; s = winrm.Session('<ip>', auth=('<user>','<pass>'), tra
 - rule 96 (external-contract-integrity) — protocol drift 발견 시
 - skill: `classify-precheck-layer`, `debug-external-integrated-feature`, `rotate-vault`
 - agent: `precheck-engineer`
-- 정본: `docs/11_precheck-module.md`, `common/library/precheck_bundle.py`
+- 정본: `docs/contract/04-failure-and-diagnosis.md`, `common/library/precheck_bundle.py`
 - reference: `docs/ai/references/redfish/redfish-spec.md`, `docs/ai/references/winrm/pywinrm.md`

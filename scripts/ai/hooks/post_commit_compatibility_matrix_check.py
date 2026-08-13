@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """post-commit hook — rule 28 #12 호환성 매트릭스 advisory.
 
-adapter capabilities 변경 시 docs/22_compatibility-matrix.md 갱신 권장.
+adapter capabilities 변경 시 docs/reference/compatibility-matrix.md 갱신 권장.
 
 Advisory (exit 0): adapter 변경 + docs/22 미갱신 시 경고.
 
@@ -31,7 +31,7 @@ if sys.platform == "win32":
 
 
 ADAPTER_PREFIX = "adapters/redfish/"
-DOCS22_PATH = "docs/22_compatibility-matrix.md"
+DOCS22_PATH = "docs/reference/compatibility-matrix.md"
 
 
 def _normalize(p: str) -> str:
@@ -72,7 +72,7 @@ def self_test() -> int:
         ),
         (
             "adapter 변경 + docs/22 변경 → 통과",
-            ["adapters/redfish/dell_idrac9.yml", "docs/22_compatibility-matrix.md"],
+            ["adapters/redfish/dell_idrac9.yml", "docs/reference/compatibility-matrix.md"],
             (["adapters/redfish/dell_idrac9.yml"], True),
         ),
         (
@@ -82,7 +82,7 @@ def self_test() -> int:
         ),
         (
             "adapter 외 변경 → 통과",
-            ["docs/19_decision-log.md"],
+            ["docs/reference/decision-log.md"],
             ([], False),
         ),
         (
@@ -95,7 +95,7 @@ def self_test() -> int:
             [
                 "adapters/redfish/dell_idrac9.yml",
                 "adapters/redfish/hpe_ilo6.yml",
-                "docs/22_compatibility-matrix.md",
+                "docs/reference/compatibility-matrix.md",
             ],
             (
                 ["adapters/redfish/dell_idrac9.yml", "adapters/redfish/hpe_ilo6.yml"],

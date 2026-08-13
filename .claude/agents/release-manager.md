@@ -14,7 +14,7 @@ server-exporter PR 머지 + 태그.
 1. pr-review-playbook 결과 PASS 확인
 2. squash 머지 (rule 93 R5)
 3. 태그 (해당 시): `v<영역>-<상태>-<YYYYMMDD>`
-4. 릴리즈 노트 (docs/19_decision-log.md)
+4. 릴리즈 노트 (docs/reference/decision-log.md)
 
 ## 분류
 

@@ -54,7 +54,7 @@ vault/
 
 ansible.cfg `fact_caching = redis`로 Ansible fact를 Redis에 캐시. 같은 host 재수집 시 일부 fact 재사용 → 시간 단축. 만료 정책은 ansible.cfg `fact_caching_timeout`.
 
-설정 정본: `docs/02_redis-install.md`.
+설정 정본: `docs/operate/02-agent-node.md`.
 
 ## 5. ansible.cfg 핵심
 
@@ -64,7 +64,7 @@ ansible.cfg `fact_caching = redis`로 Ansible fact를 Redis에 캐시. 같은 ho
 - `roles_path`, `collections_paths`, `library` 경로
 - `host_key_checking = False` (Agent ↔ target 신뢰)
 
-정본: `docs/18_ansible-project-config.md`.
+정본: `docs/operate/08-ansible-config.md`.
 
 ## 6. callback URL 무결성 (rule 31)
 

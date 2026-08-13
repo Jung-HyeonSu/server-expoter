@@ -1034,10 +1034,10 @@ Inventory(bmc_ip)
 | # | 위치 | 문서 서술 | 실제 코드 |
 |---|---|---|---|
 | 1 | `CLAUDE.md` §3 / `.claude/rules/20-output-json-callback.md` R1 | envelope 예시에 `"meta": { "loc": "...", ... }` | `build_meta.yml:17-25` 에 **`loc` 필드 없음**. `schema/` 에도 `loc` 0건 |
-| 2 | `docs/17_jenkins-pipeline.md:103-106` | credential `vault-pass` (Secret **file**), "미등록" | 실제 `server-gather-vault-password` (Secret **text**), 3곳에서 사용 중 |
-| 3 | `docs/18_ansible-project-config.md:79` | `withCredentials([file(credentialsId: 'vault-pass', ...)])` | 실제는 `string(credentialsId: 'server-gather-vault-password', ...)` |
-| 4 | `docs/21_vault-operations.md` §4.1 | `ansible.cfg` 에 `vault_password_file` 이 있어야 함 | `ansible.cfg:57` **주석 처리 = 비활성** |
-| 5 | `docs/21_vault-operations.md` §5.2 | `vault_redfish_password` 키를 갱신하라 | **이 키를 읽는 코드가 저장소에 없다.** `load_vault.yml:66-79` 는 `accounts` 와 legacy `ansible_user`/`ansible_password` 만 읽음 |
+| 2 | `docs/operate/04-pipeline-runtime.md:103-106` | credential `vault-pass` (Secret **file**), "미등록" | 실제 `server-gather-vault-password` (Secret **text**), 3곳에서 사용 중 |
+| 3 | `docs/operate/08-ansible-config.md:79` | `withCredentials([file(credentialsId: 'vault-pass', ...)])` | 실제는 `string(credentialsId: 'server-gather-vault-password', ...)` |
+| 4 | `docs/operate/05-vault.md` §4.1 | `ansible.cfg` 에 `vault_password_file` 이 있어야 함 | `ansible.cfg:57` **주석 처리 = 비활성** |
+| 5 | `docs/operate/05-vault.md` §5.2 | `vault_redfish_password` 키를 갱신하라 | **이 키를 읽는 코드가 저장소에 없다.** `load_vault.yml:66-79` 는 `accounts` 와 legacy `ansible_user`/`ansible_password` 만 읽음 |
 | 6 | `docs/ai/PRE-GATHER-PIPELINE-TRACE-2026-08-11.md` §9.4 (본인 선행 문서) | "Jenkins credential id 가 **세 곳**에서 일치 — `Jenkinsfile:159`, `Jenkinsfile_portal:160`, `jenkins/jobs/.../config.xml:22`" | `config.xml:22` 는 **설명 텍스트**이지 `credentialsId` 바인딩이 아니다. 실제 세 번째 코드 위치는 **`Jenkinsfile_portal_test:161`**. 또한 그 job 은 `<buildWrappers/>`(`:133`)가 비어 credential 바인딩이 **없다** |
 | 7 | `lookup_plugins/adapter_loader.py:13` (주석) | 사용 예시로 `facts=_precheck_result.probe_facts` | 실제 호출부 4곳 중 precheck 의 `probe_facts` 를 넘기는 곳은 **0곳**. redfish 는 `_rf_probe_facts`(detect_vendor 산출물), os/esxi 는 자체 dict |
 | 8 | `adapters/os/*.yml`, `adapters/esxi/*.yml` `credentials.profile` | `os_linux` / `os_windows` / `esxi_default` | 대응 vault 파일이 **존재하지 않고**, 읽는 코드도 없다 |

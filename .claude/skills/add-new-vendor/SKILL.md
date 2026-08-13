@@ -61,10 +61,10 @@ vault_redfish_password: ...
 ### 7. policy — .claude/policy/vendor-boundary-map.yaml
 huawei 섹션 추가 (adapter list, oem_tasks, vault, aliases)
 
-### 8. 운영 문서 — docs/13_redfish-live-validation.md
+### 8. 운영 문서 — docs/reference/live-validation.md
 Round X 추가 (Huawei iBMC 3.x 검증)
 
-### 9. 의사결정 — docs/19_decision-log.md
+### 9. 의사결정 — docs/reference/decision-log.md
 "Huawei vendor 추가 (2026-04-27)"
 ```
 
@@ -97,7 +97,7 @@ Round X 추가 (Huawei iBMC 3.x 검증)
 - 영향 채널: 주로 redfish (os / esxi는 vendor-agnostic)
 - 영향 schema: baseline_v1에 vendor JSON 추가
 - 영향 vault: vault/<loc>/redfish/<vendor>.yml 신규
-- 영향 정본: REQUIREMENTS.md / docs/13_redfish-live-validation.md / docs/19_decision-log.md
+- 영향 정본: REQUIREMENTS.md / docs/reference/live-validation.md / docs/reference/decision-log.md
 
 ## 실패 / 오탐 처리
 
@@ -114,5 +114,5 @@ Round X 추가 (Huawei iBMC 3.x 검증)
 - rule 40 (baseline 회귀)
 - skill: `probe-redfish-vendor`, `update-vendor-baseline`, `score-adapter-match`, `vendor-change-impact`, `measure_field_usage_matrix.py` (단계 8 — 필드 분류 검증)
 - agent: `vendor-onboarding-worker` (이 skill의 메인 실행자), `adapter-author`
-- 정본: `docs/14_add-new-gather.md`, `docs/13_redfish-live-validation.md`
+- 정본: `docs/develop/04-add-vendor.md`, `docs/reference/live-validation.md`
 - reference: `docs/ai/references/redfish/redfish-spec.md` (BMC 매핑)

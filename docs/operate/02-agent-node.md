@@ -9,7 +9,14 @@
 > - ansible / 컬렉션을 업그레이드해야 할 때
 
 > **사전 준비**
-> - 본 절차를 시작하기 전 [01_jenkins-setup.md](01_jenkins-setup.md) (마스터 설치) + [02_redis-install.md](02_redis-install.md) 가 완료되어야 합니다.
+> - 본 절차 전에 [01-jenkins-master.md](01-jenkins-master.md) (마스터 설치) 가 완료되어야 합니다.
+
+> [!NOTE]
+> **Redis 는 이 프로젝트가 쓰지 않는다.** 아래에 Redis 설치·연결 절차가 있는 이유는
+> Agent 공통 설정(`/etc/ansible/ansible.cfg`)이 fact 캐싱을 쓸 수 있어서다.
+> server-exporter 의 프로젝트 `ansible.cfg` 는 `gathering = explicit` 이고
+> `fact_caching` 설정이 없다. 그래서 이 파이프라인으로 수집해도 Redis 캐시는 비어 있는
+> 게 정상이다. Redis 를 쓰지 않는 환경이라면 관련 단계를 건너뛰어도 수집은 동작한다.
 > - Agent 노드는 마스터와 같은 사내망에 있어야 하며, 마스터로의 8080/tcp + Redis 6379/tcp 양방향이 필요합니다.
 
 > **검증 기준 환경 (참고)**: Ubuntu 24.04, Python 3.12, ansible-core 2.20, Java 21 (10.100.64.154 에서 2026-03-27 확인)
@@ -162,9 +169,9 @@ sudo /opt/ansible-env/bin/ansible-galaxy collection install ansible.utils       
 variable: 'VAULT_PASSWORD')])` 로 패스워드를 주입받아(콘솔 마스킹), 런타임 임시파일(`mktemp`, chmod 600)에
 써서 `--vault-password-file` 로 ansible-playbook 에 넘기고, 빌드 종료 시 `trap` 으로 임시파일을 삭제한다.
 
-- credential 등록 절차: [01_jenkins-setup.md](01_jenkins-setup.md) §7 (`server-gather-vault-password`, Secret text).
+- credential 등록 절차: [01-jenkins-master.md](01-jenkins-master.md) §7 (`server-gather-vault-password`, Secret text).
   메인 `Jenkinsfile` 이 이미 같은 credential 을 사용하므로, 대개 추가 등록 작업이 필요 없다.
-- 패스워드 회전 절차: [21_vault-operations.md](21_vault-operations.md).
+- 패스워드 회전 절차: [05-vault.md](05-vault.md).
 - 보안: Credentials Store 가 콘솔 로그에서 패스워드를 마스킹한다. 운영 빌드는 `verbosity=0` 유지 권장
   (`-vv` 이상 시 vault 변수 노출 가능).
 
@@ -306,7 +313,7 @@ Jenkinsfile 의 `agent { label "${params.loc}" }` 기준:
 
 ## 10. Redis 연결 테스트
 
-[02_redis-install.md](02_redis-install.md) 의 마스터 Redis 설정이 완료된 상태에서 실행합니다.
+[02-agent-node.md](02-agent-node.md) 의 마스터 Redis 설정이 완료된 상태에서 실행합니다.
 
 ```bash
 # Agent 에서 마스터 Redis 접속 확인
@@ -334,6 +341,6 @@ redis-cli -h {Jenkins_마스터_IP} -a {Redis비밀번호} DBSIZE
 
 | 다음 작업 | 문서 |
 |---|---|
-| Jenkins Job 등록 | [04_job-registration.md](04_job-registration.md) |
-| Vault 운영 / 패스워드 회전 | [21_vault-operations.md](21_vault-operations.md) |
-| Ansible 프로젝트 설정 (ansible.cfg / 환경변수) | [18_ansible-project-config.md](18_ansible-project-config.md) |
+| Jenkins Job 등록 | [03-job-registration.md](03-job-registration.md) |
+| Vault 운영 / 패스워드 회전 | [05-vault.md](05-vault.md) |
+| Ansible 프로젝트 설정 (ansible.cfg / 환경변수) | [08-ansible-config.md](08-ansible-config.md) |

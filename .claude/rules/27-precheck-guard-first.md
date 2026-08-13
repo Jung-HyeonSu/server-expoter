@@ -139,4 +139,4 @@ vault 파일 변경 시 다음 ansible 실행에서 자동 반영 보장. 의심
 - rule: `10-gather-core`, `12-adapter-vendor-boundary`
 - skill: `debug-precheck-failure`, `classify-precheck-layer`, `rotate-vault`
 - agent: `precheck-engineer`
-- 정본: `docs/11_precheck-module.md`, `docs/21_vault-operations.md`
+- 정본: `docs/contract/04-failure-and-diagnosis.md`, `docs/operate/05-vault.md`

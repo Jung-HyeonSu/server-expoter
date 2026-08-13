@@ -19,7 +19,7 @@ pytest 단위/통합 + redfish-probe (실장비 / mock fixture) + baseline 회�
 4. `.claude/ai-context/external/integration.md` — 외부 시스템 응답 형식
 
 ## 정본 reference
-- `docs/13_redfish-live-validation.md` — 3대 실장비 검증 (Dell/HPE/Lenovo)
+- `docs/reference/live-validation.md` — 3대 실장비 검증 (Dell/HPE/Lenovo)
 
 ## 자주 사용하는 Skills
 | Skill | 용도 |
@@ -41,6 +41,6 @@ pytest 단위/통합 + redfish-probe (실장비 / mock fixture) + baseline 회�
 
 ## 주의사항
 - **Baseline 회귀 (rule 40)**: schema/sections.yml 또는 schema/field_dictionary.yml 변경 시 영향 vendor baseline 전수 회귀.
-- **실장비 검증 (Round)**: 새 벤더 추가 또는 펌웨어 업그레이드 시 docs/13_redfish-live-validation.md 절차 따라 검증 + tests/evidence/ 기록.
+- **실장비 검증 (Round)**: 새 벤더 추가 또는 펌웨어 업그레이드 시 docs/reference/live-validation.md 절차 따라 검증 + tests/evidence/ 기록.
 - **Fixture 추가**: tests/fixtures/ 추가는 baseline 회귀 영향 검증 후. tests/evidence/에 출처 기록.
 - **probe_redfish.py vs deep_probe_redfish.py**: probe는 일반 검증 (각 벤더 1회), deep는 펌웨어 프로파일링 (새 펌웨어 추가 시).

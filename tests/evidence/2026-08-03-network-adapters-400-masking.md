@@ -1,6 +1,6 @@
 # 2026-08-03 — NetworkAdapters HTTP 400 → sections.network 마스킹 (사이트 Dell 8대)
 
-> 분류: 사이트 사고 조사 + fix. 관련 결정: `docs/19_decision-log.md` 2026-08-03.
+> 분류: 사이트 사고 조사 + fix. 관련 결정: `docs/reference/decision-log.md` 2026-08-03.
 > 외부 계약: `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` 2026-08-03.
 
 ## 1. 관측 (사용자 제보 + 실측)

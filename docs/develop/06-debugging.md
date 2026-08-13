@@ -74,7 +74,7 @@
 
 ## 2. Fragment 정규화 과정 별 진입 (rule 22)
 
-전체 처리 과정 (정본: `docs/07_normalize-flow.md`):
+전체 처리 과정 (정본: `docs/develop/02-normalize-flow.md`):
 
 ```text
 init_fragments.yml (skeleton 초기화)
@@ -137,7 +137,7 @@ adapter_loader: 선택됨 — dell_idrac9 (score=100345) [rule 10 R5 score = pri
 
 1. **점수 breakdown 확인** — priority / specificity / match_score 중 어느 것 때문인지
 2. **adapter YAML priority 확인** (`adapters/{channel}/*.yml` priority 키)
-3. **rule 50 R3 priority 정책표** (`docs/10_adapter-system.md` 참조):
+3. **rule 50 R3 priority 정책표** (`docs/develop/03-adapter-system.md` 참조):
    - generic = 0
    - vendor 기본 = 10
    - 세대별 = 80~100
@@ -278,7 +278,7 @@ ansible-playbook --syntax-check os-gather/site.yml  # 3 채널 syntax
 
 ## 9. Diagnosis 출력 디버깅 (rule 27)
 
-**정본**: `docs/12_diagnosis-output.md`
+**정본**: `docs/contract/04-failure-and-diagnosis.md`
 
 `envelope.diagnosis` 최상위 (`details` 와 형제 레벨) 의 4단계 결과:
 
@@ -297,12 +297,12 @@ ansible-playbook --syntax-check os-gather/site.yml  # 3 채널 syntax
 
 ## 10. 관련 문서
 
-- `docs/06_gather-structure.md` — 전체 구조
-- `docs/07_normalize-flow.md` — Fragment 정규화 과정
-- `docs/08_failure-handling.md` — block/rescue/always
-- `docs/10_adapter-system.md` — Adapter 점수 정책 (Phase C 확장)
-- `docs/11_precheck-module.md` — Precheck 4 단계
-- `docs/12_diagnosis-output.md` — Diagnosis 구조
-- `docs/17_jenkins-pipeline.md` — Jenkins 런타임
-- `docs/20_json-schema-fields.md` — JSON envelope 13 필드 (Phase E 확장)
-- `docs/22_compatibility-matrix.md` — 호환성 매트릭스
+- `docs/develop/01-gather-structure.md` — 전체 구조
+- `docs/develop/02-normalize-flow.md` — Fragment 정규화 과정
+- `docs/contract/04-failure-and-diagnosis.md` — block/rescue/always
+- `docs/develop/03-adapter-system.md` — Adapter 점수 정책 (Phase C 확장)
+- `docs/contract/04-failure-and-diagnosis.md` — Precheck 4 단계
+- `docs/contract/04-failure-and-diagnosis.md` — Diagnosis 구조
+- `docs/operate/04-pipeline-runtime.md` — Jenkins 런타임
+- `docs/contract/03-fields.md` — JSON envelope 13 필드 (Phase E 확장)
+- `docs/reference/compatibility-matrix.md` — 호환성 매트릭스

@@ -85,7 +85,7 @@ score = priority × 1000 + specificity × 10 + match_score
 - rule 95 R1 #4 (점수 동률 의심 패턴)
 - skill: `add-new-vendor`, `vendor-change-impact`
 - agent: `adapter-author`, `adapter-boundary-reviewer`
-- 정본 reference: `docs/10_adapter-system.md`, `module_utils/adapter_common.py`
+- 정본 reference: `docs/develop/03-adapter-system.md`, `module_utils/adapter_common.py`
 
 ## 디버깅 명령
 

@@ -150,7 +150,7 @@ score = priority × 1000  +  specificity × 10  +  match_score
 4. 점수 동률 시 `-vvv` 로그가 경고 → priority 조정 검토
 5. lab 부재 vendor (rule 96 R1-A) 는 `80` 으로 시작, lab 도입 후 메인 세대 격상
 
-상세: rule 50 R2 9단계 + 단계 10 (lab 부재 처리), `docs/14_add-new-gather.md`.
+상세: rule 50 R2 9단계 + 단계 10 (lab 부재 처리), `docs/develop/04-add-vendor.md`.
 
 ---
 
@@ -292,9 +292,9 @@ adapter 가 매칭은 됐는데 normalize task 가 그 섹션을 못 채운 경�
 
 | 보고 싶은 것 | 파일 |
 |---|---|
-| 벤더 / 세대 / 섹션 호환성 한 장 표 | `docs/22_compatibility-matrix.md` |
-| 새 벤더 추가 절차 (전체 9단계) | `docs/14_add-new-gather.md` |
-| 실장비 검증 결과 | `docs/13_redfish-live-validation.md` |
+| 벤더 / 세대 / 섹션 호환성 한 장 표 | `docs/reference/compatibility-matrix.md` |
+| 새 벤더 추가 절차 (전체 9단계) | `docs/develop/04-add-vendor.md` |
+| 실장비 검증 결과 | `docs/reference/live-validation.md` |
 | 점수 계산 코드 | `module_utils/adapter_common.py` |
 | adapter 동적 로딩 | `lookup_plugins/adapter_loader.py` |
 | 벤더 별칭 사전 | `common/vars/vendor_aliases.yml` |
@@ -315,4 +315,4 @@ adapter 가 매칭은 됐는데 normalize task 가 그 섹션을 못 채운 경�
 > [!NOTE]
 > 위 HPE 행은 현재 코드 기준 매칭이다. 커밋된 `schema/baseline_v1/hpe_baseline.json` 은 `redfish_hpe_ilo6` adapter 추가(2026-05-01) 이전 캡처라 `redfish_hpe_ilo5` 를 기록한다. baseline 재생성이 필요하다(후속 작업).
 
-상세는 `docs/13_redfish-live-validation.md`.
+상세는 `docs/reference/live-validation.md`.

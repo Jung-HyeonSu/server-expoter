@@ -381,9 +381,9 @@ always:
 
 | 주제 | 문서 |
 |------|------|
-| 스키마 / sections / status 규칙 | `docs/09_output-examples.md` |
-| 아키텍처 / 정규화 흐름 | `docs/06_gather-structure.md`, `docs/07_normalize-flow.md` |
-| Adapter 시스템 | `docs/10_adapter-system.md` |
-| Pre-check 진단 | `docs/11_precheck-module.md` |
-| 필드 매핑 | `docs/16_os-esxi-mapping.md` |
+| 스키마 / sections / status 규칙 | `docs/contract/02-output-envelope.md` |
+| 아키텍처 / 정규화 흐름 | `docs/develop/01-gather-structure.md`, `docs/develop/02-normalize-flow.md` |
+| Adapter 시스템 | `docs/develop/03-adapter-system.md` |
+| Pre-check 진단 | `docs/contract/04-failure-and-diagnosis.md` |
+| 필드 매핑 | `docs/develop/05-field-mapping.md` |
 | Field Dictionary | `schema/field_dictionary.yml` |

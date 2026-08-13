@@ -19,10 +19,10 @@
 4. `.claude/ai-context/common/coding-glossary-ko.md` — sections / fields / baseline 용어
 
 ## 정본 reference
-- `docs/07_normalize-flow.md` — 정규화 흐름
-- `docs/09_output-examples.md` — 표준 JSON 출력 예시
-- `docs/12_diagnosis-output.md` — diagnosis 구조
-- `docs/16_os-esxi-mapping.md` — OS/ESXi 필드 매핑
+- `docs/develop/02-normalize-flow.md` — 정규화 흐름
+- `docs/contract/02-output-envelope.md` — 표준 JSON 출력 예시
+- `docs/contract/04-failure-and-diagnosis.md` — diagnosis 구조
+- `docs/develop/05-field-mapping.md` — OS/ESXi 필드 매핑
 
 ## 자주 사용하는 Skills
 | Skill | 용도 |

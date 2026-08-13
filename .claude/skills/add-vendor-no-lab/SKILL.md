@@ -109,7 +109,7 @@ vendors:
   - quanta
 ```
 
-### 8. docs/13_redfish-live-validation.md 갱신
+### 8. docs/reference/live-validation.md 갱신
 
 ```markdown
 ## Round N (YYYY-MM-DD) — Huawei iBMC 추가
@@ -120,7 +120,7 @@ vendors:
 - web sources: huawei.com / DMTF Power.v1_8_0
 ```
 
-### 9. docs/19_decision-log.md 추가
+### 9. docs/reference/decision-log.md 추가
 
 ```markdown
 ## YYYY-MM-DD — Huawei vendor 추가 (lab 부재 web sources)
@@ -174,4 +174,4 @@ lab 없으므로 다음으로 회귀 대체:
 - skill: add-new-vendor (lab 보유 시), web-evidence-fetch (web sources 자동 수집), score-adapter-match (점수 디버깅), rotate-vault (vault 생성 절차)
 - agent: vendor-onboarding-worker, adapter-author, web-evidence-collector, lab-tracker
 - hook: post_merge_incoming_review (vendor 추가 검증)
-- 정본: docs/21_vault-operations.md (vault 생성), docs/13_redfish-live-validation.md (Round 검증), docs/14_add-new-gather.md (gather 추가 일반)
+- 정본: docs/operate/05-vault.md (vault 생성), docs/reference/live-validation.md (Round 검증), docs/develop/04-add-vendor.md (gather 추가 일반)

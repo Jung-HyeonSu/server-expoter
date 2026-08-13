@@ -5,8 +5,8 @@
 
 ## 주요 영역
 - `REQUIREMENTS.md` — 벤더/버전별 최소 요구사항
-- `docs/05_inventory-json-spec.md` — inventory_json 입력 스펙
-- `docs/19_decision-log.md` — 의사결정 로그
+- `docs/contract/01-input.md` — inventory_json 입력 스펙
+- `docs/reference/decision-log.md` — 의사결정 로그
 - `docs/ai/decisions/` — ADR (Architecture Decision Record)
 - `docs/ai/roadmap/` — 기술 범위 / 방향
 

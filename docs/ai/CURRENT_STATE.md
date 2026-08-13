@@ -922,7 +922,7 @@
 
 - **대상/방법**: `Jenkinsfile_portal` Stage 4 Callback 의 포털 POST 를 `sh` + `curl` 에서 **HTTP Request
   플러그인 `httpRequest()` 스텝**으로 교체. `withEnv(CALLBACK_ENDPOINT)` + `writeFile callback_body.json`
-  제거 — `requestBody` 로 직접 전달. `docs/01_jenkins-setup.md` §필수 플러그인에 HTTP Request 가 이미
+  제거 — `requestBody` 로 직접 전달. `docs/operate/01-jenkins-master.md` §필수 플러그인에 HTTP Request 가 이미
   "외부 시스템 콜백/알림" 용도로 등재돼 있어 신규 의존 아님(문서-코드 불일치 해소).
 - **동작 보존**: 재시도 3회 + backoff(attempt*10s), 최종 실패 시 `unstable`(빌드 fail 아님 — rule 31 R2),
   URL 정규화(`strip`/`rstrip('/')`), callback body/endpoint(`/api/jenkins/gather/<type>`) 계약 불변(rule 31 R3).
@@ -945,9 +945,9 @@
   포털의 plugin-free gather(raw `ansible-playbook`)는 유지 — credential 주입만 플러그인 사용.
 - **영향**: vendor-agnostic(CI). envelope/callback 계약 무영향. portal 빌드가 더 이상 agent 로컬
   `VAULT_PASS_FILE`(`/opt/ansible-env/.vault_pass`) 파일에 의존하지 않음 → agent 별도 배치 작업 불필요.
-- **문서 동기화**: `docs/03_agent-setup.md` §5(VAULT_PASS_FILE/임시 하드코딩 절 폐기 → credential 통일 안내),
+- **문서 동기화**: `docs/operate/02-agent-node.md` §5(VAULT_PASS_FILE/임시 하드코딩 절 폐기 → credential 통일 안내),
   `docs/ai/catalogs/JENKINS_PIPELINES.md`(vault binding 정정 — 기존 "Secret File/`file()`" stale → 실제
-  "Secret text/`string()`"). `docs/01_jenkins-setup.md` §7 무변경(credential 이미 등록·문서화).
+  "Secret text/`string()`"). `docs/operate/01-jenkins-master.md` §7 무변경(credential 이미 등록·문서화).
 - **검증**: 메인 `Jenkinsfile:157-184` 검증된 동일 패턴 이식 + Groovy 구조 정합성 대조(❌ 실 Jenkins 빌드는
   로컬 환경 제약으로 미확인). 사용자 결정(2026-06-18): 마스터 패스워드 회전 불필요.
 - **후속(사용자 몫)**: `Jenkinsfile_portal` 은 순수 코드 → production 반영(cherry-pick)은 rule 93 R2 사용자 승인 필요.
@@ -1052,7 +1052,7 @@
   (Dell FC associated_address 만 R13 의도 교정). HPE emulator golden 2종 faithful 재생성. 부작용 0.
 - **gated(8)**: CSUS baseline 실측 교체(Ansible/Linux 필요) · field_dictionary drift · collect_oem CSUS 필드명(lab) ·
   system.oem shape · network list/dict · Rmp · ResourceBlock count · multi_node.chassis name → NEXT_ACTIONS 등재.
-- **증거**: `tests/evidence/2026-06-15-hpe-csus3200-mirror-audit.md`, `docs/19_decision-log.md`.
+- **증거**: `tests/evidence/2026-06-15-hpe-csus3200-mirror-audit.md`, `docs/reference/decision-log.md`.
 
 ---
 
@@ -1576,9 +1576,9 @@
 
 ### 관련
 - ADR: `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md`
-- envelope ref: `docs/20_json-schema-fields.md` 7-bis 절
-- 활성화 가이드: `docs/22_rmc-activation-guide.md`
-- decision log: `docs/19_decision-log.md` 2026-05-12 Round
+- envelope ref: `docs/contract/03-fields.md` 7-bis 절
+- 활성화 가이드: `docs/operate/06-rmc-activation.md`
+- decision log: `docs/reference/decision-log.md` 2026-05-12 Round
 
 ---
 
@@ -1708,7 +1708,7 @@
 | `docs/ai/catalogs/CONVENTION_DRIFT.md` | DRIFT-015 등재 (Phase 2 보류 결정 + lab 도입 후 후속 명시) |
 | `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` | Supermicro AST2500/AST2600 firmware sources 7건 + Phase 2 보류 근거 |
 | `docs/ai/NEXT_ACTIONS.md` | Supermicro lab 도입 cycle 4 후속 (rule 96 R1-C) |
-| `docs/19_decision-log.md` | X12 priority 일관성 + Phase 2 보류 의사결정 기록 |
+| `docs/reference/decision-log.md` | X12 priority 일관성 + Phase 2 보류 의사결정 기록 |
 
 ### Additive only 검증 (rule 92 R2 / rule 96 R1-B)
 
@@ -2028,7 +2028,7 @@
 | **`docs/ai/NEXT_ACTIONS.md` line 265-270** (Phase 4) | Jinja namespace hook blocking 격상 결정 PENDING → [DONE 2026-05-11] |
 | **`scripts/ai/hooks/pre_commit_jinja_namespace_check.py`** | advisory (exit 0) → BLOCKING (exit 1) — cycle 2026-05-07-post 후 5 cycle false-positive 0 (141 파일 전수 스캔) |
 | **`scripts/ai/hooks/install-git-hooks.sh`** | 주석 + 환경변수 안내 "advisory" → "BLOCKING cycle 2026-05-11" |
-| **`docs/19_decision-log.md`** | Jinja namespace blocking 격상 entry 추가 (governance trace, rule 70 R8 trigger 없음 — ADR 의무 아님) |
+| **`docs/reference/decision-log.md`** | Jinja namespace blocking 격상 entry 추가 (governance trace, rule 70 R8 trigger 없음 — ADR 의무 아님) |
 | **`docs/ai/catalogs/PROJECT_MAP.md`** + **`CLAUDE.md`** | adapter count drift fix (39 → 41 total / Redfish 28 → 30 / supermicro 5 → 8) — cycle 2026-05-07 M-B1~B4 후 stale |
 | **`.claude/rules/00-core-repo.md`** + **`12-adapter-vendor-boundary.md`** + **`50-vendor-adapter-policy.md`** | 동일 adapter count 동기화 (rule 본문 "현재 관찰된 현실" 절 — Default/Allowed/Forbidden 본문 의미 변경 0, rule 70 R8 trigger 1 적용 안 됨) |
 
@@ -2064,7 +2064,7 @@
 | 영역 | 변경 |
 |---|---|
 | **tests/unit/test_adapter_vault_label_consistency.py** | 신설 — 29 adapter × vendor 별 허용 label set 정적 검증 (90 test cases, parametrize) |
-| **docs/21_vault-operations.md §6.6** | 신설 — adapter label naming convention (`{vendor}_factory` / `{vendor}_current` / `{vendor}_fallback` / `lab_{vendor}_root`) + 1:1 정합 의무 + Additive only 의무 |
+| **docs/operate/05-vault.md §6.6** | 신설 — adapter label naming convention (`{vendor}_factory` / `{vendor}_current` / `{vendor}_fallback` / `lab_{vendor}_root`) + 1:1 정합 의무 + Additive only 의무 |
 
 ### 검증 결과
 
@@ -2075,8 +2075,8 @@
 
 ### 정본 reference
 
-- `docs/21_vault-operations.md` §6.5 — 9 vendor recovery 매트릭스 (line 172-208, 정본)
-- `docs/21_vault-operations.md` §6.6 — adapter label naming convention (신설)
+- `docs/operate/05-vault.md` §6.5 — 9 vendor recovery 매트릭스 (line 172-208, 정본)
+- `docs/operate/05-vault.md` §6.6 — adapter label naming convention (신설)
 - `tests/unit/test_adapter_vault_label_consistency.py` — 정적 회귀 (drift 차단)
 
 ---
@@ -2122,7 +2122,7 @@
 
 ### 정본 reference
 
-- `docs/21_vault-operations.md` §6.5 — 9 vendor recovery 자격 매트릭스 (line 191-208)
+- `docs/operate/05-vault.md` §6.5 — 9 vendor recovery 자격 매트릭스 (line 191-208)
 - `redfish-gather/tasks/account_service.yml:31-41` — label 우선 → username fallback chain (불변)
 - `redfish-gather/tasks/try_one_account.yml` — 시도 체인 (불변)
 
@@ -2327,10 +2327,10 @@ drift 발견 + fix 4 위치:
 | 묶음 | 항목 수 | 산출물 |
 |---|---|---|
 | **A. M-A status 로직** | 3 | rule 13 R8 / skill verify-status-logic / hook pre_commit_status_logic_check |
-| **B. M-C vault** | 3 | rule 27 R6 / skill rotate-vault 보강 / docs/21_vault-operations.md |
+| **B. M-C vault** | 3 | rule 27 R6 / skill rotate-vault 보강 / docs/operate/05-vault.md |
 | **C. cycle 오케스트레이션** | 5 | skill cycle-orchestrator / skill add-vendor-no-lab / skill write-cold-start-ticket 보강 / agent ticket-decomposer / hook pre_commit_ticket_consistency |
 | **D. standalone rule** | 5 | rule 26 R10 / rule 50 R2 단계 10 / rule 96 R1-C / rule 28 #12 / rule 92 R2 Additive 절차 |
-| **E. 호환성 매트릭스** | 4 | hook post_commit_compatibility_matrix_check / hook pre_commit_additive_only_check / docs/22_compatibility-matrix.md / script measure_compatibility_matrix.py |
+| **E. 호환성 매트릭스** | 4 | hook post_commit_compatibility_matrix_check / hook pre_commit_additive_only_check / docs/reference/compatibility-matrix.md / script measure_compatibility_matrix.py |
 
 ### 표면 카운트 변경
 
@@ -2454,7 +2454,7 @@ Session-3 적용 변경:
 
 ### 후속 의무
 
-M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPENDENCIES.md 갱신됨):
+M-F1 (`docs/contract/03-fields.md`) 신설 시 다음 절 포함 의무 (DEPENDENCIES.md 갱신됨):
 - `status` 필드 enum 3종 (success / partial / failed)
 - 시나리오 4 매트릭스 (build_status.yml 헤더 정본 reference)
 - errors[] 와 status 분리 의미
@@ -2578,7 +2578,7 @@ M-F1 (`docs/20_json-schema-fields.md`) 신설 시 다음 절 포함 의무 (DEPE
 | 6. ai-context | huawei.md / inspur.md / fujitsu.md / quanta.md | ✅ |
 | 7. vendor-boundary-map.yaml | 4 vendor + 신 generation 7 adapter 매핑 갱신 | ✅ |
 | 8. live-validation | DEFER (lab 부재) | DEFER |
-| 9. decision-log | docs/19_decision-log.md cycle-019 entry | ✅ |
+| 9. decision-log | docs/reference/decision-log.md cycle-019 entry | ✅ |
 
 ### redfish_gather.py 동기화
 
@@ -3306,7 +3306,7 @@ server-exporter AI 하네스 cycle-012에서 사용자 plan-mode 승인으로 **
 cycle-012 변경 (이번 세션, 2026-04-29):
 
 - **plan**: `C:\Users\hshwa\.claude\plans\1-snazzy-haven.md` (P0~P5 6 Phase 분할). 사용자 결정 4건 확정: 6 Phase 직렬, ansible-vault encrypt 후 commit, schema v1 minor 유지, AccountService P2 분리 + dryrun ON default.
-- **P0 Foundation** (`f0f621ce`): Jenkinsfile 3종 `withCredentials([file('ansible-vault-password')])` + `.gitignore` (.vault_pass 차단) + `scripts/bootstrap_vault_encrypt.sh` + `docs/01_jenkins-setup.md` 갱신 + `tests/e2e/test_envelope_failure_modes.py` 12 fixture × 50 testcase.
+- **P0 Foundation** (`f0f621ce`): Jenkinsfile 3종 `withCredentials([file('ansible-vault-password')])` + `.gitignore` (.vault_pass 차단) + `scripts/bootstrap_vault_encrypt.sh` + `docs/operate/01-jenkins-master.md` 갱신 + `tests/e2e/test_envelope_failure_modes.py` 12 fixture × 50 testcase.
 - **P1 Auth Multi-Candidate** (`fe0be36c`): vault `accounts: list` 신키 + `ansible_user/password` dual-write 호환. redfish: load_vault.yml + try_one_account.yml + collect_standard.yml loop. OS/ESXi: try_credentials.yml (raw probe + `meta: reset_connection`). 16 redfish adapter 에 `recovery_accounts` 메타 (P2 진입점).
 - **P2 AccountService + P4 NetworkAdapters** (`0448d00d`): `redfish_gather.py` `_post`/`_patch` 헬퍼 + `account_service_provision()` 4 메서드 (Dell slot PATCH / HPE-Lenovo-SM POST / Cisco not_supported). main() `mode='account_provision'` + `dryrun: True` default. `gather_network_adapters_chassis()` (NetworkAdapters/Ports + PortType FC/IB 자동 분류). `account_service.yml` 신규.
 - **P3 Group Summary + P4 normalize 매핑** (`fbb0f357`): Redfish CPU/memory/storage/network 4종 group summary + Linux memory summary 빈값. `_rf_proc_map` 에 network_adapters → network 추가.
@@ -3505,7 +3505,7 @@ pytest tests/                         : PASS — 95/95
 - **사고 7건** (F1~F7): F1 자격 정정 (RESOLVED) / F2 vendor 의심 / F3 BMC 환경 / F4 WinRM 환경 / F5 SSH 비활성 / F6 sudo 대기 (RESOLVED) / F7 SKIP/옵션 추가 (RESOLVED)
 - **회귀 영향**: 없음 (별도 디렉터리, fixtures/baseline 무수정, harness consistency PASS, vendor boundary PASS)
 - **Evidence**: `tests/evidence/2026-04-28-reference-collection.md`
-- **decision-log**: `docs/19_decision-log.md` §13 Round 11
+- **decision-log**: `docs/reference/decision-log.md` §13 Round 11
 - **follow-up**: F2 (사용자 확인) / F3 (장비 가동) / F4 task #10 (Win10 WinRM) / F5 (ESXi SSH 활성화) / F6 (sudo 처리 개선)
 
 ## 다음 작업 (cycle-007 후보)

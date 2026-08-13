@@ -149,7 +149,7 @@ Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
 - **갱신**: `test_esxi_precheck_contract.py` / `test_os_candidate_search.py` /
   `test_os_precheck_polling.py` / `test_failure_code_contract.py` 를 새 문구 계약으로
 - **동기화**: `schema/examples/redfish_{failed,not_supported}.json`,
-  `schema/output_examples/redfish_failed.jsonc`, `docs/20_json-schema-fields.md` 예시 문구
+  `schema/output_examples/redfish_failed.jsonc`, `docs/contract/03-fields.md` 예시 문구
 - **전체 회귀**: `pytest tests/` → **1731 passed, 11 skipped, 7 xfailed**
 - **Jenkins 등가**: Stage 3(output_schema_drift) PASS / unit 1063 / e2e 299 /
   integration 200 / regression 169 / field_dictionary PASS
@@ -919,7 +919,7 @@ DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` �
 ### 한계
 - 사이트 실측 부재 — pytest 통과 = 합성 fixture 통과 ≠ 사이트 통과
 - NEXT_ACTIONS C1~C8 등재 (사이트 fixture 캡처 / baseline / lab cycle / vault / Product 실측 / Member ID 실측 / Oem schema 실측 / RMC 활성화 실측)
-- HPE community 7200359 위험 신호 대응: `diagnosis.details.rmc_activation_check` 메타 + `docs/22_rmc-activation-guide.md` 신규
+- HPE community 7200359 위험 신호 대응: `diagnosis.details.rmc_activation_check` 메타 + `docs/operate/06-rmc-activation.md` 신규
 
 ---
 
@@ -1065,7 +1065,7 @@ DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` �
 
 ### false-positive 0 검증 절차
 - git log 5 cycle 전수 검토 (since cycle 2026-05-06 도입)
-- 정본 4종 변경 commit (build_output.yml / build_status.yml / sections.yml / field_dictionary.yml) 모두 `docs/20_json-schema-fields.md` 동반 변경 확인
+- 정본 4종 변경 commit (build_output.yml / build_status.yml / sections.yml / field_dictionary.yml) 모두 `docs/contract/03-fields.md` 동반 변경 확인
 - 단일 위반 후보 (M-A3 commit `78611714`): build_status.yml 주석 강화 = cosmetic (R7 Allowed 절 — `DOCS20_SYNC_SKIP_COSMETIC=1` escape hatch 적용 가능)
 
 ---
@@ -1087,7 +1087,7 @@ DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` �
 - `docs/ai/NEXT_ACTIONS.md:265-270` (Phase 4) — Jinja namespace hook blocking 격상 결정 PENDING → [DONE]
 - `scripts/ai/hooks/pre_commit_jinja_namespace_check.py` — advisory → BLOCKING (5 cycle false-positive 0 / 141 파일 전수 스캔)
 - `scripts/ai/hooks/install-git-hooks.sh` — 주석 갱신
-- `docs/19_decision-log.md` — Jinja blocking 격상 governance trace entry
+- `docs/reference/decision-log.md` — Jinja blocking 격상 governance trace entry
 - `docs/ai/catalogs/PROJECT_MAP.md` + `CLAUDE.md` — adapter count drift fix (39 → 41, Redfish 28 → 30, supermicro 5 → 8)
 - `.claude/rules/00 / 12 / 50` — 동일 adapter count 동기화 (rule "현재 관찰된 현실" 절만, 본문 의미 변경 0)
 
@@ -1472,7 +1472,7 @@ DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` �
 
 - 환경: Windows 11 + Python 3.11.9 (호스트)
 - 변경 영역:
-  - **P0 Foundation** — Jenkinsfile 3종 + tests/e2e/test_envelope_failure_modes.py + .gitignore + scripts/bootstrap_vault_encrypt.sh + docs/01_jenkins-setup.md
+  - **P0 Foundation** — Jenkinsfile 3종 + tests/e2e/test_envelope_failure_modes.py + .gitignore + scripts/bootstrap_vault_encrypt.sh + docs/operate/01-jenkins-master.md
   - **P1 Auth Multi-Candidate** — vault accounts list (8 파일) + redfish load_vault/collect_standard/try_one_account + os/esxi try_credentials + adapters 16개 recovery_accounts 메타
   - **P2 + P4 (Redfish)** — redfish_gather.py AccountService 4 메서드 + dryrun ON default + gather_network_adapters_chassis + account_service.yml
   - **P3 + P4 normalize** — Redfish summary + Linux memory summary + normalize_standard.yml HBA/IB 매핑
@@ -1642,7 +1642,7 @@ DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` �
 - 회귀: 영향 없음 (별도 디렉터리, 회귀 input 무수정)
 - 환경 제약: 검증 기준 Agent (10.100.64.154) 외 WSL에서 직접 수집
 - Evidence: tests/evidence/2026-04-28-reference-collection.md
-- decision-log: docs/19_decision-log.md §13 Round 11
+- decision-log: docs/reference/decision-log.md §13 Round 11
 
 ---
 

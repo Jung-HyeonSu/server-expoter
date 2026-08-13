@@ -128,7 +128,7 @@ targets:
     description: "COMPATIBILITY-MATRIX (vendor × generation × section) — adapter capabilities 매트릭스"
     measure_command: "scripts/ai/measure_compatibility_matrix.py (P3 도입 예정) — 또는 docs/22 참조"
     storage:
-      - "docs/22_compatibility-matrix.md"
+      - "docs/reference/compatibility-matrix.md"
       - "docs/ai/tickets/<cycle>/COMPATIBILITY-MATRIX.md"
     ttl_days: 14
     invalidation_triggers:

@@ -33,5 +33,5 @@
 
 ## Reference
 
-- `docs/13_redfish-live-validation.md`
+- `docs/reference/live-validation.md`
 - Lenovo XCC Redfish API guide (외부)

@@ -113,6 +113,6 @@ python scripts/ai/check_project_map_drift.py --update
 ## 정본 reference
 
 - `CLAUDE.md` "파일 구조" — 가장 상세 (정본)
-- `docs/06_gather-structure.md`
-- `docs/07_normalize-flow.md`
-- `docs/10_adapter-system.md`
+- `docs/develop/01-gather-structure.md`
+- `docs/develop/02-normalize-flow.md`
+- `docs/develop/03-adapter-system.md`

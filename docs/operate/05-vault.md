@@ -510,7 +510,7 @@ accounts:
 | `skill: add-new-vendor` | vendor 추가 시 vault 생성 단계 |
 | `skill: debug-precheck-failure` | auth 실패 시 |
 | `redfish-gather/tasks/load_vault.yml` | vault 로딩 정본 코드 |
-| `docs/03_agent-setup.md` | Agent 보안 설정 |
+| `docs/operate/02-agent-node.md` | Agent 보안 설정 |
 | `docs/ai/references/ansible/ansible-vault.md` | ansible-vault 명령 reference |
 
 ---
@@ -519,9 +519,9 @@ accounts:
 
 | 다음 작업 | 문서 |
 |---|---|
-| Jenkins 마스터의 vault credential 등록 | [01_jenkins-setup.md](01_jenkins-setup.md) §7 |
-| Agent 노드 설치 (vault 패스워드 파일 배치) | [03_agent-setup.md](03_agent-setup.md) |
-| precheck 4단계 (인증 실패 단계 진단) | [11_precheck-module.md](11_precheck-module.md) |
+| Jenkins 마스터의 vault credential 등록 | [01-jenkins-master.md](01-jenkins-master.md) §7 |
+| Agent 노드 설치 (vault 패스워드 파일 배치) | [02-agent-node.md](02-agent-node.md) |
+| precheck 4단계 (인증 실패 단계 진단) | [../contract/04-failure-and-diagnosis.md](../contract/04-failure-and-diagnosis.md) |
 
 ## 자주 막히는 곳
 

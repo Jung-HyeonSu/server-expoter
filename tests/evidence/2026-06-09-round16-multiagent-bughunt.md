@@ -92,7 +92,7 @@ str[] 로 정정**. 어떤 테스트도 listening_ports 타입을 assert 하지 
   `default('', true)` 로 falsy(None) → '' 강제
 
 ### schema / docs (listening_ports 정정 — 코드 무변경)
-- `schema/field_dictionary.yml` 주석 `int[]`→`str[]`, `docs/09_output-examples.md`, `docs/ai/CURRENT_STATE.md`,
+- `schema/field_dictionary.yml` 주석 `int[]`→`str[]`, `docs/contract/02-output-envelope.md`, `docs/ai/CURRENT_STATE.md`,
   `schema/baseline_v1/{ubuntu,rhel810_raw_fallback}_baseline.json` (실장비 캡처 = str[] 근거)
 
 ## 반증된 finding (false positive — 미수정)

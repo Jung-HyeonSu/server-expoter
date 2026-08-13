@@ -143,7 +143,7 @@ vault/<loc>/redfish/<vendor>.yml 변경 시 **다음 ansible 실행에서 자동
 - skill: `add-new-vendor`, `debug-precheck-failure` (auth 실패 시)
 - agent: 본 skill의 운영 실행자는 사용자 (cycle-011: vault-rotator + security-reviewer agent 제거)
 - 정본 코드: `redfish-gather/tasks/load_vault.yml`
-- 정본 docs: `docs/03_agent-setup.md` 보안 부분, `docs/21_vault-operations.md` (M-C 결과 정본)
+- 정본 docs: `docs/operate/02-agent-node.md` 보안 부분, `docs/operate/05-vault.md` (M-C 결과 정본)
 - reference: `docs/ai/references/ansible/ansible-vault.md`
 - 회귀 fixture: M-C3 commit (9건 mock — vault rekey / vault edit / vendor 추가 시나리오)
 

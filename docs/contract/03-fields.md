@@ -869,7 +869,7 @@ CSUS 3200 Redfish 모델 검수 결과 추가된 5종. 모두 `data.multi_node` 
 | 기존 호출자 (`data.system` / `data.bmc` 만 사용) | 변경 0 — Partition0 데이터로 동일 동작 |
 | 멀티-노드 인식 호출자 | `data.multi_node != null` 확인 후 `partitions[]` / `managers[]` / `chassis[]` 순회 |
 | 확장 컴포넌트 인식 호출자 | `multi_node.composition` / `multi_node.fabrics` (null 가드) + `partitions[].boot` / `chassis[].thermal` / `managers[].log_services` 순회 |
-| 활성화 미상 진단 | `diagnosis.details.rmc_activation_check == false` 시 사이트 RMC Redfish 서비스 / Subscription 라이선스 확인 (`docs/22_rmc-activation-guide.md`) |
+| 활성화 미상 진단 | `diagnosis.details.rmc_activation_check == false` 시 사이트 RMC Redfish 서비스 / Subscription 라이선스 확인 (`docs/operate/06-rmc-activation.md`) |
 
 ### Lab 부재 한계 (NEXT_ACTIONS C1~C8)
 
@@ -888,6 +888,6 @@ CSUS 3200 Redfish 모델 검수 결과 추가된 5종. 모두 `data.multi_node` 
 | 필드 사전 원본 | `schema/field_dictionary.yml` |
 | **필드 × baseline 사용 실태 매트릭스 (4 상태)** | **`docs/ai/catalogs/FIELD_USAGE_MATRIX.md` (cycle 2026-05-11 신규, 측정 대상 #13)** |
 | 출력 조립 코드 | `common/tasks/normalize/build_output.yml` |
-| 채널 처리 과정 | `docs/06_gather-structure.md`, `docs/07_normalize-flow.md` |
-| 진단 단계 상세 | `docs/11_precheck-module.md` |
-| 어댑터 매칭 규칙 | `docs/10_adapter-system.md` |
+| 채널 처리 과정 | `docs/develop/01-gather-structure.md`, `docs/develop/02-normalize-flow.md` |
+| 진단 단계 상세 | `docs/contract/04-failure-and-diagnosis.md` |
+| 어댑터 매칭 규칙 | `docs/develop/03-adapter-system.md` |

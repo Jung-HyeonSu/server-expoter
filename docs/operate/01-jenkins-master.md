@@ -138,7 +138,7 @@ ufw allow 8080/tcp
 | Name | `ansible` |
 | Path to ansible executables directory | `/opt/ansible-env/bin` |
 
-> 이 경로는 03_agent-setup.md 5절 에서 Agent 에 가상환경을 생성한 뒤 실제로 동작한다.
+> 이 경로는 02-agent-node.md 5절 에서 Agent 에 가상환경을 생성한 뒤 실제로 동작한다.
 > 마스터에서는 경로만 미리 등록해두면 된다.
 
 ---
@@ -247,10 +247,10 @@ Job 이름이 패턴과 일치하면 권한이 자동 적용되므로, 신규 Jo
 
 | 다음 작업 | 문서 |
 |---|---|
-| Redis 설치 (마스터에 함께) | [02_redis-install.md](02_redis-install.md) |
-| Agent 노드 구성 | [03_agent-setup.md](03_agent-setup.md) |
-| Jenkins Job 등록 | [04_job-registration.md](04_job-registration.md) |
-| Vault 운영 (회전 / 검증) | [21_vault-operations.md](21_vault-operations.md) |
+| Redis 설치 (마스터에 함께) | [02-agent-node.md](02-agent-node.md) |
+| Agent 노드 구성 | [02-agent-node.md](02-agent-node.md) |
+| Jenkins Job 등록 | [03-job-registration.md](03-job-registration.md) |
+| Vault 운영 (회전 / 검증) | [05-vault.md](05-vault.md) |
 
 ## 자주 막히는 곳
 

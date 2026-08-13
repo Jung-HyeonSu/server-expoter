@@ -31,5 +31,5 @@
 
 ## Reference
 
-- `docs/13_redfish-live-validation.md`
+- `docs/reference/live-validation.md`
 - Cisco CIMC Redfish API doc (외부)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """pre-commit hook — rule 13 R7 docs/20 동기화 검증.
 
-rule 13 R7 정본 4종 변경 시 docs/20_json-schema-fields.md 동기화 갱신 의무.
+rule 13 R7 정본 4종 변경 시 docs/contract/03-fields.md 동기화 갱신 의무.
 
 정본 4종:
 - common/tasks/normalize/build_output.yml (envelope 13 필드)
@@ -49,7 +49,7 @@ CANONICAL_FILES: tuple[str, ...] = (
     "schema/field_dictionary.yml",
 )
 
-DOCS20_PATH = "docs/20_json-schema-fields.md"
+DOCS20_PATH = "docs/contract/03-fields.md"
 
 
 def _normalize(p: str) -> str:
@@ -94,7 +94,7 @@ def self_test() -> int:
             [
                 "schema/sections.yml",
                 "schema/field_dictionary.yml",
-                "docs/20_json-schema-fields.md",
+                "docs/contract/03-fields.md",
             ],
             [],
         ),

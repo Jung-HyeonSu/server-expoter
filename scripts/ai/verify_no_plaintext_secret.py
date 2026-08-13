@@ -23,7 +23,7 @@
 `admin` / `password` / `ADMIN` 같은 **벤더가 공개한 공장 기본값이자 사전 단어**는
 대상이 아니다. 자격증명으로서의 정보가 없고, 넣으면 평범한 산문까지 걸려 게이트가
 무력해진다 (이 저장소에서 각각 627 / 433 개 파일에 등장한다). 근거는
-`docs/21_vault-operations.md` 의 벤더 기본값 표.
+`docs/operate/05-vault.md` 의 벤더 기본값 표.
 
 사용:
     python scripts/ai/verify_no_plaintext_secret.py                 # 변경분 digest 검사

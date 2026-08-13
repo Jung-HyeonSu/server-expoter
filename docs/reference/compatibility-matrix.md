@@ -75,7 +75,7 @@ OS / ESXi 채널은 별도다. Redfish 채널은 OS 로컬 계정을 안 보기 
 | `N/A` (Redfish 가 안 다루는 영역) | 24 | 10% | 정상 |
 | **합계** | **240** | **100%** | |
 
-baseline 을 가진 lab tested 벤더 4개 (Dell iDRAC9 / HPE iLO6 / Lenovo XCC v2 / Cisco CIMC M4) 가 36 칸 (각 9 섹션)을 차지한다. Cisco M4 는 partial lab 검증이다 (`docs/13_redfish-live-validation.md` 참조). 나머지는 코드 / 어댑터는 있지만 실장비 검증을 못한 상태.
+baseline 을 가진 lab tested 벤더 4개 (Dell iDRAC9 / HPE iLO6 / Lenovo XCC v2 / Cisco CIMC M4) 가 36 칸 (각 9 섹션)을 차지한다. Cisco M4 는 partial lab 검증이다 (`docs/reference/live-validation.md` 참조). 나머지는 코드 / 어댑터는 있지만 실장비 검증을 못한 상태.
 
 ## lab 에 장비가 없는 영역
 
@@ -128,8 +128,8 @@ TTL 은 14일. 현재 수동 갱신이다 (자동 측정 도구는 없다).
 
 | 보고 싶은 것 | 파일 |
 |---|---|
-| Adapter 가 어떻게 선택되나 (점수 계산) | `docs/10_adapter-system.md` |
-| 새 벤더 / 새 세대 추가 절차 | `docs/14_add-new-gather.md` |
-| 실장비 검증 라운드 결과 | `docs/13_redfish-live-validation.md` |
-| Vault 관리 / 회전 | `docs/21_vault-operations.md` |
-| 출력 envelope 의 `not_supported` 가 어떻게 나오는지 | `docs/20_json-schema-fields.md` |
+| Adapter 가 어떻게 선택되나 (점수 계산) | `docs/develop/03-adapter-system.md` |
+| 새 벤더 / 새 세대 추가 절차 | `docs/develop/04-add-vendor.md` |
+| 실장비 검증 라운드 결과 | `docs/reference/live-validation.md` |
+| Vault 관리 / 회전 | `docs/operate/05-vault.md` |
+| 출력 envelope 의 `not_supported` 가 어떻게 나오는지 | `docs/contract/03-fields.md` |

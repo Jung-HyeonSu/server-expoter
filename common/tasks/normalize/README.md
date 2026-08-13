@@ -66,7 +66,7 @@ python scripts/ai/hooks/pre_commit_fragment_skeleton_sync.py --all
 
 ## 관련 문서
 
-- `docs/07_normalize-flow.md` — 정규화 과정 정본
-- `docs/13_redfish-live-validation.md` — Round 검증
-- `docs/20_json-schema-fields.md` — envelope 13 필드 정본
+- `docs/develop/02-normalize-flow.md` — 정규화 과정 정본
+- `docs/reference/live-validation.md` — Round 검증
+- `docs/contract/03-fields.md` — envelope 13 필드 정본
 - `tests/regression/test_cross_channel_consistency.py` — 회귀 보호

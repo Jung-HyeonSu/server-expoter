@@ -100,7 +100,7 @@
 - baseline: 영향 baseline (esxi 보강 / csus 현실화). 나머지(dell/hpe/lenovo/cisco/ubuntu/windows/rhel)는 lab 부재로 빈 유지 + 사이트 실측 시 채움 (NEXT_ACTIONS).
 - `init_fragments` / `build_empty_data` / `build_failed_output` 3중 skeleton 동기화 (infiniband rate_gbps/source 등 신규 키).
 - tests: `tests/unit/` HBA/IB 정규화 단위(FC PortProtocol 분류, IB LinkNetworkTechnology, WWN hex, None 가드), mock fixtures, baseline 회귀.
-- 문서: `docs/16_os-esxi-mapping.md`, `docs/10_adapter-system.md`, `docs/13_redfish-live-validation.md`(CSUS Round), `docs/20_json-schema-fields.md`(rule 13 R7), `docs/19_decision-log.md`, `docs/ai/CURRENT_STATE.md`, catalogs (EXTERNAL_CONTRACTS/COMPATIBILITY-MATRIX/FIELD_USAGE_MATRIX/SCHEMA_FIELDS), `.claude/ai-context/vendors/`.
+- 문서: `docs/develop/05-field-mapping.md`, `docs/develop/03-adapter-system.md`, `docs/reference/live-validation.md`(CSUS Round), `docs/contract/03-fields.md`(rule 13 R7), `docs/reference/decision-log.md`, `docs/ai/CURRENT_STATE.md`, catalogs (EXTERNAL_CONTRACTS/COMPATIBILITY-MATRIX/FIELD_USAGE_MATRIX/SCHEMA_FIELDS), `.claude/ai-context/vendors/`.
 - ADR: `ADR-2026-05-29-hba-ib-csus.md` (field_dictionary 서브필드 추가 + CSUS per-partition normalize — rule 70 R8).
 
 ---

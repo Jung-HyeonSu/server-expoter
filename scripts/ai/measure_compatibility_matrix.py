@@ -16,7 +16,7 @@ vendor × generation × section 호환성 매트릭스를 adapter YAML 의 capab
 Usage:
     python scripts/ai/measure_compatibility_matrix.py
     python scripts/ai/measure_compatibility_matrix.py --self-test
-    python scripts/ai/measure_compatibility_matrix.py --output docs/22_compatibility-matrix.md
+    python scripts/ai/measure_compatibility_matrix.py --output docs/reference/compatibility-matrix.md
 """
 
 from __future__ import annotations

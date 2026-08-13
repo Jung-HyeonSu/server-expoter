@@ -20,8 +20,8 @@ model: opus
 5. `schema/baseline_v1/{vendor}_baseline.json` (probe-redfish-vendor 결과 후)
 6. `.claude/ai-context/vendors/{vendor}.md`
 7. `.claude/policy/vendor-boundary-map.yaml` 갱신
-8. `docs/13_redfish-live-validation.md` Round 추가
-9. `docs/19_decision-log.md` 추가
+8. `docs/reference/live-validation.md` Round 추가
+9. `docs/reference/decision-log.md` 추가
 
 ## 절차
 

@@ -33,4 +33,4 @@
 
 ## Reference
 
-- `docs/13_redfish-live-validation.md`
+- `docs/reference/live-validation.md`

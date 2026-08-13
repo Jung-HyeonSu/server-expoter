@@ -46,7 +46,7 @@
 - **action**:
   1. EXTERNAL_CONTRACTS.md 에 CVE list 등재
   2. precheck 단계에서 X-Server-Addr 헤더 사용 안 함을 명시 주석
-  3. docs/19_decision-log.md "보안 advisory" 섹션 추가
+  3. docs/reference/decision-log.md "보안 advisory" 섹션 추가
 
 ### F92 [P2] iDRAC9 CVE 라이브러리 추적
 - **출처**: chnzzh/iDRAC-CVE-lib (GitHub)

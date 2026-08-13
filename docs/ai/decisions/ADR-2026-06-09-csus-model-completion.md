@@ -140,7 +140,7 @@ Rollback trigger: pytest 회귀 5건+ / 사용자 명시 보류.
 - rule: `10`, `12 R1`, `13 R5/R7`, `22`, `25 R7-A-1/R7-B`, `50 R2`, `70 R8`, `92 R2`, `95 R1`, `96 R1-A/R1-B/R1-C`
 - ADR 선례: `ADR-2026-05-12-csus-rmc-multi-node.md` (data.multi_node 컨테이너 신설)
 - 코드: `redfish-gather/library/redfish_gather.py` (gather_thermal/_gather_thermal_subsystem/gather_boot/gather_manager_logs/gather_composition_service/gather_fabrics/_gather_fabric_members)
-- 정본: `docs/20_json-schema-fields.md` 7-bis, `docs/22_rmc-activation-guide.md`
+- 정본: `docs/contract/03-fields.md` 7-bis, `docs/operate/06-rmc-activation.md`
 - 테스트: `tests/unit/test_csus_extended_topology.py`, `tests/unit/test_csus_fixture_replay.py`
 
 ## 승인 기록

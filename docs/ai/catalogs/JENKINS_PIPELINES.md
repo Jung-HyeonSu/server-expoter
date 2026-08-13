@@ -59,7 +59,7 @@ Pipeline 이 런타임 임시파일(chmod 600)에 써서 `--vault-password-file`
 
 **vault encrypt 상태 (cycle-012)**: 8 vault 파일 (linux/windows/esxi + redfish/{dell,hpe,lenovo,supermicro,cisco}) 모두 ansible-vault AES256 encrypt 완료. 평문 password 더 이상 commit 안 됨.
 
-**참조**: `docs/01_jenkins-setup.md` (credential 등록 절차).
+**참조**: `docs/operate/01-jenkins-master.md` (credential 등록 절차).
 
 ## cron 인벤토리 (rule 28 #5)
 
@@ -92,7 +92,7 @@ grep -E "callback_url|triggers|cron" Jenkinsfile*
 ## 정본 reference
 
 - `Jenkinsfile`, `Jenkinsfile_portal` (정본)
-- `docs/01_jenkins-setup.md`, `docs/04_job-registration.md`, `docs/17_jenkins-pipeline.md`
+- `docs/operate/01-jenkins-master.md`, `docs/operate/03-job-registration.md`, `docs/operate/04-pipeline-runtime.md`
 - `.claude/ai-context/infra/convention.md`
 - `docs/ai/references/jenkins/pipeline-syntax.md`
 

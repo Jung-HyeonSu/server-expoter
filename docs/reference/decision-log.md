@@ -118,7 +118,7 @@ baseline 갱신 1건 — `tests/fixtures/redfish/dmtf_rackmount1/expected_output
 **실장비 / 실 Jenkins 검증은 하지 않았다** (이 환경에 ansible 미설치).
 
 정본: `tests/evidence/2026-08-12-errors-message-contract.md`,
-`docs/20_json-schema-fields.md` §4-1, `common/vars/failure_reasons.yml`,
+`docs/contract/03-fields.md` §4-1, `common/vars/failure_reasons.yml`,
 `common/vars/section_messages.yml`, `filter_plugins/errors_normalizer.py`.
 
 ---
@@ -566,7 +566,7 @@ HPE 공식 인용 (WebSearch 2026-05-12): "supports large, partitionable systems
 1. **envelope 표현 — Option C**: `data.multi_node` Additive 단일 컨테이너 + 기존 9 section path 100% 보존 (`data.system`/`data.bmc`/... 변경 0)
 2. **코드 리팩토링 — 변형 1**: `gather_*_multi()` 함수 신설 + 기존 함수 그대로 유지 (rule 92 R2 / 95 R1 #11)
 3. **RMC 라벨**: adapter `vendor_notes.manager_layout` 을 `redfish_gather.py` 까지 전달 + `_classify_rmc_label` substring 매칭 (rule 12 R1 line 1308 nosec 영역)
-4. **precheck graceful fail**: `diagnosis.details.rmc_activation_check` + `multi_node_layout` Additive + `docs/22_rmc-activation-guide.md` 신규
+4. **precheck graceful fail**: `diagnosis.details.rmc_activation_check` + `multi_node_layout` Additive + `docs/operate/06-rmc-activation.md` 신규
 5. **mock fixture 합성**: 3-partition × 4-manager × 3-chassis (sdflexutils + DMTF v1.15 + iLO5 API ref 3-source cross-check) + README 출처 매핑
 6. **baseline 경로**: `tests/expected/redfish/hpe_csus_3200/mock_v1.json` 별도 경로 — `schema/baseline_v1/` 는 lab 도입 cycle 까지 미작성 (rule 13 R4 보호)
 7. **derived 추가**: 기존 baseline 9종 `data.multi_node: null` Additive (inject_summary_to_baselines.py 패턴 재사용)
@@ -608,8 +608,8 @@ HPE 공식 인용 (WebSearch 2026-05-12): "supports large, partitionable systems
 | `tests/fixtures/redfish/hpe_superdome_flex/` | Partition1/2 + Expansion 보강 |
 | `tests/expected/redfish/hpe_csus_3200/mock_v1.json` | 신규 (fixture-derived expected) |
 | `tests/redfish/test_{hpe_csus_multi_node,resolve_all_members,classify_rmc_label}.py` | 신규 3 단위 테스트 |
-| `docs/20_json-schema-fields.md` | rule 13 R7 동기화 (multi_node 절 추가) |
-| `docs/22_rmc-activation-guide.md` | 신규 — RMC 활성화 절차 + community 7200359 트러블슈팅 |
+| `docs/contract/03-fields.md` | rule 13 R7 동기화 (multi_node 절 추가) |
+| `docs/operate/06-rmc-activation.md` | 신규 — RMC 활성화 절차 + community 7200359 트러블슈팅 |
 | `docs/ai/decisions/ADR-2026-05-12-csus-rmc-multi-node.md` | 신규 ADR (rule 70 R8 Trigger 2 + 3) |
 | `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` | sd00002765en_us (CSUS 3200 Administration Guide) + WebSearch 권위 인용 보강 |
 | `docs/ai/catalogs/VENDOR_ADAPTERS.md` / `COMPATIBILITY-MATRIX.md` | multi_node_support column / row 갱신 |
@@ -746,7 +746,7 @@ CSUS3200 매칭 패턴이 부재하여 현재 `hpe_ilo.yml` (priority=10) generi
 | `redfish-gather/tasks/vendors/hpe/normalize_oem.yml` | model regex 확장 (Additive) + 주석 갱신 |
 | `.claude/ai-context/vendors/hpe.md` | CSUS3200 절 추가 |
 | `docs/ai/catalogs/VENDOR_ADAPTERS.md` | HPE 6 → 7 adapter / 30 → 31 total / priority 일관성 갱신 |
-| `docs/13_redfish-live-validation.md` | 16.3 / 16.3.1 항목 추가 |
+| `docs/reference/live-validation.md` | 16.3 / 16.3.1 항목 추가 |
 | `docs/ai/CURRENT_STATE.md` | adapter count 30 → 31 / HPE 6 → 7 |
 | `docs/ai/NEXT_ACTIONS.md` | CSUS3200 lab 도입 후 cycle 4 항목 (rule 96 R1-C) |
 | `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` | HPE CSUS 3200 source 7종 URL 등재 |
@@ -878,7 +878,7 @@ Gen12 OEM 정보 (Oem.Hpe.SystemInformation 등) 수집 실패.
 |---|---|
 | `adapters/redfish/hpe_ilo7.yml` L34-43 | firmware_patterns 확장 + 주석 보강 (3 line 추가, model_patterns 무변경) |
 | `scripts/ai/verify_hpe_ilo7_fix.py` | 신규 — mock 5 시나리오 점수 회귀 검증 |
-| `docs/19_decision-log.md` | 본 entry |
+| `docs/reference/decision-log.md` | 본 entry |
 | `docs/ai/catalogs/VENDOR_ADAPTERS.md` | iLO 7 행 firmware_patterns 갱신 |
 | `docs/ai/catalogs/CONVENTION_DRIFT.md` | drift entry (firmware regex 3-part 가정 ↔ 일부 BMC 2-part 보고) |
 | `docs/ai/CURRENT_STATE.md` | cycle entry |
@@ -1043,7 +1043,7 @@ advisory hook 격상 4/4 완료 보장 위해 Phase 7 선행 작업 자율 진�
 Jinja namespace hook 동일 패턴 (cycle 2026-05-11 격상). docs20_sync 격상 기준 충족:
 
 - **운영 기간**: cycle 2026-05-06 advisory → 2026-05-11 까지 **5 cycle** (M-A1~A6 / M-B~L / M-A7 / M-A7-followup / harness-cycle)
-- **false-positive 통계**: git log 5 cycle 전수 검토 — 정본 4종 (`build_output.yml` / `build_status.yml` / `sections.yml` / `field_dictionary.yml`) 변경 commit 모두 `docs/20_json-schema-fields.md` 동반 변경 (M-A3 commit `78611714` 1건만 build_status.yml 주석 강화 → cosmetic 변경 = R7 Allowed 절 = `DOCS20_SYNC_SKIP_COSMETIC=1` 환경변수 escape hatch 적용 가능)
+- **false-positive 통계**: git log 5 cycle 전수 검토 — 정본 4종 (`build_output.yml` / `build_status.yml` / `sections.yml` / `field_dictionary.yml`) 변경 commit 모두 `docs/contract/03-fields.md` 동반 변경 (M-A3 commit `78611714` 1건만 build_status.yml 주석 강화 → cosmetic 변경 = R7 Allowed 절 = `DOCS20_SYNC_SKIP_COSMETIC=1` 환경변수 escape hatch 적용 가능)
 - **self-test**: 6/6 PASS (정본 1개 변경 / 정본 2개 + docs/20 / 정본 외 / 빈 staged / Windows path / 정본 4종 전수)
 
 ### 적용 변경 (2 파일)
@@ -1196,7 +1196,7 @@ cycle 2026-05-11 M-A1~A6 (vendor default 계정 자동 생성 path 보장) 후�
 
 ### 정본 reference
 
-- `docs/21_vault-operations.md` §6.5 — 9 vendor recovery 자격 매트릭스 (line 191-208)
+- `docs/operate/05-vault.md` §6.5 — 9 vendor recovery 자격 매트릭스 (line 191-208)
 - `redfish-gather/tasks/account_service.yml:31-41` — label 우선 → username fallback chain
 - `redfish-gather/tasks/try_one_account.yml` — 시도 체인
 
@@ -1299,7 +1299,7 @@ AI 자율 진행 권한 적용 (cycle 진입 시 사용자 명시 — "사용자
 2. `status_rules.yml` 변경 0 (DEAD CODE 명시 주석 reference 확인만)
 3. mock fixture 1건 신규 — 시나리오 B 재현 (`status_success_with_warnings.json`)
 4. pytest 회귀 + verify_harness_consistency PASS 확인
-5. M-F1 (docs/20_json-schema-fields.md 신설 시) status 판정 규칙 절 포함 의무 — DEPENDENCIES 갱신
+5. M-F1 (docs/contract/03-fields.md 신설 시) status 판정 규칙 절 포함 의무 — DEPENDENCIES 갱신
 
 ### 대안 비교 (Considered)
 
@@ -1342,7 +1342,7 @@ cycle-019 본 cycle 에서 7-loop + 10R extended audit P1 22건 적용 후, 사�
 | 5. baseline | schema/baseline_v1/{vendor}_baseline.json | DEFER (lab 부재) |
 | 6. ai-context | .claude/ai-context/vendors/{vendor}.md 4종 | [OK] |
 | 7. vendor-boundary-map.yaml | huawei/inspur/fujitsu/quanta 추가 | [OK] |
-| 8. live-validation | docs/13_redfish-live-validation.md Round 갱신 | DEFER (lab 부재) |
+| 8. live-validation | docs/reference/live-validation.md Round 갱신 | DEFER (lab 부재) |
 | 9. decision-log | 본 entry | [OK] |
 
 ### redfish_gather.py 동기화
@@ -1372,7 +1372,7 @@ cycle-019 본 cycle 에서 7-loop + 10R extended audit P1 22건 적용 후, 사�
 2. `tests/redfish-probe/probe_redfish.py --vendor {vendor}` 실행
 3. `schema/baseline_v1/{vendor}_baseline.json` 생성
 4. `tests/evidence/<날짜>-{vendor}.md` Round 검증 기록
-5. `docs/13_redfish-live-validation.md` Round 갱신
+5. `docs/reference/live-validation.md` Round 갱신
 6. `capture-site-fixture` skill 으로 사이트 fixture 캡처
 
 ### rule / 정본 참조
@@ -1856,9 +1856,9 @@ kernel sysfs > POSIX 명령 > /proc > /etc
 
 | 다음 작업 | 문서 |
 |---|---|
-| 검증 라운드 결과 누적 | [13_redfish-live-validation.md](13_redfish-live-validation.md) |
-| Adapter 시스템 (점수 / 새 벤더 추가) | [10_adapter-system.md](10_adapter-system.md) |
-| envelope 13 필드 의미 사전 | [20_json-schema-fields.md](20_json-schema-fields.md) |
+| 검증 라운드 결과 누적 | [live-validation.md](live-validation.md) |
+| Adapter 시스템 (점수 / 새 벤더 추가) | [../develop/03-adapter-system.md](../develop/03-adapter-system.md) |
+| envelope 13 필드 의미 사전 | [../contract/03-fields.md](../contract/03-fields.md) |
 
 ## 본 문서를 보는 법
 

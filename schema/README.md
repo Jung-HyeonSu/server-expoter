@@ -25,9 +25,9 @@ schema 변경 시 다음 3종 동시 갱신:
 
 ## 어느 파일을 먼저 봐야 하나
 
-- **envelope 구조 이해**: `docs/20_json-schema-fields.md` (정본 reference)
+- **envelope 구조 이해**: `docs/contract/03-fields.md` (정본 reference)
 - **섹션 추가 / 변경**: `sections.yml` 먼저, 그 다음 `field_dictionary.yml`
-- **새 vendor 추가**: `baseline_v1/{vendor}_baseline.json` (실측 후) — `docs/14_add-new-gather.md` 절차 B
+- **새 vendor 추가**: `baseline_v1/{vendor}_baseline.json` (실측 후) — `docs/develop/04-add-vendor.md` 절차 B
 - **회귀 입력 / 호출자 reference**: `examples/` + `output_examples/`
 
 ## 갱신 자동 검증
@@ -48,12 +48,12 @@ status, sections, diagnosis, meta, correlation, errors, data,
 schema_version
 ```
 
-상세: `docs/20_json-schema-fields.md`.
+상세: `docs/contract/03-fields.md`.
 
 ## 관련 문서
 
-- `docs/09_output-examples.md` — 출력 예시
-- `docs/13_redfish-live-validation.md` — 실장비 검증 / baseline 갱신 절차
-- `docs/16_os-esxi-mapping.md` — OS/ESXi 필드 매핑
-- `docs/20_json-schema-fields.md` — envelope 13 필드 정본
-- `docs/22_compatibility-matrix.md` — vendor × generation × section 호환성
+- `docs/contract/02-output-envelope.md` — 출력 예시
+- `docs/reference/live-validation.md` — 실장비 검증 / baseline 갱신 절차
+- `docs/develop/05-field-mapping.md` — OS/ESXi 필드 매핑
+- `docs/contract/03-fields.md` — envelope 13 필드 정본
+- `docs/reference/compatibility-matrix.md` — vendor × generation × section 호환성

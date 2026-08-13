@@ -100,4 +100,4 @@ post_edit_jinja_check.py가 자동 검증.
 
 - rule: `13-output-schema-fields`, `21-output-baseline-fixtures`, `31-integration-callback`
 - skill: `verify-json-output`
-- 정본: `docs/09_output-examples.md`
+- 정본: `docs/contract/02-output-envelope.md`

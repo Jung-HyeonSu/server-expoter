@@ -9,8 +9,8 @@
 > 검증일: 2026-03-18 | 검증 방식: 직접 HTTPS 호출 (curl/Python urllib)
 
 > [!NOTE]
-> 이 문서를 읽는 법: 1~14절은 2026-03-18 3대 실장비 검증 스냅샷이다. 그 안의 "수정 필요" 표시는 검증 시점 기준이며, 이후 cycle 에서 해결된 항목이 있다 (해결 내역은 `docs/19_decision-log.md`).
-> 15~16절은 이후 lab 부재(web sources) 호환성 cycle 기록이다. 현재 adapter/vendor 전체 목록은 `adapters/redfish/` 디렉터리와 `docs/22_compatibility-matrix.md` 를 본다.
+> 이 문서를 읽는 법: 1~14절은 2026-03-18 3대 실장비 검증 스냅샷이다. 그 안의 "수정 필요" 표시는 검증 시점 기준이며, 이후 cycle 에서 해결된 항목이 있다 (해결 내역은 `docs/reference/decision-log.md`).
+> 15~16절은 이후 lab 부재(web sources) 호환성 cycle 기록이다. 현재 adapter/vendor 전체 목록은 `adapters/redfish/` 디렉터리와 `docs/reference/compatibility-matrix.md` 를 본다.
 
 ## 1. 대상 장비
 
@@ -353,7 +353,7 @@ ServiceRoot를 조회했으므로 chassis_uri를 함께 반환하면 HTTP 호출
 | HPE DL380 Gen11 | "iLO 6 v1.73" | **redfish_hpe_ilo6** (iLO 6 전용 adapter) | 100 |
 | Dell R740 | "4.00.00.00" | **redfish_dell_idrac9** (^[4-7]\. 패턴 매칭) | 100 |
 
-> 해결됨: hpe_ilo6.yml adapter가 추가되었다 (docs/19_decision-log.md P0-3).
+> 해결됨: hpe_ilo6.yml adapter가 추가되었다 (docs/reference/decision-log.md P0-3).
 
 ## 13. Payload 심층 분석 — 벤더 간 차이점 10건
 
@@ -552,10 +552,10 @@ cycle 2026-05-07 M-K1 검증: 30/30 adapter origin 주석 일관성 PASS (verify
 
 | 다음 작업 | 문서 |
 |---|---|
-| 새 어댑터 추가 | [14_add-new-gather.md](14_add-new-gather.md) |
-| 호환성 매트릭스 | [22_compatibility-matrix.md](22_compatibility-matrix.md) |
-| Adapter 시스템 (점수 계산) | [10_adapter-system.md](10_adapter-system.md) |
-| 결정 추적 | [19_decision-log.md](19_decision-log.md) |
+| 새 어댑터 추가 | [../develop/04-add-vendor.md](../develop/04-add-vendor.md) |
+| 호환성 매트릭스 | [compatibility-matrix.md](compatibility-matrix.md) |
+| Adapter 시스템 (점수 계산) | [../develop/03-adapter-system.md](../develop/03-adapter-system.md) |
+| 결정 추적 | [decision-log.md](decision-log.md) |
 | lab 도입 후 별도 cycle | [docs/ai/NEXT_ACTIONS.md](ai/NEXT_ACTIONS.md) (M-L1) |
 | vendor adapter 매트릭스 | [docs/ai/catalogs/VENDOR_ADAPTERS.md](ai/catalogs/VENDOR_ADAPTERS.md) (M-L2) |
 | compatibility matrix 상세 | [docs/ai/catalogs/COMPATIBILITY-MATRIX.md](ai/catalogs/COMPATIBILITY-MATRIX.md) (M-L3) |

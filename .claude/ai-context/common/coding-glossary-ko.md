@@ -42,7 +42,7 @@
 | 용어 | 풀이 |
 |---|---|
 | **agent-master 망 분리** | Ingest 단계는 master에서 (8bd80c1 / 4ccc1d7), gather는 agent에서 실행. |
-| **Round 검증** | 새 벤더/펌웨어 검증 단위 (Round 1, 2, ...). docs/19_decision-log.md + tests/evidence/에 기록. |
+| **Round 검증** | 새 벤더/펌웨어 검증 단위 (Round 1, 2, ...). docs/reference/decision-log.md + tests/evidence/에 기록. |
 | **graceful degradation** | precheck 일부 단계 실패 시 가능한 데이터만 수집하고 errors에 기록. status는 partial. |
 | **post-merge** | `git merge / pull / rebase` 직후. `post_merge_gap_check + post_merge_incoming_review` hook 자동 실행 (rule 97). |
 

@@ -45,12 +45,12 @@
   5. `schema/baseline_v1/{vendor}_baseline.json` 추가 (실장비 검증 후)
   6. `.claude/ai-context/vendors/{vendor}.md` 추가
   7. `.claude/policy/vendor-boundary-map.yaml` 갱신
-  8. `docs/13_redfish-live-validation.md` Round 갱신
-  9. `docs/19_decision-log.md` 추가
+  8. `docs/reference/live-validation.md` Round 갱신
+  9. `docs/reference/decision-log.md` 추가
 - **단계 10 (lab 부재 vendor 시 의무 — cycle 2026-05-01 / 2026-05-06 학습 형식화)**:
   - lab 부재 시 (사용자 사이트 외 lab 환경에 vendor 장비 없음) 다음 trigger 발생 → NEXT_ACTIONS.md 자동 등록 의무 (rule 96 R1-C 와 연동)
     - `schema/baseline_v1/{vendor}_baseline.json` SKIP (단계 5)
-    - `docs/13_redfish-live-validation.md` Round = "lab 부재 — web sources" (단계 8)
+    - `docs/reference/live-validation.md` Round = "lab 부재 — web sources" (단계 8)
     - `vault/<loc>/redfish/<vendor>.yml` SKIP 사용자 명시 승인 (단계 4)
   - NEXT_ACTIONS.md 등재 항목:
     1. 사이트 fixture 캡처 (capture-site-fixture skill)
@@ -150,4 +150,4 @@
 - skill: `add-new-vendor`, `vendor-change-impact`, `score-adapter-match`
 - agent: `vendor-onboarding-worker`, `vendor-boundary-guardian`
 - policy: `.claude/policy/vendor-boundary-map.yaml`
-- 정본: `docs/14_add-new-gather.md`, `docs/13_redfish-live-validation.md`
+- 정본: `docs/develop/04-add-vendor.md`, `docs/reference/live-validation.md`

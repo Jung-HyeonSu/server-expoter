@@ -19,7 +19,7 @@
 | C | Vault 패스워드 자동 반영 | 동적 로딩 메커니즘 검증 + 캐시 무효화 |
 | D | 모든 vendor 호환성 fallback | 9 vendor × N gen × 9 sections gap analysis + fallback 보강 |
 | E | HPE Superdome 추가 | rule 50 R2 9단계 + web 검색 (Flex / Flex 280 / 2 / X / Integrity) |
-| F | JSON 스키마 의미 문서 | docs/20_json-schema-fields.md 신설 (envelope 13 + sections 10) |
+| F | JSON 스키마 의미 문서 | docs/contract/03-fields.md 신설 (envelope 13 + sections 10) |
 | G | 하네스 학습 보강 | 본 cycle 학습 → rule / skill / agent 후보 |
 
 ---
@@ -97,7 +97,7 @@ docs/ai/tickets/2026-05-06-multi-session-compatibility/
 ### 외부 의존 (lab 도입 시까지 보류)
 
 - 모든 ticket 의 실 lab 검증 (mock fixture + 정적 검증으로 본 cycle 종료)
-- Round 검증 / docs/13_redfish-live-validation.md 갱신
+- Round 검증 / docs/reference/live-validation.md 갱신
 - vault 실 회전 검증 (mock 시뮬만)
 
 ---

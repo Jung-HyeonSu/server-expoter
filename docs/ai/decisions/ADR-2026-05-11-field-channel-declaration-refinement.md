@@ -71,7 +71,7 @@ cycle 2026-05-11 이전에는 65 entries × 8 baseline = 520 cells 의 실제 �
 
 ### 6. docs/20 동기화 (rule 13 R7)
 
-- `docs/20_json-schema-fields.md` memory 절: installed_mb / visible_mb / free_mb 채널 변경 반영
+- `docs/contract/03-fields.md` memory 절: installed_mb / visible_mb / free_mb 채널 변경 반영
 - 섹션 8 (참조 표): `FIELD_USAGE_MATRIX.md` 신규 catalog 링크 추가
 
 ## 결과 (Impact)

@@ -1,6 +1,6 @@
 # Project Map — server-exporter
 
-> 디렉터리 구조 요약. 정본은 `CLAUDE.md` "파일 구조" 섹션 + `docs/06_gather-structure.md` 참조.
+> 디렉터리 구조 요약. 정본은 `CLAUDE.md` "파일 구조" 섹션 + `docs/develop/01-gather-structure.md` 참조.
 
 ## 최상위 구조
 
@@ -65,9 +65,9 @@ server-exporter/
 ## 정본 reference
 
 - `CLAUDE.md` "파일 구조" 섹션 — 가장 상세
-- `docs/06_gather-structure.md` — gather 구조
-- `docs/07_normalize-flow.md` — Fragment 정규화 흐름
-- `docs/10_adapter-system.md` — Adapter 시스템
+- `docs/develop/01-gather-structure.md` — gather 구조
+- `docs/develop/02-normalize-flow.md` — Fragment 정규화 흐름
+- `docs/develop/03-adapter-system.md` — Adapter 시스템
 
 ## fingerprint
 

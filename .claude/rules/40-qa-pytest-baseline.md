@@ -25,7 +25,7 @@
    - 외부 시스템 변경 → baseline 갱신 (rule 13 R4) + evidence 기록
    - 코드 회귀 → 코드 수정
 4. evidence 파일 (`tests/evidence/<날짜>-<vendor>-<펌웨어>.md`) 작성
-5. docs/19_decision-log.md 업데이트
+5. docs/reference/decision-log.md 업데이트
 
 ### R3. pytest 명령
 
@@ -68,4 +68,4 @@ pytest tests/regression/ -k dell
 - rule: `13-output-schema-fields`, `21-output-baseline-fixtures`, `80-ci-jenkins-policy`
 - skill: `prepare-regression-check`, `update-vendor-baseline`, `probe-redfish-vendor`, `run-baseline-smoke`
 - agent: `qa-regression-worker`, `baseline-validation-worker`
-- 정본: `docs/13_redfish-live-validation.md`
+- 정본: `docs/reference/live-validation.md`

@@ -54,8 +54,8 @@ server-exporter overall.status 판정 로직의 4 시나리오 매트릭스 (A/B
 
 6. **동반 정본 4 곳 일관성**:
    - `common/tasks/normalize/build_status.yml` 본문 주석
-   - `docs/19_decision-log.md` (M-A2 / 2026-05-06 결정)
-   - `docs/20_json-schema-fields.md` (호출자 reference)
+   - `docs/reference/decision-log.md` (M-A2 / 2026-05-06 결정)
+   - `docs/contract/03-fields.md` (호출자 reference)
    - `tests/` mock fixture 13건
 
 ## 절차
@@ -109,6 +109,6 @@ server-exporter overall.status 판정 로직의 4 시나리오 매트릭스 (A/B
 - agent: `output-schema-reviewer`, `schema-mapping-reviewer`
 - script: `scripts/ai/hooks/pre_commit_status_logic_check.py` (advisory)
 - 정본 코드: `common/tasks/normalize/build_status.yml`
-- 정본 결정: `docs/19_decision-log.md` (M-A2 / 2026-05-06)
-- 정본 reference: `docs/20_json-schema-fields.md`
+- 정본 결정: `docs/reference/decision-log.md` (M-A2 / 2026-05-06)
+- 정본 reference: `docs/contract/03-fields.md`
 - 회귀 fixture: M-A3 commit `78611714` (13건)

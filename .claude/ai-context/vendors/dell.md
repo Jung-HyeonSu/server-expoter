@@ -35,6 +35,6 @@
 
 ## Reference
 
-- `docs/13_redfish-live-validation.md` — 실장비 검증 결과
-- `docs/10_adapter-system.md` — Adapter 점수 / 매트릭스
+- `docs/reference/live-validation.md` — 실장비 검증 결과
+- `docs/develop/03-adapter-system.md` — Adapter 점수 / 매트릭스
 - Dell Redfish API doc (외부): support.dell.com

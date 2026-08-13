@@ -77,5 +77,5 @@ python scripts/ai/hooks/output_schema_drift_check.py
 
 - `schema/sections.yml`, `schema/field_dictionary.yml`, `schema/baseline_v1/`
 - `tests/validate_field_dictionary.py` (표준 검증 도구)
-- `docs/09_output-examples.md`, `docs/16_os-esxi-mapping.md`
+- `docs/contract/02-output-envelope.md`, `docs/develop/05-field-mapping.md`
 - skill: `update-output-schema-evidence`, `plan-schema-change`

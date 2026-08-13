@@ -4,7 +4,7 @@
 - 일시: 2026-06-04
 - 결정 주체: 사용자(hshwang1994) 명시 지시 + AI(Claude) 구현
 - 관련 rule: 12 R1, 13 R5/R7, 50 R1/R2, 92 R5, 96 R1-B
-- supersede/refine: `docs/19_decision-log.md` 2026-05-12 결정 ("새 HPE sub-vendor 신설 거절") 의 부분 갱신
+- supersede/refine: `docs/reference/decision-log.md` 2026-05-12 결정 ("새 HPE sub-vendor 신설 거절") 의 부분 갱신
 
 ## 1. 컨텍스트 (Why)
 
@@ -78,7 +78,7 @@ PASS / validate_field_dictionary PASS / output_schema_drift PASS / Jinja 표시�
 
 ## 5. 2026-05-12 결정과의 관계
 
-`docs/19_decision-log.md` 2026-05-12 행("새 HPE sub-vendor 신설 거절 — vendor_aliases.yml
+`docs/reference/decision-log.md` 2026-05-12 행("새 HPE sub-vendor 신설 거절 — vendor_aliases.yml
 변경 불필요")은 **내부 canonical 차원에서 여전히 유효** (canonical `hpe` 유지, vendor_aliases
 의 vendor 목록 불변, OEM tasks 재사용). 본 ADR 은 그 위에 **출력 표시 계층**만 추가한 것으로
 충돌이 아니라 refine. CSUS 는 내부적으로 `hpe` 로 라우팅되고 출력에서만 `hpCsus` 로 표시된다.

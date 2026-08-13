@@ -1,6 +1,6 @@
 # Output-Schema Convention — server-exporter
 
-> 출력 schema 작업 컨벤션. 정본: `schema/sections.yml`, `schema/field_dictionary.yml`, `docs/09_output-examples.md`, `docs/16_os-esxi-mapping.md`.
+> 출력 schema 작업 컨벤션. 정본: `schema/sections.yml`, `schema/field_dictionary.yml`, `docs/contract/02-output-envelope.md`, `docs/develop/05-field-mapping.md`.
 
 ## 1. 출력 envelope (rule 20)
 

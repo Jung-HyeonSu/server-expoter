@@ -57,4 +57,4 @@
 - rule: `10-gather-core`, `22-fragment-philosophy`
 - skill: `validate-fragment-philosophy`
 - agent: `fragment-engineer`
-- 정본: `docs/07_normalize-flow.md`
+- 정본: `docs/develop/02-normalize-flow.md`

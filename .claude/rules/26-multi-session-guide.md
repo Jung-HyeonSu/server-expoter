@@ -39,7 +39,7 @@
   |---|---|---|
   | A | adapter Huawei 신규 | adapters/redfish/huawei_*.yml + redfish-gather/tasks/vendors/huawei/ |
   | B | tests/fixtures Huawei | tests/fixtures/huawei_*.json |
-  | C | docs 갱신 | .claude/ai-context/vendors/huawei.md + docs/13_redfish-live-validation.md |
+  | C | docs 갱신 | .claude/ai-context/vendors/huawei.md + docs/reference/live-validation.md |
   ```
 - **Allowed**: 오너십이 명백한 경우 (1 세션이 1 디렉터리만) 표 생략 가능. 단 README에 명시
 - **Forbidden**: 오너십 정의 없이 다중 세션 시작
