@@ -1340,3 +1340,46 @@ MinPasswordLength                   = 8
   `MaxPasswordLength=32`, ETag 제공(strong).
 - 비밀번호를 다른 속성과 함께 보내는 것은 정상 동작한다 (HPE 와 반대) — 오히려 단독
   PATCH 는 과거 권한 cache 손상 사례가 있어 묶어서 보낸다.
+
+
+---
+
+## 2026-08-13 — 9 Vendor Account Write Contract (Delta Research 반영)
+
+정본: `docs/ai/REDFISH_ACCOUNT_WRITE_CONTRACT_IMPLEMENTATION_PLAN_2026-08-12.md`,
+`tests/evidence/2026-08-13-account-write-contract-alignment.md`
+
+### Firmware / Advisory
+
+| Vendor | 계약 | 출처 |
+|---|---|---|
+| HPE | UserAccount PATCH 가 일부 파라미터를 무시. 영향 iLO6 1.73/1.74 · iLO7 1.19/1.20, **해결 iLO6 1.75+ / iLO7 1.21+** | Customer Advisory `a00159600en_us` (2026-05-12) |
+| HPE | `PasswordChangeRequired` = Read Only (iLO5/6/7), `AccountTypes` = Read Only (iLO6 1.64+/iLO7), `Locked` 는 ManagerAccount schema 에 없음 | servermanagementportal.ext.hpe.com iLO5/6/7 Resource Definitions |
+| Dell | `SYS474` = 비밀번호 정책 거부. `MessageArgs=[]`, `RelatedProperties=["#/Password"]`, `Severity=Warning`, **HTTP 200 + Success 메시지와 함께 온다** | Dell Error and Event Message Guide + 실측 10.100.15.34 |
+| Dell | `HTTPBasicAuth` 기본값이 iDRAC9 7.30.10.50 / iDRAC10 1.30.10.50 부터 `Unadvertised` | Dell KB 000437501 |
+| Dell | iDRAC9 = 16 users(ID 1 예약) / iDRAC10 = 32 users(ID 1·2 예약) | idrac9/idrac10 User Guide |
+| Lenovo | XCC1 Purley = 빈 slot PATCH / Whitley·AMD·XCC2·XCC3·TSM = Collection POST | pubs.lenovo.com xcc-restapi |
+| Lenovo | **XCC3 공식 Create/Update Property 목록에 `PasswordChangeRequired` 가 없다** (XCC2 는 있다) | pubs.lenovo.com xcc3-restapi |
+| Lenovo | `Locked` 는 XCC1/2/3 에서 GET 에만 존재(Update 목록 없음), **TSM 은 writable** | pubs.lenovo.com xcc/tsm |
+| Lenovo | `HostBootstrapAccount` = DMTF ManagerAccount 표준 Property. **실미러 10.50.11.232 에 존재** | `schema/redfish_dmtf_2026.1/ManagerAccount.v1_14_1.json`, `tests/reference/redfish/lenovo/10_50_11_232` |
+| Cisco | IMC 3.x = `POST /Accounts/<ID>`(Instance) / 4.1+ = `POST /Accounts` + body `Id` | cisco.com IMC REST API Guide 3.x / 4.1 |
+| Cisco | BMC 1.1 = `Locked` **writable**, `PasswordChangeRequired` **read-only(기존 계정)**, `AccountTypes` read-only | cisco.com BMC REST API Guide 1.1 |
+| Supermicro | 최신 Add Account = **`POST /redfish/v1/AccountService`** (Accounts Collection 아님) | Redfish 1.22.2-00.04 User Manual |
+| Supermicro | IPMI/Redfish 계정 분리 경계 = Gen13 `01.05.xx+` / Gen14 `01.02.xx.xx+` / NVIDIA Superchip `01.04.xx+` | 동 매뉴얼 Accounts |
+| Inspur | M6 Create = POST Collection(**If-Match 없음**) / Repair = PATCH Instance + `GET ETag` → `If-Match` | 浪潮英信服务器 Redfish用户手册 V1.2 §4.4/§4.6 |
+| Inspur | 성공 판정 = HTTP 200 **AND** `Oem.Public.Status == 0` | 동 매뉴얼 |
+| Huawei | ManagerAccount `UserName/Password/RoleId/**Locked**/Enabled` 가 GET/PATCH. `PasswordChangeRequired`/`AccountTypes` 는 공식 table 에 없음 | EDOC1100372764 Kunpeng iBMC Redfish |
+| Huawei | Local User 마다 Login Interface(Web/SNMP/IPMI/SSH/SFTP/Local/**Redfish**)를 개별로 켜고 끈다 | "Setting the User Interfaces for Logging to iBMC" |
+| Fujitsu | `RedfishAdmin`/`RedfishOperator`/`RedfishReadOnly` 는 Fujitsu Role 체계이며 **`ManagerAccount.RoleId` literal 이라는 근거는 없다** | SVS_LdapDeployer |
+| Quanta | upstream bmcweb 은 `Redfish` 와 `WebUI` 를 결합해 매핑 — 한쪽만 보내면 `StrictAccountTypes` 오류 | github.com/openbmc/bmcweb account_service.hpp |
+| Quanta | D43K=Redfish v1.1 / D54U·S24P=v1.11 / S45Z 등 Xeon 6=Inhouse OpenBMC. **AST2600 만으로 OpenBMC 판정 금지** | qct.io 제품자료 |
+
+### 공통 금지 (5개 문서 이상이 명시)
+
+```text
+- PasswordChangeRequired 를 덧붙여 재시도하는 generic fallback
+- 거부된 속성을 빼고 다시 쓰는 사다리
+- 두 Create URI 를 순차로 시도하는 fallback
+- HTTP 2xx 만으로 convergence 성공 처리
+- 한 Vendor/Family 의 실측을 다른 Vendor 의 기본 동작으로 일반화
+```

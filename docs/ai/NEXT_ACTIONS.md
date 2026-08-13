@@ -1,5 +1,36 @@
 # server-exporter 다음 작업 (NEXT_ACTIONS)
 
+## 계정 쓰기 계약 정합 후속 (2026-08-13)
+
+> 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
+> ADR: `docs/ai/decisions/ADR-2026-08-13-account-write-contract-alignment.md`
+
+### 조건 미발생 — 실장비가 있어도 지금은 못 한다
+
+| # | 항목 | 상태 | 왜 |
+|---|---|---|---|
+| AWC-1 | Account **CREATE** 실장비 증명 | `[PENDING / 조건 부재]` | git 4대 모두 표준 계정이 이미 존재해 `presence=absent` 가 발생하지 않는다. 조건을 만들려면 운영 계정을 삭제해야 하므로 하지 않는다 |
+| AWC-2 | Account **REPAIR** 재현 (계약 정비 후) | `[PENDING / 조건 부재]` | 표준 인증이 4대 모두 성공해 reconcile 게이트가 열리지 않는다. 비밀번호를 일부러 어긋나게 만들지 않는다 |
+
+### 조사 필요 (구현 대상 아님)
+
+| # | 대상 | 얻는 것 | 우선순위 |
+|---|---|---|---|
+| AWC-3 | Fujitsu `iRMC RESTful API Specification pack` (2026-01-13, 13.15MB) 원문 | S4/S5/S6 AccountService·ManagerAccount Method Table. 확보 전까지 Family 추가 없음 | HIGH |
+| AWC-4 | Supermicro `POST /AccountService` 가 어느 Firmware 부터 유효한가 | `create_uri` 를 `account_service_root` 로 전환할 근거. 현재는 장비값으로 Generation+Firmware 를 확정했을 때만 전환 | HIGH |
+| AWC-5 | Huawei Redfish Login Interface 를 켜는 OEM field/action | 자동 복구 payload. **확보 전 구현 금지** — 현재는 관측·진단만 | MED |
+| AWC-6 | Cisco IMC allowable Account Id 범위 공식 근거 | `id_range` 확정. 현재 `(2,16)` half-open = 2..15 는 자체 정합이므로 **근거 없이 바꾸지 않는다** | MED |
+| AWC-7 | 실장비 부재 5 Vendor 실미러 (Supermicro / Huawei / Inspur / Fujitsu / Quanta) | UNVERIFIED 를 lab 없이 낮출 유일한 수단 | MED |
+
+### 알려진 제약
+
+| # | 항목 | 내용 |
+|---|---|---|
+| AWC-8 | `scripts/ai/verify_no_plaintext_secret.py` Windows 콘솔 오류 | 기본 cp949 콘솔에서 출력 인코딩 때문에 `UnicodeEncodeError` → exit 1. 검출 결과는 정상(`PYTHONUTF8=1` 로 exit 0). 하네스 스크립트 문제이며 계정 작업 범위 밖이라 손대지 않았다 |
+| AWC-9 | Adapter 세대 오선택 (기존 PWC-4) | Dell 10.100.15.34 는 iDRAC9 인데 adapter 는 `redfish_dell_idrac10` 을 고른다. **계정 경로는 Firmware major 로 판정하므로 영향받지 않지만** adapter_id 자체는 여전히 틀린다 |
+| AWC-10 | `redfish_gather.py` 분량 | 6,900줄 초과. rule 10 R3 관점에서 계정 영역 분리가 맞지만 Jenkins agent import 경로가 미검증이라 별도 작업으로 남긴다 |
+
+
 > **본 파일**: 진정 active PENDING 만 유지 (rule 70 R5 / R6 / R7 cycle 자문 정책).
 > **lab 매트릭스**: `docs/ai/catalogs/LAB_PENDING_MATRIX.md` (8 vendor × generation × 4 column).
 > **archive**: `docs/ai/archive/NEXT_ACTIONS-history-2026-04-to-05.md` (OPS-* + cycle-013/014/015/016 잔여).
@@ -70,9 +101,16 @@
 
 ## Redfish 계정 Reconcile 후속 (2026-08-12) — Family Strategy 도입 이후
 
-> 정본: `tests/evidence/2026-08-12-redfish-standard-account-final-compatibility.md`
+> 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
 > 매트릭스: `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`
-> **현재 어떤 BMC Family 도 `PROVEN` 이 아니다** — 실장비 Write E2E 가 0건이다.
+> 계획: `docs/ai/REDFISH_ACCOUNT_WRITE_CONTRACT_IMPLEMENTATION_PLAN_2026-08-12.md`
+>
+> **[정정 2026-08-13]** 종전 이 자리의 "현재 어떤 BMC Family 도 `PROVEN` 이 아니다" 는
+> stale 이었다. Case A(표준 인증 성공 → Write 0 → 표준 계정 수집)는 git 4대에서
+> 반복 증명됐고 Case B(Repair 완주)는 Lenovo XCC 1건이 있다.
+> **여전히 미증명인 것은 Account CREATE 다** — 어느 Family 도 실장비 Create 근거가 없다.
+> 4대 모두 표준 계정이 이미 존재해 `presence=absent` 조건 자체가 발생하지 않으며,
+> 조건을 만들려면 운영 계정을 지워야 하므로 하지 않는다.
 
 ### 운영 결정 필요 (사람 몫 — 코드로 풀 수 없다)
 

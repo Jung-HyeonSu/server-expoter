@@ -358,11 +358,15 @@ try_one_account.yml (accounts[1+] recovery 시도)
        ↓
 collect_standard.yml → _rf_primary_auth_rejected = true  (primary 관측이 401 일 때만)
        ↓
-account_service.yml (진입 조건 4개 — 2026-08-11 Phase 6-B 로 좁혀짐)
-  1. _rf_used_account.role == 'recovery'
-  2. _rf_collect_ok == true
-  3. _rf_primary_auth_rejected == true   ← 401 실증. timeout/TLS/5xx/403 은 진입 안 함
-  4. vault 에 primary 후보 1개 이상
+account_service.yml (진입 조건 — 정본은 redfish-gather/site.yml)
+  [정정 2026-08-13] 종전 4개 조건 서술은 stale 이다. 특히 1·2번은 현재 코드와 반대다 —
+  복구 계정으로 수집한 결과는 정상 결과가 될 수 없으므로 `_rf_used_account.role` 은
+  진입 조건이 아니고, `_rf_collect_ok` 는 **false** 일 때만 진입한다.
+
+  현재 정본 (site.yml `_rf_account_reconcile_allowed`):
+  1. _rf_collect_ok == false              ← 표준 계정으로 수집이 실패했다
+  2. _rf_primary_auth_rejected == true    ← 401 실증. timeout/TLS/5xx/403 은 진입 안 함
+  3. 해당 Location+Vendor 의 recovery 후보 1개 이상
   └─ redfish_gather mode='account_provision'
        target_username='infraops', target_password=<vault accounts[0].password>,
        target_role='Administrator'
@@ -376,8 +380,12 @@ BMC AccountService POST/PATCH → infraops 계정 생성/복구
 
 ### dryrun 정책
 
-- `_rf_account_service_dryrun` (default `false` — cycle 2026-04-30 사용자 명시 승인으로 OFF 전환)
-- override: `-e _rf_account_service_dryrun=true` (시뮬레이션 모드 강제)
+- `_rf_account_service_dryrun` — [정정 2026-08-13] 고정 기본값 `false` 가 아니다.
+  변수를 **주지 않으면** `not _rf_account_reconcile_allowed` 에서 파생된다. 즉
+  진입 조건이 성립했을 때만 실쓰기이고 그 외에는 시뮬레이션이다
+  (정본: `redfish-gather/tasks/account_service.yml` `_rf_account_service_dryrun_effective`).
+- override: `-e _rf_account_service_dryrun=true` (변수를 명시했을 때만 override 로 인정)
+- `ansible-playbook --check` 도 dryrun 으로 접힌다 (module.check_mode → dryrun)
 - 신규 사이트 BMC 1대 처음 적용 시 권장: dryrun ON 으로 시뮬레이션 1회 → dryrun OFF 로 실 적용
 
 ## 6.6. adapter label naming convention (cycle 2026-05-11 — M-A7)

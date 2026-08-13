@@ -6,6 +6,86 @@
 
 ---
 
+## 0-A. 2026-08-13 갱신 — 9 Vendor 조사 반영 구현 완료
+
+정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
+계획: `docs/ai/REDFISH_ACCOUNT_WRITE_CONTRACT_IMPLEMENTATION_PLAN_2026-08-12.md`
+
+9 Vendor Delta 조사 결과를 코드 계약으로 반영했다. **Evidence 등급 축을 상태와 분리**한다.
+
+| Evidence | 의미 |
+|---|---|
+| `LIVE-PROVEN` | 이 저장소 실장비에서 직접 재현 |
+| `ADVISORY-DERIVED` | Vendor 공식 Advisory 가 defect 를 확인했으나 우리 payload 조합은 미검증 |
+| `DOCUMENTED` | 공식 문서로 계약 확인, Live Write 없음 |
+| `UNVERIFIED` | 공식 Write 계약 미확보 — 한 번의 결정적 쓰기만 하고 지원한다고 말하지 않는다 |
+
+**`LIVE-PROVEN` 과 `ADVISORY-DERIVED` 를 절대 합치지 않는다.**
+
+### 새 판정 축 4종
+
+| 축 | 뜻 |
+|---|---|
+| Property Contract | Family × Operation 별 `writable / read_only / verify_only / unsupported / unverified`. **표에 없는 Property 기본값은 `unverified` 이고 자동으로 쓰지 않는다.** |
+| Create URI 종류 | `accounts_collection` / `account_service_root` / `account_instance`. Accounts **열거** URI 와 다른 개념이며 실패해도 갈아타지 않는다 |
+| Operation 단위 If-Match | Inspur M6 = Create 없음 / Repair 있음 |
+| Workaround Basis | `live_proven` / `advisory_derived` / `safety_strategy` (HPE) |
+
+### HPE — Family 는 하나, 근거는 Firmware 별
+
+쓰기 **동작**은 iLO5/6/7 전부 Password 단독 PATCH 로 같다(HPE 공식 지원 동작 + 저장소 안전 전략).
+갈리는 것은 그 선택의 **근거 수준**이다.
+
+| Firmware | Workaround Basis | Evidence | Firmware Risk |
+|---|---|---|---|
+| iLO6 **1.73** | `live_proven` | **LIVE-PROVEN** | a00159600en_us |
+| iLO6 1.74 | `advisory_derived` | ADVISORY-DERIVED | a00159600en_us |
+| iLO7 1.19 / 1.20 | `advisory_derived` | ADVISORY-DERIVED | a00159600en_us |
+| iLO6 1.75+ / iLO7 1.21+ | `safety_strategy` | DOCUMENTED | **Advisory fixed** |
+| iLO5 전체 / Firmware 판독 불가 | `safety_strategy` | DOCUMENTED | 해당 없음 |
+| iLO4 | — (Oem/Hp) | DOCUMENTED | 해당 없음 |
+
+`safety_strategy` / `advisory_derived` 를 **Vendor mandatory 또는 LIVE-PROVEN 으로 표기하지 않는다.**
+
+### Family 표 변화
+
+| 종전 | 현재 | 이유 |
+|---|---|---|
+| `lenovo_xcc_accounttypes` | `lenovo_xcc2_accounttypes` + `lenovo_xcc3_accounttypes` | XCC3 공식 목록에 `PasswordChangeRequired` 가 없다 (03 §11.3) |
+| — | `cisco_cimc3_instance_post` | IMC 3.x 는 Instance URI POST (04 §4.2) |
+| — | `qct_legacy_redfish` / `qct_modern_redfish` / `qct_inhouse_openbmc` | 경계 기록용. **동작은 generic 과 동일**, AccountTypes 미전송 (09 §9/§44) |
+| `_ACCOUNT_CREATE_STRATEGY` (vendor→method) | 제거 | Family 표와 다른 답을 담은 죽은 정본 |
+
+### 제거한 재시도
+
+`PasswordChangeRequired` 추가 후 2차 POST, 거부 속성 drop 후 재PATCH — 둘 다 제거했다.
+허용되는 다중 쓰기는 **ETag 412 재시도(동일 URI·동일 payload)** 와
+**Family 가 쓰기 전에 확정한 sequence(HPE)** 뿐이다.
+
+### 보호 계정
+
+`HostBootstrapAccount == true` (DMTF ManagerAccount 표준 Property, 실미러 10.50.11.232 에 존재)
+를 근거로 `protected` 분류한다. **XCC3 전용 개념이 아니다.** 열거·진단에는 남기고 Create/Repair
+후보에서만 제외하며, 표준 계정 이름이 겹치면 `protected_conflict` → **Write 0**.
+
+`reserved_slot_ids` 는 "여기에 만들지 마라" 이지 "여기 있는 계정은 못 고친다" 가 아니다 —
+두 축을 섞지 않는다.
+
+### 2026-08-13 실장비 재검증
+
+| 대상 | Check Mode | 1차 | 2차 | Account Write |
+|---|---|---|---|---|
+| Dell iDRAC9 10.100.15.34 | success | success 9/11 | success 9/11 | **0 / 0 / 0** |
+| HPE iLO6 10.50.11.231 | success | success 9/11 | success 9/11 | **0 / 0 / 0** |
+| Lenovo XCC 10.50.11.232 | success | success 9/11 | success 9/11 | **0 / 0 / 0** |
+| Cisco CIMC 10.100.15.2 | success | success 9/11 | success 9/11 | **0 / 0 / 0** |
+
+4대 전부 `used_role=primary` / `credential_scope=common/redfish/standard`.
+**Create / Repair 는 이번에도 조건이 발생하지 않아 미증명이다** — 4대 모두 표준 계정이
+이미 정상이고, 조건을 만들려면 운영 계정을 지워야 하므로 하지 않았다.
+
+---
+
 ## 0. 이 문서를 읽는 법
 
 ### 상태 표기
@@ -172,10 +252,16 @@ Recovery Account                  = Location × Vendor (vault/<loc>/redfish/<ven
 | ETag | 미사용 | 미사용 | 미사용 |
 | Write 성공 계약 | 2xx **AND** 본문 거부 없음 | 동일 | **200 + 본문 read-only 거부** 를 실패로 처리 |
 | Repository Strategy | `dell_slot_patch` | `dell_slot_patch` | `dell_idrac10_slot_patch` |
-| Fixture Evidence | 없음 | 실미러 `10_100_15_27/28/31/33` | 실미러 `10_100_15_34` |
+| Fixture Evidence | 없음 | 실미러 `10_100_15_27/28/31/33/34` | **없음** (아래 정정) |
 | Live Evidence | 없음 | **2026-08-12 git: 10.100.15.34 / FW 7.10.70.00 — Repair 경로 전 단계 동작, 비밀번호만 거부. 계정 상태 변화 0** | 대상 부재 (lab 의 `.34` 는 실제로 iDRAC9) |
 | Status | `UNVERIFIED` | **`HOLD`** (Repair 경로 검증됨 / 비밀번호 정책 미해소) | `UNVERIFIED` |
 | Remaining Gap | iDRAC7/8 실미러 부재 | Create 실장비 미검증 | 표준 비밀번호가 Security Strengthen Policy 미충족 — **운영 결정(E-6)** |
+
+**[정정 2026-08-13] 저장소에 iDRAC10 실미러는 없다.**
+종전 표는 `10_100_15_34` 를 iDRAC10 Fixture Evidence 로 적었으나, 그 미러는
+`FirmwareVersion=7.10.70.00` / `Model=16G Monolithic` 즉 **iDRAC9** 다
+(`LAB_INVENTORY.md` 2026-08-12 정정과 실장비 재검증이 모두 같은 결론). iDRAC10 행의
+근거는 공식 문서뿐이며 Fixture / Live 모두 없다.
 
 **iDRAC10 HOLD 사유** (`tests/evidence/2026-08-12-redfish-standard-account-separation.md` §6.1):
 장비가 돌려준 문장 그대로 —

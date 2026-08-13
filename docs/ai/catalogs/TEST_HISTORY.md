@@ -1,5 +1,24 @@
 # TEST_HISTORY — server-exporter
 
+## 2026-08-13 — 계정 쓰기 계약 정합 (9 Vendor 조사 반영)
+
+| 항목 | 결과 |
+|---|---|
+| `pytest tests/` | **3063 passed**, 10 skipped, 7 xfailed (종전 2843 → +220) |
+| 신규 테스트 파일 | `test_account_no_write_fallback.py`(27) / `test_account_diagnosis_axes.py`(15) / `test_account_write_contract_invariants.py`(146) |
+| 반전 테스트 | `test_unverified_family_keeps_the_legacy_post_retry` → `..._writes_once_and_never_retries`, `test_m_b3_inspur_isbmc_post_400_then_retry` → `..._writes_once_and_fails` (제거 대상 동작을 고정하고 있었다) |
+| `ansible-playbook --syntax-check` ×3 | PASS (WSL ansible-core 2.20.7) |
+| `output_schema_drift_check` / `verify_vendor_boundary` / `verify_harness_consistency` / `verify_no_plaintext_secret` / `check_project_map_drift` | 전부 exit 0 |
+| baseline / replay / envelope 회귀 | 385 passed |
+| e2e | 590 passed |
+| **실장비** git 4대 × (Check Mode + 1차 + 2차) | 전부 `success` / `used_role=primary` / **Account Write 0** |
+
+정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
+
+미증명 유지: Account CREATE (조건 미발생 — 4대 모두 표준 계정 정상),
+Supermicro / Huawei / Inspur / Fujitsu / Quanta (실장비 0대).
+
+
 > 테스트 실행 / Round 검증 / Baseline 갱신 이력 (append-only, rule 70).
 
 ## 2026-08-12 (q) — Vault 갱신 후 전량 회귀 + git 실장비 검증

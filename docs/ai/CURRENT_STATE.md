@@ -1,5 +1,37 @@
 # server-exporter 현재 상태
 
+## 일자: 2026-08-13 — 9 Vendor 조사 반영: 계정 쓰기 계약 정합
+
+> 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
+> 계획: `docs/ai/REDFISH_ACCOUNT_WRITE_CONTRACT_IMPLEMENTATION_PLAN_2026-08-12.md`
+
+- **blind write fallback 을 전부 걷어냈다.** `PasswordChangeRequired` 를 덧붙여 다시 POST 하던
+  경로와 거부 속성을 빼고 재PATCH 하던 사다리를 제거했다. 무엇을 보낼지는 응답을 보고 정하는
+  것이 아니라 **쓰기 전에** Family Property Contract 가 정한다. 허용되는 다중 쓰기는
+  ETag 412 재시도(동일 URI·동일 payload)와 HPE 의 사전 확정 sequence 둘뿐이다.
+- **Property Contract 를 데이터로 만들었다.** Family × Operation 별로
+  `writable / read_only / verify_only / unsupported / unverified`. **표에 없는 Property 의
+  기본값은 `unverified` 이고 자동으로 쓰지 않는다** — 모르는 속성을 writable 로 가정하지 않는다.
+- **Dell 정책 거부를 200 응답에서 잡는다.** `RelatedProperties` / `Severity` 를 읽어 SYS474 류를
+  포착한다. 같은 응답에 `Base.1.12.Success` 와 `SYS413` 이 함께 오기 때문에 "성공 메시지가 있으니
+  성공" 도 "HTTP 200 이니 성공" 도 성립하지 않는다.
+- **HPE 는 Family 를 쪼개지 않고 근거만 분리했다.** 쓰기 동작(Password 단독 PATCH)은 iLO5/6/7
+  동일하고, `live_proven`(iLO6 1.73) / `advisory_derived`(1.74·iLO7 1.19·1.20) /
+  `safety_strategy`(iLO5·1.75+·1.21+) 로 Evidence 만 갈린다. **한 대의 실측이 세대 전체로
+  번지지 않는다.**
+- **보호 계정 판정 축을 바로잡았다.** slot 번호가 아니라 DMTF `HostBootstrapAccount` Property 를
+  본다(실미러 10.50.11.232 에 존재하므로 XCC3 전용 개념이 아니다). 열거·진단에는 남기고 후보에서만
+  제외하며, 표준 계정 이름이 겹치면 `protected_conflict` → Write 0.
+- **Family 세분화**: Lenovo XCC2/XCC3(PCR 계약 차이), Cisco IMC 3.x(Instance POST),
+  QCT 3 Family(동작 동일·경계 기록), Supermicro Superchip 경계. Supermicro Create URI 는
+  **장비값으로 Generation+Firmware 를 확정했을 때만** 최신 계약으로 전환한다.
+- **진단 축 추가**: Huawei 계정별 Redfish Login Interface(읽기 전용), HTTPBasicAuth/AuthMethods,
+  `policy_conflict`, 계정 잠금 전 검증 중단, 미지원 RoleId. 어느 것도 정책을 바꾸지 않는다.
+- **실장비 재검증** — git 4대 × (Check Mode + 1차 + 2차) 전부 `success` / `used_role=primary` /
+  **Account Write 0**. Create / Repair 는 조건이 발생하지 않아 이번에도 미증명이다.
+- 테스트: **3063 passed** (종전 2843 → +220). 계약 불변식 146건을 Family 표 전수로 고정.
+- envelope 13 필드 불변 — 신규 진단은 전부 `diagnosis.details.account_service` 하위.
+
 ## 일자: 2026-08-12 (r) — 표준 비밀번호 회전 수렴 + Repair 실증 + 평문 Secret 정리
 
 > 정본: `tests/evidence/2026-08-12-standard-password-convergence.md`,
