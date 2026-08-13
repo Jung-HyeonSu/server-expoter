@@ -44,7 +44,7 @@ argument-hint: "[역할] 예: gather, qa, po"
 | `discuss-feature-direction` | 모호한 요구 좁히기 |
 | `write-spec` | 명세서 |
 | `write-impact-brief` | 영향 브리핑 |
-| `write-feature-flowchart` | Mermaid 흐름도 |
+| `mermaid-visualization` | Mermaid 흐름도 |
 
 ## 운영 / 하네스
 

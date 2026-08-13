@@ -43,7 +43,7 @@ Ansible 기반 3-channel 서버 정보 수집 개발. 각 채널이 자기 fragm
 ## 자주 사용하는 Agents
 | Agent | 용도 |
 |-------|------|
-| `gather-refactor-worker` | 3-channel gather 리팩토링 |
+| `refactor-worker` | 3-channel gather 리팩토링 |
 | `fragment-engineer` | Fragment 철학 보호 / merge_fragment 검증 |
 | `adapter-author` | 벤더 adapter YAML 작성 |
 | `vendor-onboarding-worker` | 새 벤더 추가 (vendor_aliases + adapter + OEM tasks) |

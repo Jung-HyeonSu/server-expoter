@@ -82,5 +82,5 @@
 
 - rule: `31-integration-callback`, `92-dependency-and-regression-gate`
 - skill: `scheduler-change-playbook`, `investigate-ci-failure`
-- agent: `jenkins-refactor-worker`, `jenkinsfile-engineer`, `ci-failure-investigator`
+- agent: `refactor-worker`, `jenkinsfile-engineer`, `ci-failure-investigator`
 - 정본: `docs/operate/01-jenkins-master.md`, `docs/operate/03-job-registration.md`, `docs/operate/04-pipeline-runtime.md`

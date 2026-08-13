@@ -34,7 +34,7 @@ Round 검증 진행률 / 릴리즈 / 문서 갱신 / 다중 세션 인계 / 일�
 | `wave-coordinator` | 다단계 웨이브 조율 |
 | `docs-sync-worker` | 문서 동기화 |
 | `change-impact-analyst` | 변경 영향 분석 |
-| `regression-planner` | 회귀 테스트 계획 |
+| `qa-regression-worker` | 회귀 테스트 계획 |
 | `harness-evolution-coordinator` | 하네스 6단계 파이프라인 조율 |
 
 ## 주의사항

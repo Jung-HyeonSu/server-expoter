@@ -40,7 +40,7 @@ model: sonnet
 
 ## 자가 검수 금지
 
-`adapter-boundary-reviewer` 또는 `schema-mapping-reviewer`에게 위임.
+`adapter-boundary-reviewer` 또는 `schema-reviewer`에게 위임.
 
 ## 분류
 

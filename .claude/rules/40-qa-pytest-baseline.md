@@ -67,5 +67,5 @@ pytest tests/regression/ -k dell
 
 - rule: `13-output-schema-fields`, `21-output-baseline-fixtures`, `80-ci-jenkins-policy`
 - skill: `prepare-regression-check`, `update-vendor-baseline`, `probe-redfish-vendor`, `run-baseline-smoke`
-- agent: `qa-regression-worker`, `baseline-validation-worker`
+- agent: `qa-regression-worker`
 - 정본: `docs/reference/live-validation.md`

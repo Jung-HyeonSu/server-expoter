@@ -58,4 +58,4 @@ server-exporter 회귀 테스트 대상을 자동 선정. 변경 경로 → 테�
 - rule 91 R7 / rule 92 R9 (자동 회귀 영역)
 - rule: `91-task-impact-gate` R7, `92-dependency-and-regression-gate` R3
 - skill: `vendor-change-impact`, `run-baseline-smoke`, `task-impact-preview`
-- agent: `regression-planner`, `qa-regression-worker`
+- agent: `qa-regression-worker`

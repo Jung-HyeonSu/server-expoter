@@ -55,5 +55,5 @@ server-exporter 출력 schema 변경 계획. 정본 = `schema/sections.yml + sch
 - rule 92 R5 (schema 버전 사용자 확인)
 - rule 91 (task-impact-preview) — 사전 영향 분석
 - skill: `update-output-schema-evidence`, `update-vendor-baseline`, `task-impact-preview`
-- agent: `schema-migration-worker`, `schema-mapping-reviewer`
+- agent: `schema-migration-worker`, `schema-reviewer`
 - 정본: `docs/contract/02-output-envelope.md`, `docs/develop/05-field-mapping.md`

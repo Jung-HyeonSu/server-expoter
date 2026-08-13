@@ -9,7 +9,7 @@ description: PO 단계 기획 artifact 생성. 명세 / 흐름도 / 영향 분�
 
 server-exporter 새 기능 기획. PO 단계 artifact 묶음:
 1. 명세서 (`write-spec`)
-2. 흐름도 (`write-feature-flowchart`)
+2. 흐름도 (`mermaid-visualization`)
 3. 영향 분석 (`task-impact-preview` + `analyze-new-requirement`)
 4. 옵션 비교 (`compare-feature-options`)
 5. 추천안 (`recommend-product-direction`)
@@ -20,7 +20,7 @@ server-exporter 새 기능 기획. PO 단계 artifact 묶음:
 2. **요구 정제 후** → `analyze-new-requirement`
 3. **옵션 2+ 시** → `compare-feature-options` + `recommend-product-direction`
 4. **명세서 작성** → `write-spec` (구조화)
-5. **흐름도 작성** → `write-feature-flowchart` (Mermaid)
+5. **흐름도 작성** → `mermaid-visualization` (Mermaid)
 6. **영향 브리핑** → `write-impact-brief` (HIGH 리스크 시)
 7. **artifact 묶음**을 `docs/ai/decisions/ADR-YYYY-MM-DD-<topic>.md`로 저장
 

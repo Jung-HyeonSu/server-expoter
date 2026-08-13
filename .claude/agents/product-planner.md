@@ -19,5 +19,5 @@ server-exporter 새 기능 / 새 vendor / 새 섹션 기획 종합.
 
 ## 참조
 
-- skill: `plan-product-change`, `analyze-new-requirement`, `compare-feature-options`, `recommend-product-direction`, `write-spec`, `write-feature-flowchart`
-- agent: `discovery-facilitator`, `option-generator`, `decision-recorder`, `feature-flowchart-designer`, `spec-writer`
+- skill: `plan-product-change`, `analyze-new-requirement`, `compare-feature-options`, `recommend-product-direction`, `write-spec`, `mermaid-visualization`
+- agent: `discovery-facilitator`, `option-generator`, `decision-recorder`, `flow-visualizer`, `spec-writer`

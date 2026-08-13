@@ -133,5 +133,5 @@
 
 - rule: `20-output-json-callback`, `21-output-baseline-fixtures`, `22-fragment-philosophy`
 - skill: `update-output-schema-evidence`, `update-vendor-baseline`, `plan-schema-change`, `verify-json-output`
-- agent: `schema-mapping-reviewer`, `schema-reviewer`, `schema-migration-worker`, `output-schema-refactor-worker`, `baseline-validation-worker`
+- agent: `schema-reviewer`, `schema-migration-worker`, `refactor-worker`, `qa-regression-worker`
 - 정본: `docs/contract/02-output-envelope.md`, `docs/develop/05-field-mapping.md`

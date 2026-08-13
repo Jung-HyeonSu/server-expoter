@@ -37,7 +37,7 @@ model: sonnet
 
 ## 자가 검수 금지 (rule 25 R7)
 
-본 agent의 결과는 별도 reviewer (예: code-reviewer 또는 schema-mapping-reviewer)가 교차 검증.
+본 agent의 결과는 별도 reviewer (예: code-reviewer 또는 schema-reviewer)가 교차 검증.
 
 ## 분류
 

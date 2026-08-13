@@ -22,7 +22,7 @@ server-exporter의 **출력 schema 변경** 마이그레이션 실행자.
 
 ## 자가 검수 금지
 
-`schema-mapping-reviewer` + `schema-reviewer` + `qa-regression-worker` 위임.
+`schema-reviewer` + `qa-regression-worker` 위임.
 
 ## 분류
 

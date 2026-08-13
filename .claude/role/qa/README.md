@@ -36,8 +36,8 @@ pytest 단위/통합 + redfish-probe (실장비 / mock fixture) + baseline 회�
 | Agent | 용도 |
 |-------|------|
 | `qa-regression-worker` | 변경 후 baseline 전수 회귀 |
-| `baseline-validation-worker` | baseline JSON 자동 검증 |
-| `regression-planner` | 회귀 테스트 계획 |
+| `qa-regression-worker` | baseline JSON 자동 검증 |
+| `qa-regression-worker` | 회귀 테스트 계획 |
 
 ## 주의사항
 - **Baseline 회귀 (rule 40)**: schema/sections.yml 또는 schema/field_dictionary.yml 변경 시 영향 vendor baseline 전수 회귀.

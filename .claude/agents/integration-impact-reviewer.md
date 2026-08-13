@@ -19,7 +19,7 @@ server-exporter **외부 시스템 통합 영향** 리뷰어.
 
 ## 자가 검수 금지
 
-`output-schema-reviewer` 위임. (cycle-011: security-reviewer 제거)
+`schema-reviewer` 위임. (cycle-011: security-reviewer 제거)
 
 ## 분류
 

@@ -24,4 +24,4 @@ server-exporter 저장소 정리 계획.
 
 - rule: `70-docs-and-evidence-policy`
 - skill: `plan-structure-cleanup`, `measure-reality-snapshot`
-- agent: `nonfunctional-refactor-worker`, `directory-structure-architect`
+- agent: `refactor-worker`, `directory-structure-architect`

@@ -59,5 +59,5 @@ server-exporter 출력 schema 3종 (sections.yml + field_dictionary.yml + baseli
 - rule 92 R5 (schema 버전 사용자 확인)
 - rule 28 #1 (출력 schema 측정 대상)
 - skill: `update-vendor-baseline`, `verify-json-output`, `plan-schema-change`
-- agent: `schema-mapping-reviewer`, `schema-migration-worker`
+- agent: `schema-reviewer`, `schema-migration-worker`
 - script: `scripts/ai/hooks/output_schema_drift_check.py`

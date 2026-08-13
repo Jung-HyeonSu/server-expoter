@@ -11,7 +11,7 @@ server-exporter 4축 리뷰 진입점. 세부는 각 축 reviewer agent에 위�
 
 ## 3축 (cycle-011 보안 정책 해제 후)
 
-- **Structure** → `output-schema-reviewer`, `fragment-engineer`
+- **Structure** → `schema-reviewer`, `fragment-engineer`
 - **Quality** → 본 agent + `naming-consistency-reviewer`
 - **Vendor Boundary** → `vendor-boundary-guardian`, `adapter-boundary-reviewer`
 

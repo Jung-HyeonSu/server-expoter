@@ -49,7 +49,7 @@ model: opus
 - `adapter-boundary-reviewer` — adapter YAML
 - `security-reviewer` — vault
 - `qa-regression-worker` — baseline
-- `output-schema-reviewer` — schema 영향 (있을 시)
+- `schema-reviewer` — schema 영향 (있을 시)
 
 ## 분류
 

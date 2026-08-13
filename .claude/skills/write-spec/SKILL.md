@@ -58,6 +58,6 @@ description: 구조화된 server-exporter 기능 명세서 작성. 사용자가 
 
 - rule 23 R5 (육하원칙 — 사람 대상)
 - rule 70 (docs-and-evidence)
-- skill: `analyze-new-requirement`, `plan-feature-change`, `write-feature-flowchart`
+- skill: `analyze-new-requirement`, `plan-feature-change`, `mermaid-visualization`
 - agent: `spec-writer`, `product-planner`
 - template: `.claude/templates/REQUIREMENT_ANALYSIS.template.md` 일부 활용

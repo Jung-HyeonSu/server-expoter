@@ -93,4 +93,4 @@ stdout callback. 핵심 동작:
 - `verify-json-output` — envelope 검증
 - `update-vendor-baseline` — baseline 갱신
 - `plan-schema-change` — 새 섹션/필드 계획
-- agent: `output-schema-refactor-worker`, `schema-mapping-reviewer`, `output-schema-reviewer`, `schema-reviewer`
+- agent: `refactor-worker`, `schema-reviewer`

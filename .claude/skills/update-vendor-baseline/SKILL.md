@@ -91,7 +91,7 @@ description: 실장비 검증 결과로 schema/baseline_v1/{vendor}_baseline.jso
 - rule 40 (qa-pytest-baseline) — Round 검증
 - rule 96 R1 (origin 주석 갱신)
 - skill: `probe-redfish-vendor`, `update-output-schema-evidence`, `prepare-regression-check`
-- agent: `qa-regression-worker`, `baseline-validation-worker`, `schema-mapping-reviewer`
+- agent: `qa-regression-worker`, `schema-reviewer`
 - 정본: `docs/reference/live-validation.md`
 - 정본: `schema/baseline_v1/`, `tests/evidence/`
 

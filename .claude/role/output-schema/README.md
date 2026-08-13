@@ -38,12 +38,12 @@
 ## 자주 사용하는 Agents
 | Agent | 용도 |
 |-------|------|
-| `output-schema-refactor-worker` | sections / field_dictionary / build_*.yml 리팩토링 |
-| `schema-mapping-reviewer` | sections ↔ field_dictionary ↔ baseline 정합 |
-| `output-schema-reviewer` | callback envelope / build_*.yml 빌더 리뷰 |
+| `refactor-worker` | sections / field_dictionary / build_*.yml 리팩토링 |
+| `schema-reviewer` | sections ↔ field_dictionary ↔ baseline 정합 |
+| `schema-reviewer` | callback envelope / build_*.yml 빌더 리뷰 |
 | `schema-reviewer` | YAML schema 구조 리뷰 |
 | `schema-migration-worker` | 새 섹션 / 필드 마이그레이션 |
-| `baseline-validation-worker` | baseline 회귀 자동 검증 |
+| `qa-regression-worker` | baseline 회귀 자동 검증 |
 | `naming-consistency-reviewer` | 필드명 일관성 (camelCase / snake_case) |
 
 ## 주의사항 (Critical)

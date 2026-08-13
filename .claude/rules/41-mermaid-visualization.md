@@ -252,5 +252,5 @@
 ## 관련
 
 - rule: `23-communication-style` R8 (ASCII 태그)
-- skill: `write-feature-flowchart`, `visualize-flow`, `update-flowchart-after-change`
-- agent: `feature-flowchart-designer`, `flowchart-reviewer`, `flow-visualizer`
+- skill: `mermaid-visualization`
+- agent: `flow-visualizer`, `flowchart-reviewer`, `flow-visualizer`

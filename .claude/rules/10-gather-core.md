@@ -82,5 +82,5 @@
 
 - rule: `11-gather-output-boundary`, `12-adapter-vendor-boundary`, `22-fragment-philosophy`, `27-precheck-guard-first`
 - skill: `validate-fragment-philosophy`, `score-adapter-match`, `debug-precheck-failure`
-- agent: `gather-refactor-worker`, `fragment-engineer`, `adapter-author`, `precheck-engineer`
+- agent: `refactor-worker`, `fragment-engineer`, `adapter-author`, `precheck-engineer`
 - 정본: `docs/develop/01-gather-structure.md`

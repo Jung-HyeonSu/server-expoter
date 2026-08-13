@@ -88,4 +88,4 @@ url = url.strip().rstrip('/')
 - `scheduler-change-playbook` — Jenkins cron 변경
 - `investigate-ci-failure` — Jenkins 실패 분석
 - `rotate-vault` — Vault 회전
-- agent: `jenkins-refactor-worker`, `jenkinsfile-engineer`, `deploy-orchestrator`, `release-manager`, `ansible-perf-investigator` (cycle-011: vault-rotator 제거)
+- agent: `refactor-worker`, `jenkinsfile-engineer`, `deploy-orchestrator`, `release-manager`, `ansible-perf-investigator` (cycle-011: vault-rotator 제거)

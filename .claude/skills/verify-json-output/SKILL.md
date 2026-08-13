@@ -78,5 +78,5 @@ server-exporter 출력 envelope의 호출자 호환성 검증. UI 없음 — JSO
 - rule 13 R5 (envelope 13 필드)
 - rule 31 (callback URL 무결성)
 - skill: `update-output-schema-evidence`, `task-impact-preview`
-- agent: `output-schema-reviewer`
+- agent: `schema-reviewer`
 - script: `scripts/ai/hooks/post_edit_jinja_check.py`

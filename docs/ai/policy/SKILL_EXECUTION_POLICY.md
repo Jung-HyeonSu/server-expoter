@@ -25,7 +25,7 @@
 | TDD | write-quality-tdd |
 | 명세 | write-spec |
 | 영향 브리핑 | write-impact-brief |
-| 흐름도 | write-feature-flowchart |
+| 흐름도 | mermaid-visualization |
 | 새 vendor | add-new-vendor |
 | 펌웨어 프로파일 | probe-redfish-vendor |
 | baseline 갱신 | update-vendor-baseline |
@@ -56,7 +56,7 @@ task-impact-preview 결과 리스크별:
 
 skill 결과를 사용자에게 제시하기 전, 별도 reviewer agent 호출:
 - 도메인 코드 변경 → code-reviewer / fragment-engineer / vendor-boundary-guardian
-- schema 변경 → schema-mapping-reviewer / output-schema-reviewer
+- schema 변경 → schema-reviewer / schema-reviewer
 - adapter 변경 → adapter-boundary-reviewer
 - (cycle-011: security-reviewer 제거 — 보안 영향은 운영자 권장 수준 검토)
 - 머지 / 릴리즈 → release-manager (이미 reviewer 역할)

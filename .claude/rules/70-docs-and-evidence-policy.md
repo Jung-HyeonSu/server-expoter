@@ -81,7 +81,12 @@
 - **Default**: 문서 작성/유지 결정 시 "**다음 기능 개발 / 리팩토링 / 리뷰 / 디버깅 작업에서 AI가 이 문서를 참조하면 실제 도움이 되는가?**"
   - YES → 남긴다 (active 위치)
   - NO → 남기지 않는다 (삭제 또는 archive)
-- **Allowed (남김)**:
+- **판정은 유형이 아니라 질문으로 한다.** 아래 표는 *자주 남는 유형*의 예시일 뿐
+  면제 목록이 아니다. 유형이 표에 있어도 지금 코드 기준으로 안 쓰이면 지운다.
+  (2026-08-13 변경 — 종전에는 이 표가 면제 목록처럼 작동해 archive·완료 ticket·
+  조사 전용 문서가 "실행 패턴 사례"·"Round 검증 결과"로 분류돼 계속 쌓였다.
+  근거 ADR: `docs/ai/decisions/ADR-2026-08-13-harness-surface-consolidation.md`)
+- **Allowed (남김 — 예시)**:
   | 유형 | 예시 |
   |---|---|
   | 현재 유효한 규칙 | `.claude/rules/*.md`, `.claude/policy/*.yaml` |
@@ -96,6 +101,10 @@
   - V1/V2/V3 parallel 버전 (in-place 갱신 원칙)
   - 본문에 cycle 번호 태그 (cycle 로그에)
   - 1회성 audit/review (정책 흡수된 것)
+  - 완료된 ticket / 반영이 끝난 계획서 — 반영 결과가 코드·훅·evidence 에 남아 있다
+  - 조사만 하고 변경이 0건이었던 계약 문서
+  - 공개 upstream 문서의 사본 (프로젝트 사실이 없다)
+  - 장비 거동이 아니라 **에이전트 진행 과정**만 적은 기록 (라운드 로그, cycle 요약)
 - **Why**: server-exporter는 내부 프로젝트 + 감사 비대상. 감사 이력은 git log/cycle log에 보존. catalog 비대화는 catalog stale 가속
 - **재검토**: 외부 감사 요건 도입 시
 

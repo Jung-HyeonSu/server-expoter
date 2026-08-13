@@ -29,5 +29,5 @@ server-exporter **제품 루프** 메인 오케스트레이터.
 ## 참조
 
 - skill: `plan-feature-change`, `prepare-regression-check`, `pr-review-playbook`
-- agent: `gather-refactor-worker`, `output-schema-refactor-worker`, `vendor-onboarding-worker`, `qa-regression-worker`, `release-manager`
+- agent: `refactor-worker`, `vendor-onboarding-worker`, `qa-regression-worker`, `release-manager`
 - rule: `91-task-impact-gate`

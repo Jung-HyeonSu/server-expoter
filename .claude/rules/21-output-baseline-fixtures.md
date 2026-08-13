@@ -53,5 +53,5 @@
 
 - rule: `13-output-schema-fields`, `40-qa-pytest-baseline`, `70-docs-and-evidence-policy`
 - skill: `update-vendor-baseline`, `probe-redfish-vendor`, `prepare-regression-check`
-- agent: `qa-regression-worker`, `baseline-validation-worker`
+- agent: `qa-regression-worker`
 - 정본: `docs/reference/live-validation.md`

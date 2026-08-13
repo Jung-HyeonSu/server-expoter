@@ -60,5 +60,5 @@ python scripts/ai/hooks/output_schema_drift_check.py
 - **rule 40** (qa-pytest-baseline)
 - rule 24 (completion-gate) — 정적 검증 일부
 - skill: `prepare-regression-check`, `update-vendor-baseline`, `vendor-change-impact`
-- agent: `qa-regression-worker`, `baseline-validation-worker`
+- agent: `qa-regression-worker`
 - 정본: `docs/reference/live-validation.md`

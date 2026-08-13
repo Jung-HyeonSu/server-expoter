@@ -71,5 +71,5 @@ adapter YAML 변경 전문 리뷰. server-exporter의 adapter는 vendor 분기 �
 - rule 96 R1 (origin 주석)
 - rule 11 (gather-output-boundary, OEM tasks)
 - skill: `score-adapter-match`, `probe-redfish-vendor`, `update-vendor-baseline`
-- agent: `adapter-author`, `adapter-boundary-reviewer`, `schema-mapping-reviewer`
+- agent: `adapter-author`, `adapter-boundary-reviewer`, `schema-reviewer`
 - 정본: `docs/develop/03-adapter-system.md`

@@ -38,4 +38,4 @@ server-exporter 구조적 정리 (기능 변경 없음). 비례적 변경 lane (
 - rule 92 R2 (convention 위반 즉시 수정 금지)
 - rule 70 (docs-and-evidence) — CONVENTION_DRIFT.md 기록
 - skill: `task-impact-preview`, `prepare-regression-check`
-- agent: `nonfunctional-refactor-worker`, `naming-consistency-reviewer`, `directory-structure-architect`, `repo-hygiene-planner`
+- agent: `refactor-worker`, `naming-consistency-reviewer`, `directory-structure-architect`, `repo-hygiene-planner`

@@ -43,7 +43,7 @@ ROUTES = [
      "코드 리뷰 (4축: 구조/품질/보안/벤더경계)"),
     (["PR", "pull request"], "pr-review-playbook",
      "PR 생성 전 체크리스트"),
-    (["흐름도", "플로우차트", "다이어그램"], "visualize-flow",
+    (["흐름도", "플로우차트", "다이어그램"], "mermaid-visualization",
      "Mermaid 다이어그램"),
     (["벤더 영향", "어댑터 영향"], "vendor-change-impact",
      "벤더별 영향 분석"),

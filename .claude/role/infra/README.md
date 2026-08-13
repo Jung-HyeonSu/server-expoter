@@ -37,7 +37,7 @@ Jenkins 파이프라인 / Ansible 실행 환경 (Agent 노드) / Vault 시크릿
 ## 자주 사용하는 Agents
 | Agent | 용도 |
 |-------|------|
-| `jenkins-refactor-worker` | Jenkinsfile 리팩토링 |
+| `refactor-worker` | Jenkinsfile 리팩토링 |
 | `jenkinsfile-engineer` | Jenkinsfile 보호 / 4-Stage 정합 |
 | `deploy-orchestrator` | 배포 오케스트레이션 |
 | `ci-failure-investigator` | Jenkins 실패 분석 |

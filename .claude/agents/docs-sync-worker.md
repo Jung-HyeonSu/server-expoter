@@ -15,5 +15,5 @@ server-exporter 문서 갱신 (rule 70 트리거 표 따라).
 
 ## 참조
 
-- skill: `update-evidence-docs`, `update-flowchart-after-change`
+- skill: `update-evidence-docs`, `mermaid-visualization`
 - rule: `70-docs-and-evidence-policy`

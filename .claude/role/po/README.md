@@ -25,7 +25,7 @@
 | `plan-product-change` | 기획 / 명세 작성 |
 | `write-spec` | 구조화된 명세서 |
 | `write-impact-brief` | 영향 브리핑 (사용자 의사결정용) |
-| `write-feature-flowchart` | 기능 흐름도 (Mermaid) |
+| `mermaid-visualization` | 기능 흐름도 (Mermaid) |
 | `vendor-change-impact` | 벤더 추가/변경 영향 |
 
 ## 자주 사용하는 Agents
@@ -35,8 +35,8 @@
 | `option-generator` | 후보안 생성 |
 | `decision-recorder` | ADR 기록 |
 | `discovery-facilitator` | 요구사항 디스커버리 |
-| `impact-brief-writer` | 영향 브리핑 작성 |
-| `feature-flowchart-designer` | 흐름도 설계 |
+| `change-impact-analyst` | 영향 브리핑 작성 |
+| `flow-visualizer` | 흐름도 설계 |
 
 ## 주의사항
 - **새 벤더 추가 결정**: 단순 기술 작업이 아니라 PO가 우선순위/일정/리스크 정의 후 vendor-onboarding-worker에게 위임.

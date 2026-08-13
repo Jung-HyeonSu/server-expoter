@@ -48,4 +48,4 @@ description: 한 장 영향 브리핑. 사용자 의사결정용. HIGH 리스크
 - rule 91 R4 (HIGH 리스크 에스컬레이트)
 - rule 92 (dependency-and-regression)
 - skill: `task-impact-preview`, `analyze-new-requirement`, `compare-feature-options`
-- agent: `impact-brief-writer`, `change-impact-analyst`
+- agent: `change-impact-analyst`

@@ -1,6 +1,6 @@
 ---
 name: naming-consistency-reviewer
-description: 파일 / 함수 / 변수 / fragment 변수 명명 일관성 리뷰. **호출 시점**: PR 머지 전 / nonfunctional-refactor-worker 결과.
+description: 파일 / 함수 / 변수 / fragment 변수 명명 일관성 리뷰. **호출 시점**: PR 머지 전 / refactor-worker 결과.
 tools: ["Read", "Grep", "Glob"]
 model: haiku
 ---

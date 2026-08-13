@@ -95,6 +95,6 @@ server-exporter 코드를 4 축 매트릭스로 리뷰 (`.claude/policy/review-m
 - **rule 22** (fragment), **rule 12** (vendor boundary), **rule 95** (quality) — cycle-011: rule 60 해제
 - policy: `.claude/policy/review-matrix.yaml`
 - skill: `validate-fragment-philosophy`, `verify-adapter-boundary`, `verify-json-output`
-- agent: `code-reviewer`, `adapter-boundary-reviewer`, `vendor-boundary-guardian`, `output-schema-reviewer`, `naming-consistency-reviewer`, `integration-impact-reviewer` (cycle-011: security-reviewer 제거)
+- agent: `code-reviewer`, `adapter-boundary-reviewer`, `vendor-boundary-guardian`, `schema-reviewer`, `naming-consistency-reviewer`, `integration-impact-reviewer` (cycle-011: security-reviewer 제거)
 - template: `.claude/templates/REVIEW_SUMMARY.template.md`
 - command: `/review-guide`

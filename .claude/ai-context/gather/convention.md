@@ -134,4 +134,4 @@ TCP 도달/포트 → 프로토콜 → 인증(운영 미실행). ICMP 미사용
 - `score-adapter-match` — 점수 디버깅
 - `add-new-vendor` — 벤더 추가 3단계
 - `probe-redfish-vendor` — 새 펌웨어 프로파일링
-- agent: `gather-refactor-worker`, `fragment-engineer`, `adapter-author`, `vendor-onboarding-worker`, `precheck-engineer`
+- agent: `refactor-worker`, `fragment-engineer`, `adapter-author`, `vendor-onboarding-worker`, `precheck-engineer`

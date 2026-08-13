@@ -106,7 +106,7 @@ server-exporter overall.status 판정 로직의 4 시나리오 매트릭스 (A/B
 - rule 92 R5 (schema 변경 사용자 승인)
 - rule 96 R1-B (envelope shape 보존 — 호환성 외 schema 확장 금지)
 - skill: `verify-json-output`, `validate-fragment-philosophy`, `update-output-schema-evidence`
-- agent: `output-schema-reviewer`, `schema-mapping-reviewer`
+- agent: `schema-reviewer`
 - script: `scripts/ai/hooks/pre_commit_status_logic_check.py` (advisory)
 - 정본 코드: `common/tasks/normalize/build_status.yml`
 - 정본 결정: `docs/reference/decision-log.md` (M-A2 / 2026-05-06)

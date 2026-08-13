@@ -163,7 +163,7 @@
 
 - rule: `10-gather-core`, `11-gather-output-boundary`, `12-adapter-vendor-boundary`, `13-output-schema-fields`
 - skill: `validate-fragment-philosophy`, `task-impact-preview`, `add-new-vendor`
-- agent: `fragment-engineer`, `gather-refactor-worker`, `adapter-author`
+- agent: `fragment-engineer`, `refactor-worker`, `adapter-author`
 - 정본: `.claude/rules/22-fragment-philosophy.md` + `docs/develop/02-normalize-flow.md`
 - 정본: `docs/develop/01-gather-structure.md`, `docs/develop/02-normalize-flow.md`
 
