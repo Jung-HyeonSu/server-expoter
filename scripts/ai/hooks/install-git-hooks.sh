@@ -55,9 +55,15 @@ cd "\$REPO_ROOT"
 
 EOF
 
+    # 스크립트가 없으면 조용히 건너뛴다. production 브랜치는 하네스-free 라
+    # scripts/ai/hooks/ 가 물리적으로 없다. 승격 스크립트가 그 브랜치를 체크아웃한
+    # 상태에서 커밋하면 훅이 "can't open file" 을 뱉는데, 커밋 자체는 정상이므로
+    # 에러가 아니라 소음이다 (2026-08-13 promote 로그에서 확인).
     for script in "$@"; do
         cat >> "$hook_path" <<EOF
-"\${PYTHON:-${PYTHON}}" scripts/ai/hooks/${script} "\$@" || exit \$?
+if [ -f "scripts/ai/hooks/${script}" ]; then
+  "\${PYTHON:-${PYTHON}}" scripts/ai/hooks/${script} "\$@" || exit \$?
+fi
 
 EOF
     done
