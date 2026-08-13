@@ -47,7 +47,7 @@ REPO = Path(__file__).resolve().parents[2]
 # 최상위 디렉터리는 실행 시점에 실측하고, 루트 파일만 명시한다.
 ROOT_FILES = {
     "CLAUDE.md",
-    "GUIDE_FOR_AI.md",
+    "rule 22 (fragment-philosophy)",
     "README.md",
     "REQUIREMENTS.md",
     "ansible.cfg",

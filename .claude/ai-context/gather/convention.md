@@ -1,13 +1,13 @@
 # Gather Convention — server-exporter
 
 > 3-channel gather (os/esxi/redfish) 작업 컨벤션.
-> 정본: `GUIDE_FOR_AI.md` (Fragment 철학 / 새 gather 템플릿 / 변수 네이밍).
+> 정본: rule 22 (fragment-philosophy) (Fragment 철학 / 새 gather 템플릿 / 변수 네이밍).
 
 ## 0. 정본 reference
 
 본 문서는 인덱스. 본문은 정본 참조 (rule 70 중복 보존 금지):
 
-- `GUIDE_FOR_AI.md` — Fragment 철학, 변수 네이밍, 실패 처리 패턴
+- rule 22 (fragment-philosophy) — Fragment 철학, 변수 네이밍, 실패 처리 패턴
 - `docs/develop/01-gather-structure.md` — 3-channel 구조
 - `docs/develop/02-normalize-flow.md` — Fragment 정규화 흐름
 - `docs/contract/04-failure-and-diagnosis.md` — block/rescue/always 실패 처리
@@ -56,7 +56,7 @@
 
 ## 3. 새 gather 추가 (template)
 
-`GUIDE_FOR_AI.md` "새 gather 템플릿" 섹션 그대로 따른다. 핵심:
+rule 22 (fragment-philosophy) "새 gather 템플릿" 섹션 그대로 따른다. 핵심:
 
 1. `gather_<section>.yml` 또는 `collect_<section>.yml` 작성 (raw 수집)
 2. Fragment 변수 set_fact (5 공통 변수 — `_data_fragment`, `_sections_supported_fragment`, `_sections_collected_fragment`, `_sections_failed_fragment`, `_errors_fragment`)

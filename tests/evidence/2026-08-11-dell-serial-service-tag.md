@@ -2,7 +2,7 @@
 
 > **대상**: Dell 채널 단독. 다른 벤더 무변경.
 > **구현 커밋**: `0fb63799`
-> **설계·조사 정본**: `docs/ai/SERIAL-NUMBER-TRACE-2026-08-11.md` Part III (29절)
+> **설계·조사 정본**: `docs/ai/contracts/serial-number.md` Part III (29절)
 
 ## 1. 무엇을 바꿨나
 

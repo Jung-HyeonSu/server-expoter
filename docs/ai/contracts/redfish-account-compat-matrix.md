@@ -2,14 +2,14 @@
 
 작성일: 2026-08-12
 기준 Commit: `5e72ac05` (변경 전) → 본 cycle 변경 후
-입력: 9 Vendor 공식조사 문서 9건 + `docs/ai/REDFISH-STANDARD-ACCOUNT-ASIS-AUDIT-2026-08-12.md` + 현재 HEAD 코드 실측
+입력: 9 Vendor 공식조사 문서 9건 + `docs/ai/contracts/redfish-account-asis.md` + 현재 HEAD 코드 실측
 
 ---
 
 ## 0-A. 2026-08-13 갱신 — 9 Vendor 조사 반영 구현 완료
 
 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
-계획: `docs/ai/REDFISH_ACCOUNT_WRITE_CONTRACT_IMPLEMENTATION_PLAN_2026-08-12.md`
+계획: `docs/ai/contracts/redfish-account-write.md`
 
 9 Vendor Delta 조사 결과를 코드 계약으로 반영했다. **Evidence 등급 축을 상태와 분리**한다.
 

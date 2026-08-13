@@ -1,7 +1,7 @@
 # errors[].message 계약 개선 — 변경·검증 기록 (2026-08-12)
 
 - 대상 브랜치: `main`
-- 입력 문서: `docs/ai/ERRORS-MESSAGE-INVENTORY-2026-08-11.md` (조사 전용, 코드 변경 0)
+- 입력 문서: `docs/ai/contracts/errors-messages.md` (조사 전용, 코드 변경 0)
 - 성격: 조사 결과를 **현재 코드로 재검증**한 뒤 실제 수정 + 계약 테스트 신설
 - 실장비 검증: **하지 않음** (아래 §5 참조)
 

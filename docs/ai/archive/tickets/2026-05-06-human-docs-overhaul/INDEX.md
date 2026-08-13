@@ -41,7 +41,7 @@ server-exporter 의 사람용 문서 (호출자 / 운영자 / 개발자 / 검증
 | 영역 | 제외 사유 |
 |---|---|
 | `CLAUDE.md` | AI 진입점 — 본 cycle 범위 외 |
-| `GUIDE_FOR_AI.md` | AI 가이드 — 본 cycle 범위 외 |
+| rule 22 (fragment-philosophy) | AI 가이드 — 본 cycle 범위 외 |
 | `.claude/**` | AI rules / skills / agents / policy |
 | `docs/ai/**` | AI 카탈로그 / cycle 자료 |
 

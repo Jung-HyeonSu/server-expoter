@@ -90,4 +90,4 @@ git filter-repo --replace-text <(printf '__REDACTED__==>REDACTED\n__REDACTED__In
 ## 관련
 - rule: `60-security-and-secrets`(해제됨, 참고), `93-branch-merge-gate` R1(force-push), `27-precheck-guard-first` R6(vault)
 - 정본: `docs/operate/05-vault.md`, `docs/ai/policy/SECURITY_POLICY.md`
-- 인접 권고(인증 동작): `docs/ai/AUDIT-2026-05-29.md` §AUTH (lockout/dryrun)
+- 인접 권고(인증 동작): `docs/ai/contracts/account-write-vendor-compat.md` §AUTH (lockout/dryrun)

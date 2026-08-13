@@ -6,7 +6,7 @@
 
 ```
 server-exporter/
-├── CLAUDE.md, GUIDE_FOR_AI.md, REQUIREMENTS.md, README.md  (정본)
+├── CLAUDE.md, REQUIREMENTS.md, README.md  (정본)
 ├── ansible.cfg, Jenkinsfile, Jenkinsfile_portal, Jenkinsfile_portal_test  (운영 경로는 _portal)
 ├── adapters/        # 벤더/세대별 YAML adapter
 │   ├── redfish/     # vendor × 세대

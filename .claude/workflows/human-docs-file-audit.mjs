@@ -30,7 +30,7 @@ NOTE: a concurrent process is editing Python COMMENTS, so .py line counts drift 
 `
 
 const RULES = `
-HARD CONSTRAINTS: Analysis only, do NOT edit. Never propose deleting code/contract files. docs/ai/**, .claude/**, CLAUDE.md, GUIDE_FOR_AI.md, docs/superpowers/** = harness (out of scope). Canonical human docs: flag only FACTUAL problems (wrong counts/paths/commands, broken links, contradictions), never style. Every finding MUST cite evidence you actually Read/ran; confidence 'confirmed' only if you verified BOTH doc claim and code reality.
+HARD CONSTRAINTS: Analysis only, do NOT edit. Never propose deleting code/contract files. docs/ai/**, .claude/**, CLAUDE.md, docs/superpowers/** = harness (out of scope). Canonical human docs: flag only FACTUAL problems (wrong counts/paths/commands, broken links, contradictions), never style. Every finding MUST cite evidence you actually Read/ran; confidence 'confirmed' only if you verified BOTH doc claim and code reality.
 `
 
 const FINDINGS = {

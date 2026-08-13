@@ -820,4 +820,4 @@ precheck 결과를 그대로 쓴다 (`:169-183`).
   `common/library/precheck_bundle.py`, `common/tasks/precheck/run_precheck.yml`,
   `lookup_plugins/adapter_loader.py`, `module_utils/adapter_common.py`,
   `redfish-gather/tasks/load_vault.yml`
-- 같은 형식의 선행 문서: `docs/ai/SERIAL-NUMBER-TRACE-2026-08-11.md`
+- 같은 형식의 선행 문서: `docs/ai/contracts/serial-number.md`

@@ -21,7 +21,7 @@
 
 ## SELinux (server-exporter Linux gather 활용)
 
-raw fallback 모드 (rule 10 R4 + GUIDE_FOR_AI.md "Linux 2-Tier")에서:
+raw fallback 모드 (rule 10 R4 + rule 22 (fragment-philosophy) "Linux 2-Tier")에서:
 
 ```yaml
 - name: SELinux 상태 (Python ok 모드)
@@ -49,5 +49,5 @@ Round 2 수정에서 `getenforce` 출력을 `enabled` / `disabled`로 정규화.
 
 - rule 10 R4 (Linux 2-tier raw fallback)
 - rule 30 (integration-redfish-vmware-os) — SSH 채널
-- 정본: `GUIDE_FOR_AI.md` "Linux 2-Tier Gather"
+- 정본: rule 22 (fragment-philosophy) "Linux 2-Tier Gather"
 - reference: `docs/ai/references/ansible/builtin-modules.md`

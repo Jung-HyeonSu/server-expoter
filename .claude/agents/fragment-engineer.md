@@ -47,4 +47,4 @@ model: sonnet
 
 - skill: `validate-fragment-philosophy`
 - rule: `22-fragment-philosophy`, `11-gather-output-boundary`
-- 정본: `GUIDE_FOR_AI.md` "Fragment 철학"
+- 정본: `.claude/rules/22-fragment-philosophy.md`

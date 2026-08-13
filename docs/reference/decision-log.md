@@ -62,7 +62,7 @@ pytest 만으로는 두 건 다 잡히지 않았다. 둘 다 **실제 ansible-co
 
 ### 사용자 의심
 
-전수조사(`docs/ai/ERRORS-MESSAGE-INVENTORY-2026-08-11.md`)가 "Portal 이 읽는 값은
+전수조사(`docs/ai/contracts/errors-messages.md`)가 "Portal 이 읽는 값은
 `errors[].message` 인데 그 자리에 서로 다른 두 계약이 동시에 담겨 있다" 고 지적했다.
 `status=failed` 경로는 5문장으로 정제되는데, 실제로 더 흔한 `partial` / `success` 경로는
 `Processor /redfish/v1/Systems/1/Processors/CPU1 실패: 401` 같은 날것이 그대로 나갔다.
@@ -127,7 +127,7 @@ baseline 갱신 1건 — `tests/fixtures/redfish/dmtf_rackmount1/expected_output
 
 ### 요청 / 배경 (Why)
 
-- 사전 조사(`docs/ai/SERIAL-NUMBER-TRACE-2026-08-11.md`)에서 동일 Dell R760 1대의 채널 간 시리얼이
+- 사전 조사(`docs/ai/contracts/serial-number.md`)에서 동일 Dell R760 1대의 채널 간 시리얼이
   달랐다. Redfish `CNIVC0048R0159` ↔ Linux `GSBPK54` → `correlation.serial_number` 로 두 채널 결과를
   매칭할 수 없었다 (Cisco 는 SAME 이라 Dell 만의 문제).
 - 사용자 지시: Dell 만 1차 교정. schema 변경 금지, 새 필드 금지, 다른 벤더 무변경.
@@ -175,7 +175,7 @@ baseline 갱신 1건 — `tests/fixtures/redfish/dmtf_rackmount1/expected_output
 
 - rule 12 (adapter-vendor-boundary), 13 (output-schema-fields), 21 (output-baseline-fixtures),
   92 (dependency-and-regression-gate), 96 (external-contract-integrity)
-- 정본: `docs/ai/SERIAL-NUMBER-TRACE-2026-08-11.md` Part III,
+- 정본: `docs/ai/contracts/serial-number.md` Part III,
   `tests/evidence/2026-08-11-dell-serial-service-tag.md`
 
 ---
@@ -1658,7 +1658,7 @@ Round 2 이후 Network 섹션에 대해 심층 검증을 수행했다. 가상 �
 
 ### 결론
 
-Network 수집 정책을 GUIDE_FOR_AI.md에 문서화 완료. skip 패턴 확장으로 Kubernetes/tunnel/dummy 가상 인터페이스를 추가 제외하고, primary 판단 규칙과 다중 default route 처리를 명확화했다.
+Network 수집 정책을 rule 22 (fragment-philosophy)에 문서화 완료. skip 패턴 확장으로 Kubernetes/tunnel/dummy 가상 인터페이스를 추가 제외하고, primary 판단 규칙과 다중 default route 처리를 명확화했다.
 
 ## 11. Network 복잡 토폴로지 실증 (Round 4, 2026-04-15)
 
@@ -1776,7 +1776,7 @@ kernel sysfs > POSIX 명령 > /proc > /etc
 
 ### 결론
 
-명령어 매트릭스 실측으로 배포판 무관 설계를 검증하고, bond 실증으로 bond master/slave/VLAN-on-bond 수집 정확성을 확인했다. source 우선순위와 운영 해석 정책을 확정하여 GUIDE_FOR_AI.md에 반영했다.
+명령어 매트릭스 실측으로 배포판 무관 설계를 검증하고, bond 실증으로 bond master/slave/VLAN-on-bond 수집 정확성을 확인했다. source 우선순위와 운영 해석 정책을 확정하여 rule 22 (fragment-philosophy)에 반영했다.
 
 ---
 

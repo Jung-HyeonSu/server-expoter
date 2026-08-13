@@ -81,7 +81,7 @@ server-exporter의 가장 중요한 규칙(rule 22)을 자동 검증. Fragment �
 - rule 12 (adapter-vendor-boundary) — vendor 하드코딩 (verify_vendor_boundary.py)
 - skill: `task-impact-preview` (변경 영향 미리보기 시 본 skill 호출)
 - agent: `fragment-engineer` (Fragment 철학 보호 전문)
-- 정본 reference: `GUIDE_FOR_AI.md` "Fragment 철학"
+- 정본 reference: `.claude/rules/22-fragment-philosophy.md`
 
 ## 자동 호출 시점
 

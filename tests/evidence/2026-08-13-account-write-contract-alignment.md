@@ -1,7 +1,7 @@
 # Redfish 계정 쓰기 계약 정합 — 구현 및 검증 결과
 
 > **작성일**: 2026-08-13
-> **계획 정본**: `docs/ai/REDFISH_ACCOUNT_WRITE_CONTRACT_IMPLEMENTATION_PLAN_2026-08-12.md`
+> **계획 정본**: `docs/ai/contracts/redfish-account-write.md`
 > **입력**: 9 Vendor Account Write Contract Delta Research (2026-08-12) 9건
 > **실행 환경**: WSL ansible-core 2.20.7 (Windows 제어노드에서는 `ansible-playbook` 기동 불가)
 

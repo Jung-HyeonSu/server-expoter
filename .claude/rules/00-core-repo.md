@@ -28,7 +28,7 @@
 > python -m pytest tests/ --collect-only -q | tail -1                       # 테스트
 > ```
 - 운영: 단일 main + feature/* 브랜치
-- 정본: REQUIREMENTS.md / GUIDE_FOR_AI.md / README.md / docs/01~23
+- 정본: REQUIREMENTS.md / README.md / docs/01~23
 
 ## 목표 규칙
 
@@ -119,7 +119,7 @@ callback_plugins/json_only.py → JSON envelope
 - **권장 신중**: `.git/, vault/**, *.log, *.env, *.pem, *.key`
 - **권장 사용자 승인**: `ansible.cfg, Jenkinsfile*, schema/sections.yml, schema/field_dictionary.yml, schema/baseline_v1/**`
 - **벤더 경계**: `adapters/**, redfish-gather/library/**, redfish-gather/tasks/vendors/**, common/library/**, common/vars/vendor_aliases.yml`
-- **문서 기준선**: `CLAUDE.md, GUIDE_FOR_AI.md, REQUIREMENTS.md, README.md, docs/01~23, .claude/{rules,policy,skills,agents,ai-context,templates}/`
+- **문서 기준선**: `CLAUDE.md, REQUIREMENTS.md, README.md, docs/01~23, .claude/{rules,policy,skills,agents,ai-context,templates}/`
 
 세부 정책 강제는 **삭제됨** (`ADR-2026-04-28-security-policy-removal.md` 참조).
 

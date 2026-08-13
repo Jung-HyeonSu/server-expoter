@@ -332,7 +332,7 @@ flat 12개는 그대로 두었다.
 
 ## 12. 관련
 
-- 설계: `docs/ai/VAULT-CREDENTIAL-RESOLVER-DESIGN-2026-08-12.md`
+- 설계: `docs/ai/contracts/vault-credential-resolver.md`
 - 구현 검증: `tests/evidence/2026-08-12-location-credential-resolver.md`
 - 운영 절차: `docs/operate/05-vault.md` §3
 - 후속: `docs/ai/NEXT_ACTIONS.md` §E / §F

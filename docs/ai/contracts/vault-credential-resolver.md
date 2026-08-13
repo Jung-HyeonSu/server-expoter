@@ -3,7 +3,7 @@
 > **작성일**: 2026-08-12
 > **성격**: 설계 확정용 문서. **코드는 수정하지 않았다.**
 > **기준**: 실제 코드. README / docs 서술은 근거로 쓰지 않았다.
-> **선행 자료**: `docs/ai/VAULT-CREDENTIAL-SELECTION-TRACE-2026-08-12.md` (코드 전수 조사).
+> **선행 자료**: `docs/ai/contracts/vault-credential-selection.md` (코드 전수 조사).
 > 그 문서의 인용은 **전부 현재 코드로 재확인한 것만** 이 문서에 옮겼다.
 >
 > **라인 번호 기준**: HEAD `c7817510`.

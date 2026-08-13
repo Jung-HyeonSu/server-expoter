@@ -102,8 +102,8 @@
 ## Redfish 계정 Reconcile 후속 (2026-08-12) — Family Strategy 도입 이후
 
 > 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
-> 매트릭스: `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`
-> 계획: `docs/ai/REDFISH_ACCOUNT_WRITE_CONTRACT_IMPLEMENTATION_PLAN_2026-08-12.md`
+> 매트릭스: `docs/ai/contracts/redfish-account-compat-matrix.md`
+> 계획: `docs/ai/contracts/redfish-account-write.md`
 >
 > **[정정 2026-08-13]** 종전 이 자리의 "현재 어떤 BMC Family 도 `PROVEN` 이 아니다" 는
 > stale 이었다. Case A(표준 인증 성공 → Write 0 → 표준 계정 수집)는 git 4대에서
@@ -161,7 +161,7 @@
 
 ## Dell 대표 시리얼 교정 후속 (2026-08-11) — lab 부재로 미검증
 
-> 본 작업 정본: `docs/ai/SERIAL-NUMBER-TRACE-2026-08-11.md` Part III / 커밋 `0fb63799`.
+> 본 작업 정본: `docs/ai/contracts/serial-number.md` Part III / 커밋 `0fb63799`.
 > Dell 대표 시리얼을 `ServiceRoot.Oem.Dell.ServiceTag` 단일 정본으로 바꿨고 폴백을 없앴다.
 > 아래는 **실기기가 있어야만** 닫을 수 있는 항목 (rule 96 R1-C).
 
@@ -572,7 +572,7 @@
 
 ## 0. 2026-05-29 audit-cleanup 후속 (전수 audit 결과 — 미적용 backlog)
 
-> 정본: `docs/ai/AUDIT-2026-05-29.md` (전체 권고 + 정확 file:line + diff).
+> 정본: `docs/ai/contracts/account-write-vendor-compat.md` (전체 권고 + 정확 file:line + diff).
 
 | 우선 | 항목 | 분류 | 결정 주체 |
 |---|---|---|---|
@@ -922,7 +922,7 @@ envelope 과 `errors[].message` 는 정상 생성됐는데 **Portal 이 아예 �
 
 ## Location 기반 Credential Resolver — 후속 (2026-08-12, commit `70744c76`)
 
-설계 정본: `docs/ai/VAULT-CREDENTIAL-RESOLVER-DESIGN-2026-08-12.md`
+설계 정본: `docs/ai/contracts/vault-credential-resolver.md`
 검증 증거: `tests/evidence/2026-08-12-location-credential-resolver.md`
 
 ### E. 실장비 Pilot — 2026-08-12 수행 (`d09ff344`)

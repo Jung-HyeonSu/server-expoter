@@ -696,7 +696,7 @@ git commit -m "harness: .claude/role/ 6개 README 포팅 (gather/output-schema/i
 
 **Source reference:** `clovirone-base/.claude/ai-context/{backend,common,external}/`
 
-**콘텐츠 원칙:** ai-context는 **인덱스/요약**이며, 본문은 server-exporter 정본(GUIDE_FOR_AI.md, REQUIREMENTS.md, README.md, docs/01~19)을 reference로 가리킨다 (rule 70 중복 보존 금지).
+**콘텐츠 원칙:** ai-context는 **인덱스/요약**이며, 본문은 server-exporter 정본(REQUIREMENTS.md, README.md, docs/01~19)을 reference로 가리킨다 (rule 70 중복 보존 금지).
 
 | 파일 | 내용 |
 |---|---|
@@ -705,7 +705,7 @@ git commit -m "harness: .claude/role/ 6개 README 포팅 (gather/output-schema/i
 | `common/coding-glossary-ko.md` | server-exporter 용어 사전 (Fragment / Adapter / Precheck / Vault 2단계 / 3-channel / 4단계 진단 / Sections 10 / Field Dictionary 28 Must / Baseline / loc / target_type) |
 | `common/convention-drift.md` | 발견된 컨벤션 위반/drift list (초기 비어있음) |
 | `common/ecc-adoption-summary.md` | (선택) ECC 채택 현황 — server-exporter는 단순 진입 단계로 비어있거나 짧은 placeholder |
-| `gather/convention.md` | 1) Fragment 철학 (GUIDE_FOR_AI.md reference) <br>2) gather_*.yml 명명 규칙 <br>3) raw 수집 vs fragment 생성 분리 <br>4) merge_fragment.yml 호출 순서 <br>5) Linux 2-tier (preflight.yml _l_python_mode) <br>6) precheck_bundle.py 4단계 |
+| `gather/convention.md` | 1) Fragment 철학 (rule 22 (fragment-philosophy) reference) <br>2) gather_*.yml 명명 규칙 <br>3) raw 수집 vs fragment 생성 분리 <br>4) merge_fragment.yml 호출 순서 <br>5) Linux 2-tier (preflight.yml _l_python_mode) <br>6) precheck_bundle.py 4단계 |
 | `output-schema/convention.md` | 1) sections.yml 10 섹션 list <br>2) field_dictionary.yml 28 Must + Nice + Skip <br>3) baseline_v1/ 갱신 절차 <br>4) build_*.yml 빌더 5종 (sections, status, errors, meta, correlation, output) <br>5) callback_plugins/json_only.py JSON envelope 형식 |
 | `infra/convention.md` | 1) Jenkinsfile 3종 (main / grafana / portal) 차이 <br>2) Agent 노드 구성 (docs/03 reference) <br>3) Vault 구조 (`vault/{linux,windows,esxi}.yml + vault/redfish/{vendor}.yml`) <br>4) Redis fact cache <br>5) ansible.cfg 핵심 설정 |
 | `vendors/dell.md` | iDRAC8/9 OEM 특이사항. 펌웨어 버전별 Redfish path 차이. adapter 우선순위 |
@@ -870,11 +870,11 @@ git commit -m "harness: rules 00-13 포팅 (core-repo + gather + boundary + sche
 |---|---|
 | `20-output-json-callback` | Vue/FTL/jQuery → JSON output schema. `$springMsg` 제거. 출력 envelope 규칙: status/sections/data/errors/meta/diagnosis. callback_plugins/json_only.py 보호 (스토우드웃 OUTPUT 태스크만 JSON). Jinja2 `{{ }}` 변수 정합성 (post_edit_jinja_check 연동) |
 | `21-output-baseline-fixtures` | static assets → tests/fixtures/, schema/baseline_v1/. CSS/JS 충돌 → fixture 중복 vs baseline 회귀. 보호 경로: schema/baseline_v1/** |
-| `22-fragment-philosophy` ⭐ | **rule 22를 server-exporter 핵심 게이트로 재구성.** 공통 컴포넌트 재사용 → Fragment 철학. <br>R1: 각 gather는 자기 fragment(`_data_fragment`, `_sections_<name>_supported_fragment`, `_errors_fragment`)만 만든다 <br>R2: 다른 gather의 fragment를 set_fact로 수정 금지 (구현 시작 전 승인 게이트) <br>R3: merge_fragment.yml 호출 순서 보장 <br>R4: 새 섹션 추가는 sections.yml + field_dictionary.yml + baseline 3종 동반 갱신 <br>R5: vendor-specific 로직은 adapter YAML, gather 코드 하드코딩 금지 <br>R6: 새 gather 추가 전 기존 gather 패턴 조사 의무 (GUIDE_FOR_AI.md reference) <br>R7~R11: 사용 사례별 추가 (clovirone R6~R11 패턴 보존하되 server-exporter 어휘) |
+| `22-fragment-philosophy` ⭐ | **rule 22를 server-exporter 핵심 게이트로 재구성.** 공통 컴포넌트 재사용 → Fragment 철학. <br>R1: 각 gather는 자기 fragment(`_data_fragment`, `_sections_<name>_supported_fragment`, `_errors_fragment`)만 만든다 <br>R2: 다른 gather의 fragment를 set_fact로 수정 금지 (구현 시작 전 승인 게이트) <br>R3: merge_fragment.yml 호출 순서 보장 <br>R4: 새 섹션 추가는 sections.yml + field_dictionary.yml + baseline 3종 동반 갱신 <br>R5: vendor-specific 로직은 adapter YAML, gather 코드 하드코딩 금지 <br>R6: 새 gather 추가 전 기존 gather 패턴 조사 의무 (rule 22 (fragment-philosophy) reference) <br>R7~R11: 사용 사례별 추가 (clovirone R6~R11 패턴 보존하되 server-exporter 어휘) |
 
 - [ ] **Step 1: 3개 rule 1개씩 포팅. rule 22는 가장 신중히 작성 (서버-exporter 핵심)**
 
-- [ ] **Step 2: rule 22의 R1~R5 의무 사항이 GUIDE_FOR_AI.md / 기존 코드 패턴과 일치 확인**
+- [ ] **Step 2: rule 22의 R1~R5 의무 사항이 rule 22 (fragment-philosophy) / 기존 코드 패턴과 일치 확인**
 
 ```bash
 grep -nE "fragment|merge_fragment|sections\.yml|field_dictionary" .claude/rules/22-fragment-philosophy.md
@@ -1237,7 +1237,7 @@ git commit -m "docs: docs/ai/CURRENT_STATE.md 초기화 (Plan 1 완료 기록)"
 - [ ] `CLAUDE.md` Tier 0 정본 패턴 11 섹션 추가 + 어휘 잔재 0
 - [ ] `verify_harness_consistency.py` 통과
 - [ ] git history 약 12 commit (`harness:` prefix) 분할
-- [ ] 기존 server-exporter 코드 / GUIDE_FOR_AI.md / REQUIREMENTS.md / README.md / docs/01~19 무수정
+- [ ] 기존 server-exporter 코드 / rule 22 (fragment-philosophy) / REQUIREMENTS.md / README.md / docs/01~19 무수정
 - [ ] `docs/ai/CURRENT_STATE.md` Plan 1 완료 기록
 
 ---
@@ -1260,7 +1260,7 @@ git commit -m "docs: docs/ai/CURRENT_STATE.md 초기화 (Plan 1 완료 기록)"
 | settings.json hook 등록 vs 실파일 부재 (Task 1.2 → 1.3 사이) | settings.json 작성 후 새 Claude Code 세션 시작 금지. 1.3 완료 후 재개 안내 |
 | CLAUDE.md 보강 시 기존 내용 손상 | Task 1.4 Step 1 백업. 신규 섹션은 기존 섹션 사이에 삽입, 기존 내용 변경 최소 |
 | 어휘 잔재 누락 | Phase별 commit 직전 grep 검사. Task 4.3 final scan으로 이중 검증 |
-| rule 22 (Fragment 철학)이 GUIDE_FOR_AI.md와 drift | Task 3.3 Step 2의 reference 검증. 정본은 GUIDE_FOR_AI.md, rule 22는 인덱스 |
+| rule 22 (Fragment 철학)이 rule 22 (fragment-philosophy)와 drift | Task 3.3 Step 2의 reference 검증. 정본은 rule 22는 인덱스 |
 | settings.json `disableBypassPermissionsMode` 환경 비호환 | clovirone에는 이 키가 없었음. server-exporter에 신규 추가 시 Claude Code 버전 확인 필요. 미지원 시 제거 |
 | measurement-targets.yaml의 12 항목 중 server-exporter에 없는 것 | Task 2.1에서 항목별 명시적 처리 (제거 / 변환 / 비활성). 결과를 rule 28에도 반영 |
 

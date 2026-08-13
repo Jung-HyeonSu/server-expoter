@@ -8,7 +8,7 @@
 
 server-exporter는 Ansible/Python/Jenkins 기반 멀티벤더 서버 수집 파이프라인으로 프로덕션 준비 상태(Round 7-10 완료). 하지만 AI 협업 시:
 
-- Fragment 철학 / 벤더 경계 / 출력 schema 정합 같은 도메인 규칙이 GUIDE_FOR_AI.md에 분산
+- Fragment 철학 / 벤더 경계 / 출력 schema 정합 같은 도메인 규칙이 rule 22 (fragment-philosophy)에 분산
 - 새 vendor 추가 / schema 변경 / Jenkinsfile cron 같은 작업의 영향 분석이 ad-hoc
 - 작업 영역 침범 (다른 gather fragment 수정) / 회귀 누락 / 외부 계약 drift 사고 가능성
 

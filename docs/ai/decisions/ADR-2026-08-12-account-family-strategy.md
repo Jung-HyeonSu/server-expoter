@@ -3,9 +3,9 @@
 상태: Accepted
 일자: 2026-08-12
 결정자: hshwang1994 (사용자 결정 4건) + AI 초안
-관련: `docs/ai/REDFISH-STANDARD-ACCOUNT-ASIS-AUDIT-2026-08-12.md`,
+관련: `docs/ai/contracts/redfish-account-asis.md`,
       9 Vendor 공식조사 문서 9건,
-      `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`
+      `docs/ai/contracts/redfish-account-compat-matrix.md`
 
 ---
 

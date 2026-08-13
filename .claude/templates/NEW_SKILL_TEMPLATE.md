@@ -44,4 +44,4 @@ description: {WHAT: skill이 무엇을 하는가}. 사용자가 "{trigger phrase
 
 - rule: {N}
 - agent: {agent-name}
-- 정본 reference: {GUIDE_FOR_AI.md / docs/...}
+- 정본 reference: {rule 22 (fragment-philosophy) / docs/...}

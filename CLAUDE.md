@@ -12,7 +12,7 @@ Server Exporter는 Jenkins + Ansible 기반 서버 정보 Gathering 프로젝트
 4. 이 `CLAUDE.md`
 5. README, docs, 과거 Evidence
 과거 Cycle/Round, Test/Adapter/Fixture 개수, 파일 Line 수, Commit SHA, Audit 결과는 현재 사실로 고정하지 않는다.
-필요 시 `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`, 관련 `docs/`, `.claude/rules/`, `.claude/skills/`만 읽는다.
+필요 시 `REQUIREMENTS.md`, 관련 `docs/`, `.claude/rules/`, `.claude/skills/`만 읽는다.
 
 ## 3. Architecture
 `Portal -> Jenkins Controller -> Site/Agent Routing -> Jenkins Agent -> Ansible -> OS|ESXi|Redfish -> Fragment -> Normalize/Merge -> JSON -> Callback/Result -> Portal`
@@ -113,7 +113,7 @@ Credential은 기존 Vault와 Credential Profile 구조를 사용한다.
 ## 14. Git / Production
 `main`: 개발 기준 Branch, 순수 Project Code와 Harness 포함.
 `production`: 순수 Gathering 배포 Branch, Harness 제외.
-대표 production 제외 경로: `.claude/`, `CLAUDE.md`, `GUIDE_FOR_AI.md`, `docs/ai/`, `docs/superpowers/`, `scripts/ai/`, `tests/reference/`, `tests/evidence/`.
+대표 production 제외 경로: `.claude/`, `CLAUDE.md`, `docs/ai/`, `docs/superpowers/`, `scripts/ai/`, `tests/reference/`, `tests/evidence/`.
 원칙: 순수 코드/Harness 변경 가능하면 별도 Commit, `git merge main`으로 production 전체 병합 금지, 순수 Project Code는 현재 Promotion Script/정책으로 승격.
 유효한 자동 승격 범위에서는 매번 별도 승인 재요구 금지. force push와 History Rewrite 금지.
 Remote URL은 `git remote -v`로 확인하고 Push 성공만으로 Jenkins 반영 완료 판단 금지. 실제 Job의 Repository, Branch, Checkout SHA를 확인한다.
@@ -139,11 +139,13 @@ Cycle/Round History, 긴 Troubleshooting, Vendor별 전체 구현, AI Harness Hi
 세부 절차는 `.claude/skills/`, 경로별 규칙은 `.claude/rules/`, 상세 설계와 Evidence는 `docs/`에 둔다.
 
 ## 18. Key Documentation
-`README.md`, `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`,
-`docs/contract/01-input.md`, `docs/develop/01-gather-structure.md`,
-`docs/develop/02-normalize-flow.md`, `docs/contract/04-failure-and-diagnosis.md`,
-`docs/develop/03-adapter-system.md`, `docs/contract/04-failure-and-diagnosis.md`,
-`docs/contract/04-failure-and-diagnosis.md`, `docs/operate/04-pipeline-runtime.md`,
-`docs/reference/decision-log.md`, `docs/contract/03-fields.md`,
-`docs/operate/05-vault.md`, `docs/reference/compatibility-matrix.md`,
-`docs/develop/06-debugging.md`.
+문서 지도는 `docs/README.md` 다. 갈래는 다섯이다.
+
+- `docs/overview/` — 이 시스템이 푸는 문제와 전체 그림
+- `docs/operate/` — Jenkins·에이전트 구축, 잡 등록, 자격증명, 현장 작업
+- `docs/contract/` — 호출자 계약 (입력 / envelope / 필드 / 실패)
+- `docs/develop/` — 수집 구조, 어댑터, 벤더 추가, 디버깅
+- `docs/reference/` — 호환성 매트릭스, 실장비 검증, 결정 로그
+
+AI 전용 문서는 `docs/ai/` 에 있고 production 브랜치에는 나가지 않는다.
+사람용 문서가 `docs/ai/` 나 `.claude/` 를 참조하면 안 된다 — 배포본에서 깨진 링크가 된다.

@@ -2,7 +2,7 @@
 
 작성일: 2026-08-12
 기준 Commit: `5e72ac05`
-대상: 9 Vendor 공식조사 반영 + `docs/ai/REDFISH-STANDARD-ACCOUNT-ASIS-AUDIT-2026-08-12.md` 잔여 결함 해소
+대상: 9 Vendor 공식조사 반영 + `docs/ai/contracts/redfish-account-asis.md` 잔여 결함 해소
 
 ---
 
@@ -312,7 +312,7 @@ Dell 표준 비밀번호가 iDRAC Security Strengthen Policy 를 만족하지 �
 
 ## 8. 관련 문서
 
-- `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md` — Vendor × Family 매트릭스
+- `docs/ai/contracts/redfish-account-compat-matrix.md` — Vendor × Family 매트릭스
 - `docs/ai/decisions/ADR-2026-08-12-account-family-strategy.md` — 설계 결정과 대안
-- `docs/ai/REDFISH-STANDARD-ACCOUNT-ASIS-AUDIT-2026-08-12.md` — 본 작업의 입력이 된 전수조사
+- `docs/ai/contracts/redfish-account-asis.md` — 본 작업의 입력이 된 전수조사
 - `tests/evidence/2026-08-12-redfish-standard-account-separation.md` — 직전 cycle 실장비 결과 (Dell 2층 원인)

@@ -2,7 +2,7 @@
 
 - **일시**: 2026-08-12
 - **대상 commit**: `70744c76` (feat) + `117c5190` (fix: OS credential_scope 누락 보완)
-- **설계 정본**: `docs/ai/VAULT-CREDENTIAL-RESOLVER-DESIGN-2026-08-12.md`
+- **설계 정본**: `docs/ai/contracts/vault-credential-resolver.md`
 - **검증 환경**: Windows 11 (pytest) + WSL Ubuntu 24.04 (ansible-core 2.19.12, venv `~/.se-ansible`)
   - Windows 의 `ansible-playbook` 은 `os.get_blocking` 부재로 실행 불가 → WSL 사용
 

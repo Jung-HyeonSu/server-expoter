@@ -200,7 +200,7 @@ common/README.md
 
 ```text
 CLAUDE.md
-GUIDE_FOR_AI.md
+rule 22 (fragment-philosophy)
 .claude/agents/**/*.md
 .claude/rules/**/*.md
 .claude/skills/**/SKILL.md

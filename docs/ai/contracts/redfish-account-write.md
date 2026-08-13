@@ -1,8 +1,8 @@
 # Redfish Account Write Contract — 구현 계획 (2026-08-12, rev.2)
 
 > **입력**: 9 Vendor Account Write Contract Delta Research 9건 (2026-08-12)
-> + `docs/ai/REDFISH-STANDARD-ACCOUNT-ASIS-AUDIT-2026-08-12.md`
-> + `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`
+> + `docs/ai/contracts/redfish-account-asis.md`
+> + `docs/ai/contracts/redfish-account-compat-matrix.md`
 > + 현재 HEAD(`26394474`) 및 워킹트리 코드 실측
 >
 > **rev.2 변경 사유**: 사용자 검토 지시 10건 반영. 기존 설계 방향은 유지하고 해당 항목만 수정했다.
@@ -407,7 +407,7 @@ supermicro_split_account→ 유지 + create_uri 조건부 결정 (§3.5)
 
 ## 5.4 문서
 
-`docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`, `CURRENT_STATE.md`,
+`docs/ai/contracts/redfish-account-compat-matrix.md`, `CURRENT_STATE.md`,
 `NEXT_ACTIONS.md`, `catalogs/EXTERNAL_CONTRACTS.md`, `catalogs/TEST_HISTORY.md`,
 `catalogs/LAB_PENDING_MATRIX.md`, `docs/reference/decision-log.md`, `docs/operate/05-vault.md`,
 `docs/ai/decisions/ADR-2026-08-12-account-write-contract.md`(신규, rule 70 R8 trigger 1),
@@ -701,7 +701,7 @@ Fujitsu 는 API Pack 원문 확보 전 Family 추가 없음.
   [ ] syntax:           ansible-playbook --syntax-check ×3 + py_compile
   [ ] 위 전부 PASS 확인  ← 하나라도 FAIL 이면 commit 하지 않고 원인부터 해결
   [ ] baseline commit
-  [ ] 본 문서를 docs/ai/REDFISH_ACCOUNT_WRITE_CONTRACT_IMPLEMENTATION_PLAN_2026-08-12.md 로 기록
+  [ ] 본 문서를 docs/ai/contracts/redfish-account-write.md 로 기록
   [ ] task-impact-preview 5섹션 (rule 91 R1)
 
 [ P1 ] 표현력 도입 — 행동 변화 0
@@ -882,8 +882,8 @@ Evidence 만 Firmware 별 구분 / **D-4** real-write default 현행 유지·Che
 | 구현 정본 | `redfish-gather/library/redfish_gather.py` (Family 표 :5076 / 선택 :5180 / provision :5548) |
 | Ansible | `redfish-gather/tasks/account_service.yml`, `account_service_try_one.yml`, `site.yml:148-153` |
 | Credential | `module_utils/credential_common.py:54-55`, `common/tasks/credential/` |
-| AS-IS 감사 | `docs/ai/REDFISH-STANDARD-ACCOUNT-ASIS-AUDIT-2026-08-12.md` |
-| 호환성 Matrix | `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md` |
+| AS-IS 감사 | `docs/ai/contracts/redfish-account-asis.md` |
+| 호환성 Matrix | `docs/ai/contracts/redfish-account-compat-matrix.md` |
 | 실장비 Evidence | `tests/evidence/2026-08-12-{git-location-live-verification,standard-password-convergence,redfish-standard-account-separation}.md` |
 | 실미러 | `tests/reference/redfish/**` (Lenovo `HostBootstrapAccount` 실측 포함) |
 | DMTF 스키마 | `schema/redfish_dmtf_2026.1/ManagerAccount.v1_14_1.json:323` (`HostBootstrapAccount`) |

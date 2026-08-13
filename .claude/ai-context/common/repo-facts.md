@@ -59,6 +59,5 @@
 
 - `REQUIREMENTS.md` — 벤더/버전별 최소 요구사항 (정본)
 - `README.md` — 프로젝트 정체성, 3-channel 개요
-- `GUIDE_FOR_AI.md` — Fragment 철학, 새 gather 템플릿
 - `CLAUDE.md` — Tier 0 정본
 - `docs/` — 운영·계약·개발 문서

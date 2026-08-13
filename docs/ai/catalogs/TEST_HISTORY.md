@@ -696,7 +696,7 @@ AUDIT CS-3 — `_summarize_partition_disks`/`_normalize_{storage,cpu,memory,netw
 - 의미: 누군가 grouping 키에서 한 필드(예: storage protocol)를 빼면 이질 케이스가 즉시 실패 — 기존 동질 테스트는 통과하던 drift 를 차단.
 
 ### 정정
-- `docs/ai/AUDIT-2026-05-29.md` CS-3 → [PARTIAL] (Python 측 drift 가드 완료, ansible↔python full parity 는 Jenkins Agent 후속).
+- `docs/ai/contracts/account-write-vendor-compat.md` CS-3 → [PARTIAL] (Python 측 drift 가드 완료, ansible↔python full parity 는 Jenkins Agent 후속).
 - CLAUDE.md test_*.py 50→51파일 / 470→487함수.
 
 ## 2026-06-08 (AUDIT-2026-05-29 backlog 재확인 — stale 정정)
@@ -706,7 +706,7 @@ DMTF 작업 후속으로 audit backlog 의 "Python-only 저위험" 항목 실 �
 - **AR-2 (JEDEC 2-테이블 drift)** = [DONE] — `tests/unit/test_jedec_drift_guard.py` **5 pass** 실측. 공유 byte 값 일치 + VENDOR_NAME_NORMALIZATION mirror + 방향성 가드. 통합(단일 source) 대신 drift 가드 채택(rule 10 R2 self-contained 보존).
 - **R-4 (매직넘버 상수화)** = [DONE] — `BYTES_PER_GB_DECIMAL`/`BYTES_PER_MIB`/`MIB_PER_GIB`/`MBPS_PER_GBPS`(L52-55) + `_VOLUMETYPE_RAID_MAP`(L1856 module-const) 실측 확인.
 - AR-3 (registry.yml 문서) = 비이슈 — CLAUDE.md/docs 가 "master index" 미사용, "adapter 인덱스"로 정확 기술. DSP8010 #2 link_status = 완료(`67cbaf27` merge).
-- 정정: `docs/ai/AUDIT-2026-05-29.md` AR-2/R-4 row → [DONE] 표기. (코드 변경 0 — 문서 reconciliation)
+- 정정: `docs/ai/contracts/account-write-vendor-compat.md` AR-2/R-4 row → [DONE] 표기. (코드 변경 0 — 문서 reconciliation)
 
 ## 2026-06-08 (DMTF 표준 mockup 오프라인 회귀 fixture)
 
@@ -866,7 +866,7 @@ DMTF 공식 mockup(DSP2043 `public-rackmount1`, BSD-3)을 `redfish_gather.py` �
 - pytest **703 PASS / 0 FAIL** (699 + CSUS 가드 4).
 - `verify_harness_consistency` PASS (rules 28 / skills 51 / agents 60 / policies 10), `verify_vendor_boundary` PASS, `check_project_map_drift` (fingerprint 갱신).
 - py_compile: `redfish_gather.py` / `diagnosis_mapper.py` / `adapter_common.py` OK.
-- 환경 제약: ansible 미설치 → `ansible-playbook --syntax-check` 미실행 (rule 24 R1 환경 제약 명시). ansible YAML 동작 변경은 미적용 (AUDIT-2026-05-29.md 로 위임).
+- 환경 제약: ansible 미설치 → `ansible-playbook --syntax-check` 미실행 (rule 24 R1 환경 제약 명시). ansible YAML 동작 변경은 미적용 (account-write-vendor-compat.md 로 위임).
 
 ## 2026-05-29 (cycle hba-ib-csus — CSUS 3200 전 공통 섹션 + HBA/InfiniBand 전 채널)
 

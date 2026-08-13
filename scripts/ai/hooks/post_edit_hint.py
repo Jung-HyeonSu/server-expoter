@@ -26,7 +26,7 @@ HINT_RULES = [
     (r"os-gather/.*\.yml$", "test",
      "OS gather 변경 → tests/redfish-probe + 실장비 검증 권장"),
     (r"os-gather/.*\.yml$", "doc",
-     "GUIDE_FOR_AI.md Fragment 철학 / docs/develop/01-gather-structure.md 확인"),
+     "rule 22 (fragment-philosophy) Fragment 철학 / docs/develop/01-gather-structure.md 확인"),
     (r"esxi-gather/.*\.yml$", "test",
      "ESXi gather 변경 → community.vmware 의존성 + ESXi 실장비 검증"),
     (r"redfish-gather/.*\.yml$", "test",

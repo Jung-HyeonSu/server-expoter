@@ -44,6 +44,6 @@
 
 ## 정본 reference
 
-- `CLAUDE.md`, `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`
+- `CLAUDE.md`, `REQUIREMENTS.md`
 - `docs/01~19`
 - `docs/ai/decisions/` (ADR)

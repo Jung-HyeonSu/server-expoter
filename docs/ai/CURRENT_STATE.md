@@ -3,7 +3,7 @@
 ## 일자: 2026-08-13 — 9 Vendor 조사 반영: 계정 쓰기 계약 정합
 
 > 정본: `tests/evidence/2026-08-13-account-write-contract-alignment.md`
-> 계획: `docs/ai/REDFISH_ACCOUNT_WRITE_CONTRACT_IMPLEMENTATION_PLAN_2026-08-12.md`
+> 계획: `docs/ai/contracts/redfish-account-write.md`
 
 - **blind write fallback 을 전부 걷어냈다.** `PasswordChangeRequired` 를 덧붙여 다시 POST 하던
   경로와 거부 속성을 빼고 재PATCH 하던 사다리를 제거했다. 무엇을 보낼지는 응답을 보고 정하는
@@ -113,7 +113,7 @@
 ## 일자: 2026-08-12 (p) — Redfish 계정 Reconcile: Capability Discovery + Family Strategy
 
 > 정본 기록: `tests/evidence/2026-08-12-redfish-standard-account-final-compatibility.md`
-> 매트릭스: `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`
+> 매트릭스: `docs/ai/contracts/redfish-account-compat-matrix.md`
 > 결정: `docs/ai/decisions/ADR-2026-08-12-account-family-strategy.md`
 
 9 Vendor 공식조사 9건 + AS-IS 감사를 현재 HEAD 와 대조해 남아 있던 결함을 처리했다.
@@ -187,7 +187,7 @@
 
 ## 일자: 2026-08-12 — errors[].message 계약 개선 (조사 → 실제 수정)
 
-> 입력: `docs/ai/ERRORS-MESSAGE-INVENTORY-2026-08-11.md` (조사 전용, 코드 변경 0).
+> 입력: `docs/ai/contracts/errors-messages.md` (조사 전용, 코드 변경 0).
 > 그 주장을 **현재 코드로 재검증**한 뒤 수정. 정본 기록: `tests/evidence/2026-08-12-errors-message-contract.md`.
 
 - **Message 4계층 확정** — 전체 실패(6문장, `failure_reasons.yml`) / 섹션 부분 실패(섹션 의미 유지,
@@ -272,7 +272,7 @@
   #189(os, 짝 호스트). BMC 10.100.15.34 = OS 10.100.64.96 이 동일 `system_uuid` 위에서
   `correlation.serial_number` **둘 다 `GSBPK54`** → 교정 전 DIFFERENT 가 SAME 으로 해소.
   envelope 13필드 일치 / Stage 3 PASS / errors 0 / 콘솔 `CNIVC` 0회.
-- 정본: `docs/ai/SERIAL-NUMBER-TRACE-2026-08-11.md` Part III (29절) /
+- 정본: `docs/ai/contracts/serial-number.md` Part III (29절) /
   `tests/evidence/2026-08-11-dell-serial-service-tag.md`.
 
 ## 일자: 2026-08-11 (n) — Phase 6-B: 계정 보정 안전화 + 결과 누락 제거 + 문구 통일
@@ -1509,13 +1509,13 @@
 - **EX-01 오탐 확인**: `gather_cpu.yml` `\| float` raise 주장 → WSL ansible 실측 `'abc'\|float`=0.0 (raise 안 함) → 변경 불필요 (empirical 반증).
 - **docs 정리**: 완료-cycle 덤프 164 삭제 + 26 archive(harness 006-015/handoff/ticket summary) + dangling ref 26 수정.
 - **CSUS 정직성**: mock baseline registry 라벨 `_MOCK` + "정식 지원"→"lab 부재 미검증" + self-consistency 가드 테스트 4 신설 (`tests/regression/test_csus_mock_consistency.py`).
-- **신규 문서**: `docs/ai/AUDIT-2026-05-29.md`(권고 backlog), `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md`(보안 — 문서화만), `ADR-2026-05-29-audit-cleanup.md`.
+- **신규 문서**: `docs/ai/contracts/account-write-vendor-compat.md`(권고 backlog), `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md`(보안 — 문서화만), `ADR-2026-05-29-audit-cleanup.md`.
 
 ### 스키마 "bloat" 판정 (사용자 핵심 질문)
 - 대부분 **fake gathering 아님** — (a) stale baseline (코드는 채우는데 baseline 이 코드보다 오래됨) 또는 (b) lab 에 FC HBA/InfiniBand 하드웨어 부재. envelope 은 frozen 계약(ADR-2026-05-11). 유일한 "mock-only" 노출 = CSUS `multi_node` 9 필드 (gated null, 타 벤더 무영향).
 - 필드 삭제 0 (계약 안전). 권고 = stale baseline 재캡처 (lab).
 
-### 미적용 (사용자 결정 / lab / ansible 미설치) → `docs/ai/AUDIT-2026-05-29.md` + NEXT_ACTIONS §0
+### 미적용 (사용자 결정 / lab / ansible 미설치) → `docs/ai/contracts/account-write-vendor-compat.md` + NEXT_ACTIONS §0
 - 보안 회전(사용자), AUTH lockout/dryrun(lab), esxi vendor 정규화 버그·perf·refactor(ansible 검증 필요).
 
 ### 관련
@@ -3529,7 +3529,7 @@ pytest tests/                         : PASS — 95/95
 ## 정본 reference
 
 - `CLAUDE.md` (Tier 0 정본, 보강됨)
-- `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`, `README.md`
+- `REQUIREMENTS.md`, `README.md`
 - `docs/01_jenkins-setup` ~ `docs/19_decision-log`
 - 직전 cycle: `docs/ai/archive/harness/cycle-004.md`
 - vendor 경계 분석: `docs/ai/impact/2026-04-27-vendor-boundary-57.md`

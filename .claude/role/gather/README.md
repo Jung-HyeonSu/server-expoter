@@ -21,7 +21,7 @@ Ansible 기반 3-channel 서버 정보 수집 개발. 각 채널이 자기 fragm
 6. `.claude/ai-context/common/repo-facts.md`
 
 ## 정본 reference (덮어쓰지 말 것)
-- `GUIDE_FOR_AI.md` — Fragment 철학 정본
+- rule 22 (fragment-philosophy) — Fragment 철학 정본
 - `docs/develop/01-gather-structure.md` — 3-channel 구조
 - `docs/develop/02-normalize-flow.md` — Fragment 정규화 흐름
 - `docs/develop/03-adapter-system.md` — Adapter 점수 / 매트릭스

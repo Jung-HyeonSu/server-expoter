@@ -59,7 +59,7 @@
 
 ### R2. 새 섹션 추가는 정확히 7단계
 
-- **Default** (`GUIDE_FOR_AI.md` "Fragment 추가 체크리스트" + 본 rule):
+- **Default** (rule 22 (fragment-philosophy) "Fragment 추가 체크리스트" + 본 rule):
   1. `gather_<section>.yml` 또는 `collect_<section>.yml` 작성 (raw 수집)
   2. Fragment 변수 set_fact (5 공통 변수: `_data_fragment`, `_sections_supported_fragment`, `_sections_collected_fragment`, `_sections_failed_fragment`, `_errors_fragment`)
   3. `normalize_<section>.yml` 또는 `common/tasks/normalize/build_<section>.yml` 작성
@@ -93,7 +93,7 @@
 
 ### R6. 새 gather 추가 전 기존 패턴 조사
 
-- **Default**: 새 gather (예: 새 섹션 또는 새 채널) 추가 전 기존 gather 코드 조사 의무. `GUIDE_FOR_AI.md` "새 gather 템플릿" + 가장 비슷한 기존 gather를 reference로
+- **Default**: 새 gather (예: 새 섹션 또는 새 채널) 추가 전 기존 gather 코드 조사 의무. rule 22 (fragment-philosophy) "새 gather 템플릿" + 가장 비슷한 기존 gather를 reference로
 - **Forbidden**: 백지 상태에서 새 gather 작성 (fragment 변수 명명 / merge 호출 / vendor 분기 패턴 일탈 위험)
 
 ### R7. fragment 변수 명명 규칙
@@ -164,7 +164,7 @@
 - rule: `10-gather-core`, `11-gather-output-boundary`, `12-adapter-vendor-boundary`, `13-output-schema-fields`
 - skill: `validate-fragment-philosophy`, `task-impact-preview`, `add-new-vendor`
 - agent: `fragment-engineer`, `gather-refactor-worker`, `adapter-author`
-- 정본: `GUIDE_FOR_AI.md` "Fragment 철학" / "Fragment 추가 체크리스트" / "새 gather 템플릿"
+- 정본: `.claude/rules/22-fragment-philosophy.md` + `docs/develop/02-normalize-flow.md`
 - 정본: `docs/develop/01-gather-structure.md`, `docs/develop/02-normalize-flow.md`
 
 ## 승인 기록

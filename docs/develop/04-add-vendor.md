@@ -147,7 +147,7 @@ echo -e "---\nansible_user: CHANGE_ME\nansible_password: CHANGE_ME" > vault/${GA
 - [ ] `tasks/normalize.yml` — fragment 생성 + `merge_fragment` 호출
 - [ ] `site.yml` — `init_fragments` → collect → normalize → build_* → `schema_version` 주입
 - [ ] `OUTPUT` 태스크 — `name: OUTPUT` 유지 (절대 변경 금지)
-- [ ] `GUIDE_FOR_AI.md` — 섹션 지원 현황 표 업데이트
+- [ ] rule 22 (fragment-philosophy) — 섹션 지원 현황 표 업데이트
 
 ---
 

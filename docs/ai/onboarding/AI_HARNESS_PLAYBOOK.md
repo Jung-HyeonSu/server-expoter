@@ -18,7 +18,7 @@ server-exporter는 엔터프라이즈급 멀티벤더 서버 정보 수집 파�
 ### 신규 사용자
 
 1. `CLAUDE.md` (Tier 0 정본) — 5분 읽기
-2. `GUIDE_FOR_AI.md` Fragment 철학 — 가장 중요한 도메인 규칙
+2. rule 22 (fragment-philosophy) — 가장 중요한 도메인 규칙
 3. `REQUIREMENTS.md` — 벤더 / 펌웨어 검증 기준
 4. `docs/develop/01-gather-structure.md` — 3-channel 흐름
 
@@ -123,7 +123,7 @@ bash scripts/ai/hooks/install-git-hooks.sh
 ## 정본 reference
 
 - `CLAUDE.md` (Tier 0)
-- `GUIDE_FOR_AI.md` (Fragment 철학)
+- rule 22 (fragment-philosophy) (Fragment 철학)
 - `REQUIREMENTS.md`
 - `docs/01_jenkins-setup ~ 19_decision-log` (운영 정본)
 - `docs/ai/CURRENT_STATE.md` (현재 상태)

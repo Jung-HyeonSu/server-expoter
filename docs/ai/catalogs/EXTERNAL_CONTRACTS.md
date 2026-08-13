@@ -53,7 +53,7 @@ Password History 전용 property 는 이 펌웨어의 Attribute 목록에 **존�
 
 ## 일자: 2026-08-12 — 9 Vendor 계정 Write 계약 origin (공식 조사 반영)
 
-> 정본 매트릭스: `docs/ai/REDFISH-STANDARD-ACCOUNT-FINAL-COMPATIBILITY-MATRIX-2026-08-12.md`
+> 정본 매트릭스: `docs/ai/contracts/redfish-account-compat-matrix.md`
 > 아래는 `redfish_gather._ACCOUNT_FAMILIES` 각 항목의 근거 출처다 (rule 96 R1).
 
 | Family | 계약 | origin |
@@ -1346,7 +1346,7 @@ MinPasswordLength                   = 8
 
 ## 2026-08-13 — 9 Vendor Account Write Contract (Delta Research 반영)
 
-정본: `docs/ai/REDFISH_ACCOUNT_WRITE_CONTRACT_IMPLEMENTATION_PLAN_2026-08-12.md`,
+정본: `docs/ai/contracts/redfish-account-write.md`,
 `tests/evidence/2026-08-13-account-write-contract-alignment.md`
 
 ### Firmware / Advisory

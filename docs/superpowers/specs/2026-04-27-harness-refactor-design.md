@@ -14,7 +14,7 @@
 
 **왜** — server-exporter는 엔터프라이즈급 멀티벤더 서버 정보 수집 파이프라인으로, 이미 프로덕션 준비 완료(Round 7~10 검증) 상태이다. 향후 새 벤더 추가, 새 섹션 확장, 실장비 회귀 검증, Jenkins 파이프라인 운영, 외부 시스템 계약 변경 등 다양한 작업이 예상된다. clovirone에서 검증된 게이트(task-impact-preview, completion-gate, production-critical-review, external-contract-integrity 등)와 자기개선 루프(observer→architect→reviewer→governor→updater→verifier)를 server-exporter 도메인에 이식하면 동일한 운영 안정성을 확보할 수 있다.
 
-**영향** — 신규 약 200 파일 추가. 기존 server-exporter 코드(ansible playbook, python module, schema, vault, tests, docs/01~19, CLAUDE.md, GUIDE_FOR_AI.md, REQUIREMENTS.md, README.md) 무수정.
+**영향** — 신규 약 200 파일 추가. 기존 server-exporter 코드(ansible playbook, python module, schema, vault, tests, docs/01~19, CLAUDE.md, REQUIREMENTS.md, README.md) 무수정.
 
 **결정 주체** — 사용자가 2026-04-27 대화에서 풀스펙 포팅 / vendor만 customer-plugin slot 매핑 / 6분류 직접 매핑 / 기존 문서 보존 + 추가 의 4개 핵심 결정 + 나머지 추천안 일괄 채택을 승인.
 
@@ -65,7 +65,7 @@
 server-exporter/
 ├── CLAUDE.md                        ← 기존 보존, Tier 0 정본 패턴 흡수해 보강
 ├── README.md                        ← 무수정
-├── GUIDE_FOR_AI.md                  ← 무수정
+├── rule 22 (fragment-philosophy)                  ← 무수정
 ├── REQUIREMENTS.md                  ← 무수정
 ├── ansible.cfg                      ← 무수정
 ├── Jenkinsfile, Jenkinsfile_grafana, Jenkinsfile_portal  ← 무수정
@@ -134,7 +134,7 @@ server-exporter/
     ├── ai-context/
     │   ├── common/                  ← repo-facts, project-map, coding-glossary-ko,
     │   │                              convention-drift, ecc-adoption-summary
-    │   ├── gather/                  ← convention.md (Fragment 철학은 GUIDE_FOR_AI.md 참조)
+    │   ├── gather/                  ← convention.md (Fragment 철학은 rule 22 (fragment-philosophy) 참조)
     │   ├── output-schema/           ← convention.md (sections / field_dictionary)
     │   ├── infra/                   ← convention.md (Jenkins / Agent / Vault / Redis)
     │   ├── vendors/                 ← Dell, HPE, Lenovo, Supermicro, Cisco 별 OEM 메모
@@ -321,7 +321,7 @@ harness-architect, harness-evolution-coordinator, harness-governor, harness-obse
 |---|---|---|
 | 200 파일 일시 추가로 commit history 폭증 | git 검색 시 노이즈 | Phase별 commit 분할 (`harness:` 타입 prefix, 8 commit) |
 | clovirone 어휘 잔재 (FTL/Vue/MyBatis 등) 유출 | 어휘 일관성 훼손 | verify_harness_consistency.py에 server-exporter 어휘 whitelist 추가, 잔재 grep 검사 |
-| ai-context가 server-exporter 정본(GUIDE_FOR_AI.md 등)과 drift | 두 문서 불일치 | ai-context는 reference만 명시, 실 내용은 정본에서 — 중복 보존 금지 원칙 |
+| ai-context가 server-exporter 정본(rule 22 (fragment-philosophy) 등)과 drift | 두 문서 불일치 | ai-context는 reference만 명시, 실 내용은 정본에서 — 중복 보존 금지 원칙 |
 | 자기개선 루프 7 agents가 실 운영에서 사용되지 않음 | 표면적 낭비 | 도입 후 1 cycle 직접 돌려보고 keep/drop 재결정 (ADR로 기록) |
 | skill/agent 본문이 server-exporter 도메인을 충분히 반영 못함 | 신규 작업자가 hint 없이 헤맴 | Phase 4~5 작성 시 각 skill/agent에 server-exporter 실제 파일 경로 1개 이상 인용 의무 |
 | 기존 server-exporter CLAUDE.md와 새 .claude/ 룰 충돌 | 우선순위 모호 | CLAUDE.md를 Tier 0 정본으로 명시, .claude/rules/는 Tier 1 (구체화 계층) |
@@ -332,7 +332,7 @@ harness-architect, harness-evolution-coordinator, harness-governor, harness-obse
 
 - **server-exporter 코드 변경 일체** (ansible playbook, python module, schema, vault, tests, tools, Jenkinsfile, ansible.cfg)
 - **기존 docs/01~19 운영 문서 수정**
-- **기존 CLAUDE.md/GUIDE_FOR_AI.md/REQUIREMENTS.md/README.md 내용 변경** (CLAUDE.md는 Tier 0 패턴 흡수 목적의 보강만 허용 — append-only)
+- **기존 CLAUDE.md/rule 22 (fragment-philosophy)/REQUIREMENTS.md/README.md 내용 변경** (CLAUDE.md는 Tier 0 패턴 흡수 목적의 보강만 허용 — append-only)
 - **새 벤더/채널 추가 작업** (하네스 인프라만 깐다, 실 도메인 작업은 별도 티켓)
 - **Jenkins/Agent 인프라 변경** (docs/operate/02-agent-node.md 영역)
 - **clovirone-base 폴더 정리** (참조용으로 그대로 두며, 향후 사용자가 별도 정리)
@@ -364,7 +364,7 @@ harness-architect, harness-evolution-coordinator, harness-governor, harness-obse
 
 - 출처 하네스: `clovirone-base/.claude/` 전체
 - 출처 패턴: `clovirone-base/CLAUDE.md` (Tier 0 정본), `clovirone-base/docs/ai/*` (AI 협업 문서 패턴)
-- 대상 정본: `CLAUDE.md`, `GUIDE_FOR_AI.md`, `REQUIREMENTS.md`, `README.md`
+- 대상 정본: `CLAUDE.md`, `REQUIREMENTS.md`, `README.md`
 - 대상 운영 문서: `docs/operate/01-jenkins-master.md` ~ `docs/reference/decision-log.md`
 - 대상 코드: `os-gather/`, `esxi-gather/`, `redfish-gather/`, `common/`, `adapters/`, `schema/`
 

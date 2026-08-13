@@ -27,7 +27,7 @@
 
 - 검증: pytest **699→703 PASS** (CSUS 가드 4 신규), `verify_harness_consistency` / `verify_vendor_boundary` PASS, dangling ref 0.
 - envelope 13 필드 / `data.*` shape / schema 83 entries **변경 0** (호출자 계약 안전).
-- 미적용 backlog → `docs/ai/AUDIT-2026-05-29.md` + `NEXT_ACTIONS.md §0` (보안 회전[사용자] / AUTH lockout·dryrun[lab] / esxi vendor 버그·perf·refactor[ansible 검증]).
+- 미적용 backlog → `docs/ai/contracts/account-write-vendor-compat.md` + `NEXT_ACTIONS.md §0` (보안 회전[사용자] / AUTH lockout·dryrun[lab] / esxi vendor 버그·perf·refactor[ansible 검증]).
 - 핵심 발견: schema "bloat" 대부분이 fake 아님 (stale baseline + lab 하드웨어 부재). 유일 mock-only = CSUS `multi_node`(gated null). 최대 운영 리스크 = vault 마스터 암호 평문 노출(387 파일 + 히스토리).
 
 ## 대안 비교 (Considered)
@@ -39,4 +39,4 @@
 
 ## 관련
 - rule: 70 R5/R6/R7 (문서 보존/archive), 93 R1 (force-push 사용자 승인), 13 R5 (envelope 계약), 25 R7-A-1/R7-B (실측>spec, 추정 격상 금지)
-- 문서: `docs/ai/AUDIT-2026-05-29.md`, `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md`
+- 문서: `docs/ai/contracts/account-write-vendor-compat.md`, `docs/ai/policy/SECRET-ROTATION-RUNBOOK.md`

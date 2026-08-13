@@ -31,7 +31,7 @@
 1. 루트 문서
 
    * `CLAUDE.md`
-   * `GUIDE_FOR_AI.md`
+   * rule 22 (fragment-philosophy)
    * `README.md`
    * `REQUIREMENTS.md`
 
@@ -228,7 +228,7 @@
 * 입력, 출력, 예외, fallback 설명이 맞는가
 * 벤더별 동작 설명이 코드와 맞는가
 * 테스트 fixture와 baseline 설명이 실제 파일과 맞는가
-* README나 GUIDE_FOR_AI의 설명과 코드가 충돌하지 않는가
+* README·docs/ 의 설명과 코드가 충돌하지 않는가
 
 ### C. Human Comment Writer
 
