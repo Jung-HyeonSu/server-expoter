@@ -250,7 +250,7 @@ def test_diagnosis_is_dict(baseline_envelope: dict) -> None:
 
 def test_diagnosis_has_4stage_keys(baseline_envelope: dict) -> None:
     """precheck 4-stage keys must be present in success path
-    (rule 27 — ping → port → protocol → auth)."""
+    (rule 27 — TCP 도달 → 프로토콜 → 인증)."""
     label = baseline_envelope["__label"]
     diagnosis = baseline_envelope.get("diagnosis", {})
     for key in ("reachable", "port_open", "protocol_supported", "auth_success"):

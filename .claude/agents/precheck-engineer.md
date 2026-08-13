@@ -1,6 +1,6 @@
 ---
 name: precheck-engineer
-description: precheck_bundle.py 진단 (TCP 도달 → 프로토콜 → 인증 (ICMP 미사용)) 전문. **호출 시점**: precheck 실패 디버깅 / Vault 2단계 로딩 검증 / classify-precheck-layer 분류.
+description: precheck_bundle.py 진단(TCP 도달 → 프로토콜 → 인증, ICMP 미사용) 전문. **호출 시점**: precheck 실패 디버깅 / Vault 2단계 로딩 검증 / classify-precheck-layer 분류.
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: sonnet
 ---
@@ -12,7 +12,7 @@ model: sonnet
 ## 역할
 
 1. `common/library/precheck_bundle.py` 검증 / 디버그
-2. 각 단계 (ping / port / protocol / auth) 실패 분석 (`debug-precheck-failure` skill)
+2. 각 단계(TCP 도달 / 프로토콜 / 인증) 실패 분석 (`debug-precheck-failure` skill)
 3. graceful degradation 설계 검증 (rule 27 R4)
 4. Vault 2단계 로딩 시퀀스 (Redfish 특화)
 5. validation layer 분류 (rule 27 R5)

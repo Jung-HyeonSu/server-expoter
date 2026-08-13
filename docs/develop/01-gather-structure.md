@@ -167,7 +167,7 @@ ESXi 는 `community.vmware` 컬렉션 + `pyvmomi` 9.0.0 의존. Agent 환경 설
 ```text
 site.yml (Play 1개)
   init_fragments
-  precheck_bundle              → 4단계 진단 (ping → port 443 → /redfish/v1/ → Basic Auth)
+  precheck_bundle              → 진단 (TCP 443 → /redfish/v1/ 응답 확인)
   tasks/detect_vendor.yml      → BMC manufacturer → vendor_aliases.yml 거쳐 정규화
                                  → _rf_detected_vendor = "dell" / "hpe" / ...
   adapter_loader (redfish)     → _selected_adapter = (예) redfish_dell_idrac9

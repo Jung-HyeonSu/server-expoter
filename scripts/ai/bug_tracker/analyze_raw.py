@@ -429,7 +429,7 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--rf-root", default=str(REDFISH_ROOT_DEFAULT))
     p.add_argument("--linux-root", default=str(LINUX_ROOT_DEFAULT))
-    p.add_argument("--out", default="docs/ai/tickets/2026-04-29-output-quality/VERIFICATION.md")
+    p.add_argument("--out", default="docs/ai/bug-verification.md")
     a = p.parse_args()
 
     rf_root = Path(a.rf_root)
