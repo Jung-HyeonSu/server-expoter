@@ -761,7 +761,7 @@ Fujitsu 는 API Pack 원문 확보 전 Family 추가 없음.
   [ ] Compatibility Matrix (Family × Firmware × Evidence × Workaround Basis)
   [ ] G-25 drift 교정 3건
   [ ] ADR 작성 (rule 70 R8)
-  [ ] EXTERNAL_CONTRACTS / LAB_PENDING_MATRIX / CURRENT_STATE / NEXT_ACTIONS / TEST_HISTORY / docs/21
+  [ ] EXTERNAL_CONTRACTS / LAB_PENDING_MATRIX / CURRENT_STATE / NEXT_ACTIONS / TEST_HISTORY / `docs/operate/05-vault.md`
   [ ] git Location 4대 재실행 (Check Mode 먼저 → Case A + 2차 Write 0)
   [ ] tests/evidence/2026-08-12-account-write-contract-alignment.md
   [ ] commit + push (rule 93) + production 승격 판단
@@ -786,7 +786,7 @@ Fujitsu 는 API Pack 원문 확보 전 Family 추가 없음.
 - [ ] Quanta 에 `AccountTypes=["Redfish"]` / PCR generic retry / generic ETag 가 **없다**
 - [ ] **Inspur Create POST 에 If-Match 없음 / Repair PATCH 에 If-Match 있음**
 - [ ] Family 표와 모순되는 `vendor → create method` 표가 병존하지 않는다
-- [ ] 문서(Matrix / NEXT_ACTIONS / docs/21)가 실측과 어긋나지 않는다
+- [ ] 문서(Matrix / NEXT_ACTIONS / `docs/operate/05-vault.md`)가 실측과 어긋나지 않는다
 
 ## 12.2 안전 불변식 (테스트로 고정)
 

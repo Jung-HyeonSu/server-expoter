@@ -153,7 +153,7 @@ def self_test() -> int:
             ),
         ),
         (
-            "정본 3종 + 동반 일부 (docs/19 누락) + tests scenario hint",
+            "정본 3종 + 동반 일부 (`docs/reference/decision-log.md` 누락) + tests scenario hint",
             [
                 "common/tasks/normalize/build_status.yml",
                 "common/tasks/normalize/build_sections.yml",

@@ -30,8 +30,8 @@
 |---|---|---|
 | 1 | envelope 13 필드 / `data.<section>.<field>` shape 변경 0 | `scripts/ai/hooks/envelope_change_check.py` |
 | 2 | 기존 path 유지 (수정 안 됨) — 새 path **추가만** | `git diff` 검토 — 삭제 line 0 / 추가 line만 |
-| 3 | sections / field_dictionary entries 의미 변경 0 (count-agnostic — 실측은 field_dictionary 헤더) | rule 13 R5 / R7 (docs/20 동기화) |
-| 4 | 호출자 시스템 파싱 변경 0 | docs/20 / baseline_v1 회귀 |
+| 3 | sections / field_dictionary entries 의미 변경 0 (count-agnostic — 실측은 field_dictionary 헤더) | rule 13 R5 / R7 (`docs/contract/03-fields.md` 동기화) |
+| 4 | 호출자 시스템 파싱 변경 0 | `docs/contract/03-fields.md` / baseline_v1 회귀 |
 | 5 | 회귀 fixture 추가 (호환성 fix 영역만) | `tests/fixtures/` mock 추가 |
 
 - **Forbidden** (Additive 위반):
@@ -57,7 +57,7 @@
 체크리스트:
 - [ ] 영향 vendor baseline 회귀 통과
 - [ ] 3-channel syntax-check 통과
-- [ ] 출력 envelope 6 필드 유지
+- [ ] 출력 envelope 13 필드 유지
 - [ ] 외부 호출 timeout 정상
 
 ### R4. 대형 기능 추가 영향도 필수
@@ -119,4 +119,4 @@
 
 - rule: `91-task-impact-gate`, `95-production-code-critical-review`, `97-incoming-merge-review`
 - skill: `prepare-regression-check`, `vendor-change-impact`
-- 정본: `CODE_CONVENTION.md` (server-exporter 자체 정본 — 향후 작성 시)
+- 정본: `.claude/rules/00-core-repo.md` (저장소 공통) + 각 영역 rule

@@ -16,7 +16,7 @@ server-exporter 출력 envelope의 호출자 호환성 검증. UI 없음 — JSO
 
 ## 검증 항목
 
-1. **envelope 6 필드 존재** (rule 20 R1):
+1. **envelope 13 필드 존재** (rule 20 R1):
    - status: "success" | "partial" | "failed"
    - sections: list of strings (section 이름)
    - data: dict (섹션별 데이터)
@@ -58,7 +58,7 @@ server-exporter 출력 envelope의 호출자 호환성 검증. UI 없음 — JSO
 ```markdown
 ## JSON 출력 검증 결과
 
-### envelope 6 필드: PASS
+### envelope 13 필드: PASS
 - status / sections / data / errors / meta / diagnosis 모두 존재
 
 ### Jinja2 정합성: PASS
@@ -75,7 +75,7 @@ server-exporter 출력 envelope의 호출자 호환성 검증. UI 없음 — JSO
 ## 적용 rule / 관련
 
 - **rule 20** (output-json-callback) 정본
-- rule 13 R5 (envelope 6 필드)
+- rule 13 R5 (envelope 13 필드)
 - rule 31 (callback URL 무결성)
 - skill: `update-output-schema-evidence`, `task-impact-preview`
 - agent: `output-schema-reviewer`

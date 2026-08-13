@@ -19,7 +19,7 @@
 > **상태: 대부분 offline 구현·검증 완료 (cycle 2026-06-14, 커밋 c8b3f38e/6ce66bc8/867fe29b/a2be1b28).**
 > 완료: field_dictionary enum→up/down/unknown + os-linux/os-windows/esxi(interfaces+adapters+hbas)
 > 코드 통일 + os/redfish HBA raw-leak fallback 제거 + dell/hpe/lenovo/esxi baseline 결정론적
-> 마이그레이션(hpe/lenovo 미러 replay 로 코드 일치 검증) + docs/20+09+예시/fixture + render-test.
+> 마이그레이션(hpe/lenovo 미러 replay 로 코드 일치 검증) + `docs/contract/03-fields.md`+09+예시/fixture + render-test.
 > **잔여 = lab only**: 전 baseline 의 link_status 외 필드 stale 가능성 → 실장비 full 재캡처 + Jenkins
 > Stage 3/4 전 벤더 통과 후 main 병합. (아래 절차는 그 full 재캡처 기준 — 코드는 이미 적용됨.)
 
@@ -38,7 +38,7 @@
 1. **os linux** `gather_network.yml`: line 140 `'linkup' if active else 'linkdown'` → `'up' if active else 'down'`; line 388 `'linkup'/'linkdown'` → `'up'/'down'` (raw fallback). `link_up` 비교(158/448)는 이미 `['up','linkup']` 수용 — 무해.
 2. **esxi** `normalize_network.yml:80`: `'up' if active else 'unknown'` 유지(이미 canonical). 단 baseline 의 raw `Connected/Disconnected/offline` 는 **정규화 미적용 경로 존재 가능** — 별도 조사(왜 baseline 에 raw 가 들어갔는지). `_normalize_link_status` 등가 정규화를 esxi 수집 경로에도 적용 검토.
 3. **redfish**: 코드 변경 불필요(이미 up/down/unknown).
-4. **field_dictionary.yml:507-525**: enum `["linkup","linkdown","none",null]` → `["up","down","unknown",null]`, help_ko/en 의 linkup/linkdown 설명 → up/down. (rule 13 R7 docs/20 동기화 동반.)
+4. **field_dictionary.yml:507-525**: enum `["linkup","linkdown","none",null]` → `["up","down","unknown",null]`, help_ko/en 의 linkup/linkdown 설명 → up/down. (rule 13 R7 `docs/contract/03-fields.md` 동기화 동반.)
 5. **전 9 baseline 재캡처**(실장비 live run, rule 13 R4): dell/hpe/lenovo/cisco/csus(redfish) + ubuntu/windows/rhel(os) + esxi. mechanical find-replace 금지 — 실 envelope 로 교체.
 6. **검증**: Jenkins Stage 3(schema) + Stage 4(baseline 회귀) 전 벤더 PASS. `tests/e2e/conftest.py` link_status 키 presence 유지.
 
@@ -52,10 +52,10 @@ os baseline 이 `up`인데 os 코드가 `linkup` emit → **baseline 또는 코�
 
 > **상태: 코드/스키마 offline 구현·검증 완료 (cycle 2026-06-14, 커밋 d7f91149/9571699c, ADR-2026-06-14).**
 > 완료: module 배선(`_collect_all_sections`) + sections.yml + field_dictionary(7 entry) +
-> normalize passthrough + supported_sections + docs/20 + emulator/dmtf golden 6건 thermal-only 재생성 +
+> normalize passthrough + supported_sections + `docs/contract/03-fields.md` + emulator/dmtf golden 6건 thermal-only 재생성 +
 > count 참조. replay 로 Dell temps 4/fans 6 실값 검증, drift(sections=11)/validator/jinja/pytest 1097 PASS.
 > **잔여 = lab only**: redfish baseline(dell/hpe/lenovo/cisco/csus)에 thermal 섹션 추가(실장비 full 재캡처
-> — baseline 은 내 미러와 다른 device 라 미러 thermal 직접 주입 금지, rule 13 R4) + docs/22 thermal 열
+> — baseline 은 내 미러와 다른 device 라 미러 thermal 직접 주입 금지, rule 13 R4) + `docs/reference/compatibility-matrix.md` thermal 열
 > per-vendor 실측. drift 는 baseline 섹션 누락을 informational 처리 → 미수집 baseline 으로도 offline gate 통과.
 
 > 아래 절차는 그 baseline 재캡처 기준 (코드는 이미 적용됨):
@@ -72,12 +72,12 @@ os baseline 이 `up`인데 os 코드가 `linkup` emit → **baseline 또는 코�
    (gather_power 패턴 mirror), 결과를 `data.thermal` 로. **오프라인 replay 로 Dell thermal 출력 검증 가능**.
 2. **sections.yml**: `thermal` 섹션 추가(key/display_name/channels=[redfish, esxi?]/empty_value).
 3. **field_dictionary.yml**: `thermal.temperatures[]`(name/reading_celsius/health/upper_critical/physical_context)
-   + `thermal.fans[]`(name/reading/reading_units/health) 문서화 (+docs/20 동기화).
+   + `thermal.fans[]`(name/reading/reading_units/health) 문서화 (+`docs/contract/03-fields.md` 동기화).
 4. **normalize_standard.yml**: `_rf_d_thermal` 추출 + `data.thermal` fragment + `_sections_*` 매핑.
 5. **공통 빌더**: `supported_sections.yml` 에 thermal 등록.
 6. **전 redfish baseline 재캡처**(thermal 섹션 포함): dell/hpe/lenovo/cisco/csus. **Cisco 미러 부재**
    — Cisco 실장비 또는 미러 확보 필수.
-7. **문서**: docs/06(구조)/docs/20/docs/19(ADR) 갱신. ADR-2026-06-09(thermal multi-chassis 한정) 갱신.
+7. **문서**: `docs/develop/01-gather-structure.md`(구조)/docs/20/`docs/reference/decision-log.md`(ADR) 갱신. ADR-2026-06-09(thermal multi-chassis 한정) 갱신.
 8. **검증**: replay(module thermal) + Jenkins Stage 3/4 전 벤더.
 
 ### 대안 (가벼움)
@@ -92,10 +92,10 @@ thermal 을 독립 섹션 대신 `data.power.fans` / `data.power.temperatures` �
   `tests/unit/test_firmware_category.py`(실 템플릿 추출 렌더, 16 pass)로 Dell 7건 정정 + CSUS 무영향 고정.
   jinja2 compile PASS. pytest 1097 pass. CSUS/Dell baseline 무영향(Stage-4-safe). **→ main 병합 완료.**
 - **Track 2 (field_dictionary 문서)**: bmc.* 15 + memory.total_mb/slots[] 15 = +30 entry(83→113),
-  network.summary 보강(NETAD-1), docs/20 `data.bmc` 절 추가. validator PASS, pytest 1097 pass,
+  network.summary 보강(NETAD-1), `docs/contract/03-fields.md` `data.bmc` 절 추가. validator PASS, pytest 1097 pass,
   baseline 무영향. **→ main 병합 완료.**
 - **Track 3 (link_status 통일)**: enum→up/down/unknown + os-linux/os-windows/esxi 코드 통일 +
-  os/redfish HBA raw-leak fallback 제거 + dell/hpe/lenovo/esxi baseline 마이그레이션 + docs/20+09+
+  os/redfish HBA raw-leak fallback 제거 + dell/hpe/lenovo/esxi baseline 마이그레이션 + `docs/contract/03-fields.md`+09+
   예시/fixture + B13/R18-4 tracking 갱신. render-test + jinja compile + validator + drift + pytest 1097
   전부 PASS. **잔여 = lab full 재캡처(link_status 외 stale)만.** Stage-4 영향 가능(baseline 값 변경)이라
   **lab Stage 3/4 전 벤더 통과 확인 후 main 병합 권장.**
@@ -104,7 +104,7 @@ thermal 을 독립 섹션 대신 `data.power.fans` / `data.power.temperatures` �
 1. **이미 main 병합 완료**(Stage-4-safe, 오프라인 검증): Track 1 + Track 2.
 2. **lab Stage 3/4 확인 후 병합**: Track 3 (코드 적용 완료 — baseline 값 변경분 live 회귀 확인).
 3. **lab Stage 3/4 + baseline 재캡처 후 병합**: Track 4 thermal (코드/스키마 적용 완료 — redfish baseline
-   thermal 섹션 추가 + docs/22 thermal 열만 lab 잔여).
+   thermal 섹션 추가 + `docs/reference/compatibility-matrix.md` thermal 열만 lab 잔여).
 
 ## offline 완료 요약 (이 브랜치 main..HEAD)
 - Track 1 (firmware category) + Track 2 (field_dictionary 문서) → **main 병합 완료**.

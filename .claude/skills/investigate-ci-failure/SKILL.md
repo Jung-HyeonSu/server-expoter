@@ -15,7 +15,7 @@ server-exporter Jenkins 실패 분석. 파이프라인은 `Jenkinsfile`(4 stage,
 |---|---|
 | 1. Validate | 입력 형식 오류 (target_type 잘못 / inventory_json 파싱 실패 / IP 형식) |
 | 2. Gather | precheck 실패 / vault 자격증명 stale / 외부 시스템 응답 변경 / fragment 침범 |
-| 3. Validate Schema | sections.yml ↔ field_dictionary 정합 위반 / Must 필드 누락 / output envelope 6 필드 위반 |
+| 3. Validate Schema | sections.yml ↔ field_dictionary 정합 위반 / Must 필드 누락 / output envelope 13 필드 위반 |
 | 4. E2E Regression | baseline 회귀 실패 (외부 시스템 변경 / 코드 회귀 / fixture stale) |
 | Post (callback) | callback URL 무결성 (공백/슬래시) / 호출자 시스템 다운 |
 

@@ -12,7 +12,7 @@ server-exporter **baseline 회귀** 전문 에이전트.
 ## 역할
 
 1. update-vendor-baseline 결과 검증
-2. baseline JSON 형식 정합 (envelope 6 필드)
+2. baseline JSON 형식 정합 (envelope 13 필드)
 3. field_dictionary 정합 (Must 필드 모두 존재)
 4. fixture 회귀 (mock 기반 빠른 검증)
 

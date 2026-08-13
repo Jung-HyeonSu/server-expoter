@@ -14,7 +14,7 @@ server-exporter **출력 schema 3종 정합** 리뷰어.
 1. sections.yml 섹션이 field_dictionary에 누락 없음
 2. field_dictionary Must 필드가 모든 vendor baseline에 존재
 3. baseline 새 필드가 field_dictionary에 등록
-4. envelope 6 필드 (status / sections / data / errors / meta / diagnosis) 형식 유지
+4. envelope 13 필드 형식 유지
 5. build_*.yml 빌더 패턴 일관
 
 ## 자가 검수 금지

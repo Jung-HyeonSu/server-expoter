@@ -16,8 +16,8 @@
 ```
 
 예시:
-- ✅ 새 vendor adapter 작성 + tests/fixtures 추가 → 파일 영역 독립
-- ❌ schema/sections.yml 추가 + field_dictionary 갱신 → field_dictionary가 sections 참조
+- [OK] 새 vendor adapter 작성 + tests/fixtures 추가 → 파일 영역 독립
+- [NG] schema/sections.yml 추가 + field_dictionary 갱신 → field_dictionary가 sections 참조
 
 ### R2. Agent tool 활용 우선
 
@@ -98,4 +98,5 @@ Agent(description="vendor README", subagent_type="docs-sync-worker", prompt="...
 
 ## 관련
 
+- skill: `cross-review-workflow` — 한 agent 결과를 다른 agent 가 검수하는 절차 (R7-A 실측 검증의 확장)
 - rule: `26-multi-session-guide`, `96-external-contract-integrity`

@@ -1,6 +1,6 @@
 ---
 name: review-existing-code
-description: 기존 server-exporter 코드를 4축 (구조 / 품질 / 보안 / 벤더 경계)으로 리뷰. PR 제출 전, 의심 영역 점검, 신규 작업자 온보딩 시. 사용자가 "코드 리뷰해줘", "이 파일 봐줘", "리뷰" 등 요청 시. - 코드 리뷰 일반 / PR 머지 전 / 4축 점검 (rule 22 fragment + rule 12 boundary + rule 60 security + rule 95 quality)
+description: 기존 server-exporter 코드를 4축 (구조 / 품질 / 보안 / 벤더 경계)으로 리뷰. PR 제출 전, 의심 영역 점검, 신규 작업자 온보딩 시. 사용자가 "코드 리뷰해줘", "이 파일 봐줘", "리뷰" 등 요청 시. - 코드 리뷰 일반 / PR 머지 전 / 4축 점검 (rule 22 fragment + rule 12 boundary + CLAUDE.md §12 security + rule 95 quality)
 ---
 
 # review-existing-code
@@ -17,7 +17,7 @@ server-exporter 코드를 4 축 매트릭스로 리뷰 (`.claude/policy/review-m
 - adapter 점수 일관성 (rule 12 R2)
 - 파일 500줄 / 함수 50줄 (rule 10 R3)
 
-### Quality (의심 패턴 11종, rule 95 R1)
+### Quality (의심 패턴 12종, rule 95 R1)
 - Ansible default(omit) 누락
 - set_fact 재정의로 fragment 침범
 - Jinja2 정규식 dead code
@@ -30,7 +30,7 @@ server-exporter 코드를 4 축 매트릭스로 리뷰 (`.claude/policy/review-m
 - mutable/immutable 혼동
 - 외부 시스템 계약 drift (rule 96)
 
-### Security (rule 60)
+### Security (CLAUDE.md §12)
 - vault 변수 평문 누설
 - BMC password log 출력
 - Vault 2단계 로딩 절차 (Redfish)
@@ -73,10 +73,10 @@ server-exporter 코드를 4 축 매트릭스로 리뷰 (`.claude/policy/review-m
 ## 절차
 
 1. **대상 파일 Read** (or 변경 diff)
-2. **rule 95 R1 11 패턴 grep**: 의심 영역 list
+2. **rule 95 R1 12 패턴 grep**: 의심 영역 list
 3. **rule 22 R1-R9 검증**: validate-fragment-philosophy skill 호출 (gather/normalize 영역)
 4. **rule 12 R1 grep**: `verify_vendor_boundary.py` 결과 통합
-5. **rule 60 grep**: vault 누설 / cert verify / callback redaction
+5. **보안 grep** (CLAUDE.md §12): vault 누설 / cert verify / callback redaction
 6. **각 발견을 4 축으로 분류 + 심각도 (CRIT / WARN / Info)**
 7. **회귀 영역 자동 식별** (rule 91 R7)
 8. **REVIEW_SUMMARY 출력**

@@ -47,7 +47,7 @@
 - **Default**: 작업 영향에 따라 다음 갱신 (rule 70 R1 매핑)
   - `docs/ai/CURRENT_STATE.md` (코드/구조/규칙 변경 시)
   - `docs/ai/catalogs/TEST_HISTORY.md` (테스트 실행 시)
-  - 영향 `docs/01~23` (정본 변경 시)
+  - 영향 `docs/` 문서 (정본 변경 시)
   - 영향 ADR (`docs/ai/decisions/ADR-*.md`, 결정 있을 시)
 - **Allowed**: 영향 없는 항목은 skip 가능. 단 "X 영향 없음" 명시
 - **Forbidden**: 코드 변경 + 문서 갱신 누락
@@ -68,7 +68,7 @@
 
 - **Default** (rule 93 R1+R4 — 2026-05-01 + 2026-06-30 사용자 명시):
   - 태그 (해당 시): `v{영역}-{상태}-{YYYYMMDD}` 포맷
-  - **모든 브랜치 push 자율 진행** (main 포함 — github + gitlab 동시)
+  - **현재 체크아웃된 브랜치는 자율 push** (main 포함 — origin 이 github + gitlab 동시 push)
   - 작업 종료 시 commit + push 무조건 (사용자 "보류" 명시 시 skip)
   - **순수 게더링 코드 변경 시 production 자동 승격** — `bash scripts/ai/promote_to_production.sh`
     (하네스 제외 sync + github/gitlab push). **사용자 승인 불요** (2026-06-30 사용자 명시
@@ -147,4 +147,4 @@
 ## 관련
 
 - rule: `23-communication-style`, `70-docs-and-evidence-policy`, `93-branch-merge-gate`
-- 정본: `CLAUDE.md` Step 7
+- 정본: `CLAUDE.md` §16

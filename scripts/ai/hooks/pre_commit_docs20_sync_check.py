@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""pre-commit hook — rule 13 R7 docs/20 동기화 검증.
+"""pre-commit hook — rule 13 R7 `docs/contract/03-fields.md` 동기화 검증.
 
 rule 13 R7 정본 4종 변경 시 docs/contract/03-fields.md 동기화 갱신 의무.
 
 정본 4종:
 - common/tasks/normalize/build_output.yml (envelope 13 필드)
-- schema/sections.yml (sections 10 정의)
+- schema/sections.yml (섹션 정의)
 - schema/field_dictionary.yml (Must/Nice/Skip 분류)
 - common/tasks/normalize/build_status.yml (status 판정 규칙)
 
@@ -13,7 +13,7 @@ Blocking (exit 1) — cycle 2026-05-11 격상.
 이전 cycle 2026-05-06 도입 시 advisory (exit 0). 5 cycle 운영 false-positive 0
 확인 후 cycle 2026-05-11 harness-cycle 에서 blocking 격상.
 
-정본 4종 staged + docs/20 미staged 시 commit 차단.
+정본 4종 staged + `docs/contract/03-fields.md` 미staged 시 commit 차단.
 
 비활성화 환경변수:
     DOCS20_SYNC_SKIP=1            — 본 hook skip
@@ -57,7 +57,7 @@ def _normalize(p: str) -> str:
 
 
 def detect_violation(staged_files: list[str]) -> list[str]:
-    """staged 파일 목록에서 rule 13 R7 위반 (정본 변경 + docs/20 미변경) 검출.
+    """staged 파일 목록에서 rule 13 R7 위반 (정본 변경 + `docs/contract/03-fields.md` 미변경) 검출.
 
     Returns: 위반한 정본 파일 목록 (없으면 빈 리스트).
     """
@@ -85,12 +85,12 @@ def _staged_files(repo_root: Path) -> list[str]:
 def self_test() -> int:
     cases: list[tuple[str, list[str], list[str]]] = [
         (
-            "정본 1개만 변경 + docs/20 미변경 → 위반 1건",
+            "정본 1개만 변경 + `docs/contract/03-fields.md` 미변경 → 위반 1건",
             ["common/tasks/normalize/build_output.yml"],
             ["common/tasks/normalize/build_output.yml"],
         ),
         (
-            "정본 2개 변경 + docs/20 변경 → 통과",
+            "정본 2개 변경 + `docs/contract/03-fields.md` 변경 → 통과",
             [
                 "schema/sections.yml",
                 "schema/field_dictionary.yml",
@@ -114,7 +114,7 @@ def self_test() -> int:
             ["common/tasks/normalize/build_status.yml"],
         ),
         (
-            "정본 4종 모두 변경 + docs/20 미변경 → 위반 4건",
+            "정본 4종 모두 변경 + `docs/contract/03-fields.md` 미변경 → 위반 4건",
             list(CANONICAL_FILES),
             list(CANONICAL_FILES),
         ),
@@ -131,7 +131,7 @@ def self_test() -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="rule 13 R7 docs/20 동기화 검증")
+    parser = argparse.ArgumentParser(description="rule 13 R7 `docs/contract/03-fields.md` 동기화 검증")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
@@ -153,7 +153,7 @@ def main() -> int:
         return 0
 
     print(
-        "[docs/20 sync] rule 13 R7 위반 — 정본 변경 + docs/20 미동기화 (BLOCKING — cycle 2026-05-11 격상):",
+        "[`docs/contract/03-fields.md` sync] rule 13 R7 위반 — 정본 변경 + `docs/contract/03-fields.md` 미동기화 (BLOCKING — cycle 2026-05-11 격상):",
         file=sys.stderr,
     )
     for f in violations:

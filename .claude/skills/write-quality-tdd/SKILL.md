@@ -17,10 +17,10 @@ server-exporter pytest는 redfish_gather.py / precheck_bundle.py / filter_plugin
    - 빈 응답 / 타임아웃 / TLS 핸드셰이크 실패
    - 잘못된 JSON / 누락된 필드
    - 다른 vendor 응답
-4. **Production 코드 비판적 검증** (rule 95 R1) §11 — TDD 작성 전 의심 패턴 11종 자동 스캔
+4. **Production 코드 비판적 검증** (rule 95 R1) §11 — TDD 작성 전 의심 패턴 12종 자동 스캔
 5. **`@pytest.mark.skip` 또는 `@pytest.mark.xfail`** 으로 의심 발견을 드러냄 (현재 동작에 맞춰 assertion 작성 금지)
 
-## 의심 패턴 11종 (rule 95 R1)
+## 의심 패턴 12종 (rule 95 R1)
 
 1. Ansible default(omit) 누락
 2. set_fact 재정의로 fragment 침범

@@ -47,7 +47,7 @@
 
 **테스트**: `tests/unit/test_hpe_csus_multi_node.py` +7 (per-partition normalize), `tests/regression/test_hba_ib_canonical.py` 신규 (cross-channel canonical), 회귀 **pytest 699 PASS / 0 FAIL** (full suite).
 
-**문서**: docs/20 §6.3.1 (HBA/IB), field_dictionary, EXTERNAL-CONTRACTS, 본 ADR, CURRENT_STATE, decision-log, NEXT_ACTIONS.
+**문서**: `docs/contract/03-fields.md` §6.3.1 (HBA/IB), field_dictionary, EXTERNAL-CONTRACTS, 본 ADR, CURRENT_STATE, decision-log, NEXT_ACTIONS.
 
 ## 4. 대안 비교 (Considered)
 

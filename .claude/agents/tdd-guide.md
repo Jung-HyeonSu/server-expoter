@@ -11,7 +11,7 @@ server-exporter pytest 작성 + production 비판적 검증 (rule 95 R1).
 
 ## 절차
 
-1. production 코드 스캔 (의심 패턴 11종)
+1. production 코드 스캔 (의심 패턴 12종)
 2. 의심 발견 시 `@pytest.mark.xfail`
 3. given / when / then 행위 명세 TDD
 4. fixture 사용 (실장비 의존 금지)

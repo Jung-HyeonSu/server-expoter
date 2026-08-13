@@ -32,7 +32,7 @@ schema 에 thermal 섹션이 없어 "거짓"은 아니나(설계 범위), 호출
 - **Additive**: 기존 13 envelope 필드 / 10 섹션 path 변경 0. 미지원 벤더는 빈 `{temperatures:[],fans:[]}`.
 - **channels=[redfish]**: os/esxi 는 thermal 미수집(향후 channel 확장 여지 — esxi 호스트 thermal 별도).
 - **잔여(lab)**: redfish baseline(dell/hpe/lenovo/cisco/csus)에 thermal 섹션 부재 → 실장비 full 재캡처 필요
-  (baseline 은 내 미러와 다른 device — 미러 thermal 직접 주입 금지, rule 13 R4). docs/22 compatibility-matrix
+  (baseline 은 내 미러와 다른 device — 미러 thermal 직접 주입 금지, rule 13 R4). `docs/reference/compatibility-matrix.md` compatibility-matrix
   thermal 열 추가도 per-vendor 실측 후.
 - drift check 는 baseline 의 섹션 누락을 informational 처리 → 미수집 baseline 으로도 offline gate 통과.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""rule 95 R1 의심 패턴 11종 자동 검출 (server-exporter 도메인).
+"""rule 95 R1 의심 패턴 12종 자동 검출 (server-exporter 도메인).
 
 production code (Python / YAML)에서 의심 패턴 grep + 라인 출력. advisory 도구.
 TDD 작성 / 코드 리뷰 / harness-cycle observer 단계에서 활용.
@@ -340,7 +340,7 @@ def main() -> int:
 
     if not all_findings:
         print("=== 의심 패턴 스캔 결과 ===")
-        print("clean (rule 95 R1 11 패턴 — 검출 0건)")
+        print("clean (rule 95 R1 12 패턴 — 검출 0건)")
         return 0
 
     # 패턴별 그룹

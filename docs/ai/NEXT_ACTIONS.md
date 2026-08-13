@@ -225,7 +225,7 @@
 - [x] `diagnosis.failure_code` 신설 (nullable 7종, 성공 시에도 키 존재)
 - [x] TCP 실패 분류를 문자열 파싱에서 `tcp_check_ex()` 구조화 kind 로 교체
 - [x] schema/baseline/examples/fixtures/hook/문서 정합화
-- [x] schema_version `"1"` 유지 (근거: `docs/20:589` 정책 + 전례 2건)
+- [x] schema_version `"1"` 유지 (근거: `docs/contract/03-fields.md`:589` 정책 + 전례 2건)
 - [ ] **[남음] Redfish HTTP 401 기반 인증 실패 세분화 (운영 경로)** — `redfish_gather.py` 의
       errors 엔트리는 `{section, message, detail}` 3키뿐이고 HTTP status 가 message 문자열
       안에만 있다(`_err():370-371`). 모듈 `exit_json` 에도 구조화된 status 필드가 없다.
@@ -383,7 +383,7 @@
 
 ## hostname BMC fallback — baseline 갱신 + cross-vendor 실측 (2026-06-16)
 
-> 상세: `tests/evidence/2026-06-16-real-capture-audit.md` + `docs/20 §8`. hostname 우선순위에
+> 상세: `tests/evidence/2026-06-16-real-capture-audit.md` + `docs/contract/03-fields.md` §8`. hostname 우선순위에
 > BMC NetworkProtocol.HostName fallback 추가(System.HostName 부재 시). 코드는 vendor-agnostic
 > graceful. 실측: Dell iDRAC9 / HPE iLO7·RMC / Lenovo XCC3 = populate, Cisco CIMC = null.
 
@@ -508,14 +508,14 @@
 ### 완료 (사용자 승인 후 진행 — 2026-06-15)
 
 - [x] **thermal 섹션 배선 (ATX-01/02)** — `build_sections.yml`/`build_failed_output.yml` all_sec +
-  3 skeleton 에 thermal 추가 (10→11 섹션). docs/19·20 동반(rule 13 R8). status-scenario 회귀 5건. (commit 7be8cdc0)
+  3 skeleton 에 thermal 추가 (10→11 섹션). `docs/reference/decision-log.md`·20 동반(rule 13 R8). status-scenario 회귀 5건. (commit 7be8cdc0)
 - [x] **firmware category 오분류 (SCHEMA-07)** — 'System ROM'→bios + UBM 백플레인 'nvme' 선점 정정.
   + firmware[].category/pending field_dictionary 등록 (122 entries). (commit da215d68)
-- [x] **cpu.architecture channel (SCHEMA-05)** — `[os,esxi]`→`[redfish,os,esxi]` + docs/20 동기화. (da215d68)
+- [x] **cpu.architecture channel (SCHEMA-05)** — `[os,esxi]`→`[redfish,os,esxi]` + `docs/contract/03-fields.md` 동기화. (da215d68)
 - [x] **hardware 12 식별필드 field_dictionary 등록 (SCH-1/2, 사용자 승인 — 핵심은 Must)** — vendor/model/
   serial/uuid/bios_version = Must (전 esxi+redfish baseline 보유 실측), 나머지 7 = Nice. (120→134 entries)
 - [x] **volumes.total_mb 단위 명명 (RJ-1, 사용자 결정 — total_mb 유지)** — 키/값 유지, "값은 MiB(÷2^20)"를
-  field_dictionary + docs/20 에 문서 명시 (rename/재계산은 계약 breaking이라 회피).
+  field_dictionary + `docs/contract/03-fields.md` 에 문서 명시 (rename/재계산은 계약 breaking이라 회피).
 
 ### 잔여 — 실측 필요 (자율 수정 불가)
 
@@ -568,7 +568,7 @@
 | 우선 | 항목 | 분류 | 결정 주체 |
 |---|---|---|---|
 | LOW | **runtime dual-collector success-path clobber (R18-3)** — gather_runtime(Linux+Windows) 가 success 경로에서도 gather_system 의 더 견고한 runtime(chronyd loop / nftables / systemctl firewall / become:true)을 inferior 값으로 덮음. 선재(F5 commit f2ccea36). 근본 fix = gather_runtime 의 runtime 생산 제거(gather_system 단일 정본화) — site.yml include 제거 + 파일 삭제. 구조 변경이라 실 ansible smoke 후 적용 권장 | `[ANSIBLE][LAB]` | 사용자+lab |
-| DONE | ~~**network.interfaces[].link_status enum drift (R18-4)**~~ — **해결 cycle 2026-06-14** (branch feature/r740-audit-fixes). field_dictionary enum→`up/down/unknown` 통일 + 3채널 코드 통일(os-linux/os-windows/esxi-interfaces+adapters+hbas; redfish 기존 canonical) + dell/hpe/lenovo baseline `network.interfaces[].link_status` 결정론적 마이그레이션(linkup→up 등; hpe/lenovo 미러 replay 로 코드 출력 일치 검증) + docs/20+docs/09+예시/fixture. **잔여(lab)**: 전 baseline 의 link_status 외 필드 stale 가능 → 실장비 full 재캡처 권장(rule 13 R4) | `[SCHEMA][LAB]` | 사용자+lab |
+| DONE | ~~**network.interfaces[].link_status enum drift (R18-4)**~~ — **해결 cycle 2026-06-14** (branch feature/r740-audit-fixes). field_dictionary enum→`up/down/unknown` 통일 + 3채널 코드 통일(os-linux/os-windows/esxi-interfaces+adapters+hbas; redfish 기존 canonical) + dell/hpe/lenovo baseline `network.interfaces[].link_status` 결정론적 마이그레이션(linkup→up 등; hpe/lenovo 미러 replay 로 코드 출력 일치 검증) + `docs/contract/03-fields.md`+`docs/contract/02-output-envelope.md`+예시/fixture. **잔여(lab)**: 전 baseline 의 link_status 외 필드 stale 가능 → 실장비 full 재캡처 권장(rule 13 R4) | `[SCHEMA][LAB]` | 사용자+lab |
 
 ## 0. 2026-05-29 audit-cleanup 후속 (전수 audit 결과 — 미적용 backlog)
 
@@ -718,7 +718,7 @@
 
 ### 2.5 에뮬레이터 하네스 CI 편입 [DONE 2026-06-08 — agent 검증만 대기]
 
-- **상태**: 사용자 승인(2026-06-08) 후 구현 완료. Jenkins Stage 4(E2E Regression)가 e2e 회귀 + `tests/integration/ -m "not live"`(HPE 에뮬레이터 오프라인 회귀)를 별도 invocation 으로 실행, 둘 중 하나라도 FAIL 시 stage 실패. 동반 갱신(docs/17 / rule 80 R1-A / JENKINS_PIPELINES) 완료.
+- **상태**: 사용자 승인(2026-06-08) 후 구현 완료. Jenkins Stage 4(E2E Regression)가 e2e 회귀 + `tests/integration/ -m "not live"`(HPE 에뮬레이터 오프라인 회귀)를 별도 invocation 으로 실행, 둘 중 하나라도 FAIL 시 stage 실패. 동반 갱신(`docs/operate/04-pipeline-runtime.md` / rule 80 R1-A / JENKINS_PIPELINES) 완료.
 - **구현 노트**: tests/e2e 와 tests/integration 이 둘 다 top-level `conftest` module 을 써서 단일 멀티-디렉터리 호출 시 ImportError → **별도 pytest 호출 + RC 합산**으로 해결 (Jenkinsfile L217-231). integration conftest 의 전역 `sys.path.insert` 도 제거(e2e conftest shadow 방지).
 - **잔여 (⚠️ AI 환경 밖)**: 실제 Jenkins agent 에서 1회 green 확인 — `/opt/ansible-env` venv 가 redfish_gather(stdlib + ansible stub) import 가능한지. 로컬에선 동일 셸 로직 시뮬레이션 PASS(e2e 157 + integration 44, FINAL_RC=0) 확인했으나 **실 agent 실행은 미확인**. 첫 빌드 모니터링 필요.
 

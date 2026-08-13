@@ -64,7 +64,7 @@
 | `Baseline` | "Baseline (실장비 회귀 기준선 JSON)" |
 | `loc` | "loc (운영 사이트 — 정본은 common/vars/locations.yml)" |
 | `target_type` | "target_type (os/esxi/redfish)" |
-| `JSON envelope` | "JSON envelope (status/sections/data/errors/meta/diagnosis 6 필드)" |
+| `JSON envelope` | "JSON envelope (13 필드 — 분석 6 + 라우팅·식별 7)" |
 | `Round 검증` | "Round 검증 (실장비 검증 단위)" |
 | `iDRAC / iLO / XCC / CIMC` | "iDRAC (Dell BMC) / iLO (HPE) / XCC (Lenovo) / CIMC (Cisco)" |
 | `squash merge` | "squash 병합 (여러 커밋을 1개로 압축)" |
@@ -150,4 +150,4 @@
 ## 관련
 
 - rule: `24-completion-gate`
-- 정본: `CLAUDE.md` Step 6
+- 정본: `CLAUDE.md` §13

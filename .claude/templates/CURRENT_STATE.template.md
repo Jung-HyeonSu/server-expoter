@@ -45,5 +45,5 @@
 ## 정본 reference
 
 - `CLAUDE.md`, `REQUIREMENTS.md`
-- `docs/01~19`
+- `docs/` 문서
 - `docs/ai/decisions/` (ADR)

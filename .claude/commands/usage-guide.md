@@ -70,4 +70,4 @@ argument-hint: "[역할] 예: gather, qa, po"
 - `CLAUDE.md` — Tier 0 정본
 - rule 22 (fragment-philosophy) — Fragment 철학
 - `REQUIREMENTS.md` — 요구사항
-- `docs/01~19` — 운영
+- `docs/` 문서 — 운영

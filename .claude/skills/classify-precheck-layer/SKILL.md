@@ -20,7 +20,7 @@ server-exporter의 검증 / 차단 logic을 적절한 layer에 배치. 너무 �
 | 2d. precheck auth | precheck_bundle.py | 자격증명 인증 |
 | 3. adapter capabilities | adapters/{channel}/{vendor}_*.yml | vendor-specific 비즈니스 규칙 (예: "이 펌웨어는 Volumes endpoint 미지원") |
 | 4. gather 중 graceful degradation | gather_*.yml | 일부 endpoint 실패 → 가능한 데이터만 + errors 기록 |
-| 5. Jenkins Stage 3 (Validate Schema) | Jenkinsfile + output_schema_drift_check | envelope 6 필드 / field_dictionary 정합 |
+| 5. Jenkins Stage 3 (Validate Schema) | Jenkinsfile + output_schema_drift_check | envelope 13 필드 / field_dictionary 정합 |
 | 6. Jenkins Stage 4 (E2E Regression) | Jenkinsfile + pytest | baseline 회귀 |
 
 ## 분류 판단 질문 (Q1-Q3)

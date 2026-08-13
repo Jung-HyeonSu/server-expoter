@@ -3,7 +3,7 @@
 
 adapter capabilities 변경 시 docs/reference/compatibility-matrix.md 갱신 권장.
 
-Advisory (exit 0): adapter 변경 + docs/22 미갱신 시 경고.
+Advisory (exit 0): adapter 변경 + `docs/reference/compatibility-matrix.md` 미갱신 시 경고.
 
 비활성화 환경변수:
     COMPAT_MATRIX_CHECK_SKIP=1  — 본 hook skip
@@ -39,9 +39,9 @@ def _normalize(p: str) -> str:
 
 
 def detect_advisory(committed_files: list[str]) -> tuple[list[str], bool]:
-    """commit 파일 목록에서 adapter 변경 + docs/22 미갱신 검출.
+    """commit 파일 목록에서 adapter 변경 + `docs/reference/compatibility-matrix.md` 미갱신 검출.
 
-    Returns: (변경된 adapter 파일 list, docs/22 갱신 여부)
+    Returns: (변경된 adapter 파일 list, `docs/reference/compatibility-matrix.md` 갱신 여부)
     """
     files = [_normalize(f) for f in committed_files if f]
     adapter_files = [f for f in files if f.startswith(ADAPTER_PREFIX) and f.endswith(".yml")]
@@ -66,12 +66,12 @@ def _last_commit_files(repo_root: Path) -> list[str]:
 def self_test() -> int:
     cases: list[tuple[str, list[str], tuple[list[str], bool]]] = [
         (
-            "adapter 1개 변경 + docs/22 미변경 → advisory (1 adapter, no docs22)",
+            "adapter 1개 변경 + `docs/reference/compatibility-matrix.md` 미변경 → advisory (1 adapter, no docs22)",
             ["adapters/redfish/dell_idrac9.yml"],
             (["adapters/redfish/dell_idrac9.yml"], False),
         ),
         (
-            "adapter 변경 + docs/22 변경 → 통과",
+            "adapter 변경 + `docs/reference/compatibility-matrix.md` 변경 → 통과",
             ["adapters/redfish/dell_idrac9.yml", "docs/reference/compatibility-matrix.md"],
             (["adapters/redfish/dell_idrac9.yml"], True),
         ),
@@ -91,7 +91,7 @@ def self_test() -> int:
             (["adapters/redfish/hpe_ilo6.yml"], False),
         ),
         (
-            "다중 adapter 변경 + docs/22 변경 → 통과",
+            "다중 adapter 변경 + `docs/reference/compatibility-matrix.md` 변경 → 통과",
             [
                 "adapters/redfish/dell_idrac9.yml",
                 "adapters/redfish/hpe_ilo6.yml",
@@ -135,7 +135,7 @@ def main() -> int:
         return 0
 
     print(
-        "[compat-matrix] rule 28 #12 advisory — adapter capabilities 변경 + docs/22 미갱신:",
+        "[compat-matrix] rule 28 #12 advisory — adapter capabilities 변경 + `docs/reference/compatibility-matrix.md` 미갱신:",
         file=sys.stderr,
     )
     for f in adapter_files:

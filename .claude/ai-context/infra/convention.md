@@ -1,7 +1,7 @@
 # Infra Convention — server-exporter
 
 > Jenkins / Agent / Vault / Redis / ansible.cfg 작업 컨벤션.
-> 정본: `docs/01~04`, `docs/17`, `docs/18`.
+> 정본: `docs/` 문서, `docs/operate/04-pipeline-runtime.md`, `docs/operate/08-ansible-config.md`.
 
 ## 1. Jenkins 파이프라인 3종
 
@@ -17,7 +17,7 @@
 4. **E2E Regression** — pytest baseline (FAIL 게이트)
 5. **Post** — json_only callback → JSON 출력
 
-## 2. Agent 노드 (docs/03)
+## 2. Agent 노드 (`docs/operate/02-agent-node.md`)
 
 운영 토폴로지:
 - master (10.100.64.154) — Jenkins controller, 검증 기준 Agent

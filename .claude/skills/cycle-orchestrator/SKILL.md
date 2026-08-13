@@ -60,7 +60,7 @@ P1 출력 종합:
 
 - M-X3 패턴 (영역별 코드 변경)
 - Additive only (rule 92 R2 + rule 96 R1-B)
-- 정본 4종 (envelope / sections / field_dictionary / build_status) 변경 시 docs/19 + docs/20 + 회귀 mock 동반 갱신 (rule 13 R7 + R8)
+- 정본 4종 (envelope / sections / field_dictionary / build_status) 변경 시 `docs/reference/decision-log.md` + `docs/contract/03-fields.md` + 회귀 mock 동반 갱신 (rule 13 R7 + R8)
 - pytest mock fixture N건 추가
 - commit 마커 `[SUB-N DONE]`
 

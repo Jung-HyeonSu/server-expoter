@@ -16,7 +16,7 @@
 - Findings:
   - [Critical/High/Med/Low] {item}
 
-### Quality (의심 패턴 11종)
+### Quality (의심 패턴 12종)
 - 결과: {PASS / WARN / FAIL}
 - Findings:
   - {item}

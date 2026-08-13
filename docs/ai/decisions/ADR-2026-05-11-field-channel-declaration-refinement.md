@@ -69,7 +69,7 @@ cycle 2026-05-11 이전에는 65 entries × 8 baseline = 520 cells 의 실제 �
 `.claude/skills/add-new-vendor/SKILL.md` 절차 10단계 (기존 9 → 10):
 - 단계 8 신설: 새 vendor baseline 추가 후 `measure_field_usage_matrix.py --update-md` 실행 → DRIFT 검출 / 분류 후보 식별
 
-### 6. docs/20 동기화 (rule 13 R7)
+### 6. `docs/contract/03-fields.md` 동기화 (rule 13 R7)
 
 - `docs/contract/03-fields.md` memory 절: installed_mb / visible_mb / free_mb 채널 변경 반영
 - 섹션 8 (참조 표): `FIELD_USAGE_MATRIX.md` 신규 catalog 링크 추가
@@ -79,7 +79,7 @@ cycle 2026-05-11 이전에는 65 entries × 8 baseline = 520 cells 의 실제 �
 ### 정합성 검증
 
 - **rule 13 R5 envelope shape 보존**: envelope 13 필드 변경 없음 [PASS]
-- **rule 13 R7 docs/20 동기화**: 적용 [PASS]
+- **rule 13 R7 `docs/contract/03-fields.md` 동기화**: 적용 [PASS]
 - **rule 92 R2 Additive only**: channel 배열은 "거짓 선언 제거" + "누락 선언 추가" (시스템 안정성). schema/baseline_v1 변경 없음 [PASS]
 - **rule 92 R5 schema 변경 사용자 승인**: ExitPlanMode 가 승인 시점 [PASS]
 - **rule 70 R8 ADR 의무**: rule 28 R1 표 카운트 변경 (12 → 13) + rule 본문 의미 변경 [PASS — 본 ADR]

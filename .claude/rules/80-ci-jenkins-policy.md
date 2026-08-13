@@ -3,7 +3,7 @@
 ## 적용 대상
 - `Jenkinsfile`, `Jenkinsfile_portal`
 - `ansible.cfg`
-- Jenkins Job 등록 (docs/04)
+- Jenkins Job 등록 (`docs/operate/03-job-registration.md`)
 - callback URL endpoint 구성
 
 ## 현재 관찰된 현실

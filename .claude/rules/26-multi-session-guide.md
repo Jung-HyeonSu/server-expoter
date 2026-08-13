@@ -111,7 +111,7 @@
 - **Why**: 다음 세션이 stale 정보로 시작 → 작업 중복 또는 충돌
 - **재검토**: 종료 hook으로 자동 갱신 시
 
-### R10. 다중 worker 4 정본 (cycle 2026-05-06 정착)
+### R9. 다중 worker 4 정본 (cycle 2026-05-06 정착)
 
 다중 worker (N≥3) cycle 운영 시 다음 4 정본 파일 모두 의무:
 
@@ -140,7 +140,7 @@
 - CONTINUATION.md 5 섹션 누락 — R6
 - 마커 없는 commit — R7
 - CONTINUATION 갱신 없이 종료 — R8
-- N≥3 worker + 4 정본 일부 누락 — R10
+- N≥3 worker + 4 정본 일부 누락 — R9
 
 ## 리뷰 포인트
 
@@ -148,7 +148,7 @@
 - [ ] 각 세션 commit에 [SUB-N] 태그
 - [ ] 공용 파일 충돌 없음
 - [ ] 세션 종료 전 CONTINUATION.md 갱신
-- [ ] N≥3 worker 시 4 정본 (INDEX/HANDOFF/DEPENDENCIES/SESSION-PROMPTS) 모두 — R10
+- [ ] N≥3 worker 시 4 정본 (INDEX/HANDOFF/DEPENDENCIES/SESSION-PROMPTS) 모두 — R9
 
 ## 관련
 

@@ -107,7 +107,9 @@ Credential은 기존 Vault와 Credential Profile 구조를 사용한다.
 세션 시작 시: 현재 Branch/Git 상태 확인 -> 요청/변경 경로 기준 역할 추론 -> 필요한 `.claude/role/`, `.claude/ai-context/`, `.claude/rules/`만 로드.
 단순 오타가 아닌 코드 변경은 현재 Impact Preview 정책을 따르고, 사용자가 Preview 생략/바로 진행을 명시하면 현재 정책 범위에서 진행한다.
 제품 코드 작업과 Harness 자기개선 작업을 섞지 않는다. 제품 코드 변경 중 `.claude/`, `docs/ai/`, `scripts/ai/`를 이유 없이 수정하지 않는다. Harness 개선 작업에서도 제품 코드를 요청 없이 수정하지 않는다.
-`bypassPermissions`를 사용하지 않고 `~/.claude/settings.json`을 자율 수정하지 않는다.
+사용자 `~/.claude/settings.json`(전역 설정)은 자율 수정하지 않는다. 프로젝트
+`.claude/settings.json` 의 권한 모드는 2026-05-01 ADR(harness-full-permissions)로
+사용자가 전권을 부여한 결과이며 그 자체가 위반이 아니다.
 세부 승인/Role/Hook/Orchestrator 규칙은 현재 `.claude/rules/`, `.claude/policy/`, `.claude/skills/`를 따른다. 오래된 Rule 번호/날짜를 이 파일에 복제하지 않는다.
 
 ## 14. Git / Production

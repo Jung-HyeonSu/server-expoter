@@ -63,7 +63,7 @@ PLACEHOLDER_RE = re.compile(
     re.IGNORECASE,
 )
 
-# `docs/20` 처럼 번호만 적은 산문 약칭은 파일 경로 주장이 아니다.
+# `docs/contract/03-fields.md` 처럼 번호만 적은 산문 약칭은 파일 경로 주장이 아니다.
 # (재편 시 같이 고쳐야 하지만, 실존 게이트의 대상은 아니다 — `--shorthand` 로 따로 본다.)
 DOCS_SHORTHAND_RE = re.compile(r"^docs/\d+$")
 
@@ -167,7 +167,7 @@ def main() -> int:
     ap.add_argument("--baseline", metavar="PATH",
                     help="현재 위반 목록을 파일로 기록하고 종료 0")
     ap.add_argument("--shorthand", action="store_true",
-                    help="`docs/20` 같은 번호 약칭도 함께 보고 (문서 재편 시 치환 대상 파악용)")
+                    help="`docs/contract/03-fields.md` 같은 번호 약칭도 함께 보고 (문서 재편 시 치환 대상 파악용)")
     args = ap.parse_args()
 
     tops = top_level_dirs()

@@ -49,6 +49,6 @@
 ## 주의사항 (Critical)
 - **schema 변경은 3종 동반 (rule 13)**: `sections.yml` + `field_dictionary.yml` + `schema/baseline_v1/{vendor}_baseline.json` 동시 갱신. 한쪽만 수정 금지.
 - **Field Dictionary**: `priority: must` 필드는 모든 vendor baseline 에 존재해야 한다. nice 는 vendor-specific 허용, skip 은 의도적 미수집.
-- **JSON envelope (rule 20)**: `{status, sections, data, errors, meta, diagnosis}` 6 필드. callback_plugins/json_only.py가 OUTPUT 태스크에만 JSON 직렬화.
+- **JSON envelope (rule 20)**: 13 필드 (분석 6 + 라우팅·식별 7). callback_plugins/json_only.py가 OUTPUT 태스크에만 JSON 직렬화.
 - **build_*.yml 빌더 5종 (common/tasks/normalize/)**: build_sections / build_status / build_errors / build_meta / build_correlation / build_output. 각 빌더가 fragment 변수를 어떻게 누적하는지 일관 패턴.
 - **baseline 회귀**: schema 변경 PR은 영향 vendor 전수 회귀 검증 결과를 docs/ai/incoming-review/ 또는 evidence/에 첨부.

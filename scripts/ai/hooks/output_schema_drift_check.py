@@ -73,7 +73,7 @@ def _read_yaml_keys(path: Path, section: str = None) -> list[str]:
     return keys
 
 
-# envelope 필드 (섹션 아님 — JSON envelope 6 필드 중 data 외 5개)
+# envelope 필드 (섹션 아님 — 13 필드 중 data 를 제외한 분석 계열)
 ENVELOPE_FIELDS = {"status", "sections", "errors", "meta", "diagnosis", "correlation"}
 
 

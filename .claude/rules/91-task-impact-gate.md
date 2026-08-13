@@ -22,7 +22,7 @@
 다음만 skip:
 - 사용자 명시 ("그냥 진행해줘" / "프리뷰 skip" / "바로 해줘" / "간단하니까")
 - 오타 1줄, 주석만 수정, 변수명 1개 변경
-- 이미 `plan-feature-change` 등 계획 단계 끝나고 `implement-safe-change` 진입
+- 이미 `plan-feature-change` 등 계획 단계를 끝내고 구현에 들어간 경우
 
 **Forbidden**: AI 자체 판단으로 "안전해 보여서" skip.
 
@@ -42,7 +42,7 @@
 
 | 리스크 | 다음 단계 |
 |---|---|
-| LOW | `implement-safe-change` 직진 |
+| LOW | 바로 구현 진행 |
 | MED + 선택지 2+ | `compare-feature-options` 먼저 |
 | HIGH | `write-impact-brief` 에스컬레이트 + 사용자 승인 대기 |
 | Critical (벤더 경계 / schema 변경 / Jenkinsfile cron / vault) | 사용자 명시 승인 없이 구현 진입 금지 |
@@ -83,7 +83,7 @@
 
 ## 관련
 
-- skill: `task-impact-preview`, `compare-feature-options`, `write-impact-brief`, `implement-safe-change`
+- skill: `task-impact-preview`, `compare-feature-options`, `write-impact-brief`
 - rule: `92-dependency-and-regression-gate`, `95-production-code-critical-review`, `96-external-contract-integrity`
 - catalog: `docs/ai/catalogs/FAILURE_PATTERNS.md`
-- 정본: `CLAUDE.md` Step 4
+- 정본: `CLAUDE.md` §13

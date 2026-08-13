@@ -22,7 +22,7 @@
 | Vault | | |
 | Jenkinsfile (3종) | | |
 | 외부 시스템 계약 (Redfish path 등) | | |
-| 정본 문서 (CLAUDE / GUIDE / REQUIREMENTS / docs/01~19) | | |
+| 정본 문서 (CLAUDE / GUIDE / REQUIREMENTS / `docs/` 문서) | | |
 
 ## 3. 변경 대상 파일 (실측)
 

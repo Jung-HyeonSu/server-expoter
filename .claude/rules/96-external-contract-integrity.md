@@ -71,7 +71,7 @@ lab 부재 vendor / 펌웨어 추가 시 후속 작업 자동 추적 의무 (rul
   1. **사이트 fixture 캡처** — capture-site-fixture skill 적용 (Round 검증 후 회귀 회피)
   2. **baseline 추가** — 실장비 검증 후 schema/baseline_v1/{vendor}_baseline.json (rule 13 R4)
   3. **lab 도입 후 cycle** — 별도 round (`{vendor} lab 검증`)
-  4. **vault 결정** — 사용자 명시 승인 시점 (rule 27 R6 / docs/21)
+  4. **vault 결정** — 사용자 명시 승인 시점 (rule 27 R6 / `docs/operate/05-vault.md`)
 - **Allowed**: lab 부재 vendor 가 NEXT_ACTIONS 에 이미 등재된 경우 중복 등재 skip
 - **Forbidden**:
   - lab 부재 vendor 추가 + NEXT_ACTIONS 등재 누락 (다음 작업자 / 다음 cycle 진입 시 추적 불가)

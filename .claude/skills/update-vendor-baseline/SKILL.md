@@ -58,7 +58,7 @@ description: 실장비 검증 결과로 schema/baseline_v1/{vendor}_baseline.jso
    - 새 필드가 Must 대상이면 다른 vendor에도 존재하는지 확인 (없으면 Nice로 분류)
    - field_dictionary.yml 동반 갱신
 5. **새 baseline 작성**:
-   - JSON envelope 6 필드 형식 유지 (rule 20 R1)
+   - JSON envelope 13 필드 형식 유지 (rule 20 R1)
    - section list가 sections.yml과 일치
 6. **회귀 검증**:
    ```bash

@@ -9,7 +9,7 @@ description: server-exporter 하네스 자기개선 1 cycle 수동 트리거. 6�
 
 | 단계 | Agent | 역할 |
 |---|---|---|
-| 1. Observe | `harness-observer` | rule 28 측정 대상 11종 재측정 + drift 검출 |
+| 1. Observe | `harness-observer` | rule 28 측정 대상 13종 재측정 + drift 검출 |
 | 2. Architect | `harness-architect` | 변경 명세 (diff 수준) — 구현 안 함 |
 | 3. Review | `harness-reviewer` | 명세 검수 (자가 승인 금지, rule 25 R7) |
 | 4. Govern | `harness-governor` | Tier 1/2/3 분류 + 사용자 에스컬레이션 결정 |

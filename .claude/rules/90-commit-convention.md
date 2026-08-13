@@ -33,7 +33,7 @@
   | `feat` | 신규 기능 | `feat: Huawei vendor adapter 추가` |
   | `fix` | 버그 수정 | `fix: callback URL 후행 슬래시 방어` |
   | `refactor` | 기능 변경 없는 구조 개선 | `refactor: gather/normalize 책임 분리` |
-  | `docs` | 문서만 | `docs: docs/13 Round 11 추가` |
+  | `docs` | 문서만 | `docs: `docs/reference/live-validation.md` Round 11 추가` |
   | `test` | 테스트 추가/수정 | `test: HPE iLO6 baseline 추가` |
   | `chore` | 빌드/의존성/설정 | `chore: requirements.yml 갱신` |
   | `harness` | AI 하네스 변경 | `harness: rule 22 fragment-philosophy 보강` |
@@ -88,9 +88,11 @@
 - **Default**:
   - `commit_msg_check.py` (commit-msg hook): advisory (stderr 경고, commit 허용)
   - 보호 경로 / 잔재 어휘 / SKILL.md 형식: blocking
-- **Allowed**: 사용자 명시 승인 후 advisory 무시 가능 (`--no-verify` 금지 — bypassPermissions 정책)
+- **Allowed**: 사용자 명시 승인 후 advisory 무시 가능. `--no-verify` 는 쓰지 않는다 —
+  훅을 통째로 끄면 blocking 검사까지 함께 꺼지기 때문이다. 개별 훅은 각자 문서화한
+  skip 환경변수(`ADDITIVE_SKIP_NEW_CYCLE` 등)로 우회한다
 - **Forbidden**:
-  - `--no-verify` 사용 (rule 00 금지)
+  - `--no-verify` 사용. 단 rule 93 R2 예외 2(하네스-free 인 production 브랜치 sync)는 허용된다
   - blocking hook 우회
 - **Why**: advisory는 학습 목적. 강제 차단은 막대한 정지 비용
 - **재검토**: AI 자동 commit message 정합성 100% 도달 시 blocking 격상 검토

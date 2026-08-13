@@ -49,6 +49,6 @@ Jenkins 파이프라인 / Ansible 실행 환경 (Agent 노드) / Vault 시크릿
 ## 주의사항 (Critical)
 - **vault/ 운영 권장**: 모든 vault 파일은 ansible-vault encrypt 권장 (cycle-011 보안 정책 해제 + cycle-012 8 vault encrypt 채택). 회전은 사용자 직접 운영.
 - **Jenkinsfile cron 변경 (rule 80)**: cron 표현식 변경은 사용자 명시 승인 필수 (pre_commit_jenkinsfile_guard advisory). 4-Stage (Validate / Gather / Validate Schema / E2E Regression) 통과 의무.
-- **Agent 노드 (docs/03)**: 새 loc 추가 또는 Agent 노드 변경은 Jenkins RBAC + 인벤토리 + 방화벽 동반 갱신.
+- **Agent 노드 (`docs/operate/02-agent-node.md`)**: 새 loc 추가 또는 Agent 노드 변경은 Jenkins RBAC + 인벤토리 + 방화벽 동반 갱신.
 - **callback URL 무결성 (rule 31)**: 호출자에게 결과 통지하는 callback URL은 공백/후행 슬래시 방어 처리 (이전 commit 4ccc1d7 fix 참조).
 - **agent-master 망 분리**: Ingest 단계는 master에서 실행, gather는 agent에서 실행 (8bd80c1 / 8b2f128 commit 참조).

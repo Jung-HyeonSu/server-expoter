@@ -224,7 +224,7 @@ collected 를 채우는 26곳 전부 `os-gather/tasks/{linux,windows}/gather_*.y
 
 ## 7. 실장비 스모크 (§9)
 
-대상/채널은 `tests/evidence` + `docs/13` 에 **이미 기록된 매핑만** 사용했다. 새 IP 를
+대상/채널은 `tests/evidence` + `docs/reference/live-validation.md` 에 **이미 기록된 매핑만** 사용했다. 새 IP 를
 추측하지 않았다. 모두 읽기 전용 수집이며 Account Write 는 `-e _rf_account_service_dryrun=true`
 로 시뮬레이션 고정했다.
 
@@ -370,7 +370,7 @@ INVENTORY_JSON='[{"ip":"10.100.64.2"}]' \
 | 실제 Account Write | 미검증 |
 | Jenkins Checkout SHA | BLOCKED |
 | 벤더별 OEM 실장비 | 일부 미검증 |
-| `docs/19` production 승격 | 대기 |
+| `docs/reference/decision-log.md` production 승격 | 대기 |
 
 > pytest PASS 는 **본 Phase 커밋(`be97e407`) 트리를 격리 추출해 실행한 결과**다
 > (2275 passed / 0 failed). 같은 시각 작업 트리에서 관측된
@@ -378,7 +378,7 @@ INVENTORY_JSON='[{"ip":"10.100.64.2"}]' \
 > Location Credential Resolver 작업에서 비롯된 것이며 본 Phase 의 회귀가 아니다.**
 > 해당 Test 를 우회하거나 수정하지 않았다.
 
-### docs/19 승격 대기 사유 (판정 근거)
+### `docs/reference/decision-log.md` 승격 대기 사유 (판정 근거)
 
 종료 시점 실측:
 
@@ -395,14 +395,14 @@ Resolver production 승격 승인·검증  본 세션에서 확인 불가 — �
 
 `scripts/ai/promote_to_production.sh` 는 `origin/production ↔ main` 의 순수 코드 차이를
 **전량** 승격한다. 파일 선택 인자가 없고, 저장소에 다른 공식 선택 승격 경로도 없다.
-따라서 `docs/19` 하나를 넣으려면 Resolver 코드 31 파일이 함께 올라간다.
+따라서 `docs/reference/decision-log.md` 하나를 넣으려면 Resolver 코드 31 파일이 함께 올라간다.
 
-→ **경우 2 로 판정하고 `docs/19` 는 계속 대기**시킨다.
+→ **경우 2 로 판정하고 `docs/reference/decision-log.md` 는 계속 대기**시킨다.
 `git merge main -> production` / force push / history rewrite 는 사용하지 않았다.
 
 본 Phase 의 **게더링 코드 변경은 이미 production(`b574841e`)에 전부 반영**돼 있다
 (ESXi `listening_ports`, Redfish OEM include 6건, 회귀 테스트 2건).
-대기 중인 것은 `docs/19` 문서 교정 1건뿐이며 운영 동작에 영향이 없다.
+대기 중인 것은 `docs/reference/decision-log.md` 문서 교정 1건뿐이며 운영 동작에 영향이 없다.
 
 Resolver 의 완료·검증·commit·production 승격 판단은 **해당 작업 세션 소관**이다.
-그 세션이 승격을 수행하면 `docs/19` 도 같은 승격에 자연히 포함된다.
+그 세션이 승격을 수행하면 `docs/reference/decision-log.md` 도 같은 승격에 자연히 포함된다.

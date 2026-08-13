@@ -57,11 +57,26 @@ FORBIDDEN_WORDS = [
     "BillingCalculator",
 ]
 
-# rule reference 패턴: "rule NN" 또는 "rules/NN-..."
+# 경로 모양 참조 — 이것만 보던 것이 이 검증기의 사각지대였다.
 RULE_REF_RE = re.compile(r"\.claude/rules/(\d{2}-[a-z0-9-]+)\.md")
 SKILL_REF_RE = re.compile(r"\.claude/skills/([a-z0-9-]+)/")
 AGENT_REF_RE = re.compile(r"\.claude/agents/([a-z0-9-]+)\.md")
 POLICY_REF_RE = re.compile(r"\.claude/policy/([a-z0-9-]+\.yaml)")
+
+# ── 산문 참조 (2026-08-13 추가) ────────────────────────────────────────────
+# 하네스는 서로를 경로가 아니라 **이름**으로 부른다. 경로 모양만 검사하니
+# `rule 60`(파일 없음)·`implement-safe-change`(스킬 없음)·`CLAUDE.md Step 6`(절 없음)·
+# `docs/contract/03-fields.md`(이동됨) 이 전부 통과했고, 그러면서 "모든 참조 정합 확인"을 찍었다.
+# 초록불에 정보가 없으면 게이트가 아니라 장식이다.
+BARE_RULE_RE = re.compile(r"(?<![\w/-])rule\s+(\d{2})(?![\d\w-])", re.IGNORECASE)
+# `- skill: a, b` / `- agent: x` 같은 관계 선언 줄에서 백틱 이름을 뽑는다.
+DECL_LINE_RE = re.compile(r"^\s*[-*]?\s*(skills?|agents?)\s*:\s*(.+)$", re.IGNORECASE)
+BACKTICK_NAME_RE = re.compile(r"`([a-z][a-z0-9-]{2,})`")
+# `CLAUDE.md Step 6` / `` `CLAUDE.md` §11 `` — 사이에 백틱이 끼는 표기가 흔하다
+CLAUDE_SEC_RE = re.compile(r"CLAUDE\.md`?\s*(?:§|절)\s*(\d{1,2})")
+CLAUDE_STEP_RE = re.compile(r"CLAUDE\.md`?\s*Step\s*\d{1,2}")
+# 옛 번호 문서 약칭 — 2026-08-13 구조 재편으로 더 이상 유효하지 않다.
+DOCS_SHORTHAND_RE = re.compile(r"(?<![\w/])docs/(\d{2})(?![\d\w])")
 
 
 def _scan_file(path: Path) -> Tuple[List[str], List[str], List[str], List[str], List[str]]:
@@ -92,6 +107,52 @@ def _scan_file(path: Path) -> Tuple[List[str], List[str], List[str], List[str], 
                     break
 
     return rule_refs, skill_refs, agent_refs, policy_refs, forbidden
+
+
+def _scan_prose_refs(
+    path: Path,
+    rule_nums: Set[str],
+    skills: Set[str],
+    agents: Set[str],
+    claude_sections: Set[str],
+) -> List[str]:
+    """이름으로 부르는 참조가 실제로 존재하는지 본다."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except Exception:
+        return []
+
+    found: List[str] = []
+    for lineno, line in enumerate(text.splitlines(), 1):
+        # 폐지 사실을 서술하는 줄은 대상이 아니다 (tombstone 은 정보다)
+        tombstone = any(k in line for k in ("해제", "제거됨", "삭제됨", "존재하지 않", "폐지", "정리됨"))
+
+        for num in BARE_RULE_RE.findall(line):
+            if num not in rule_nums and not tombstone:
+                found.append(f"{path.name}:{lineno}: 없는 rule 참조 — rule {num}")
+
+        m = DECL_LINE_RE.match(line)
+        if m:
+            kind = m.group(1).lower().rstrip("s")
+            for name in BACKTICK_NAME_RE.findall(m.group(2)):
+                if kind == "skill" and name not in skills and not tombstone:
+                    found.append(f"{path.name}:{lineno}: 없는 skill 참조 — {name}")
+                if kind == "agent" and name not in agents and not tombstone:
+                    found.append(f"{path.name}:{lineno}: 없는 agent 참조 — {name}")
+
+        # CLAUDE.md 에는 "Step" 이라는 표제가 없다. 절 번호(`## N.`)뿐이다.
+        # 번호가 우연히 맞아도 가리키는 내용이 다르므로 표기 자체를 위반으로 본다.
+        if CLAUDE_STEP_RE.search(line):
+            found.append(f"{path.name}:{lineno}: CLAUDE.md 에 Step 표제 없음 — 절 번호(§N)로 적어야 한다")
+        for sec in CLAUDE_SEC_RE.findall(line):
+            if sec not in claude_sections:
+                found.append(f"{path.name}:{lineno}: CLAUDE.md 에 없는 절 — §{sec}")
+
+        for num in DOCS_SHORTHAND_RE.findall(line):
+            if not tombstone:
+                found.append(f"{path.name}:{lineno}: 옛 문서 번호 약칭 — docs/{num} (구조 재편됨)")
+
+    return found
 
 
 def main() -> int:
@@ -154,6 +215,20 @@ def main() -> int:
                 f".claude/skills/{skill_dir.name}/SKILL.md: name '{m.group(1).strip()}' "
                 f"↔ 폴더 '{skill_dir.name}' 불일치"
             )
+
+    # 산문 참조 검사용 카탈로그
+    rule_nums: Set[str] = {r.split("-", 1)[0] for r in existing_rules}
+    claude_md = repo_root / "CLAUDE.md"
+    claude_sections: Set[str] = set()
+    if claude_md.is_file():
+        claude_sections = set(
+            re.findall(r"^##\s*(\d{1,2})\.", claude_md.read_text(encoding="utf-8"), re.MULTILINE)
+        )
+
+    for path in list(claude_dir.rglob("*.md")) + ([claude_md] if claude_md.is_file() else []):
+        issues.extend(
+            _scan_prose_refs(path, rule_nums, existing_skills, existing_agents, claude_sections)
+        )
 
     for path in claude_dir.rglob("*.md"):
         rule_refs, skill_refs, agent_refs, policy_refs, forbidden = _scan_file(path)

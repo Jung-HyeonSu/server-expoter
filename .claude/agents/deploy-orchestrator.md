@@ -11,7 +11,7 @@ server-exporter Jenkins / Agent 인프라 배포.
 
 ## 절차
 
-1. docs/01~04 절차 참조 (Jenkins setup / Job 등록 / Agent 노드)
+1. `docs/` 문서 절차 참조 (Jenkins setup / Job 등록 / Agent 노드)
 2. 사용자 명시 승인 (인프라 변경)
 3. dry-run 후 적용
 

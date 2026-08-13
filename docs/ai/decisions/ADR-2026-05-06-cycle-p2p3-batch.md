@@ -48,7 +48,7 @@ cycle 2026-05-06-multi-session-compatibility 종료 시 M-G1 산출물로 22 P2/
 
 ### E. 호환성 매트릭스 묶음 (4 항목 — P3)
 
-- **hook post_commit_compatibility_matrix_check.py** 신설 — adapter capabilities 변경 시 docs/22 advisory
+- **hook post_commit_compatibility_matrix_check.py** 신설 — adapter capabilities 변경 시 `docs/reference/compatibility-matrix.md` advisory
 - **hook pre_commit_additive_only_check.py** 신설 — 호환성 cycle Additive 검증
 - **docs/reference/compatibility-matrix.md** 신설 — M-D1 240 cell 정본화
 - **script scripts/ai/measure_compatibility_matrix.py** 신설 — rule 28 #12 자동 측정
@@ -63,7 +63,7 @@ cycle 2026-05-06-multi-session-compatibility 종료 시 M-G1 산출물로 22 P2/
 | skills | 49 | 51 | +2 (verify-status-logic / cycle-orchestrator / add-vendor-no-lab — 3 신설 + write-cold-start / rotate-vault 보강) |
 | agents | 59 | 60 | +1 (ticket-decomposer) |
 | hooks | 22 | 26 | +4 (status_logic / ticket_consistency / additive_only / compat_matrix_check) |
-| docs | 21 | 22 | +1 (compatibility-matrix) — docs/21 / docs/22 신설 |
+| docs | 21 | 22 | +1 (compatibility-matrix) — `docs/operate/05-vault.md` / `docs/reference/compatibility-matrix.md` 신설 |
 
 ### 검증
 
@@ -81,9 +81,9 @@ cycle 2026-05-06-multi-session-compatibility 종료 시 M-G1 산출물로 22 P2/
 ### 학습 (M-G2 형식화)
 
 - M-A status 학습 → rule 13 R8 + skill + hook 3 항목
-- M-C vault 학습 → rule 27 R6 + skill 보강 + docs/21 3 항목
+- M-C vault 학습 → rule 27 R6 + skill 보강 + `docs/operate/05-vault.md` 3 항목
 - M-G 24 ticket × 5 worker 라이브러리화 → cycle-orchestrator + ticket-decomposer + write-cold-start-ticket 보강
-- M-D1 240 cell 매트릭스 → docs/22 + script + hook 정본화
+- M-D1 240 cell 매트릭스 → `docs/reference/compatibility-matrix.md` + script + hook 정본화
 - lab 부재 학습 → rule 50 R2 단계 10 + rule 96 R1-C + skill add-vendor-no-lab
 
 ## 대안 비교 (Considered)

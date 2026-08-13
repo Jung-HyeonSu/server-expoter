@@ -1,6 +1,6 @@
 ---
 name: measure-reality-snapshot
-description: rule 28 R1 카탈로그 11종 측정 대상을 TTL / 무효화 trigger 기반으로 재측정 또는 캐시 사용 판정. 사용자가 "실측해줘", "최신 정보 맞아?" 요청 시 또는 장기 세션 중간 동기화. - 코드 작업 시작 전 / 측정 대상 stale 의심 / 사용자 명시 요청
+description: rule 28 R1 카탈로그 13종 측정 대상을 TTL / 무효화 trigger 기반으로 재측정 또는 캐시 사용 판정. 사용자가 "실측해줘", "최신 정보 맞아?" 요청 시 또는 장기 세션 중간 동기화. - 코드 작업 시작 전 / 측정 대상 stale 의심 / 사용자 명시 요청
 ---
 
 # measure-reality-snapshot
@@ -37,7 +37,7 @@ Step 4  유효 → 캐시 사용 + "last measured: YYYY-MM-DD" 명시
 ## 출력
 
 ```markdown
-## 측정 대상 11종 상태
+## 측정 대상 13종 상태
 
 | # | 대상 | last measured | TTL | 상태 |
 |---|---|---|---|---|

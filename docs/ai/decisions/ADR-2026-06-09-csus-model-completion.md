@@ -64,14 +64,14 @@ chassis GET 실패 시 `continue` (drop) → `cdata = {}` 후 멤버 노출. gat
 - baseline: `schema/baseline_v1/hpe_csus_3200_baseline.json` 에 5종 신 키 Additive 추가 (mock — 실측 아님, rule 25 R7-B).
 - 테스트: `test_csus_extended_topology.py` (16) + `test_csus_fixture_replay.py` (7) 신설.
 
-**근거**: rule 96 R1-A web sources + rule 21 R1 fixture 회귀 + rule 13 R7 docs/20 동기화.
+**근거**: rule 96 R1-A web sources + rule 21 R1 fixture 회귀 + rule 13 R7 `docs/contract/03-fields.md` 동기화.
 
 ## 결과 (Impact)
 
 ### 정합성 검증
 
 - **rule 13 R5 envelope 13 필드**: 변경 0 — 신 데이터 전부 `data.multi_node` 내부 [PASS]
-- **rule 13 R7 docs/20 동기화**: 7-bis 절 + "확장 컴포넌트" 표 갱신 [PASS]
+- **rule 13 R7 `docs/contract/03-fields.md` 동기화**: 7-bis 절 + "확장 컴포넌트" 표 갱신 [PASS]
 - **rule 22 Fragment 철학**: normalize_standard.yml multi_node wholesale passthrough — task 변경 0 [PASS]
 - **rule 92 R2 Additive only**: 기존 path 변경 0 / 신 key 추가만 (gather_chassis_multi 는 실패-경로만 변경) [PASS]
 - **rule 96 R1-A web sources**: DMTF DSP0266 + HPE CSUS 3200 Admin Guide + Superdome Flex 상속 origin 주석 [PASS]

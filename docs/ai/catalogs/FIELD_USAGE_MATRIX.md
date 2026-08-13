@@ -633,7 +633,7 @@ Phase 1 탐색 (Explore agents) 에서 식별된 15 의심 후보. Phase 1 스�
 
 ## 관련
 
-- rule: `13-output-schema-fields` R5/R7 (envelope shape 보존 + docs/20 동기화)
+- rule: `13-output-schema-fields` R5/R7 (envelope shape 보존 + `docs/contract/03-fields.md` 동기화)
 - rule: `28-empirical-verification-lifecycle` R1 #13 (측정 대상 신규)
 - rule: `92-dependency-and-regression-gate` R5 (schema 변경 사용자 명시 승인)
 - rule: `96-external-contract-integrity` R1 (외부 계약 origin 주석)

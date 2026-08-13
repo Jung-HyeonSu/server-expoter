@@ -69,17 +69,17 @@
   - set_fact로만 변수 생성 (다른 task의 결과를 직접 참조 안 함)
 - **Forbidden**: 빌더 안에서 외부 시스템 호출 (gather에서 이미 끝남)
 
-### R7. envelope 정본 변경 시 docs/20 갱신 의무
+### R7. envelope 정본 변경 시 `docs/contract/03-fields.md` 갱신 의무
 
 - **Default**: 다음 정본 변경 시 `docs/contract/03-fields.md` 동기화 갱신 의무 (cycle 2026-05-06 M-G2 추가)
   - `common/tasks/normalize/build_output.yml` (envelope 13 필드 정본)
-  - `schema/sections.yml` (sections 10 정의)
+  - `schema/sections.yml` (섹션 정의)
   - `schema/field_dictionary.yml` (Must/Nice/Skip 분류)
   - `common/tasks/normalize/build_status.yml` (status 판정 규칙 — M-A3 정본)
-- **Allowed**: 변경이 cosmetic (주석 / 들여쓰기) 시 docs/20 갱신 skip 가능. 단 commit 메시지 명시 ("docs/20 동기화 불필요 — cosmetic only")
-- **Forbidden**: envelope 13 필드 / sections 10 / field_dictionary 83 의 의미 변경 + docs/20 갱신 누락
-- **Why**: 호출자 시스템이 docs/20 을 정본 reference 로 사용. 정본 코드 변경 시 docs/20 stale → 호출자 파싱 오류 + 사용자 의심 (cycle 2026-05-06 M-A 사용자 질문 — "errors success 모순" 의심 발생)
-- **재검토**: docs/20 자동 동기화 hook (`pre_commit_docs20_sync_check.py`) 도입 시 advisory → blocking 격상
+- **Allowed**: 변경이 cosmetic (주석 / 들여쓰기) 시 `docs/contract/03-fields.md` 갱신 skip 가능. 단 commit 메시지 명시 ("`docs/contract/03-fields.md` 동기화 불필요 — cosmetic only")
+- **Forbidden**: envelope 13 필드 / 섹션 목록 / field_dictionary 의 의미 변경 + `docs/contract/03-fields.md` 갱신 누락
+- **Why**: 호출자 시스템이 `docs/contract/03-fields.md` 을 정본 reference 로 사용. 정본 코드 변경 시 `docs/contract/03-fields.md` stale → 호출자 파싱 오류 + 사용자 의심 (cycle 2026-05-06 M-A 사용자 질문 — "errors success 모순" 의심 발생)
+- **재검토**: `docs/contract/03-fields.md` 자동 동기화 hook (`pre_commit_docs20_sync_check.py`) 도입 시 advisory → blocking 격상
 
 ### R8. status 판정 로직 변경 시 시나리오 매트릭스 동반 갱신
 
@@ -94,11 +94,12 @@
   - `tests/` mock fixture (시나리오 B 재현 — M-A3 commit `78611714` 회귀 13건)
 - **Allowed**: 4 시나리오 결과가 변경되지 않는 cosmetic 변경 (주석 다듬기 / 들여쓰기) 시 매트릭스 갱신 skip 가능. 단 commit 메시지 명시 ("status 매트릭스 영향 없음 — cosmetic only")
 - **Forbidden**:
-  - 4 시나리오 매트릭스 의미 변경 (A/B/C/D enum 값 / overall status 결과) + docs/19 + docs/20 + 회귀 fixture 동반 갱신 누락
+  - 4 시나리오 매트릭스 의미 변경 (A/B/C/D enum 값 / overall status 결과) + `docs/reference/decision-log.md` + `docs/contract/03-fields.md` + 회귀 fixture 동반 갱신 누락
   - severity (warning / error) 도입 시 envelope shape 변경 영향 무시 (rule 22 R7 + rule 13 R5 + rule 96 R1-B)
   - status_rules.yml DEAD CODE 활성화 (build_status.yml 인라인 Jinja2 ↔ status_rules.yml 동기화 의무 발생) + 사용자 명시 승인 누락
-- **Why**: status 판정은 envelope 호출자 계약의 핵심. M-A 학습 (cycle 2026-05-06) — 사용자 의심 "errors 있는데 success 모순" 발생 → 시나리오 B 가 의도된 동작임을 코드 주석 + docs/19 + docs/20 + mock fixture 4 곳에 명시한 후 사용자 신뢰 회복. 매트릭스 분산 갱신은 향후 동일 의심 재발 차단
-- **재검토**: status 로직 자동 동기화 hook (`pre_commit_status_logic_check.py`) 도입 시 advisory → blocking 격상
+- **Why**: status 판정은 envelope 호출자 계약의 핵심. M-A 학습 (cycle 2026-05-06) — 사용자 의심 "errors 있는데 success 모순" 발생 → 시나리오 B 가 의도된 동작임을 코드 주석 + `docs/reference/decision-log.md` + `docs/contract/03-fields.md` + mock fixture 4 곳에 명시한 후 사용자 신뢰 회복. 매트릭스 분산 갱신은 향후 동일 의심 재발 차단
+- **검증 절차**: `verify-status-logic` skill 로 A/B/C/D 시나리오 매트릭스를 확인한다.
+- **재검토**: status 로직 자동 동기화 hook (`pre_commit_status_logic_check.py`) 이 blocking 으로 격상될 때
 
 ## 금지 패턴
 
@@ -106,9 +107,9 @@
 - Must 필드 vendor 누락 — R2
 - AI 임의 schema 버전 — R3
 - 실측 없이 baseline 수정 — R4
-- envelope 6 필드 변경 — R5
+- envelope 13 필드 변경 — R5
 - 빌더에서 외부 호출 — R6
-- envelope 정본 변경 + docs/20 갱신 누락 — R7
+- envelope 정본 변경 + `docs/contract/03-fields.md` 갱신 누락 — R7
 - status 판정 로직 변경 + 4 시나리오 매트릭스 갱신 누락 — R8
 
 ## 리뷰 포인트
@@ -117,8 +118,8 @@
 - [ ] 새 Must 필드가 모든 vendor에 존재
 - [ ] schema 버전 사용자 승인
 - [ ] baseline 갱신이 실측 기반인가 (evidence 첨부)
-- [ ] envelope 6 필드 유지
-- [ ] envelope 정본 변경 시 docs/20 동기화 (R7)
+- [ ] envelope 13 필드 유지
+- [ ] envelope 정본 변경 시 `docs/contract/03-fields.md` 동기화 (R7)
 - [ ] status 로직 변경 시 4 시나리오 매트릭스 동반 갱신 (R8)
 
 ## 테스트 포인트

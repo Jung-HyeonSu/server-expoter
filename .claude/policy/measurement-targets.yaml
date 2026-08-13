@@ -126,7 +126,7 @@ targets:
   compatibility_matrix:
     id: 12
     description: "COMPATIBILITY-MATRIX (vendor × generation × section) — adapter capabilities 매트릭스"
-    measure_command: "scripts/ai/measure_compatibility_matrix.py (P3 도입 예정) — 또는 docs/22 참조"
+    measure_command: "scripts/ai/measure_compatibility_matrix.py (P3 도입 예정) — 또는 `docs/reference/compatibility-matrix.md` 참조"
     storage:
       - "docs/reference/compatibility-matrix.md"
       - "docs/ai/tickets/<cycle>/COMPATIBILITY-MATRIX.md"
@@ -135,7 +135,7 @@ targets:
       - "adapters/**/*.yml capabilities 변경"
       - "새 vendor 추가 (rule 50 R2)"
       - "벤더 펌웨어 업그레이드"
-      - "schema/sections.yml 변경 (sections 10 영향)"
+      - "schema/sections.yml 변경"
 
   field_usage_matrix:
     id: 13

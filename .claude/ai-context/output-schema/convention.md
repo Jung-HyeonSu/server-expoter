@@ -4,7 +4,7 @@
 
 ## 1. 출력 envelope (rule 20)
 
-callback_plugins/json_only.py가 OUTPUT 태스크에만 JSON 직렬화. 표준 6 필드:
+callback_plugins/json_only.py가 OUTPUT 태스크에만 JSON 직렬화. 표준 13 필드:
 
 ```json
 {

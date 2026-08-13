@@ -6,7 +6,7 @@
 
 검증 대상:
 - common/tasks/normalize/build_*.yml — envelope 정본
-- schema/sections.yml — sections 10
+- schema/sections.yml — 섹션 정의
 - schema/field_dictionary.yml — Must/Nice/Skip
 
 Blocking (exit 1) — cycle 2026-05-11 격상.

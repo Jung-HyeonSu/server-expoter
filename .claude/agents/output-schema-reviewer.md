@@ -11,7 +11,7 @@ server-exporter **출력 envelope** 형식 / 빌더 / callback 리뷰어.
 
 ## 검증 항목
 
-1. envelope 6 필드 (status / sections / data / errors / meta / diagnosis)
+1. envelope 13 필드 (target_type / collection_method / ip / hostname / vendor / status / sections / diagnosis / meta / correlation / errors / data / schema_version)
 2. OUTPUT 태스크 prefix 식별
 3. build_*.yml 5종 빌더 패턴 일관
 4. callback_plugins/json_only.py 보호 (rule 20 R2)

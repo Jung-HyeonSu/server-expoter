@@ -1,6 +1,6 @@
 ---
 name: harness-observer
-description: 하네스 자기개선 루프 1단계 — rule 28 측정 대상 11종 재측정 + drift 검출. **호출 시점**: harness-cycle / harness-full-sweep 진입.
+description: 하네스 자기개선 루프 1단계 — rule 28 측정 대상 13종 재측정 + drift 검출. **호출 시점**: harness-cycle / harness-full-sweep 진입.
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: opus
 ---

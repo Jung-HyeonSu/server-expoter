@@ -115,7 +115,7 @@ vault/<loc>/redfish/<vendor>.yml 변경 시 **다음 ansible 실행에서 자동
 5. callback 결과 envelope의 `meta.vendor` 정상
 6. console log에 평문 password 노출 없음 확인
 
-## 보안 주의 (rule 60)
+## 보안 주의 (CLAUDE.md §12)
 
 - 회전 절차 중 임시로 평문 password 메모는 메모리 only (파일 / clipboard 제거)
 - Jenkins credentials는 server-exporter 외부 (Jenkins controller 권한 최소)

@@ -103,7 +103,7 @@ server-exporter는 3-channel + multi-vendor + adapter + schema + Jenkins 등 cro
 
 - **rule 91** (task-impact-gate) 정본
 - rule 92 (dependency-and-regression-gate) — 후속 회귀 검사
-- rule 95 (production-code-critical-review) — 의심 패턴 11종
+- rule 95 (production-code-critical-review) — 의심 패턴 12종
 - rule 96 (external-contract-integrity) — 외부 계약 변경
 - skill: `compare-feature-options`, `write-impact-brief`, `prepare-regression-check`, `validate-fragment-philosophy`, `vendor-change-impact`
 - agent: `change-impact-analyst`

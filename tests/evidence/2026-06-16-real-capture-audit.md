@@ -21,7 +21,7 @@ envelope 변환(hostname/sections)을 함께 재현해 전수 대조.
 | thermal 절삭 (G1) | 온도 `_safe_int` 절삭 → `_safe_round_int` 반올림 | replay: CSUS 44.7→45, Lenovo 38.86→39, -68.75→-69 |
 | 누락 필드 (G4, Additive) | bmc serial/part_number/manufacturer, PSU part_number, multi_node chassis uuid/asset_tag/power_state | replay: CSUS bmc.serial=`SGHD3TLNDD`, PSU part=`CSU2400AP-3-500` |
 | baseline 정합 | cisco/hpe/csus baseline 의 top-level hostname 이 자기 data.system.fqdn 과 불일치(ip/mock 수동 주입) → 정정 | cisco→`C220-FCH2116V1V0`, hpe→`null`, csus→`csus-p0` |
-| docs/test 동기화 | docs/20 §8 strict-null 재작성, T3 `test_hostname_not_ip_fallback`(null 허용/ip 금지), README | 전체 1225 passed |
+| docs/test 동기화 | `docs/contract/03-fields.md` §8 strict-null 재작성, T3 `test_hostname_not_ip_fallback`(null 허용/ip 금지), README | 전체 1225 passed |
 
 ## 회귀 fixture 반입 (실장비 4대)
 

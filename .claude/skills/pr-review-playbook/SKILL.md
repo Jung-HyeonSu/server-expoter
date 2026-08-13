@@ -19,7 +19,7 @@ server-exporter PR을 origin/main에 머지하기 전 체크리스트 일괄 실
 
 ### 2. 4축 리뷰 (rule 22/12/60/95)
 - [ ] Structure (Fragment 철학 / 경계 / adapter score)
-- [ ] Quality (의심 패턴 11종)
+- [ ] Quality (의심 패턴 12종)
 - [ ] Security (vault / cert verify / log redaction)
 - [ ] Vendor Boundary (verify_vendor_boundary.py)
 
@@ -30,7 +30,7 @@ server-exporter PR을 origin/main에 머지하기 전 체크리스트 일괄 실
 
 ### 4. 문서 갱신 (rule 70)
 - [ ] docs/ai/CURRENT_STATE.md
-- [ ] 영향 docs/01~19
+- [ ] 영향 `docs/` 문서
 - [ ] 영향 ADR (docs/ai/decisions/, 결정 있을 시)
 - [ ] tests/evidence/ (Round 검증 시)
 
@@ -64,7 +64,7 @@ server-exporter PR을 origin/main에 머지하기 전 체크리스트 일괄 실
 ### 정적 검증: PASS
 ### 4축 리뷰: WARN (Quality 1건 — int cast)
 ### 회귀: PASS (Huawei baseline 신규 + 기존 5 vendor 무영향)
-### 문서: PASS (CURRENT_STATE / docs/13 / 19 / ai-context/vendors/huawei.md 갱신)
+### 문서: PASS (CURRENT_STATE / `docs/reference/live-validation.md` / 19 / ai-context/vendors/huawei.md 갱신)
 ### Jenkins dry-run: PASS
 ### Commit 메시지: PASS
 ### 외부 계약: PASS (adapter metadata origin 주석 존재)

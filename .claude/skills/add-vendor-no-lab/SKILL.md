@@ -66,7 +66,7 @@ OEM 분기 필요한 경우만. 없으면 standard_only.
 
 ```bash
 ansible-vault create vault/<loc>/redfish/huawei.yml
-# accounts list 입력 (rotate-vault skill / docs/21 참조)
+# accounts list 입력 (rotate-vault skill / `docs/operate/05-vault.md` 참조)
 ```
 
 → **사용자 명시 승인**: lab 부재 vendor 의 vault 는 사용자 결정. 본 cycle 2026-05-01 시점 4 vendor (Huawei/Inspur/Fujitsu/Quanta) 는 vault SKIP (사용자 명시 승인 — placeholder 만 추가).

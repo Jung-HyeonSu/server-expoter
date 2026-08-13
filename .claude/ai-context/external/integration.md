@@ -1,6 +1,6 @@
 # External Systems Integration — server-exporter
 
-> 외부 시스템 연동 노트. 정본: `docs/30_*` (rule 30)에 운영 절차, 본 문서는 메모.
+> 외부 시스템 연동 노트. 정본: `docs/develop/` (rule 30)에 운영 절차, 본 문서는 메모.
 
 ## Redfish API
 

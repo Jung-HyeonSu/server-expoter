@@ -55,7 +55,7 @@ by-design/needs-human 판정) → 확정 버그 수정 → replay+pytest 회귀 
 |---|---|---|---|
 | ATX-01/02 | MED | Track4(2026-06-14) thermal 섹션이 라이브러리·supported_sections·normalize 엔 추가됐으나 `build_sections.yml`/`build_failed_output.yml` all_sec + `init_fragments.yml`/`build_empty_data.yml` skeleton 에 누락 → `sections.thermal` 미emit + overall status 미반영 | build_sections/build_failed_output all_sec 에 thermal 추가 + 3 skeleton 동기화. 단 os/esxi 다채널 영향 + status 계약(rule 13 R8) → 사용자 승인 + 3채널 baseline 회귀 |
 | SCHEMA-01/04/06 | MED | HPE baseline(iLO5 구캡처)에 thermal·network.adapters·network.ports·storage.hbas·multi_node 누락 — 라이브러리는 정상 수집(faithful)이나 회귀 커버리지 공백 | 실장비(iLO7 DL380) 재캡처로 baseline 갱신(rule 13 R4) — AI 임의 편집 금지 |
-| SCHEMA-05 | LOW | field_dictionary cpu.architecture channel=[os,esxi] 인데 redfish 도 emit | field_dictionary channel 에 redfish 추가(보호 경로) + docs/20 동기화 |
+| SCHEMA-05 | LOW | field_dictionary cpu.architecture channel=[os,esxi] 인데 redfish 도 emit | field_dictionary channel 에 redfish 추가(보호 경로) + `docs/contract/03-fields.md` 동기화 |
 | SCHEMA-07/AT-3 | LOW | (normalize-layer) firmware[].category 가 'UBM3 BC BP' backplane 을 'nvme' substring 으로 drive 오분류 + 'System ROM' BIOS 미분류 + category 가 field_dictionary 미정의 | normalize_standard.yml category elif 보강 + field_dictionary 등록 |
 | 단위/명명 (by-design) | — | volumes.total_mb 가 실제 MiB 값 / drive.capacity_gb(decimal) vs volume.total_mb(binary) 단위계 혼재 — 값은 faithful, 키 명명 계약 이슈 | 호출자 계약(rule 13 R5) 결정 필요 — 현행 명명 의도적 |
 | 하드웨어 필드 (by-design) | — | normalize 가 hardware 에 emit 하는 asset_tag/system_type/part_number/last_reset_time/boot_progress/tpm + vendor/model/serial/uuid/bios_* 가 field_dictionary 미등록 | field_dictionary 등록(보호 경로) |
@@ -79,11 +79,11 @@ by-design/needs-human 판정) → 확정 버그 수정 → replay+pytest 회귀 
 
 | 항목 | 처리 | 검증 | commit |
 |---|---|---|---|
-| thermal 섹션 배선 (ATX-01/02) | build_sections/build_failed_output all_sec + 3 skeleton 에 thermal 추가 (10→11) | render+skeleton-sync 5건, docs/19·20 동반(rule 13 R8 — status 4시나리오 결과 불변) | 7be8cdc0 |
+| thermal 섹션 배선 (ATX-01/02) | build_sections/build_failed_output all_sec + 3 skeleton 에 thermal 추가 (10→11) | render+skeleton-sync 5건, `docs/reference/decision-log.md`·20 동반(rule 13 R8 — status 4시나리오 결과 불변) | 7be8cdc0 |
 | firmware category (SCHEMA-07) | 'System ROM'→bios + UBM 백플레인 'nvme' 선점 정정 + category/pending field_dictionary 등록(122) | render 7건(Dell/CSUS 무영향) | da215d68 |
-| cpu.architecture channel (SCHEMA-05) | `[os,esxi]`→`[redfish,os,esxi]` + docs/20 | drift check PASS | da215d68 |
+| cpu.architecture channel (SCHEMA-05) | `[os,esxi]`→`[redfish,os,esxi]` + `docs/contract/03-fields.md` | drift check PASS | da215d68 |
 | hardware 12 식별필드 등록 (SCH-1/2, 사용자: 핵심 Must) | vendor/model/serial/uuid/bios_version=Must (전 esxi+redfish baseline 보유 실측), 나머지 7=Nice | drift PASS, dup 0 | (이 commit) |
-| volumes.total_mb 단위 명명 (RJ-1, 사용자: total_mb 유지) | 키/값 유지 + "값은 MiB(÷2^20)" field_dictionary·docs/20 문서 명시 (rename=계약 breaking 회피) | — | (이 commit) |
+| volumes.total_mb 단위 명명 (RJ-1, 사용자: total_mb 유지) | 키/값 유지 + "값은 MiB(÷2^20)" field_dictionary·`docs/contract/03-fields.md` 문서 명시 (rename=계약 breaking 회피) | — | (이 commit) |
 | field_dictionary count 동기화 | 120→**134** 참조 14파일 일괄 (무관 `120`/`122`·commit 이력 제외) | grep 정합, dup 검출 0 | b58f8cfe + (이 commit) |
 
 - 회귀: `pytest tests/ --ignore=tests/e2e_browser` = **1123 passed, 5 skipped** (1097 baseline 무회귀 + 신규 26).

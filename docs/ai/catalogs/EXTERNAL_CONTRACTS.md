@@ -251,7 +251,7 @@ DMTF DSP8010 2026.2+ release / 사이트 펌웨어 schema 변경 관측 / 신규
 | Chassis Member IDs | Base / Expansion1 / Expansion2 (최대 4) | HPE psnow doc/a50009596enw + DMTF Chassis v1.20 | NEXT_ACTIONS C6 |
 | Oem.Hpe.PartitionInfo schema | `{PartitionId, PartitionName, NumNodes, NumSockets, ...}` | sdflex-ironic-driver wiki + sdflexutils 1.5.1 | NEXT_ACTIONS C7 |
 | RMC firmware 형식 | `^[34]\.[0-9]+\..*` (CSUS RMC 3.x/4.x) / `^[23]\.[0-9]+\..*` (Superdome Flex RMC 2.x/3.x) | adapter origin 추정 | NEXT_ACTIONS C8 |
-| RMC 활성화 요구 | Subscription License + RMC Web GUI enable | community 7200359 + docs/22 | NEXT_ACTIONS C8 |
+| RMC 활성화 요구 | Subscription License + RMC Web GUI enable | community 7200359 + `docs/reference/compatibility-matrix.md` | NEXT_ACTIONS C8 |
 
 ### server-exporter 적용 (cycle 2026-05-12)
 

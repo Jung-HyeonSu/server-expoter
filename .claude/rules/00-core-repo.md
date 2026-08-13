@@ -28,7 +28,7 @@
 > python -m pytest tests/ --collect-only -q | tail -1                       # 테스트
 > ```
 - 운영: 단일 main + feature/* 브랜치
-- 정본: REQUIREMENTS.md / README.md / docs/01~23
+- 정본: REQUIREMENTS.md / README.md / `docs/` 문서
 
 ## 목표 규칙
 
@@ -114,12 +114,14 @@ callback_plugins/json_only.py → JSON envelope
 
 ## 보호 경로 (참고용 — 정책 강제 해제됨)
 
-> 2026-04-28 cycle-011: 사용자 명시 결정 — 보안 정책 자체 해제. 본 절은 *권장 작업 영역 분류*로만 의미. PreToolUse Edit guard / pre_commit_policy.py / protected-paths.yaml 모두 제거됨. AI 자동화 우선.
+> 2026-04-28 cycle-011: 사용자 명시 결정 — 정책 **강제**가 해제됐다. 본 절은 *권장 작업 영역 분류*로만 의미가 있다.
+> PreToolUse Edit guard 와 `pre_commit_policy.py` 는 제거됐다. `.claude/policy/protected-paths.yaml` 은
+> **파일로 남아 있다** — 스스로 DEPRECATED 라 적고 있고, `validate_claude_structure.py` 가 존재만 확인한다.
 
 - **권장 신중**: `.git/, vault/**, *.log, *.env, *.pem, *.key`
 - **권장 사용자 승인**: `ansible.cfg, Jenkinsfile*, schema/sections.yml, schema/field_dictionary.yml, schema/baseline_v1/**`
 - **벤더 경계**: `adapters/**, redfish-gather/library/**, redfish-gather/tasks/vendors/**, common/library/**, common/vars/vendor_aliases.yml`
-- **문서 기준선**: `CLAUDE.md, REQUIREMENTS.md, README.md, docs/01~23, .claude/{rules,policy,skills,agents,ai-context,templates}/`
+- **문서 기준선**: `CLAUDE.md, REQUIREMENTS.md, README.md, `docs/` 문서, .claude/{rules,policy,skills,agents,ai-context,templates}/`
 
 세부 정책 강제는 **삭제됨** (`ADR-2026-04-28-security-policy-removal.md` 참조).
 

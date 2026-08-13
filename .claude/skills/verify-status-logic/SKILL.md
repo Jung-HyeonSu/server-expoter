@@ -12,7 +12,7 @@ server-exporter overall.status 판정 로직의 4 시나리오 매트릭스 (A/B
 ## 입력
 
 - 검증 대상: `common/tasks/normalize/build_status.yml` (정본) / `build_sections.yml` / `build_errors.yml`
-- 동반 정본 4종: 코드 주석 + docs/19 + docs/20 + tests mock fixture
+- 동반 정본 4종: 코드 주석 + `docs/reference/decision-log.md` + `docs/contract/03-fields.md` + tests mock fixture
 
 ## 4 시나리오 매트릭스 정본
 
@@ -67,7 +67,7 @@ server-exporter overall.status 판정 로직의 4 시나리오 매트릭스 (A/B
    - `os-gather/tasks/linux/gather_network.yml:208-209` (lspci stderr)
    - `esxi-gather/tasks/normalize_storage.yml:79-83` (NFS/vSAN/vVOL capacity 미수집)
 4. **status_rules.yml DEAD CODE 상태** 검증 — `grep -r "include_vars.*status_rules" .` 0 결과
-5. **동반 정본 4 곳 일관성** — docs/19 + docs/20 + mock fixture diff
+5. **동반 정본 4 곳 일관성** — `docs/reference/decision-log.md` + `docs/contract/03-fields.md` + mock fixture diff
 6. **회귀 — pytest tests/test_*status*.py** PASS
 
 ## 출력
@@ -92,7 +92,7 @@ server-exporter overall.status 판정 로직의 4 시나리오 매트릭스 (A/B
 - tests/test_*status*.py — 13건 회귀
 
 ### 동반 정본 4 곳 일관성: PASS
-- build_status.yml + docs/19 + docs/20 + tests mock 모두 일관
+- build_status.yml + `docs/reference/decision-log.md` + `docs/contract/03-fields.md` + tests mock 모두 일관
 
 ### 의심 발견: 0
 ```
@@ -101,7 +101,7 @@ server-exporter overall.status 판정 로직의 4 시나리오 매트릭스 (A/B
 
 - **rule 13 R8** (status 시나리오 매트릭스 동반 갱신 — 정본)
 - rule 13 R5 (envelope 13 필드)
-- rule 13 R7 (docs/20 동기화)
+- rule 13 R7 (`docs/contract/03-fields.md` 동기화)
 - rule 22 R7/R8 (5 fragment 변수 / 타입 정본)
 - rule 92 R5 (schema 변경 사용자 승인)
 - rule 96 R1-B (envelope shape 보존 — 호환성 외 schema 확장 금지)

@@ -48,7 +48,7 @@ IP 를 `bonds[].addresses` 로 mirror → interfaces ↔ bonds 자동 일관.
 | `tests/unit/test_network_topology.py` | +13 테스트(parse 3-tier/merge/full-chain/back-compat/immutability), rhel96 alias 단언 |
 | `tests/unit/test_os_network_render.py` | merge 필터 등록 + raw 렌더 alias 단언 |
 | `tests/fixtures/os/net/` | `rhel810_addr.txt`·`rhel96_addr.txt` 신규(실 ip -j 캡처), `rhel810_rawpath_stdout.txt` ADDRJSON append, `rhel810/rhel96_bond_network.expected.json` 재생성 |
-| `docs/16`, `docs/20` | 주소 source 매핑 + 6.4.2 스키마 문서 |
+| `docs/develop/05-field-mapping.md`, `docs/contract/03-fields.md` | 주소 source 매핑 + 6.4.2 스키마 문서 |
 
 ## 5. 테스트 결과 (✅ 확인함)
 

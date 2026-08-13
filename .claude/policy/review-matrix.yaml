@@ -12,7 +12,7 @@ axes:
       - "파일 500줄 / 함수 15줄 한계"
 
   quality:
-    description: "품질 — 의심 패턴 11종 (rule 95 R1), 에러 처리, 테스트 커버"
+    description: "품질 — 의심 패턴 12종 (rule 95 R1), 에러 처리, 테스트 커버"
     checks:
       - "Ansible default(omit) 누락"
       - "set_fact 재정의로 인한 fragment 침범"

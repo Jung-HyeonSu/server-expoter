@@ -137,7 +137,7 @@
 | EXTERNAL_CONTRACTS row | 일부 | 30+ row (9 vendor × N gen) | 대폭 |
 | OEM namespace 매트릭스 | 5 vendor | 9 vendor (M-I3 + M-J1) | +4 |
 | origin 주석 일관성 (M-K1) | 일부 | **30/30 PASS** | — |
-| catalog 갱신 | — | 4종 (NEXT_ACTIONS / VENDOR_ADAPTERS / COMPATIBILITY-MATRIX / EXTERNAL_CONTRACTS) + docs/13 | — |
+| catalog 갱신 | — | 4종 (NEXT_ACTIONS / VENDOR_ADAPTERS / COMPATIBILITY-MATRIX / EXTERNAL_CONTRACTS) + `docs/reference/live-validation.md` | — |
 | pytest | 484 | 497 (Phase 2 후) | +13 |
 | ticket | 0 → 38 | 38/38 DONE | — |
 | schema/sections.yml + field_dictionary.yml | (불변) | (변경 0) | 0 (Q7 정책) |

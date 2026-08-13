@@ -84,14 +84,14 @@ post_edit_jinja_check.py가 자동 검증.
 
 ## 금지 패턴
 
-- envelope 6 필드 외 추가 — R1
+- envelope 13 필드 외 추가 — R1
 - json_only.py 임의 수정 — R2
 - OUTPUT 태스크 이름이 `OUTPUT` 완전일치가 아님 (접두사 형태 포함) — R3
 - envelope 필드 자체 누락 — R4
 
 ## 리뷰 포인트
 
-- [ ] envelope 6 필드 모두 존재
+- [ ] envelope 13 필드 모두 존재
 - [ ] OUTPUT 태스크 이름이 정확히 `OUTPUT` (완전일치)
 - [ ] Jinja2 정합성
 - [ ] callback URL 처리 무결성

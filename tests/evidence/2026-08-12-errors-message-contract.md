@@ -140,7 +140,7 @@
 | H8 | ESXi datastore 이름 무제한 concat → 고정 문장 + detail(500자 상한) |
 | N41/N50/N51/N52/N65 | 실패 후보의 모듈 errors 와 무인증 probe errors 가 전부 버려지던 것 → 화이트리스트(role/label/status/첫 message)만 `errors[].detail` 로 합류 (상한 3건) |
 | M10/N01/N02/N20 | callback 보충 루프를 per-host try 로 격리(첫 호스트 예외가 나머지를 전부 죽이던 것), 비상 스위치 상태 stderr 고지, precheck 원본 detail 보존, `_emit_error` 를 평문으로(stdout envelope 과 키 충돌 회피) |
-| H13/P5 | `schema/field_dictionary.yml` 에 `errors[]` / `.section` / `.message` / `.detail` 4항목 신설 (종전 정의 **0건**) + `docs/20` §4-1 신설 |
+| H13/P5 | `schema/field_dictionary.yml` 에 `errors[]` / `.section` / `.message` / `.detail` 4항목 신설 (종전 정의 **0건**) + `docs/contract/03-fields.md` §4-1 신설 |
 
 ---
 

@@ -89,7 +89,7 @@ data:
 
 **근거**: rule 12 R1 BMC 표시명 매핑 인가 영역 (line 1308 이미 `nosec rule12-r1`). 다른 12 vendor 의 `manager_layout=None` → 기존 `bmc_names[vendor]` path 그대로.
 
-### 결정 4: precheck graceful fail — `diagnosis.details.rmc_activation_check` Additive + docs/22 신규
+### 결정 4: precheck graceful fail — `diagnosis.details.rmc_activation_check` Additive + `docs/reference/compatibility-matrix.md` 신규
 
 - ServiceRoot 401/404/connection refused → `errors[0].message`: "ServiceRoot 응답 실패 — RMC Redfish API 활성화 미상 (HPE community 7200359 참조)"
 - `diagnosis.details.rmc_activation_check` (true/false/null) + `diagnosis.details.multi_node_layout` (string/null) Additive
@@ -153,7 +153,7 @@ C8: RMC 활성화 / Subscription License 펌웨어 요구 실측
 ### 정합성 검증
 
 - **rule 13 R5 envelope shape 보존**: envelope 13 필드 변경 없음 (`data.multi_node` 는 `data` 내부 신 키) [PASS]
-- **rule 13 R7 docs/20 동기화**: Phase 4 SUB-4.4 적용 [PASS]
+- **rule 13 R7 `docs/contract/03-fields.md` 동기화**: Phase 4 SUB-4.4 적용 [PASS]
 - **rule 22 Fragment 철학**: 자기 fragment 만 / 5 공통 변수 / merge_fragment 호출 보장 [PASS]
 - **rule 12 R1 vendor 경계**: `_classify_rmc_label` substring 매칭 — `bmc_names` 매핑 line 1308 `nosec rule12-r1` 인가 영역 확장 [PASS]
 - **rule 50 R2 단계 10 (lab 부재)**: NEXT_ACTIONS C1~C8 등재 [PASS]
@@ -250,7 +250,7 @@ Rollback trigger:
 - agent: `adapter-author`, `fragment-engineer`, `schema-reviewer`, `vendor-boundary-guardian`, `web-evidence-collector`
 - ADR 선례:
   - `ADR-2026-04-28-rule12-oem-namespace-exception.md` (rule 12 R1 Allowed 영역)
-  - `ADR-2026-05-06-rule13-r7-docs20-sync.md` (envelope 정본 변경 시 docs/20 동기화)
+  - `ADR-2026-05-06-rule13-r7-docs20-sync.md` (envelope 정본 변경 시 `docs/contract/03-fields.md` 동기화)
   - `ADR-2026-05-11-field-channel-declaration-refinement.md` (field_dictionary 분류 / channel 정밀화)
 - cycle 선례: cycle 2026-05-11 hpe-csus-add (어댑터 신설), cycle 2026-05-06 M-E2 (hpe_superdome_flex 신설)
 - web sources (rule 96 R1-A): `docs/ai/catalogs/EXTERNAL_CONTRACTS.md` HPE 절 (Phase 6 SUB-6.2 보강)

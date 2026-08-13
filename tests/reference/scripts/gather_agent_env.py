@@ -80,7 +80,7 @@ AGENT_COMMANDS: list[tuple[str, str, bool]] = [
     ("nvme_cli",          "nvme version 2>&1",                                         False),
     ("racadm",            "racadm version 2>&1; which racadm 2>&1",                   False),
     ("storcli",           "/opt/MegaRAID/storcli/storcli64 version 2>&1; storcli version 2>&1", False),
-    # Redis (per docs/02)
+    # Redis (per `docs/operate/02-agent-node.md`)
     ("redis_status",      "systemctl status redis 2>&1; redis-cli ping 2>&1; redis-cli info server 2>&1 | head -20", False),
     # Time
     ("time_sync",         "timedatectl 2>&1; chronyc sources 2>&1; chronyc tracking 2>&1", False),

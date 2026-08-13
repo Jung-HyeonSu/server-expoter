@@ -32,7 +32,7 @@
 
 | 용어 | 풀이 |
 |---|---|
-| **JSON envelope** | callback_plugins/json_only.py가 출력하는 표준 6 필드: `status / sections / data / errors / meta / diagnosis` (rule 20). |
+| **JSON envelope** | callback_plugins/json_only.py가 출력하는 표준 13 필드 (rule 20 R1). 분석 6 분류(status/sections/data/errors/meta/diagnosis) + 라우팅·식별 7. |
 | **build_*.yml** | `common/tasks/normalize/build_{sections,status,errors,meta,correlation,output}.yml`. fragment 누적 → 최종 JSON 조립. |
 | **callback URL** | 호출자에게 결과 통지하는 URL. 공백/후행 슬래시 방어 필수 (commit 4ccc1d7). rule 31 무결성. |
 | **Jenkins 4-Stage** | Validate (입력) → Gather (ansible-playbook) → Validate Schema (field_dictionary 정합) → E2E Regression (pytest baseline). 각 Stage FAIL 게이트. |
@@ -52,7 +52,7 @@
 |---|---|
 | **Tier 0/1/2/3** | 정본 / 진입 인덱스 / 상세 정책 / 이력 감사 (server-exporter 도입 시 계승된 4계층 분류). |
 | **자기개선 루프** | observer → architect → reviewer → governor → updater → verifier 6단계. `harness-evolution-coordinator`가 조율. |
-| **measurement-targets** | rule 28 R1 카탈로그 11종. TTL + 무효화 trigger 미리 확립 → 매번 재측정 vs 캐시 사용 자동 판정. |
+| **measurement-targets** | rule 28 R1 카탈로그 13종. TTL + 무효화 trigger 미리 확립 → 매번 재측정 vs 캐시 사용 자동 판정. |
 
 ## 외부 시스템
 

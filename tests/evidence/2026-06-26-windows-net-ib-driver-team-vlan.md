@@ -88,7 +88,7 @@ Linux 는 is_alias=false/is_secondary=true 라 **Linux 와 값이 정반대** �
 검증(build #158, 전 스테이지 SUCCESS):
 - Ethernet4 (192.168.50.40 + .41, 같은 /24): 한 주소 is_secondary=true, 다른 하나 false (정확히 1 primary)
 - 전 주소 6개 5키 보유, is_secondary 누락 0, is_alias=true 0 (날조 0)
-- 단위 787 passed (신규 6), field_dictionary + docs/20 §6.4.2 Windows 반영 동기화
+- 단위 787 passed (신규 6), field_dictionary + `docs/contract/03-fields.md` §6.4.2 Windows 반영 동기화
 
 한계(문서화됨): "어느 IP 가 primary 인가"는 수집 순서 기반(best-effort) — Windows 는 커널 primary 플래그
 API 가 없어 first-in-collection 을 primary 로. "같은 서브넷에 정확히 1 primary" 불변식은 보장.
