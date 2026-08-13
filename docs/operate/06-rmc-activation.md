@@ -25,7 +25,7 @@ HPE community 게시물 ([7200359 "impossible to get redfish answer from superdo
 
 ## 3. server-exporter 자동 진단
 
-`adapter.vendor_notes.manager_layout` 가 `rmc_primary` 또는 `rmc_primary_ilo_secondary` 인 vendor 에 대해 다음 진단 메타가 envelope 에 자동 노출:
+`adapter.vendor_notes.manager_layout` 가 `rmc_primary` 또는 `rmc_primary_ilo_secondary` 인 vendor 에는 다음 진단 메타가 envelope 에 자동 노출:
 
 ```json
 {
@@ -67,7 +67,7 @@ CSUS 3200 / Superdome Flex RMC Redfish API 는 일부 펌웨어 / 라이선스 �
 
 ### 4.2 RMC Web GUI 로 활성화
 
-기본적으로 RMC 는 표준 Redfish API host 로 동작하지만, 일부 환경에서 명시 enable 필요:
+기본적으로 RMC 는 표준 Redfish API host 로 동작하지만 일부 환경에서 명시 enable 필요:
 
 1. RMC Web GUI 로그인 (`https://<rmc-ip>/`)
 2. **System Management** → **Network Services** → **Redfish API** 활성화 확인

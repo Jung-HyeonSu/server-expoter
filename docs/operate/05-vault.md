@@ -52,7 +52,7 @@ Generation / Model / Firmware 는 **선택축이 아니다** (세대를 아는 �
 | Redfish (복구) | `vault/<loc>/redfish/<vendor>.yml` | location + vendor (canonical 9종) |
 
 - `<location>` 은 `common/vars/locations.yml` 에 등록된 ID 만 쓸 수 있다. Jenkins 가
-  `-e se_location=<id>` 로 전달하고, resolver 가 registry 에 없는 값이면 **경로를 만들지 않는다.**
+  `-e se_location=<id>` 로 전달한다. resolver 는 registry 에 없는 값이면 **경로를 만들지 않는다.**
 - `<vendor>` 는 `common/vars/vendor_aliases.yml` 의 canonical 키만 쓸 수 있다.
 - **다른 Location / 다른 Vendor 로 넘어가는 폴백 경로는 코드에 존재하지 않는다.**
   `ich + dell` 이 실패해도 `chj + dell` 이나 `ich + hpe` 를 시도하지 않는다.
@@ -72,7 +72,7 @@ Generation / Model / Firmware 는 **선택축이 아니다** (세대를 아는 �
 "조용히 옛 파일로 성공" 하는 대신 명시적으로 실패한다
 (`failure_code=CREDENTIAL_SET_UNAVAILABLE`). 이관 실패를 감추지 않기 위한 의도된 설계다.
 
-**2026-08-12 삭제 완료.** 실장비 6대 재검증 후 제거했고, 제거 후에도 정상 수집을 확인했다
+**2026-08-12 삭제 완료.** 실장비 6대 재검증 후 제거했다. 제거 후에도 정상 수집을 확인했다
 (`tests/evidence/2026-08-12-redfish-standard-account-separation.md`).
 `vault/.lab-credentials.yml` 은 resolver 대상이 아니라 유지한다.
 이전 동작 복원이 필요하면 git 이력에서 되살린다.
@@ -99,7 +99,7 @@ vault/<loc>/redfish/<vendor>.yml    ← 복구 계정 (role: recovery 만)
 - 복구 계정으로 수집한 결과가 정상 결과로 나가는 경로는 **없다.** 복구가 확인되면
   표준 계정으로 재인증·재수집한다.
 - 복구 vault 에 `role: primary` 나 legacy `ansible_user` 를 두지 마라 — 표준 계정
-  중복이 되고, 코드는 그것을 표준 대용으로 쓰지 않는다.
+  중복이 되고 코드는 그것을 표준 대용으로 쓰지 않는다.
 
 OS / ESXi 는 축이 하나뿐이라 구조가 그대로다 (`<loc>/os/<type>`, `<loc>/esxi`).
 
@@ -151,7 +151,7 @@ SE_VAULT_PASSWORD='<마스터 키>' python 내부 검증 스크립트
 > vault 복호화 점검 도구 는 `.gitignore` 대상 **로컬 도구**다 (cycle-018 결정 —
 > 당시 마스터 키가 코드에 하드코딩돼 있었다). 2026-08-12 에 하드코딩을 제거하고 키를
 > `SE_VAULT_PASSWORD` / `--password-file` 로만 받도록 바꿨다. gitignore 해제 여부는
-> 사용자 결정 사항으로 남겨 두었으므로, fresh clone 에는 이 파일이 없을 수 있다.
+> 사용자 결정 사항으로 남겨 두었으므로 fresh clone 에는 이 파일이 없을 수 있다.
 
 검사 항목: `$ANSIBLE_VAULT` 헤더 / 복호화 성공 / `accounts[]` 각 항목의
 `username·password·label·role` / `role ∈ {primary, recovery, secondary}` /
@@ -481,8 +481,7 @@ accounts:
 
 ### 8.3 vault edit 도중 swap 파일 잔재
 
-- 편집 중 만들어진 swap 파일(`vault/.swp`, `vault/<loc>/redfish/.{vendor}.yml.swp`)이
-  남아 있으면 절대 commit 하지 않는다. 평소에는 없어야 정상이다
+- `vault/.swp`, `vault/<loc>/redfish/.{vendor}.yml.swp` 파일 잔재 시 절대 commit 금지
 - `.gitignore` 에 `*.swp` 등록 (이미 적용)
 
 ## 9. 검증 절차 (회전 후 의무)
@@ -498,8 +497,7 @@ accounts:
 
 - 회전 절차 중 임시 평문 password 메모는 메모리 only (파일 / clipboard 제거)
 - Jenkins credentials 는 server-exporter 외부 (Jenkins controller 권한 최소)
-- 회전 이력은 `tests/evidence/vault-rotation-log.md` 에 남긴다. 아직 없으면 새로 만든다.
-  날짜와 대상만 적고 password 자체는 절대 쓰지 않는다
+- 회전 이력 = `tests/evidence/vault-rotation-log.md` (날짜 + 대상만, password 자체는 절대 기록 안 함)
 - ansible-vault password file (`~/.vault_pass`) 은 `chmod 600`
 
 ## 11. 관련 문서
